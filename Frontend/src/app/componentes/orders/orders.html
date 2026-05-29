@@ -1,0 +1,314 @@
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <h2 class="mb-0">
+            <i class="fas fa-shopping-bag me-2"></i>
+            Gestión de Pedidos
+          </h2>
+        </div>
+        <div class="d-flex gap-2">
+          <select class="form-select w-auto" [(ngModel)]="filtroDeliveryType" (change)="aplicarFiltro()">
+            <option value="TODOS">Todos los tipos</option>
+            <option value="PICKUP">🏪 Recojo en tienda</option>
+            <option value="DELIVERY">🛵 Delivery</option>
+          </select>
+          <select class="form-select w-auto" [(ngModel)]="filtroEstado" (change)="aplicarFiltro()">
+            <option value="TODOS">Todos los estados</option>
+            <option value="PENDING">Pendiente</option>
+            <option value="CONFIRMED">Confirmado</option>
+            <option value="PREPARING">Preparando</option>
+            <option value="OUT_FOR_DELIVERY">En camino</option>
+            <option value="DELIVERED">Entregado</option>
+            <option value="CANCELLED">Cancelado</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensajes de éxito y error -->
+  <div class="row mb-3" *ngIf="mensaje">
+    <div class="col-12">
+      <div class="alert alert-dismissible fade show" [ngClass]="error ? 'alert-danger' : 'alert-success'">
+        <i class="fas" [ngClass]="error ? 'fa-exclamation-circle' : 'fa-check-circle'" class="me-2"></i>
+        {{ mensaje }}
+        <button type="button" class="btn-close" (click)="mensaje = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de pedidos -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            Lista de Pedidos ({{ filteredOrders.length }})
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <!-- Vista de cards para mejor legibilidad -->
+          <div class="orders-container">
+            <div class="order-card" *ngFor="let order of ordersPaginados">
+              <!-- Header del pedido -->
+              <div class="order-header">
+                <div class="order-header-left">
+                  <h5 class="order-id">Pedido #{{ order.id }}</h5>
+                  <span class="badge" [ngClass]="getBadgeClass(order.status)">
+                    {{ getEstadoTexto(order.status) }}
+                  </span>
+                  <span class="badge ms-2" [ngClass]="esPickup(order) ? 'bg-secondary' : 'bg-info'">
+                    {{ esPickup(order) ? '🏪 PICKUP' : '🛵 DELIVERY' }}
+                  </span>
+                </div>
+                <div class="order-header-right">
+                  <div class="order-total">S/ {{ order.total | number:'1.2-2' }}</div>
+                  <small class="text-muted">{{ order.createdAt | date: 'short' }}</small>
+                </div>
+              </div>
+
+              <!-- Información del cliente -->
+              <div class="order-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="info-section">
+                      <h6><i class="fas fa-user me-2"></i>Cliente</h6>
+                      <p class="mb-1"><strong>{{ order.userName }}</strong></p>
+                      <p class="mb-1 text-muted small">{{ order.userEmail }}</p>
+                      <p class="mb-0 text-muted small" *ngIf="order.userPhone">
+                        <i class="fas fa-phone me-1"></i>{{ order.userPhone }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4" *ngIf="esDelivery(order) && order.addressLine1">
+                    <div class="info-section">
+                      <h6><i class="fas fa-map-marker-alt me-2"></i>Dirección</h6>
+                      <p class="mb-1">{{ order.addressLine1 }}</p>
+                      <p class="mb-1 text-muted small">{{ order.addressDistrict }}, {{ order.addressCity }}</p>
+                      <p class="mb-0 text-muted small" *ngIf="order.addressReference">
+                        Ref: {{ order.addressReference }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4" *ngIf="esPickup(order)">
+                    <div class="info-section">
+                      <h6><i class="fas fa-store me-2"></i>Recojo en Tienda</h6>
+                      <p class="mb-1">El cliente recogerá su pedido</p>
+                      <p class="mb-0">
+                        <span class="badge bg-success">Sin costo de envío</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div [ngClass]="esPickup(order) ? 'col-md-4' : 'col-md-4'">
+                    <div class="info-section">
+                      <h6><i class="fas fa-dollar-sign me-2"></i>Resumen</h6>
+                      <p class="mb-1">Subtotal: <strong>S/ {{ order.subtotal | number:'1.2-2' }}</strong></p>
+                      <p class="mb-1">
+                        Envío: 
+                        <strong [ngClass]="order.deliveryFee === 0 ? 'text-success' : ''">
+                          S/ {{ order.deliveryFee | number:'1.2-2' }}
+                        </strong>
+                      </p>
+                      <p class="mb-1" *ngIf="order.discount && order.discount > 0">
+                        Descuento: 
+                        <strong class="text-danger">
+                          -S/ {{ order.discount | number:'1.2-2' }}
+                        </strong>
+                        <span class="badge bg-info ms-1" *ngIf="order.promoCode">{{ order.promoCode }}</span>
+                      </p>
+                      <p class="mb-0 small text-muted">
+                        Pago: {{ order.paymentMethodName || 'No especificado' }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="order-actions">
+                  <button 
+                    class="btn btn-sm btn-info" 
+                    (click)="verDetalles(order)"
+                    title="Ver detalles completos">
+                    <i class="fas fa-eye me-1"></i>
+                    Ver Detalles Completos
+                  </button>
+                  <select 
+                    class="form-select form-select-sm" 
+                    style="width: auto;"
+                    [(ngModel)]="order.status" 
+                    (change)="cambiarEstado(order, order.status)">
+                    <option *ngFor="let estado of estados" [value]="estado">
+                      {{ getEstadoTexto(estado) }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mensaje cuando no hay pedidos -->
+            <div *ngIf="filteredOrders.length === 0" class="empty-state text-center py-5">
+              <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No hay pedidos para mostrar</h5>
+              <p class="text-muted">Los pedidos aparecerán aquí cuando se realicen</p>
+            </div>
+          </div>
+
+          <!-- Paginación -->
+          <app-pagination
+            *ngIf="filteredOrders.length > 0"
+            [currentPage]="currentPage"
+            [totalItems]="filteredOrders.length"
+            [itemsPerPage]="itemsPerPage"
+            (pageChange)="onPageChange($event)"
+          ></app-pagination>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalles -->
+<div class="modal fade show d-block" *ngIf="showModal" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-info-circle me-2"></i>
+          Detalles del Pedido #{{ selectedOrder?.id }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="cerrarModal()"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedOrder">
+        <!-- Secciones de información -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-user me-2"></i>Información del Cliente</h6>
+                <p class="mb-1"><strong>Nombre:</strong> {{ selectedOrder.userName }}</p>
+                <p class="mb-1"><strong>Email:</strong> {{ selectedOrder.userEmail }}</p>
+                <p class="mb-1"><strong>Teléfono:</strong> {{ selectedOrder.userPhone || 'No proporcionado' }}</p>
+                <p class="mb-1">
+                  <strong>Tipo:</strong> 
+                  <span class="badge" [ngClass]="esPickup(selectedOrder) ? 'bg-secondary' : 'bg-info'">
+                    {{ esPickup(selectedOrder) ? '🏪 Recojo en tienda' : '🛵 Delivery' }}
+                  </span>
+                </p>
+                <p class="mb-1">
+                  <strong>Estado:</strong> 
+                  <span class="badge" [ngClass]="getBadgeClass(selectedOrder.status)">
+                    {{ getEstadoTexto(selectedOrder.status) }}
+                  </span>
+                </p>
+                <p class="mb-0"><strong>Método de Pago:</strong> {{ selectedOrder.paymentMethodName || 'No especificado' }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Dirección (solo para DELIVERY) -->
+          <div class="col-md-6" *ngIf="esDelivery(selectedOrder) && selectedOrder.addressLine1">
+            <div class="card h-100 bg-light">
+              <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-map-marker-alt me-2"></i>Dirección de Entrega</h6>
+                <p class="mb-1"><strong>Dirección:</strong> {{ selectedOrder.addressLine1 }}</p>
+                <p class="mb-1"><strong>Distrito:</strong> {{ selectedOrder.addressDistrict }}</p>
+                <p class="mb-1"><strong>Ciudad:</strong> {{ selectedOrder.addressCity }}</p>
+                <p class="mb-0" *ngIf="selectedOrder.addressReference">
+                  <strong>Referencia:</strong> {{ selectedOrder.addressReference }}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Resumen de pago (ocupa ambas columnas si es PICKUP) -->
+          <div [ngClass]="esPickup(selectedOrder) ? 'col-md-6' : 'col-12 mt-3'">
+            <div class="card h-100" [ngClass]="esPickup(selectedOrder) ? 'bg-light' : 'bg-success bg-opacity-10'">
+              <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-dollar-sign me-2"></i>Resumen de Pago</h6>
+                <p class="mb-1"><strong>Subtotal:</strong> S/ {{ selectedOrder.subtotal | number:'1.2-2' }}</p>
+                <p class="mb-1">
+                  <strong>Envío:</strong> 
+                  <span [ngClass]="selectedOrder.deliveryFee === 0 ? 'text-success' : ''">
+                    S/ {{ selectedOrder.deliveryFee | number:'1.2-2' }}
+                    <span *ngIf="selectedOrder.deliveryFee === 0" class="badge bg-success ms-2">GRATIS</span>
+                  </span>
+                </p>
+                <p class="mb-1" *ngIf="selectedOrder.discount && selectedOrder.discount > 0">
+                  <strong>Descuento:</strong> 
+                  <span class="text-danger">-S/ {{ selectedOrder.discount | number:'1.2-2' }}</span>
+                  <span class="badge bg-info ms-2" *ngIf="selectedOrder.promoCode">{{ selectedOrder.promoCode }}</span>
+                </p>
+                <hr class="my-2">
+                <p class="mb-0 fs-5"><strong>Total:</strong> <span class="text-success fw-bold">S/ {{ selectedOrder.total | number:'1.2-2' }}</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <h6 class="mb-3"><i class="fas fa-pizza-slice me-2"></i>Items del Pedido:</h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Tipo</th>
+                <th>Producto</th>
+                <th>Tamaño</th>
+                <th>Ingredientes Extras</th>
+                <th>Cantidad</th>
+                <th>Precio Unit.</th>
+                <th>Total Línea</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of selectedOrder.items">
+                <td>
+                  <span class="badge" [ngClass]="item.itemType === 'EXTRA' ? 'bg-info' : 'bg-primary'">
+                    {{ item.itemType === 'EXTRA' ? '🍔 Extra' : '🍕 Pizza' }}
+                  </span>
+                </td>
+                <td>{{ item.pizzaName || 'Producto #' + (item.pizzaId || item.extraId) }}</td>
+                <td>
+                  <span *ngIf="item.itemType !== 'EXTRA'">
+                    {{ item.sizeName || 'Tamaño #' + item.sizeId }}
+                  </span>
+                  <span *ngIf="item.itemType === 'EXTRA'" class="text-muted">
+                    -
+                  </span>
+                </td>
+                <td>
+                  <span *ngIf="item.extras && item.extras.length > 0" class="text-info">
+                    <i class="fas fa-plus-circle me-1"></i>
+                    {{ item.extras.join(', ') }}
+                  </span>
+                  <span *ngIf="!item.extras || item.extras.length === 0" class="text-muted">
+                    -
+                  </span>
+                </td>
+                <td><span class="badge bg-secondary">{{ item.quantity }}</span></td>
+                <td>S/ {{ item.unitPrice | number:'1.2-2' }}</td>
+                <td><strong>S/ {{ item.lineTotal | number:'1.2-2' }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div *ngIf="selectedOrder.notes" class="alert alert-info mt-3">
+          <strong><i class="fas fa-sticky-note me-2"></i>Notas:</strong> {{ selectedOrder.notes }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
+          <i class="fas fa-times me-2"></i>
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

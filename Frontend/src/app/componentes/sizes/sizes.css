@@ -1,0 +1,12 @@
+.modal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-backdrop.show {
+  opacity: 0.5;
+}
+
+.bg-info {
+  color: white !important;
+}

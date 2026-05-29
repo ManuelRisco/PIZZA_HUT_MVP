@@ -1,0 +1,49 @@
+.modal {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal.show {
+  display: block;
+}
+
+.card {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.card-body h5 {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.card-body h2 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: #495057;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.badge {
+  padding: 0.35rem 0.65rem;
+  font-weight: 500;
+}
+
+h2 i {
+  margin-right: 0.5rem;
+}
+
+.form-select-sm {
+  padding: 0.25rem 2rem 0.25rem 0.5rem;
+}

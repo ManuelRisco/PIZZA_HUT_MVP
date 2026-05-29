@@ -1,0 +1,191 @@
+<div class="promociones-container">
+  <div class="header">
+    <h1><i class="bi bi-tag-fill me-2"></i>Gestión de Promociones</h1>
+    <button class="btn-primary" (click)="abrirFormulario()" *ngIf="!showForm">
+      <i class="bi bi-plus-lg"></i> Nueva Promoción
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros-container" *ngIf="!showForm">
+    <span class="filtros-label">Estado:</span>
+    <div class="filtros-buttons">
+      <button class="btn-filter" [class.active]="filtroEstado === 'TODOS'" (click)="cambiarFiltro('TODOS')">
+        <i class="bi bi-grid"></i> Todas
+      </button>
+      <button class="btn-filter" [class.active]="filtroEstado === 'ACTIVAS'" (click)="cambiarFiltro('ACTIVAS')">
+        <i class="bi bi-check-circle"></i> Activas
+      </button>
+      <button class="btn-filter" [class.active]="filtroEstado === 'INACTIVAS'" (click)="cambiarFiltro('INACTIVAS')">
+        <i class="bi bi-x-circle"></i> Inactivas
+      </button>
+    </div>
+  </div>
+
+  <!-- Mensajes -->
+  <div class="alert alert-success" *ngIf="success">{{ success }}</div>
+  <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+  <div class="loading" *ngIf="loading"><i class="bi bi-hourglass-split"></i> Cargando...</div>
+
+  <!-- Formulario -->
+  <div class="form-container" *ngIf="showForm">
+    <div class="form-header">
+      <h2>{{ editMode ? 'Editar Promoción' : 'Nueva Promoción' }}</h2>
+      <button class="btn-close" (click)="cancelar()"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <form [formGroup]="promocionForm" (ngSubmit)="guardarPromocion()" class="form-grid">
+      <div class="form-group">
+        <label for="code">Código *</label>
+        <input id="code" type="text" formControlName="code" class="form-control" placeholder="SUMMER2025" style="text-transform: uppercase;">
+      </div>
+
+      <div class="form-group">
+        <label for="name">Nombre *</label>
+        <input id="name" type="text" formControlName="name" class="form-control" placeholder="Verano 2025">
+      </div>
+
+      <div class="form-group full-width">
+        <label for="description">Descripción</label>
+        <textarea id="description" formControlName="description" class="form-control" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="discountType">Tipo de Descuento *</label>
+        <select id="discountType" formControlName="discountType" class="form-control">
+          <option *ngFor="let tipo of tiposDescuento" [value]="tipo.value">{{ tipo.label }}</option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="promocionForm.value.discountType !== 'BUNDLE'">
+        <label for="discountValue">Valor de Descuento *</label>
+        <input id="discountValue" type="number" step="0.01" formControlName="discountValue" class="form-control">
+      </div>
+
+      <div class="form-group" *ngIf="promocionForm.value.discountType === 'BUNDLE'">
+        <label for="finalPrice">Precio Final (S/) *</label>
+        <input id="finalPrice" type="number" step="0.01" formControlName="finalPrice" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="minPurchase">Compra Mínima (S/)</label>
+        <input id="minPurchase" type="number" step="0.01" formControlName="minPurchase" class="form-control">
+      </div>
+
+      <div class="form-group" *ngIf="promocionForm.value.discountType === 'PERCENTAGE'">
+        <label for="maxDiscount">Descuento Máximo (S/)</label>
+        <input id="maxDiscount" type="number" step="0.01" formControlName="maxDiscount" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="startDate">Fecha Inicio *</label>
+        <input id="startDate" type="date" formControlName="startDate" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="endDate">Fecha Fin *</label>
+        <input id="endDate" type="date" formControlName="endDate" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="usageLimit">Límite de Usos</label>
+        <input id="usageLimit" type="number" formControlName="usageLimit" class="form-control" placeholder="Ilimitado si está vacío">
+      </div>
+
+      <div class="form-group">
+        <label for="applicableTo">Aplicable a *</label>
+        <select id="applicableTo" formControlName="applicableTo" class="form-control">
+          <option *ngFor="let app of aplicableTo" [value]="app.value">{{ app.label }}</option>
+        </select>
+      </div>
+
+      <div class="form-group full-width">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="isActive">
+          <span>Activar promoción</span>
+        </label>
+      </div>
+
+      <div class="form-actions full-width">
+        <button type="button" class="btn-secondary" (click)="cancelar()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="promocionForm.invalid || loading">
+          <i class="bi bi-save"></i> {{ editMode ? 'Actualizar' : 'Crear' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabla -->
+  <div class="table-container" *ngIf="!showForm">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Valor</th>
+          <th>Vigencia</th>
+          <th>Usos</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let promo of promocionesPaginadas" [class.vigente]="esVigente(promo)">
+          <td><span class="promo-code">{{ promo.code }}</span></td>
+          <td>
+            <strong>{{ promo.name }}</strong>
+            <small *ngIf="promo.description">{{ promo.description }}</small>
+          </td>
+          <td>
+            <span class="badge-tipo" [ngSwitch]="promo.discountType">
+              <span *ngSwitchCase="'PERCENTAGE'">📊 Porcentaje</span>
+              <span *ngSwitchCase="'FIXED_AMOUNT'">💵 Monto Fijo</span>
+              <span *ngSwitchCase="'BUNDLE'">📦 Precio Final</span>
+            </span>
+          </td>
+          <td class="valor">
+            <span *ngIf="promo.discountType === 'PERCENTAGE'">{{ promo.discountValue }}%</span>
+            <span *ngIf="promo.discountType === 'FIXED_AMOUNT'">S/ {{ promo.discountValue }}</span>
+            <span *ngIf="promo.discountType === 'BUNDLE'">S/ {{ promo.finalPrice }}</span>
+          </td>
+          <td>
+            <div class="vigencia">
+              <small>{{ formatearFecha(promo.startDate) }}</small>
+              <i class="bi bi-arrow-right"></i>
+              <small>{{ formatearFecha(promo.endDate) }}</small>
+            </div>
+          </td>
+          <td>
+            <span class="usos">
+              {{ promo.usageCount || 0 }}
+              <span *ngIf="promo.usageLimit">/ {{ promo.usageLimit }}</span>
+              <span *ngIf="!promo.usageLimit">/ ∞</span>
+            </span>
+          </td>
+          <td>
+            <button class="btn-toggle" [class.active]="esVigente(promo)" (click)="toggleActivar(promo)">
+              <i class="bi" [ngClass]="esVigente(promo) ? 'bi-check-circle-fill' : 'bi-x-circle'"></i>
+              {{ esVigente(promo) ? 'Activa' : 'Inactiva' }}
+            </button>
+          </td>
+          <td class="actions">
+            <button class="btn-action btn-edit" (click)="editarPromocion(promo)" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn-action btn-delete" (click)="eliminarPromocion(promo.id!)" title="Eliminar">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <app-pagination
+      [currentPage]="currentPage"
+      [totalItems]="promociones.length"
+      [itemsPerPage]="itemsPerPage"
+      (pageChange)="onPageChange($event)"
+    ></app-pagination>
+  </div>
+</div>

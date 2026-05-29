@@ -1,0 +1,178 @@
+<div class="promociones-container">
+  <!-- Header -->
+  <div class="header-section">
+    <h1 class="title">
+      <i class="bi bi-gift me-2"></i>
+      Promociones Especiales
+    </h1>
+    <p class="subtitle">Aprovecha nuestras ofertas y ahorra en tu pedido</p>
+  </div>
+
+  <!-- Mensajes -->
+  @if (mensaje) {
+    <div class="alert" [ngClass]="esError ? 'alert-danger' : 'alert-success'">
+      <i class="bi" [ngClass]="esError ? 'bi-exclamation-circle' : 'bi-check-circle'"></i>
+      {{ mensaje }}
+    </div>
+  }
+
+  <!-- Filtros de Tipo -->
+  <div class="filters-container">
+    <div class="type-filters">
+      @for (tipo of tiposDescuento; track tipo.value) {
+        <button 
+          class="filter-btn" 
+          [class.active]="tipoSeleccionado === tipo.value"
+          (click)="cambiarTipo(tipo.value)">
+          <i class="bi" [ngClass]="tipo.icon"></i>
+          <span>{{ tipo.label }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Buscador -->
+  @if (!loading && promociones.length > 0) {
+    <div class="search-container">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Buscar promociones..."
+          [(ngModel)]="searchTerm"
+          (input)="aplicarFiltros()"
+        >
+        @if (searchTerm) {
+          <button class="clear-btn" (click)="limpiarBuscador()" type="button">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="loading-container">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-3">Cargando promociones...</p>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (error && !loading) {
+    <div class="alert alert-danger">
+      <i class="bi bi-exclamation-circle me-2"></i>
+      {{ error }}
+    </div>
+  }
+
+  <!-- Grid de Promociones -->
+  @if (!loading && promocionesFiltradas.length > 0) {
+    <div class="promociones-grid">
+      @for (promo of promocionesFiltradas; track promo.id) {
+        <div class="promo-card" [style.border-color]="obtenerColorTipo(promo.discountType)">
+          <!-- Badge de Tipo -->
+          <div class="type-badge" [style.background]="obtenerColorTipo(promo.discountType)">
+            @if (promo.discountType === 'PERCENTAGE') {
+              <i class="bi bi-percent"></i>
+              <span>Porcentaje</span>
+            }
+            @if (promo.discountType === 'FIXED_AMOUNT') {
+              <i class="bi bi-cash-coin"></i>
+              <span>Descuento</span>
+            }
+            @if (promo.discountType === 'BUNDLE') {
+              <i class="bi bi-basket3"></i>
+              <span>Combo</span>
+            }
+          </div>
+
+          <!-- Contenido Principal -->
+          <div class="card-body">
+            <div class="promo-header">
+              <h3 class="promo-name">{{ promo.name }}</h3>
+              <div class="discount-badge" [style.background]="obtenerColorTipo(promo.discountType)">
+                {{ obtenerTextoDescuento(promo) }}
+              </div>
+            </div>
+
+            @if (promo.description) {
+              <p class="promo-description">{{ promo.description }}</p>
+            }
+
+            <!-- Detalles -->
+            <div class="promo-details">
+              @if (promo.minPurchase && promo.minPurchase > 0) {
+                <div class="detail-item">
+                  <i class="bi bi-cart-check text-primary"></i>
+                  <span>Compra mínima: <strong>S/ {{ promo.minPurchase | number:'1.2-2' }}</strong></span>
+                </div>
+              }
+
+              @if (promo.maxDiscount && promo.maxDiscount > 0 && promo.discountType === 'PERCENTAGE') {
+                <div class="detail-item">
+                  <i class="bi bi-arrow-down-circle text-warning"></i>
+                  <span>Descuento máximo: <strong>S/ {{ promo.maxDiscount | number:'1.2-2' }}</strong></span>
+                </div>
+              }
+
+              @if (promo.usageLimit && promo.usageLimit > 0) {
+                <div class="detail-item">
+                  <i class="bi bi-people text-info"></i>
+                  <span>Usos restantes: <strong>{{ promo.usageLimit - (promo.usageCount || 0) }}</strong></span>
+                </div>
+              }
+
+              <div class="detail-item">
+                <i class="bi bi-calendar-event text-success"></i>
+                <span>Válido hasta: <strong>{{ formatearFecha(promo.endDate) }}</strong></span>
+              </div>
+            </div>
+
+            <!-- Código de Promoción -->
+            <div class="promo-code">
+              <span class="code-label">Código:</span>
+              <span class="code-value">{{ promo.code }}</span>
+              <button 
+                class="copy-btn" 
+                (click)="copiarCodigo(promo.code)"
+                title="Copiar código">
+                <i class="bi bi-clipboard"></i>
+              </button>
+            </div>
+
+            <!-- Aplicabilidad -->
+            @if (promo.applicableTo && promo.applicableTo !== 'ALL') {
+              <div class="applicable-tag">
+                @if (promo.applicableTo === 'PIZZAS') {
+                  <i class="bi bi-basket me-1"></i>Solo en pizzas
+                }
+                @if (promo.applicableTo === 'EXTRAS') {
+                  <i class="bi bi-cup-straw me-1"></i>Solo en extras
+                }
+                @if (promo.applicableTo === 'SPECIFIC_PRODUCTS') {
+                  <i class="bi bi-star me-1"></i>Productos específicos
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Sin Resultados -->
+  @if (!loading && promocionesFiltradas.length === 0 && !error) {
+    <div class="no-results">
+      <i class="bi bi-gift"></i>
+      <p>No hay promociones disponibles</p>
+      @if (searchTerm || tipoSeleccionado !== 'TODOS') {
+        <button class="btn btn-primary mt-3" (click)="searchTerm = ''; tipoSeleccionado = 'TODOS'; aplicarFiltros()">
+          Ver todas las promociones
+        </button>
+      }
+    </div>
+  }
+</div>

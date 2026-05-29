@@ -1,0 +1,228 @@
+<nav class="navbar" aria-label="Navegación principal">
+  <div class="navbar-links">
+    <span><a [routerLink]="['']" aria-label="Inicio - Pizza Hut">🍕 Pizza Hut</a></span>
+  </div>
+
+  <ul class="navbar-links" role="menubar" aria-label="Menú de navegación">
+    <li role="none">
+      <a [routerLink]="['/menu']" role="menuitem" alt="M" aria-label="Ir a Menú (Alt+M)">Menú</a>
+    </li>
+    <li role="none">
+      <a [routerLink]="['/extras']" role="menuitem" aria-label="Extras - Bebidas y postres">Extras</a>
+    </li>
+    <li role="none">
+      <a [routerLink]="['/promociones']" role="menuitem" aria-label="Promociones y ofertas">Promociones</a>
+    </li>
+    <li class="cart-link" role="none">
+      <a [routerLink]="['/cart']" role="menuitem" alt="C" aria-label="Carrito de compras (Alt+C) con {{ cartCount }} artículos">
+        <i class="bi bi-cart3" aria-hidden="true"></i>
+        <span>Carrito</span>
+        <span class="cart-badge" *ngIf="cartCount > 0" aria-label="Número de artículos: {{ cartCount }}">{{ cartCount }}</span>
+      </a>
+    </li>
+
+    <!-- Botón de Accesibilidad - Alto Contraste -->
+    <li class="accessibility-link" role="none">
+      <button
+        class="accessibility-button"
+        (click)="toggleAltoContraste()"
+        [class.activo]="contrasteAlto"
+        [title]="contrasteAlto ? 'Desactivar alto contraste' : 'Activar alto contraste'"
+        aria-label="Alternar modo de alto contraste (Alt+A)"
+        aria-pressed="{{contrasteAlto}}"
+        alt="A">
+        <i class="bi" [class.bi-eye]="!contrasteAlto" [class.bi-eye-fill]="contrasteAlto" aria-hidden="true"></i>
+        <span class="accessibility-text">Contraste</span>
+      </button>
+    </li>
+
+    <!-- Botón de Accesibilidad - Filtros y Fuente -->
+    <li class="accessibility-link accessibility-menu-container" role="none">
+      <button
+        class="accessibility-button"
+        (click)="toggleMenuAccesibilidad()"
+        [attr.aria-expanded]="mostrarMenuAccesibilidad"
+        aria-haspopup="true"
+        aria-label="Menú de accesibilidad: daltonismo y tamaño de fuente (Alt+S)"
+        alt="S">
+        <i class="bi bi-sliders" aria-hidden="true"></i>
+        <span class="accessibility-text">Accesibilidad</span>
+      </button>
+
+      <!-- Dropdown Menu de Accesibilidad -->
+      <div class="accessibility-dropdown"
+        *ngIf="mostrarMenuAccesibilidad"
+        role="menu"
+        aria-label="Opciones de accesibilidad">
+
+        <!-- Sección de Filtros de Daltonismo -->
+        <div class="accessibility-section" role="group" aria-label="Filtros para daltonismo">
+          <div class="accessibility-section-title">
+            <i class="bi bi-palette" aria-hidden="true"></i>
+            <span>Filtros de Color</span>
+          </div>
+
+          <button
+            class="accessibility-option"
+            *ngFor="let mode of ['none', 'protanopia', 'deuteranopia', 'tritanopia']"
+            (click)="setColorblindMode($any(mode))"
+            [class.active]="modoColorblind === mode"
+            role="menuitemradio"
+            [attr.aria-checked]="modoColorblind === mode"
+            [title]="'Filtro: ' + getColorblindLabel(mode)">
+            <i class="bi" [class.bi-check-lg]="modoColorblind === mode" aria-hidden="true"></i>
+            <span>{{ getColorblindLabel(mode) }}</span>
+          </button>
+        </div>
+
+        <div class="accessibility-divider" role="separator" aria-hidden="true"></div>
+
+        <!-- Sección de Tamaño de Fuente -->
+        <div class="accessibility-section" role="group" aria-label="Tamaño de fuente">
+          <div class="accessibility-section-title">
+            <i class="bi bi-type" aria-hidden="true"></i>
+            <span>Tamaño de Letra</span>
+          </div>
+
+          <button
+            class="accessibility-option"
+            *ngFor="let size of ['pequena', 'normal', 'grande', 'extra-grande']"
+            (click)="setFontSize($any(size))"
+            [class.active]="tamanoFuente === size"
+            role="menuitemradio"
+            [attr.aria-checked]="tamanoFuente === size"
+            [title]="'Tamaño: ' + getFontSizeLabel(size)">
+            <i class="bi" [class.bi-check-lg]="tamanoFuente === size" aria-hidden="true"></i>
+            <span>{{ getFontSizeLabel(size) }}</span>
+          </button>
+        </div>
+      </div>
+    </li>
+
+    <!-- Menú de Usuario -->
+    <li class="user-menu-container" role="none">
+      <button
+        class="user-menu-button"
+        (click)="toggleMenuUsuario()"
+        [attr.aria-expanded]="mostrarMenuUsuario"
+        aria-haspopup="true"
+        aria-label="Menú de usuario (Alt+P)"
+        alt="P">
+        <!-- Icono de usuario NO autenticado -->
+        <div class="user-icon" *ngIf="!usuarioActual">
+          <i class="bi bi-person-circle" aria-hidden="true"></i>
+        </div>
+        <!-- Avatar con iniciales para usuario autenticado -->
+        <div class="user-avatar" *ngIf="usuarioActual" [class.admin]="esAdmin" [attr.aria-label]="usuarioActual.name">
+          {{ getIniciales() }}
+        </div>
+        <span class="user-menu-text">
+          {{ usuarioActual ? usuarioActual.name : 'Cuenta' }}
+        </span>
+        <i class="bi bi-chevron-down arrow-icon" aria-hidden="true"></i>
+      </button>
+
+      <!-- Dropdown Menu -->
+      <div class="user-dropdown"
+        *ngIf="mostrarMenuUsuario"
+        role="menu"
+        aria-label="Opciones de usuario">
+        <div class="dropdown-content">
+          <!-- Usuario NO autenticado -->
+          <div *ngIf="!usuarioActual" class="dropdown-section" role="group">
+            <button class="dropdown-item primary" (click)="navegarA('/join')" role="menuitem">
+              <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+              <span>Identificarse</span>
+            </button>
+            <div class="dropdown-divider" role="separator" aria-hidden="true"></div>
+            <button class="dropdown-item" (click)="navegarA('/register')" role="menuitem">
+              <i class="bi bi-person-plus" aria-hidden="true"></i>
+              <span>Crear cuenta</span>
+            </button>
+          </div>
+
+          <!-- Usuario CLIENTE autenticado -->
+          <div *ngIf="usuarioActual && !esAdmin" class="dropdown-section" role="group">
+            <div class="user-info-dropdown" role="img" [attr.aria-label]="'Información de usuario: ' + usuarioActual.name">
+              <div class="avatar-circle">{{ getIniciales() }}</div>
+              <div>
+                <div class="user-name">{{ usuarioActual.name }}</div>
+                <div class="user-email">{{ usuarioActual.email }}</div>
+              </div>
+            </div>
+            <div class="dropdown-divider" role="separator" aria-hidden="true"></div>
+            <button class="dropdown-item" (click)="navegarA('/cliente/dashboard')" role="menuitem">
+              <i class="bi bi-speedometer2" aria-hidden="true"></i>
+              <span>Mi Dashboard</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/perfil')" role="menuitem">
+              <i class="bi bi-person-circle" aria-hidden="true"></i>
+              <span>Ver Perfil</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/pedidos')" role="menuitem">
+              <i class="bi bi-bag" aria-hidden="true"></i>
+              <span>Mis Pedidos</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/resenas')" role="menuitem">
+              <i class="bi bi-star" aria-hidden="true"></i>
+              <span>Mis Reseñas</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/favoritos')" role="menuitem">
+              <i class="bi bi-heart-fill" aria-hidden="true"></i>
+              <span>Favoritos</span>
+            </button>
+            <div class="dropdown-divider" role="separator" aria-hidden="true"></div>
+            <button class="dropdown-item danger" (click)="cerrarSesion()" role="menuitem">
+              <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
+
+          <!-- Usuario ADMINISTRADOR autenticado -->
+          <div *ngIf="usuarioActual && esAdmin" class="dropdown-section" role="group">
+            <div class="user-info-dropdown" role="img" [attr.aria-label]="'Información de administrador: ' + usuarioActual.name">
+              <div class="avatar-circle admin">{{ getIniciales() }}</div>
+              <div>
+                <div class="user-name">{{ usuarioActual.name }}</div>
+                <div class="user-role">
+                  <i class="bi bi-shield-check" aria-hidden="true"></i> Administrador
+                </div>
+              </div>
+            </div>
+            <div class="dropdown-divider" role="separator" aria-hidden="true"></div>
+            <button class="dropdown-item highlight" (click)="navegarA('/admin/dashboard')" role="menuitem">
+              <i class="bi bi-gear" aria-hidden="true"></i>
+              <span>Panel de Administración</span>
+            </button>
+            <div class="dropdown-divider" role="separator" aria-hidden="true"></div>
+            <button class="dropdown-item" (click)="navegarA('/cliente/dashboard')" role="menuitem">
+              <i class="bi bi-speedometer2" aria-hidden="true"></i>
+              <span>Mi Dashboard</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/perfil')" role="menuitem">
+              <i class="bi bi-person-circle" aria-hidden="true"></i>
+              <span>Ver Perfil</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/pedidos')" role="menuitem">
+              <i class="bi bi-bag" aria-hidden="true"></i>
+              <span>Mis Pedidos</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/resenas')" role="menuitem">
+              <i class="bi bi-star" aria-hidden="true"></i>
+              <span>Mis Reseñas</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/favoritos')" role="menuitem">
+              <i class="bi bi-heart-fill" aria-hidden="true"></i>
+              <span>Favoritos</span>
+            </button>
+            <div class="dropdown-divider" role="separator" aria-hidden="true"></div>
+            <button class="dropdown-item danger" (click)="cerrarSesion()" role="menuitem">
+              <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </li>
+  </ul>
+</nav>

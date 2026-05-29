@@ -1,0 +1,358 @@
+<div class="combo-container" role="main" aria-label="Menú de Pizzas">
+  <!-- Título del Menú -->
+  <div class="search-container">
+    <div class="text-center mb-4">
+      <h1 class="text-white fw-bold" style="font-size: 3.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+        Menú de Pizzas
+      </h1>
+    </div>
+  </div>
+
+  @if (mensaje) {
+    <div class="alert" [ngClass]="esError ? 'alert-danger' : 'alert-success'" role="status" aria-live="polite">
+      {{ mensaje }}
+    </div>
+  }
+
+  <!-- Buscador de pizzas -->
+  @if (!loading && pizzas.length > 0) {
+    <div class="search-container">
+      <!-- Mensaje de favoritos -->
+      @if (favoritosPizzaIds.size > 0) {
+        <div class="alert alert-info d-flex align-items-center mb-3" style="background-color: #ffe6e6; border-color: #dc3545; color: #721c24;" role="status" aria-live="polite">
+          <i class="fas fa-heart me-2" style="color: #dc3545;" aria-hidden="true"></i>
+          <span>
+            Tus <strong>{{ favoritosPizzaIds.size }}</strong> 
+            {{ favoritosPizzaIds.size === 1 ? 'pizza favorita aparece' : 'pizzas favoritas aparecen' }} primero
+          </span>
+        </div>
+      }
+      
+      <div class="search-box" role="search">
+        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        <input 
+          #searchInput
+          type="text" 
+          class="search-input" 
+          placeholder="Buscar pizzas por nombre o descripción..."
+          aria-label="Buscar pizzas por nombre o descripción"
+          aria-describedby="search-help"
+          [(ngModel)]="searchTerm"
+          (input)="filtrarPizzas()"
+        >
+        <span id="search-help" class="visually-hidden">
+          Escribe para filtrar pizzas. Presiona Escape para borrar la búsqueda.
+        </span>
+        @if (searchTerm) {
+          <button class="clear-search" (click)="limpiarBuscador()" type="button" aria-label="Borrar búsqueda">
+            <i class="fas fa-times" aria-hidden="true"></i>
+          </button>
+        }
+      </div>
+      @if (searchTerm && pizzasFiltradas.length === 0) {
+        <div class="no-results" role="status" aria-live="polite">
+          <i class="fas fa-search" aria-hidden="true"></i>
+          <p>No se encontraron pizzas con "{{ searchTerm }}"</p>
+        </div>
+      }
+      @if (searchTerm && pizzasFiltradas.length > 0) {
+        <div class="search-results-count" role="status" aria-live="polite">
+          {{ pizzasFiltradas.length }} {{ pizzasFiltradas.length === 1 ? 'resultado' : 'resultados' }}
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Loading spinner -->
+  @if (loading) {
+    <div class="text-center py-4">
+      <div class="spinner-border text-primary" role="status" aria-label="Cargando pizzas">
+        <span class="visually-hidden">Cargando pizzas...</span>
+      </div>
+      <p class="mt-2">Cargando pizzas...</p>
+    </div>
+  }
+
+  <!-- Error message -->
+  @if (error && !loading) {
+    <div class="alert alert-danger" role="alert">
+      <i class="fas fa-exclamation-circle me-2" aria-hidden="true"></i>
+      {{ error }}
+    </div>
+  }
+
+  <!-- Pizza cards -->
+  <div role="listbox" aria-label="Lista de pizzas disponibles" class="pizzas-list">
+    @for (pizza of pizzasFiltradas; track pizza.id; let i = $index) {
+      <div 
+        class="combo-card" 
+        [id]="'pizza-' + pizza.id"
+        [class.highlight]="pizzaHighlightId === pizza.id"
+        role="option"
+        [attr.aria-selected]="false"
+        tabindex="0"
+      >
+        <div class="image-container" style="position: relative;">
+          <!-- Badge de favorito -->
+          @if (esFavorito(pizza.id || 0)) {
+            <span 
+              class="badge bg-danger text-dark"
+              style="position: absolute; top: 10px; left: 10px; z-index: 10; font-size: 0.75rem; padding: 0.35em 0.65em;"
+              aria-label="Agregada a favoritos"
+            >
+              <i class="fas fa-heart me-1" aria-hidden="true"></i>Favorito
+            </span>
+          }
+          
+          <!-- Botón de favorito -->
+          @if (pizza.id) {
+            <button
+              type="button"
+              class="btn btn-sm"
+              (click)="toggleFavorito(pizza.id, $event)"
+              [title]="esFavorito(pizza.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
+              [aria-label]="esFavorito(pizza.id) ? 'Quitar ' + pizza.name + ' de favoritos' : 'Agregar ' + pizza.name + ' a favoritos'"
+              style="position: absolute; top: 10px; right: 10px; z-index: 10; background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%; width: 40px; height: 40px; padding: 0; font-size: 1.3rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.2s;"
+            >
+              <i 
+                class="fa-heart" 
+                [class.fas]="esFavorito(pizza.id)" 
+                [class.far]="!esFavorito(pizza.id)"
+                [style.color]="esFavorito(pizza.id) ? '#dc3545' : '#6c757d'"
+                aria-hidden="true"
+              ></i>
+            </button>
+          }
+          
+          @if (!imagenesCargadas.has(pizza.id || 0) && !isImageCached(pizza.imageUrl || '')) {
+            <div class="image-skeleton" aria-hidden="true"></div>
+          }
+          <img 
+            [src]="getOptimizedImageUrl(pizza.imageUrl)" 
+            [alt]="pizza.name + ' - ' + formatearPrecio(pizza.price)"
+            [loading]="i < 3 ? 'eager' : 'lazy'"
+            [attr.fetchpriority]="i === 0 ? 'high' : (i < 3 ? 'auto' : 'low')"
+            [class.loaded]="imagenesCargadas.has(pizza.id || 0) || isImageCached(pizza.imageUrl || '')"
+            (load)="onImageLoad(pizza.id || 0)"
+            (error)="onImageError($event)"
+            decoding="async"
+          >
+        </div>
+        <h2>{{ pizza.name }}</h2>
+        <h3>{{ pizza.description || 'Deliciosa pizza con ingredientes frescos' }}</h3>
+        <p aria-label="Precio desde">Desde {{ formatearPrecio(pizza.price) }}</p>
+        <div class="combo-actions">
+          <button 
+            class="btn btn-outline-primary" 
+            (click)="abrirModalAgregarRapido(pizza)"
+            aria-label="Agregar rápidamente {{ pizza.name }}"
+          >
+            <i class="fas fa-plus me-2" aria-hidden="true"></i>Agregar
+          </button>
+          <button 
+            class="btn btn-primary" 
+            (click)="abrirModalPersonalizacion(pizza)"
+            aria-label="Personalizar {{ pizza.name }}"
+          >
+            <i class="fas fa-magic me-2" aria-hidden="true"></i>Personalizar
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Message when no pizzas available -->
+  @if (!loading && pizzas.length === 0 && !error) {
+    <div class="text-center py-5" role="status" aria-live="polite">
+      <i class="fas fa-pizza-slice fa-3x text-muted mb-3" aria-hidden="true"></i>
+      <h5 class="text-muted">No hay pizzas disponibles</h5>
+      <p class="text-muted">Vuelve más tarde para ver nuestras deliciosas pizzas</p>
+    </div>
+  }
+</div>
+
+<!-- Modal de Agregar Rápido (Solo Tamaño) -->
+@if (mostrarModalRapido && pizzaSeleccionada) {
+  <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modal-rapido-title" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-rapido-title">
+            <i class="fas fa-pizza-slice me-2" aria-hidden="true"></i>{{ pizzaSeleccionada.name }}
+          </h5>
+          <button 
+            type="button" 
+            class="btn-close" 
+            (click)="cerrarModalRapido()"
+            aria-label="Cerrar diálogo"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <!-- Selección de Tamaño -->
+          <div class="mb-3">
+            <h6 class="mb-3" id="sizes-label">
+              <i class="fas fa-expand-arrows-alt me-2" aria-hidden="true"></i>Selecciona el Tamaño
+              <span class="text-danger" aria-label="requerido">*</span>
+            </h6>
+            <div class="row g-2" role="group" aria-labelledby="sizes-label">
+              @for (tamano of tamanosDisponibles; track tamano.id) {
+                <div class="col-6">
+                  <div 
+                    class="card size-card h-100 cursor-pointer"
+                    [ngClass]="{'border-primary': tamanoSeleccionado?.id === tamano.id}"
+                    (click)="seleccionarTamano(tamano)"
+                    role="button"
+                    [attr.aria-pressed]="tamanoSeleccionado?.id === tamano.id"
+                    tabindex="0"
+                  >
+                    <div class="card-body text-center py-3">
+                      <i class="fas fa-pizza-slice mb-2" 
+                         [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'text-primary' : 'text-muted'"
+                         aria-hidden="true"
+                      >
+                      </i>
+                      <h6 class="card-title mb-1">{{ tamano.name }}</h6>
+                      <p class="card-text mb-0">
+                        <strong>{{ formatearPrecio((pizzaSeleccionada.price || 0) + (tamano.extraCost || 0)) }}</strong>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalRapido()">
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            [disabled]="!tamanoSeleccionado"
+            (click)="agregarAlCarritoRapido()"
+            [attr.aria-label]="tamanoSeleccionado ? 'Agregar ' + pizzaSeleccionada.name + ' al carrito' : 'Selecciona un tamaño para agregar al carrito'"
+          >
+            <i class="fas fa-shopping-cart me-2" aria-hidden="true"></i>Agregar al Carrito
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal de Personalización -->
+@if (mostrarModal && pizzaSeleccionada) {
+  <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modal-personalizacion-title" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-personalizacion-title">
+            <i class="fas fa-pizza-slice me-2" aria-hidden="true"></i>Personaliza tu {{ pizzaSeleccionada.name }}
+          </h5>
+          <button 
+            type="button" 
+            class="btn-close" 
+            (click)="cerrarModal()"
+            aria-label="Cerrar diálogo"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <!-- Selección de Tamaño -->
+          <div class="mb-4">
+            <h6 class="mb-3" id="sizes-label-personalizacion">
+              <i class="fas fa-expand-arrows-alt me-2" aria-hidden="true"></i>Selecciona el Tamaño
+              <span class="text-danger" aria-label="requerido">*</span>
+            </h6>
+            <div class="row g-2" role="group" aria-labelledby="sizes-label-personalizacion">
+              @for (tamano of tamanosDisponibles; track tamano.id) {
+                <div class="col-md-4">
+                  <div 
+                    class="card size-card h-100 cursor-pointer"
+                    [ngClass]="{'border-primary': tamanoSeleccionado?.id === tamano.id}"
+                    (click)="seleccionarTamano(tamano)"
+                    role="button"
+                    [attr.aria-pressed]="tamanoSeleccionado?.id === tamano.id"
+                    tabindex="0"
+                  >
+                    <div class="card-body text-center">
+                      <i class="fas fa-pizza-slice fa-2x mb-2" 
+                         [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'text-primary' : 'text-muted'"
+                         aria-hidden="true"
+                      >
+                      </i>
+                      <h6 class="card-title">{{ tamano.name }}</h6>
+                      <p class="card-text small text-muted mb-1">{{ tamano.description }}</p>
+                      <p class="card-text">
+                        <strong>+ {{ formatearPrecio(tamano.extraCost || 0) }}</strong>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Selección de Ingredientes Extra -->
+          <div class="mb-4">
+            <h6 class="mb-3" id="ingredientes-label">
+              <i class="fas fa-pepper-hot me-2" aria-hidden="true"></i>Ingredientes Extra (Opcional)
+            </h6>
+            @if (ingredientesDisponibles.length === 0) {
+              <p class="text-muted">No hay ingredientes adicionales disponibles</p>
+            } @else {
+              <div class="row g-2" role="group" aria-labelledby="ingredientes-label">
+                @for (ingrediente of ingredientesDisponibles; track ingrediente.id) {
+                  <div class="col-md-4">
+                    <div class="form-check">
+                      <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        [id]="'ingrediente-' + ingrediente.id"
+                        [checked]="extrasSeleccionados.includes(ingrediente.id?.toString() || '')"
+                        (change)="toggleExtra(ingrediente.id?.toString() || '')"
+                      >
+                      <label class="form-check-label" [for]="'ingrediente-' + ingrediente.id">
+                        {{ ingrediente.name }}
+                        <small class="text-muted">(+ {{ formatearPrecio(ingrediente.extraCost || 0) }})</small>
+                      </label>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Resumen del Precio -->
+          <div class="card bg-light" role="status" aria-live="polite" aria-label="Resumen del precio">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-1">Total:</h6>
+                  @if (descripcionPersonalizacion) {
+                    <small class="text-muted">{{ descripcionPersonalizacion }}</small>
+                  }
+                </div>
+                <h4 class="mb-0 text-primary">{{ formatearPrecio(precioCalculado) }}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            [disabled]="!tamanoSeleccionado"
+            (click)="agregarAlCarritoPersonalizado()"
+            [attr.aria-label]="tamanoSeleccionado ? 'Agregar ' + pizzaSeleccionada.name + ' personalizada al carrito' : 'Selecciona un tamaño para agregar al carrito'"
+          >
+            <i class="fas fa-shopping-cart me-2" aria-hidden="true"></i>Agregar al Carrito
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

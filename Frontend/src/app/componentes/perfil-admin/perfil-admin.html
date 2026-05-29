@@ -1,0 +1,160 @@
+<div class="content-wrapper">
+  <div class="page-header">
+    <h2><i class="bi bi-person-circle"></i> Mi Perfil</h2>
+    <p class="text-muted">Gestiona tu información personal y contraseña</p>
+  </div>
+
+  <!-- Mensajes -->
+  <div *ngIf="mensaje" class="alert" [ngClass]="{'alert-success': tipoMensaje === 'success', 'alert-danger': tipoMensaje === 'error'}" role="alert">
+    <i class="bi" [ngClass]="{'bi-check-circle': tipoMensaje === 'success', 'bi-exclamation-circle': tipoMensaje === 'error'}"></i>
+    {{ mensaje }}
+  </div>
+
+  <div class="row">
+    <!-- Información Personal -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="bi bi-person-lines-fill"></i> Información Personal</h5>
+        </div>
+        <div class="card-body">
+          <form (ngSubmit)="actualizarDatos()">
+            <div class="mb-3">
+              <label for="nombre" class="form-label">Nombre Completo *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="nombre" 
+                [(ngModel)]="usuarioEditado.name" 
+                name="nombre"
+                required>
+            </div>
+
+            <div class="mb-3">
+              <label for="email" class="form-label">Email *</label>
+              <input 
+                type="email" 
+                class="form-control" 
+                id="email" 
+                [(ngModel)]="usuarioEditado.email" 
+                name="email"
+                required>
+            </div>
+
+            <div class="mb-3">
+              <label for="telefono" class="form-label">Teléfono</label>
+              <input 
+                type="tel" 
+                class="form-control" 
+                id="telefono" 
+                [(ngModel)]="usuarioEditado.phone" 
+                name="telefono"
+                placeholder="Opcional">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Rol</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [value]="usuarioEditado.role" 
+                readonly
+                disabled>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="cargando">
+                <span *ngIf="cargando" class="spinner-border spinner-border-sm me-2"></span>
+                <i class="bi bi-save" *ngIf="!cargando"></i>
+                {{ cargando ? 'Guardando...' : 'Guardar Cambios' }}
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="cancelarEdicion()" [disabled]="cargando">
+                <i class="bi bi-x-circle"></i> Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel Lateral -->
+    <div class="col-lg-4">
+      <!-- Información de Cuenta -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0"><i class="bi bi-shield-check"></i> Información de Cuenta</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <strong>ID de Usuario:</strong>
+            <p class="text-muted mb-0">{{ usuario?.id }}</p>
+          </div>
+          <div class="mb-3">
+            <strong>Rol:</strong>
+            <p class="mb-0">
+              <span class="badge bg-success">{{ usuario?.role }}</span>
+            </p>
+          </div>
+          <div>
+            <strong>Email Registrado:</strong>
+            <p class="text-muted mb-0">{{ usuario?.email }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cambiar Contraseña -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0"><i class="bi bi-key-fill"></i> Seguridad</h5>
+        </div>
+        <div class="card-body">
+          <div *ngIf="!mostrarCambioPassword">
+            <p class="text-muted mb-3">Mantén tu cuenta segura actualizando tu contraseña regularmente.</p>
+            <button type="button" class="btn btn-warning w-100" (click)="mostrarCambioPassword = true">
+              <i class="bi bi-key"></i> Cambiar Contraseña
+            </button>
+          </div>
+
+          <div *ngIf="mostrarCambioPassword">
+            <form (ngSubmit)="cambiarPassword()">
+              <div class="mb-3">
+                <label for="nuevaPassword" class="form-label">Nueva Contraseña *</label>
+                <input 
+                  type="password" 
+                  class="form-control" 
+                  id="nuevaPassword" 
+                  [(ngModel)]="nuevaPassword" 
+                  name="nuevaPassword"
+                  placeholder="Mínimo 6 caracteres"
+                  required>
+              </div>
+
+              <div class="mb-3">
+                <label for="confirmarPassword" class="form-label">Confirmar Contraseña *</label>
+                <input 
+                  type="password" 
+                  class="form-control" 
+                  id="confirmarPassword" 
+                  [(ngModel)]="confirmarPassword" 
+                  name="confirmarPassword"
+                  placeholder="Repite la contraseña"
+                  required>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-warning flex-fill" [disabled]="cargando">
+                  <span *ngIf="cargando" class="spinner-border spinner-border-sm me-2"></span>
+                  <i class="bi bi-check-lg" *ngIf="!cargando"></i>
+                  {{ cargando ? 'Cambiando...' : 'Cambiar' }}
+                </button>
+                <button type="button" class="btn btn-secondary" (click)="cancelarCambioPassword()" [disabled]="cargando">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,94 @@
+package com.example.infrastructure.persistence.entities;
+
+import com.example.domain.model.PaymentMethod;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "payment_methods")
+public class PaymentMethodEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(nullable = false, unique = true, length = 50)
+    private String name;
+
+    @Column(length = 255)
+    private String description;
+
+    @Column(nullable = false)
+    private boolean isActive = true;
+
+    @Column(nullable = false)
+    private int displayOrder = 0;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    // Ciclo de vida
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // Constructor vacío
+    public PaymentMethodEntity() {}
+
+    // Conversión entre entidad y dominio
+    public static PaymentMethodEntity fromDomain(PaymentMethod paymentMethod) {
+        PaymentMethodEntity entity = new PaymentMethodEntity();
+        entity.id = paymentMethod.getId();
+        entity.name = paymentMethod.getName();
+        entity.description = paymentMethod.getDescription();
+        entity.isActive = paymentMethod.isActive();
+        entity.displayOrder = paymentMethod.getDisplayOrder();
+        entity.createdAt = paymentMethod.getCreatedAt();
+        entity.updatedAt = paymentMethod.getUpdatedAt();
+        return entity;
+    }
+
+    public PaymentMethod toDomain() {
+        return new PaymentMethod(
+            this.id,
+            this.name,
+            this.description,
+            this.isActive,
+            this.displayOrder,
+            this.createdAt,
+            this.updatedAt
+        );
+    }
+
+    // Getters y Setters
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
+
+    public int getDisplayOrder() { return displayOrder; }
+    public void setDisplayOrder(int displayOrder) { this.displayOrder = displayOrder; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+}

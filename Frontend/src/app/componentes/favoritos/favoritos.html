@@ -1,0 +1,100 @@
+<div class="favoritos-container">
+  <div class="header">
+    <h2>
+      <i class="bi bi-heart-fill me-2"></i>
+      Mis Pizzas Favoritas
+    </h2>
+  </div>
+
+  @if (mensaje) {
+    <div class="alert" [ngClass]="esError ? 'alert-danger' : 'alert-success'">
+      {{ mensaje }}
+    </div>
+  }
+
+  @if (loading) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando favoritos...</span>
+      </div>
+      <p class="mt-3">Cargando tus pizzas favoritas...</p>
+    </div>
+  }
+
+  @if (!loading && pizzasFavoritas.length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-heart" style="font-size: 4rem; color: #ccc;"></i>
+      <h3>No tienes pizzas favoritas</h3>
+      <p>Explora nuestro menú y agrega tus pizzas favoritas haciendo clic en la estrella</p>
+      <button class="btn btn-primary mt-3" (click)="verPizza(0)">
+        <i class="bi bi-search me-2"></i>
+        Ver Menú
+      </button>
+    </div>
+  }
+
+  @if (!loading && pizzasFavoritas.length > 0) {
+    <div class="favoritos-grid">
+      @for (pizza of pizzasFavoritasPaginadas; track pizza.id; let i = $index) {
+        <div class="favorito-card">
+          <div class="pizza-image">
+            @if (!imagenesCargadas.has(pizza.id || 0) && !isImageCached(pizza.imageUrl || '')) {
+              <div class="image-skeleton"></div>
+            }
+            <img 
+              [src]="getOptimizedImageUrl(pizza.imageUrl)" 
+              [alt]="pizza.name"
+              [loading]="i < 3 ? 'eager' : 'lazy'"
+              [attr.fetchpriority]="i === 0 ? 'high' : (i < 3 ? 'auto' : 'low')"
+              [class.loaded]="imagenesCargadas.has(pizza.id || 0) || isImageCached(pizza.imageUrl || '')"
+              (load)="onImageLoad(pizza.id || 0)"
+              (error)="onImageError($event)"
+              decoding="async"
+            >
+            <button 
+              class="remove-favorite"
+              (click)="eliminarFavorito(pizza.id!)"
+              title="Eliminar de favoritos"
+            >
+              <i class="bi bi-heart-fill"></i>
+            </button>
+          </div>
+          
+          <div class="pizza-info">
+            <h3>{{ pizza.name }}</h3>
+            <p class="description">{{ pizza.description || 'Deliciosa pizza' }}</p>
+            
+            <div class="pizza-details">
+              <span class="badge" [class.bg-success]="pizza.isAvailable" [class.bg-danger]="!pizza.isAvailable">
+                {{ pizza.isAvailable ? 'Disponible' : 'No disponible' }}
+              </span>
+              @if (pizza.isPopular) {
+                <span class="badge bg-danger text-dark">
+                  <i class="bi bi-star-fill"></i> Popular
+                </span>
+              }
+            </div>
+
+            <div class="pizza-footer">
+              <div class="precio">
+                Desde {{ formatearPrecio(pizza.price) }}
+              </div>
+              <button class="btn btn-primary btn-sm" (click)="verPizza(pizza.id!)">
+                <i class="bi bi-eye me-1"></i>
+                Ver en el menú
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Paginación -->
+    <app-pagination 
+      [currentPage]="currentPage" 
+      [totalItems]="pizzasFavoritas.length" 
+      [itemsPerPage]="itemsPerPage"
+      (pageChange)="onPageChange($event)">
+    </app-pagination>
+  }
+</div>

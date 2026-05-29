@@ -1,0 +1,171 @@
+footer {
+  background: #151515;
+  padding: 40px 0px;
+  width: 100%;
+}
+
+footer .foo-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+footer .foo-row .foo-col {
+    width: 50%;
+}
+
+footer .foo-row .foo-col:last-child {
+    margin-left: 150px;
+}
+
+footer .foo-row .foo-col:first-child {
+    margin-right: 0;
+    margin-left: 5%; /* mueve la columna izquierda un poco hacia el centro */
+    width: 45%; /* opcional: ajusta un poco más compacto para centrar mejor */
+}
+
+footer .foo-row .foo-col h2 {
+    color: #e3e3e3;
+    line-height: 40px;
+
+    font-size: 25px;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+footer form .f-input {
+    width: 100%;
+    position: relative;
+}
+
+footer form .f-input input {
+    width: 100%;
+    display: block;
+    padding: 16px 30px;
+    background: #2c2b2b;
+    border: none;
+    padding-right: 50px;
+    font-size: 15px;
+    border-radius: 25px;
+    outline: 0;
+    color: #a7a1a1;
+}
+
+footer form .f-input .hm-btn-round {
+    position: absolute;
+    right: 0px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    border: none;
+    font-size: 18px;
+    margin-right: 3px;
+    cursor: pointer;
+}
+
+
+footer .foo-row .foo-col ul {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+footer .foo-row .foo-col ul li {
+    width: 50%;
+    margin-bottom: 16px;
+}
+
+footer .foo-row .foo-col ul li a {
+    color: #e3e3e3;
+    font-size: 15px;
+}
+
+footer .foo-row .foo-col ul li a:hover {
+    text-decoration: underline;
+}
+
+.foo-col ul li a i {
+  font-size: 1.35em;
+  vertical-align: middle;
+  margin-right: 7px;
+  color: #222;
+  transition: filter 0.2s;
+}
+
+
+.foo-col ul li a:hover i,
+.foo-col ul li a:focus i {
+  filter: brightness(1.5);
+}
+
+
+.foo-col ul li a .fa-facebook-square {
+  color: #1877f3;
+  transition: color 0.2s, filter 0.2s;
+}
+.foo-col ul li a .fa-facebook-square:hover {
+  color: #3b82ff;
+  filter: brightness(1.3);
+}
+.foo-col ul li a .fa-whatsapp-square {
+  color: #25d366;
+  transition: color 0.2s, filter 0.2s;
+}
+.foo-col ul li a .fa-whatsapp-square:hover {
+  color: #4ffb7b;
+  filter: brightness(1.3);
+}
+.foo-col ul li a .fa-map-marker-alt {
+  color: #e14b50;
+  transition: color 0.2s, filter 0.2s;
+}
+.foo-col ul li a .fa-map-marker-alt:hover {
+  color: #ff6f61;
+  filter: brightness(1.3);
+}
+.foo-col ul li a .fa-utensils {
+  color: #ffb300;
+  transition: color 0.2s, filter 0.2s;
+}
+.foo-col ul li a .fa-utensils:hover {
+  color: #ffd54f;
+  filter: brightness(1.3);
+}
+.foo-col ul li a .fa-tags {
+  color: #e14b50;
+  transition: color 0.2s, filter 0.2s;
+}
+.foo-col ul li a .fa-tags:hover {
+  color: #ff6f61;
+  filter: brightness(1.3);
+}
+.foo-col ul li a .fa-users {
+  color: #6c63ff;
+  transition: color 0.2s, filter 0.2s;
+}
+.foo-col ul li a .fa-users:hover {
+  color: #a29bfe;
+  filter: brightness(1.3);
+}
+.foo-col ul li a:hover i {
+  color: #ff5a5f;
+  filter: brightness(1.3);
+}
+
+
+.foo-copy {
+    background: #000000;
+    padding: 40px 0px;
+}
+
+.foo-copy p {
+    text-align: center;
+    color: #e3e3e3;
+    font-size: 14px;
+    font-weight: 300;
+}
+
+.foo-bottom {
+    text-align: center;
+}

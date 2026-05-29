@@ -1,0 +1,381 @@
+<div class="dashboard-container" role="main" aria-label="Panel de administración">
+  <!-- Sidebar -->
+  <aside
+    class="sidebar"
+    [class.collapsed]="sidebarCollapsed"
+    role="navigation"
+    aria-label="Menú de navegación"
+  >
+    <div class="sidebar-header">
+      <button
+        class="btn btn-link text-white"
+        (click)="toggleSidebar()"
+        [attr.aria-label]="sidebarCollapsed ? 'Expandir menú' : 'Contraer menú'"
+        [attr.aria-expanded]="!sidebarCollapsed"
+      >
+        <i class="bi bi-list fs-4" aria-hidden="true"></i>
+      </button>
+      <h5 class="text-white mb-0" *ngIf="!sidebarCollapsed" id="admin-panel-title">
+        <i class="bi bi-person-gear" aria-hidden="true"></i> Admin Panel
+      </h5>
+    </div>
+
+    <!-- User Info -->
+    <div
+      class="user-info"
+      *ngIf="getCurrentUser() && !sidebarCollapsed"
+      role="region"
+      aria-label="Información del usuario"
+    >
+      <div class="text-center p-3 border-bottom border-secondary">
+        <div class="avatar mb-2" aria-label="Avatar del usuario">
+          {{ getCurrentUser()?.name ? getCurrentUser()!.name.charAt(0).toUpperCase() : 'U' }}
+        </div>
+        <div class="text-white fw-bold">{{ getCurrentUser()?.name }}</div>
+        <small class="text-success" aria-label="Rol del usuario">{{
+          getCurrentUser()?.role
+        }}</small>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav" role="navigation" aria-label="Opciones de administración">
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'dashboard'"
+        (click)="cambiarVista('dashboard')"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="vistaActual === 'dashboard' ? 'Dashboard (actual)' : 'Ir a Dashboard'"
+        [attr.aria-pressed]="vistaActual === 'dashboard'"
+      >
+        <i class="bi bi-speedometer2" aria-hidden="true"></i>
+        <span *ngIf="!sidebarCollapsed">Dashboard</span>
+      </a>
+
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'usuarios'"
+        (click)="cambiarVista('usuarios')"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="vistaActual === 'usuarios' ? 'Usuarios (actual)' : 'Ir a Usuarios'"
+        [attr.aria-pressed]="vistaActual === 'usuarios'"
+      >
+        <i class="bi bi-people-fill" aria-hidden="true"></i>
+        <span *ngIf="!sidebarCollapsed">Usuarios</span>
+      </a>
+
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'pizzas'"
+        (click)="cambiarVista('pizzas')"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="vistaActual === 'pizzas' ? 'Pizzas (actual)' : 'Ir a Pizzas'"
+        [attr.aria-pressed]="vistaActual === 'pizzas'"
+      >
+        <i class="bi bi-circle-fill text-warning" aria-hidden="true"></i>
+        <span *ngIf="!sidebarCollapsed">Pizzas</span>
+      </a>
+
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'categorias'"
+        (click)="cambiarVista('categorias')"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="vistaActual === 'categorias' ? 'Categorías (actual)' : 'Ir a Categorías'"
+        [attr.aria-pressed]="vistaActual === 'categorias'"
+      >
+        <i class="bi bi-folder-fill" aria-hidden="true"></i>
+        <span *ngIf="!sidebarCollapsed">Categorías</span>
+      </a>
+
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'ingredientes'"
+        (click)="cambiarVista('ingredientes')"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="
+          vistaActual === 'ingredientes' ? 'Ingredientes (actual)' : 'Ir a Ingredientes'
+        "
+        [attr.aria-pressed]="vistaActual === 'ingredientes'"
+      >
+        <i class="bi bi-basket-fill" aria-hidden="true"></i>
+        <span *ngIf="!sidebarCollapsed">Ingredientes</span>
+      </a>
+
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'sizes'"
+        (click)="cambiarVista('sizes')"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="vistaActual === 'sizes' ? 'Tamaños (actual)' : 'Ir a Tamaños'"
+        [attr.aria-pressed]="vistaActual === 'sizes'"
+      >
+        <i class="bi bi-rulers" aria-hidden="true"></i>
+        <span *ngIf="!sidebarCollapsed">Tamaños</span>
+      </a>
+
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'extras'"
+        (click)="cambiarVista('extras')"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="vistaActual === 'extras' ? 'Extras (actual)' : 'Ir a Extras'"
+        [attr.aria-pressed]="vistaActual === 'extras'"
+      >
+        <i class="bi bi-cup-straw" aria-hidden="true"></i>
+        <span *ngIf="!sidebarCollapsed">Extras</span>
+      </a>
+
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'promociones'"
+        (click)="cambiarVista('promociones')"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="
+          vistaActual === 'promociones' ? 'Promociones (actual)' : 'Ir a Promociones'
+        "
+        [attr.aria-pressed]="vistaActual === 'promociones'"
+      >
+        <i class="bi bi-tag-fill" aria-hidden="true"></i>
+        <span *ngIf="!sidebarCollapsed">Promociones</span>
+      </a>
+
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'orders'"
+        (click)="cambiarVista('orders')"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="vistaActual === 'orders' ? 'Pedidos (actual)' : 'Ir a Pedidos'"
+        [attr.aria-pressed]="vistaActual === 'orders'"
+      >
+        <i class="bi bi-bag-fill" aria-hidden="true"></i>
+        <span *ngIf="!sidebarCollapsed">Pedidos</span>
+      </a>
+
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'payments'"
+        (click)="cambiarVista('payments')"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="vistaActual === 'payments' ? 'Pagos (actual)' : 'Ir a Pagos'"
+        [attr.aria-pressed]="vistaActual === 'payments'"
+      >
+        <i class="bi bi-credit-card-fill" aria-hidden="true"></i>
+        <span *ngIf="!sidebarCollapsed">Pagos</span>
+      </a>
+
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'metodos-pago'"
+        (click)="cambiarVista('metodos-pago')"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="
+          vistaActual === 'metodos-pago' ? 'Métodos de Pago (actual)' : 'Ir a Métodos de Pago'
+        "
+        [attr.aria-pressed]="vistaActual === 'metodos-pago'"
+        >>
+        <i class="bi bi-wallet2"></i>
+        <span *ngIf="!sidebarCollapsed">Métodos de Pago</span>
+      </a>
+
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'reviews'"
+        (click)="cambiarVista('reviews')"
+      >
+        <i class="bi bi-star-fill"></i>
+        <span *ngIf="!sidebarCollapsed">Reseñas</span>
+      </a>
+    </nav>
+
+    <!-- Logout Button - Fixed at bottom -->
+    <div class="sidebar-footer">
+      <div class="sidebar-divider"></div>
+      <a
+        class="nav-item"
+        [class.active]="vistaActual === 'mi-perfil'"
+        (click)="cambiarVista('mi-perfil')"
+      >
+        <i class="bi bi-person-circle"></i>
+        <span *ngIf="!sidebarCollapsed">Mi Perfil</span>
+      </a>
+      <a class="nav-item text-danger" (click)="cerrarSesion()">
+        <i class="bi bi-box-arrow-right"></i>
+        <span *ngIf="!sidebarCollapsed">Cerrar Sesión</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-wrapper">
+      <!-- Vista Dashboard por defecto -->
+      <div *ngIf="vistaActual === 'dashboard'" class="dashboard-home">
+        <h2 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h2>
+
+        <div class="row g-4">
+          <div class="col-md-3" (click)="cambiarVista('usuarios')" style="cursor: pointer">
+            <div class="stat-card bg-danger">
+              <i class="bi bi-people-fill"></i>
+              <div class="stat-info">
+                <h3>Usuarios</h3>
+                <p>Gestionar usuarios del sistema</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3" (click)="cambiarVista('pizzas')" style="cursor: pointer">
+            <div class="stat-card bg-danger">
+              <i class="bi bi-circle-fill"></i>
+              <div class="stat-info">
+                <h3>Pizzas</h3>
+                <p>Administrar menú de pizzas</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3" (click)="cambiarVista('orders')" style="cursor: pointer">
+            <div class="stat-card bg-danger">
+              <i class="bi bi-bag-fill"></i>
+              <div class="stat-info">
+                <h3>Pedidos</h3>
+                <p>Ver y gestionar pedidos</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3" (click)="cambiarVista('payments')" style="cursor: pointer">
+            <div class="stat-card bg-danger">
+              <i class="bi bi-credit-card-fill"></i>
+              <div class="stat-info">
+                <h3>Pagos</h3>
+                <p>Gestionar transacciones</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4 mt-2">
+          <div class="col-md-3" (click)="cambiarVista('categorias')" style="cursor: pointer">
+            <div class="stat-card bg-danger">
+              <i class="bi bi-folder-fill"></i>
+              <div class="stat-info">
+                <h3>Categorías</h3>
+                <p>Organizar productos</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3" (click)="cambiarVista('ingredientes')" style="cursor: pointer">
+            <div class="stat-card bg-danger">
+              <i class="bi bi-basket-fill"></i>
+              <div class="stat-info">
+                <h3>Ingredientes</h3>
+                <p>Gestionar ingredientes</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3" (click)="cambiarVista('extras')" style="cursor: pointer">
+            <div class="stat-card bg-danger">
+              <i class="bi bi-cup-straw"></i>
+              <div class="stat-info">
+                <h3>Extras</h3>
+                <p>Bebidas, postres, etc.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3" (click)="cambiarVista('promociones')" style="cursor: pointer">
+            <div class="stat-card bg-danger">
+              <i class="bi bi-tag-fill"></i>
+              <div class="stat-info">
+                <h3>Promociones</h3>
+                <p>Descuentos y ofertas</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3" (click)="cambiarVista('reviews')" style="cursor: pointer">
+            <div class="stat-card bg-danger">
+              <i class="bi bi-star-fill"></i>
+              <div class="stat-info">
+                <h3>Reseñas</h3>
+                <p>Opiniones de clientes</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-3" (click)="cambiarVista('sizes')" style="cursor: pointer">
+            <div class="stat-card bg-danger">
+              <i class="bi bi-rulers"></i>
+              <div class="stat-info">
+                <h3>Tamaños</h3>
+                <p>Gestionar tamaños</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Contenido dinámico según la vista seleccionada -->
+      <div *ngIf="vistaActual === 'usuarios'">
+        <app-usuarios></app-usuarios>
+      </div>
+
+      <div *ngIf="vistaActual === 'pizzas'">
+        <app-pizzas></app-pizzas>
+      </div>
+
+      <div *ngIf="vistaActual === 'categorias'">
+        <app-categorias></app-categorias>
+      </div>
+
+      <div *ngIf="vistaActual === 'ingredientes'">
+        <app-ingredientes></app-ingredientes>
+      </div>
+
+      <div *ngIf="vistaActual === 'sizes'">
+        <app-sizes></app-sizes>
+      </div>
+
+      <div *ngIf="vistaActual === 'extras'">
+        <app-extras></app-extras>
+      </div>
+
+      <div *ngIf="vistaActual === 'promociones'">
+        <app-promociones></app-promociones>
+      </div>
+
+      <div *ngIf="vistaActual === 'orders'">
+        <app-orders></app-orders>
+      </div>
+
+      <div *ngIf="vistaActual === 'payments'">
+        <app-payments></app-payments>
+      </div>
+
+      <div *ngIf="vistaActual === 'metodos-pago'">
+        <app-metodos-pago></app-metodos-pago>
+      </div>
+
+      <div *ngIf="vistaActual === 'reviews'">
+        <app-reviews></app-reviews>
+      </div>
+
+      <div *ngIf="vistaActual === 'mi-perfil'">
+        <app-perfil-admin></app-perfil-admin>
+      </div>
+    </div>
+  </main>
+</div>

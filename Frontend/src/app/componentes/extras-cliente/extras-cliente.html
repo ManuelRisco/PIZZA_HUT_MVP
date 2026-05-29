@@ -1,0 +1,129 @@
+<div class="extras-container">
+  <!-- Título -->
+  <div class="header-section">
+    <h1 class="title">
+      <i class="bi bi-basket me-2"></i>
+      Extras y Complementos
+    </h1>
+    <p class="subtitle">Complementa tu pedido con bebidas, postres y más</p>
+  </div>
+
+  <!-- Mensajes -->
+  @if (mensaje) {
+    <div class="alert" [ngClass]="esError ? 'alert-danger' : 'alert-success'">
+      <i class="bi" [ngClass]="esError ? 'bi-exclamation-circle' : 'bi-check-circle'"></i>
+      {{ mensaje }}
+    </div>
+  }
+
+  <!-- Filtros de Categoría -->
+  <div class="filters-container">
+    <div class="category-filters">
+      @for (cat of categorias; track cat.value) {
+        <button 
+          class="filter-btn" 
+          [class.active]="categoriaSeleccionada === cat.value"
+          (click)="cambiarCategoria(cat.value)">
+          <i class="bi" [ngClass]="cat.icon"></i>
+          <span>{{ cat.label }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Buscador -->
+  @if (!loading && extras.length > 0) {
+    <div class="search-container">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Buscar extras..."
+          [(ngModel)]="searchTerm"
+          (input)="aplicarFiltros()"
+        >
+        @if (searchTerm) {
+          <button class="clear-btn" (click)="limpiarBuscador()" type="button">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="loading-container">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-3">Cargando extras...</p>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (error && !loading) {
+    <div class="alert alert-danger">
+      <i class="bi bi-exclamation-circle me-2"></i>
+      {{ error }}
+    </div>
+  }
+
+  <!-- Grid de Extras -->
+  @if (!loading && extrasFiltrados.length > 0) {
+    <div class="extras-grid">
+      @for (extra of extrasFiltrados; track extra.id) {
+        <div class="extra-card">
+          <!-- Badge de Categoría -->
+          <div class="category-badge">
+            <i class="bi" [ngClass]="obtenerIconoCategoria(extra.category || '')"></i>
+            {{ obtenerNombreCategoria(extra.category || '') }}
+          </div>
+
+          <!-- Contenido -->
+          <div class="card-content">
+            <h3 class="extra-name">{{ extra.name }}</h3>
+            
+            @if (extra.description) {
+              <p class="extra-description">{{ extra.description }}</p>
+            }
+
+            <div class="card-footer">
+              <div class="price-section">
+                <span class="price-label">Precio:</span>
+                <span class="price">S/ {{ extra.price | number:'1.2-2' }}</span>
+              </div>
+
+              <button 
+                class="add-btn" 
+                (click)="agregarAlCarrito(extra)"
+                [disabled]="!extra.isAvailable">
+                <i class="bi bi-cart-plus"></i>
+                <span>Agregar</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Badge No Disponible -->
+          @if (!extra.isAvailable) {
+            <div class="unavailable-overlay">
+              <span class="unavailable-badge">No disponible</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Sin Resultados -->
+  @if (!loading && extrasFiltrados.length === 0 && !error) {
+    <div class="no-results">
+      <i class="bi bi-search"></i>
+      <p>No se encontraron extras</p>
+      @if (searchTerm || categoriaSeleccionada !== 'TODOS') {
+        <button class="btn btn-primary mt-3" (click)="searchTerm = ''; categoriaSeleccionada = 'TODOS'; aplicarFiltros()">
+          Ver todos los extras
+        </button>
+      }
+    </div>
+  }
+</div>

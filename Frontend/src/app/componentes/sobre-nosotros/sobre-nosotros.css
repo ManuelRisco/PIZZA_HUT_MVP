@@ -1,0 +1,19 @@
+.sobre-nosotros {
+    max-width: 92%;
+    margin: 40px auto 36px auto; /* margen superior aumentado */
+    padding: 32px 24px;
+    background: #f7e9e3;
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    font-size: 1.30rem;
+    color: #333;
+    text-align: center;
+    line-height: 1.7;
+    text-align: justify;
+}
+
+.sobre-nosotros h1 {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+    text-align: center;
+}

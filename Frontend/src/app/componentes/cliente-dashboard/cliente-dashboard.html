@@ -1,0 +1,162 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
+    <div class="sidebar-header">
+      <button class="btn btn-link text-white" (click)="toggleSidebar()">
+        <i class="bi bi-list fs-4"></i>
+      </button>
+      <h5 class="text-white mb-0" *ngIf="!sidebarCollapsed">
+        <i class="bi bi-person-circle"></i> Mi Panel
+      </h5>
+    </div>
+
+    <!-- User Info -->
+    <div class="user-info" *ngIf="getCurrentUser() && !sidebarCollapsed">
+      <div class="text-center p-3 border-bottom border-secondary">
+        <div class="avatar mb-2">
+          {{ getCurrentUser()?.name ? getCurrentUser()!.name.charAt(0).toUpperCase() : 'U' }}
+        </div>
+        <div class="text-white fw-bold">{{ getCurrentUser()?.name }}</div>
+        <small class="text-info">Cliente</small>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+      <a class="nav-item" 
+         [class.active]="vistaActual === 'dashboard'"
+         (click)="cambiarVista('dashboard')">
+        <i class="bi bi-speedometer2"></i>
+        <span *ngIf="!sidebarCollapsed">Dashboard</span>
+      </a>
+      
+      <a class="nav-item" 
+         [class.active]="vistaActual === 'perfil'"
+         (click)="cambiarVista('perfil')">
+        <i class="bi bi-person-circle"></i>
+        <span *ngIf="!sidebarCollapsed">Mi Perfil</span>
+      </a>
+      
+      <a class="nav-item" 
+         [class.active]="vistaActual === 'pedidos'"
+         (click)="cambiarVista('pedidos')">
+        <i class="bi bi-bag-fill"></i>
+        <span *ngIf="!sidebarCollapsed">Mis Pedidos</span>
+      </a>
+      
+      <a class="nav-item" 
+         [class.active]="vistaActual === 'resenas'"
+         (click)="cambiarVista('resenas')">
+        <i class="bi bi-star-fill"></i>
+        <span *ngIf="!sidebarCollapsed">Mis Reseñas</span>
+      </a>
+      
+      <a class="nav-item" 
+         [class.active]="vistaActual === 'favoritos'"
+         (click)="cambiarVista('favoritos')">
+        <i class="bi bi-heart-fill"></i>
+        <span *ngIf="!sidebarCollapsed">Favoritos</span>
+      </a>
+      
+      <!-- Logout Button -->
+      <a class="nav-item text-danger" (click)="cerrarSesion()">
+        <i class="bi bi-box-arrow-right"></i>
+        <span *ngIf="!sidebarCollapsed">Cerrar Sesión</span>
+      </a>
+    </nav>
+    </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Dashboard View -->
+    <div *ngIf="vistaActual === 'dashboard'" class="content-section">
+      <div class="content-header">
+        <h2><i class="bi bi-speedometer2 me-2"></i>Dashboard</h2>
+        <p class="text-muted">Accede rápidamente a las funciones de tu cuenta</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon bg-primary">
+            <i class="bi bi-bag-fill"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Mis Pedidos</h3>
+            <p>Ver historial de pedidos</p>
+            <button class="btn btn-sm btn-primary" (click)="cambiarVista('pedidos')">
+              Ver Pedidos
+            </button>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon bg-warning">
+            <i class="bi bi-star-fill"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Mis Reseñas</h3>
+            <p>Gestiona tus reseñas</p>
+            <button class="btn btn-sm btn-warning" (click)="cambiarVista('resenas')">
+              Ver Reseñas
+            </button>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon bg-danger">
+            <i class="bi bi-heart-fill"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Favoritos</h3>
+            <p>Tus pizzas favoritas</p>
+            <button class="btn btn-sm btn-danger" (click)="cambiarVista('favoritos')">
+              Ver Favoritos
+            </button>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon bg-success">
+            <i class="bi bi-person-circle"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Mi Perfil</h3>
+            <p>Editar información personal</p>
+            <button class="btn btn-sm btn-success" (click)="cambiarVista('perfil')">
+              Ver Perfil
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Perfil View -->
+    <div *ngIf="vistaActual === 'perfil'" class="content-section">
+      <div class="content-header">
+        <h2><i class="bi bi-person-circle me-2"></i>Mi Perfil</h2>
+      </div>
+      <app-cliente-perfil></app-cliente-perfil>
+    </div>
+
+    <!-- Pedidos View -->
+    <div *ngIf="vistaActual === 'pedidos'" class="content-section">
+      <div class="content-header">
+        <h2><i class="bi bi-bag-fill me-2"></i>Mis Pedidos</h2>
+      </div>
+      <app-cliente-pedidos></app-cliente-pedidos>
+    </div>
+
+    <!-- Reseñas View -->
+    <div *ngIf="vistaActual === 'resenas'" class="content-section">
+      <div class="content-header">
+        <h2><i class="bi bi-star-fill me-2"></i>Mis Reseñas</h2>
+      </div>
+      <app-reviews></app-reviews>
+    </div>
+
+    <!-- Favoritos View -->
+    <div *ngIf="vistaActual === 'favoritos'" class="content-section">
+      <app-favoritos></app-favoritos>
+    </div>
+  </main>
+</div>

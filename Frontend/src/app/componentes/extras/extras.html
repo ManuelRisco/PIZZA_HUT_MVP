@@ -1,0 +1,150 @@
+<div class="extras-container">
+  <div class="header">
+    <h1><i class="bi bi-cup-straw me-2"></i>Gestión de Extras</h1>
+    <button class="btn-primary" (click)="abrirFormulario()" *ngIf="!showForm">
+      <i class="bi bi-plus-lg"></i> Nuevo Extra
+    </button>
+  </div>
+
+  <!-- Filtros por categoría -->
+  <div class="filtros-container" *ngIf="!showForm">
+    <span class="filtros-label">Categorías:</span>
+    <div class="filtros-buttons">
+      <button 
+        class="btn-filter" 
+        [class.active]="filtroCategoria === 'TODOS'"
+        (click)="cambiarFiltro('TODOS')">
+        <i class="bi bi-grid"></i> Todos
+      </button>
+      <button 
+        *ngFor="let cat of categorias"
+        class="btn-filter" 
+        [class.active]="filtroCategoria === cat.value"
+        (click)="cambiarFiltro(cat.value)">
+        <i class="bi" [ngClass]="cat.icon"></i> {{ cat.label }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Mensajes -->
+  <div class="alert alert-success" *ngIf="success">{{ success }}</div>
+  <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+  <div class="loading" *ngIf="loading"><i class="bi bi-hourglass-split"></i> Cargando...</div>
+
+  <!-- Formulario -->
+  <div class="form-container" *ngIf="showForm">
+    <div class="form-header">
+      <h2>{{ editMode ? 'Editar Extra' : 'Nuevo Extra' }}</h2>
+      <button class="btn-close" (click)="cancelar()"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <form [formGroup]="extraForm" (ngSubmit)="guardarExtra()" class="form-grid">
+      <div class="form-group">
+        <label for="name">Nombre *</label>
+        <input id="name" type="text" formControlName="name" class="form-control" placeholder="Ej: Coca Cola">
+        <div class="error-message" *ngIf="extraForm.get('name')?.invalid && extraForm.get('name')?.touched">
+          El nombre es requerido (mín. 2 caracteres)
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="price">Precio (S/) *</label>
+        <input id="price" type="number" step="0.01" formControlName="price" class="form-control" placeholder="0.00">
+        <div class="error-message" *ngIf="extraForm.get('price')?.invalid && extraForm.get('price')?.touched">
+          El precio es requerido
+        </div>
+      </div>
+
+      <div class="form-group full-width">
+        <label for="description">Descripción</label>
+        <textarea id="description" formControlName="description" class="form-control" rows="3" placeholder="Descripción del producto"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="category">Categoría *</label>
+        <select id="category" formControlName="category" class="form-control">
+          <option *ngFor="let cat of categorias" [value]="cat.value">{{ cat.label }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="displayOrder">Orden de visualización</label>
+        <input id="displayOrder" type="number" formControlName="displayOrder" class="form-control" placeholder="0">
+      </div>
+
+      <div class="form-group full-width">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="isAvailable">
+          <span>Disponible para la venta</span>
+        </label>
+      </div>
+
+      <div class="form-actions full-width">
+        <button type="button" class="btn-secondary" (click)="cancelar()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="extraForm.invalid || loading">
+          <i class="bi bi-save"></i> {{ editMode ? 'Actualizar' : 'Crear' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabla -->
+  <div class="table-container" *ngIf="!showForm">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th>Precio</th>
+          <th>Orden</th>
+          <th>Disponible</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let extra of extrasPaginados">
+          <td>
+            <strong>{{ extra.name }}</strong>
+            <small *ngIf="extra.description">{{ extra.description }}</small>
+          </td>
+          <td>
+            <span class="badge-category">
+              <i class="bi" [ngClass]="obtenerIconoCategoria(extra.category)"></i>
+              {{ obtenerNombreCategoria(extra.category) }}
+            </span>
+          </td>
+          <td class="price">S/ {{ extra.price | number:'1.2-2' }}</td>
+          <td>
+            <span class="badge-order">
+              {{ extra.displayOrder || 0 }}
+            </span>
+          </td>
+          <td>
+            <button 
+              class="btn-toggle" 
+              [class.active]="extra.isAvailable"
+              (click)="cambiarDisponibilidad(extra.id!)">
+              <i class="bi" [ngClass]="extra.isAvailable ? 'bi-check-circle-fill' : 'bi-x-circle'"></i>
+              {{ extra.isAvailable ? 'Sí' : 'No' }}
+            </button>
+          </td>
+          <td class="actions">
+            <button class="btn-action btn-edit" (click)="editarExtra(extra)" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn-action btn-delete" (click)="eliminarExtra(extra.id!)" title="Eliminar">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <app-pagination
+      [currentPage]="currentPage"
+      [totalItems]="extras.length"
+      [itemsPerPage]="itemsPerPage"
+      (pageChange)="onPageChange($event)"
+    ></app-pagination>
+  </div>
+</div>

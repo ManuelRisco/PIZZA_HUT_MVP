@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Pizza hut - Inicio</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script>
+    // Cargar preferencias de accesibilidad antes de renderizar
+    if (localStorage.getItem('alta-contraste') === 'true') {
+      document.documentElement.setAttribute('data-contraste', 'alto');
+    }
+
+    // Cargar modo de daltonismo
+    const colorblindMode = localStorage.getItem('colorblind-mode') || 'none';
+    if (colorblindMode !== 'none') {
+      document.documentElement.setAttribute('data-colorblind', colorblindMode);
+    }
+
+    // Cargar tamaño de fuente
+    const fontSize = localStorage.getItem('font-size') || 'normal';
+    if (fontSize !== 'normal') {
+      document.documentElement.setAttribute('data-font-size', fontSize);
+    }
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+  <script>
+    window.toggleAltoContraste = function() {
+      const html = document.documentElement;
+      const esActivo = html.getAttribute('data-contraste') === 'alto';
+
+      if (esActivo) {
+        html.removeAttribute('data-contraste');
+        localStorage.setItem('alta-contraste', 'false');
+      } else {
+        html.setAttribute('data-contraste', 'alto');
+        localStorage.setItem('alta-contraste', 'true');
+      }
+    };
+
+    window.getEstadoContraste = function() {
+      return document.documentElement.getAttribute('data-contraste') === 'alto';
+    };
+
+    // Funciones para daltonismo
+    window.setColorblindMode = function(mode) {
+      const html = document.documentElement;
+      html.removeAttribute('data-colorblind');
+
+      if (mode !== 'none') {
+        html.setAttribute('data-colorblind', mode);
+      }
+
+      localStorage.setItem('colorblind-mode', mode);
+    };
+
+    window.getColorblindMode = function() {
+      return document.documentElement.getAttribute('data-colorblind') || 'none';
+    };
+
+    // Funciones para tamaño de fuente
+    window.setFontSize = function(size) {
+      const html = document.documentElement;
+      html.removeAttribute('data-font-size');
+
+      if (size !== 'normal') {
+        html.setAttribute('data-font-size', size);
+      }
+
+      localStorage.setItem('font-size', size);
+    };
+
+    window.getFontSize = function() {
+      return document.documentElement.getAttribute('data-font-size') || 'normal';
+    };
+  </script>
+</body>
+</html>

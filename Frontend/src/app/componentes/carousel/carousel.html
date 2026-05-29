@@ -1,0 +1,8 @@
+<div class="carousel-container">
+  <img *ngFor="let img of images; let i = index"
+       [src]="img"
+       [class.active]="i === currentIndex()"
+       [class.prev]="i === prevIndex() && prevIndex() !== currentIndex()"
+       class="carousel-img"
+       alt="Imagen carrusel">
+</div>
