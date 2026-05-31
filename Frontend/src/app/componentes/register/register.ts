@@ -10,15 +10,15 @@ import { UsuarioDTO, UsuarioCreateDTO } from '../../models/usuario.interface';
   selector: 'app-register',
   standalone: true,
   imports: [
-    CommonModule, 
-    ReactiveFormsModule, 
+    CommonModule,
+    ReactiveFormsModule,
     RouterModule
   ],
   templateUrl: './register.html',
   styleUrls: ['./register.css']
 })
 export class Register implements OnInit {
-  
+
   registerForm: FormGroup;
   loading = false;
   error = '';
@@ -32,10 +32,26 @@ export class Register implements OnInit {
     private cdr: ChangeDetectorRef
   ) {
     this.registerForm = this.formBuilder.group({
-      name: ['', [Validators.required, Validators.minLength(2)]],
-      phone: [''],
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      name: ['', [
+        Validators.required,
+        Validators.minLength(4),
+        Validators.maxLength(50),
+        Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/)
+      ]],
+      phone: ['', [
+        Validators.required,
+        Validators.pattern(/^[0-9]{9}$/)
+      ]],
+      email: ['', [
+        Validators.required,
+        Validators.email
+      ]],
+      password: ['', [
+        Validators.required,
+        Validators.minLength(6),
+        Validators.maxLength(20),
+        Validators.pattern(/^(?=.*[A-Z])(?=.*\d).+$/)
+      ]],
       confirmPassword: ['', Validators.required]
     }, { validators: this.passwordsMatchValidator });
   }
@@ -81,11 +97,11 @@ export class Register implements OnInit {
       email: formValue.email.trim(),
       password: formValue.password,
       name: formValue.name.trim(),
-      phone: this.formatearTelefono(formValue.phone)
+      phone: formValue.phone.trim()
     };
     this.usuarioPatronesService.crearCliente(clienteData).subscribe({
       next: (response) => {
-        this.mostrarMensajeExito('Cuenta creada exitosamente!');
+        this.mostrarMensajeExito('Usuario registrado correctamente');
         this.registerForm.reset();
         this.loading = false;
       },
@@ -98,14 +114,14 @@ export class Register implements OnInit {
   registrarTradicional(formValue: any): void {
     const usuario: UsuarioCreateDTO = {
       name: formValue.name.trim(),
-      phone: this.formatearTelefono(formValue.phone),
+      phone: formValue.phone.trim(),
       email: formValue.email.trim(),
       password: formValue.password,
       role: 'CUSTOMER'
     };
     this.usuarioService.crearUsuario(usuario).subscribe({
       next: (response) => {
-        this.mostrarMensajeExito('Cuenta creada exitosamente!');
+        this.mostrarMensajeExito('Usuario registrado correctamente');
         this.registerForm.reset();
         this.loading = false;
       },
@@ -115,39 +131,21 @@ export class Register implements OnInit {
     });
   }
 
-  /**
-   * Formatea el número de teléfono eliminando espacios y código de país +51
-   */
-  formatearTelefono(telefono: string | null | undefined): string {
-    if (!telefono) {
-      return '';
-    }
-
-    // Convertir a string y limpiar
-    let telefonoLimpio = telefono.toString().trim();
-
-    // Eliminar todos los espacios
-    telefonoLimpio = telefonoLimpio.replace(/\s+/g, '');
-
-    // Eliminar el código de país +51 si está presente
-    if (telefonoLimpio.startsWith('+51')) {
-      telefonoLimpio = telefonoLimpio.substring(3);
-    } else if (telefonoLimpio.startsWith('51') && telefonoLimpio.length > 9) {
-      // Si empieza con 51 y tiene más de 9 dígitos, probablemente sea 51XXXXXXXXX
-      telefonoLimpio = telefonoLimpio.substring(2);
-    }
-
-    // Eliminar guiones y otros caracteres no numéricos
-    telefonoLimpio = telefonoLimpio.replace(/[^0-9]/g, '');
-
-    return telefonoLimpio;
-  }
-
   manejarErrorRegistro(error: any): void {
     let errorMessage = 'Error al crear la cuenta';
+
     if (error.error && error.error.message) {
-      errorMessage = error.error.message;
+      const serverMessage = error.error.message.toLowerCase();
+
+      // Manejo dinámico de duplicados devueltos por el backend
+      if (serverMessage.includes('correo') || serverMessage.includes('email')) {
+        this.registerForm.get('email')?.setErrors({ duplicado: true });
+        errorMessage = 'El correo electrónico ya se encuentra registrado';
+      } else {
+        errorMessage = error.error.message;
+      }
     }
+
     this.mostrarMensajeError(errorMessage);
     this.loading = false;
   }
@@ -169,13 +167,5 @@ export class Register implements OnInit {
   mostrarMensajeError(mensaje: string): void {
     this.error = mensaje;
     this.success = '';
-  }
-
-  verificarNombreDuplicado(): boolean {
-    return false;
-  }
-
-  verificarEmailDuplicado(): boolean {
-    return false;
   }
 }

@@ -3,6 +3,7 @@ package com.example.domain.repository;
 import com.example.domain.model.SessionLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -39,7 +40,7 @@ public interface SessionLogRepository extends JpaRepository<SessionLog, Long> {
     // Buscar sesiones activas de larga duración
     @Query("SELECT s FROM SessionLog s WHERE s.isActive = true " +
            "AND s.loginTime < :thresholdTime")
-    List<SessionLog> findLongActiveSessions(LocalDateTime thresholdTime);
+    List<SessionLog> findLongActiveSessions(@Param("thresholdTime") LocalDateTime thresholdTime);
     
     // Buscar sesiones por razón de cierre
     List<SessionLog> findByLogoutReason(SessionLog.LogoutReason logoutReason);
@@ -50,5 +51,5 @@ public interface SessionLogRepository extends JpaRepository<SessionLog, Long> {
     // Contar sesiones por usuario en un período
     @Query("SELECT COUNT(s) FROM SessionLog s WHERE s.userId = :userId " +
            "AND s.loginTime >= :since")
-    Long countSessionsByUserSince(Integer userId, LocalDateTime since);
+    Long countSessionsByUserSince(@Param("userId") Integer userId, @Param("since") LocalDateTime since);
 }

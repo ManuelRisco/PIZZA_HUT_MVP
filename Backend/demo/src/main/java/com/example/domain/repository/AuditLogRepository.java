@@ -3,6 +3,7 @@ package com.example.domain.repository;
 import com.example.domain.model.AuditLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -37,7 +38,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     
     // Buscar logs recientes (últimas 24 horas)
     @Query("SELECT a FROM AuditLog a WHERE a.createdAt >= :since ORDER BY a.createdAt DESC")
-    List<AuditLog> findRecentLogs(LocalDateTime since);
+    List<AuditLog> findRecentLogs(@Param("since") LocalDateTime since);
     
     // Buscar logs por IP
     List<AuditLog> findByIpAddressAndCreatedAtBetween(String ipAddress, LocalDateTime start, LocalDateTime end);
@@ -46,7 +47,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     @Query("SELECT COUNT(a) FROM AuditLog a WHERE a.userId = :userId " +
            "AND a.actionType = 'FAILED_LOGIN' " +
            "AND a.createdAt >= :since")
-    Long countFailedLoginAttempts(Integer userId, LocalDateTime since);
+    Long countFailedLoginAttempts(@Param("userId") Integer userId, @Param("since") LocalDateTime since);
     
     // Obtener logs ordenados por fecha (paginado)
     List<AuditLog> findTop100ByOrderByCreatedAtDesc();

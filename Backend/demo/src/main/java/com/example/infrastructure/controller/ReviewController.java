@@ -36,7 +36,7 @@ public class ReviewController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerReviewPorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerReviewPorId(@PathVariable("id") Integer id) { // Corregido
         Optional<Review> reviewOpt = reviewService.obtenerPorId(id);
         if (reviewOpt.isPresent()) {
             ReviewDTO reviewDTO = new ReviewDTO(reviewOpt.get());
@@ -48,7 +48,7 @@ public class ReviewController {
     }
 
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<List<ReviewDTO>> obtenerReviewsPorOrderId(@PathVariable Integer orderId) {
+    public ResponseEntity<List<ReviewDTO>> obtenerReviewsPorOrderId(@PathVariable("orderId") Integer orderId) { // Corregido
         List<Review> reviews = reviewService.obtenerPorOrderId(orderId);
         List<ReviewDTO> reviewsDTO = reviews.stream()
             .map(ReviewDTO::new)
@@ -57,7 +57,7 @@ public class ReviewController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<?> obtenerReviewsPorUserId(@PathVariable Integer userId) {
+    public ResponseEntity<?> obtenerReviewsPorUserId(@PathVariable("userId") Integer userId) { // Corregido
         // Validar que el cliente solo pueda ver sus propias reseñas
         if (!securityUtils.isAdmin()) {
             Integer currentUserId = securityUtils.getCurrentUserId();
@@ -77,7 +77,6 @@ public class ReviewController {
     @PostMapping
     public ResponseEntity<?> crearReview(@RequestBody ReviewDTO reviewDTO) {
         try {
-            // Validar que el cliente solo pueda crear reseñas para sí mismo
             if (!securityUtils.isAdmin()) {
                 Integer currentUserId = securityUtils.getCurrentUserId();
                 if (currentUserId == null || !currentUserId.equals(reviewDTO.getUserId())) {
@@ -91,7 +90,7 @@ public class ReviewController {
             review.setOrderId(reviewDTO.getOrderId());
             review.setRating(reviewDTO.getRating());
             review.setComment(reviewDTO.getComment());
-            review.setActive(true); // Las nuevas reseñas están activas por defecto
+            review.setActive(true);
             
             Review reviewCreado = reviewService.crearReview(review);
             return ResponseEntity.status(HttpStatus.CREATED).body(new ReviewDTO(reviewCreado));
@@ -102,9 +101,8 @@ public class ReviewController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarReview(@PathVariable Integer id, @RequestBody ReviewDTO reviewDTO) {
+    public ResponseEntity<?> actualizarReview(@PathVariable("id") Integer id, @RequestBody ReviewDTO reviewDTO) { // Corregido
         try {
-            // Verificar que la review existe y obtener su userId
             Optional<Review> reviewOpt = reviewService.obtenerPorId(id);
             if (reviewOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -113,7 +111,6 @@ public class ReviewController {
             
             Review existingReview = reviewOpt.get();
             
-            // Validar que el cliente solo pueda actualizar sus propias reseñas
             if (!securityUtils.isAdmin()) {
                 Integer currentUserId = securityUtils.getCurrentUserId();
                 if (currentUserId == null || !currentUserId.equals(existingReview.getUserId())) {
@@ -123,14 +120,14 @@ public class ReviewController {
             }
             
             Review review = new Review();
-            review.setId(id); // Importante: establecer el ID
-            review.setUserId(existingReview.getUserId()); // Preservar userId original
-            review.setOrderId(existingReview.getOrderId()); // Preservar orderId original
+            review.setId(id);
+            review.setUserId(existingReview.getUserId());
+            review.setOrderId(existingReview.getOrderId());
             review.setRating(reviewDTO.getRating());
             review.setComment(reviewDTO.getComment());
-            review.setActive(existingReview.getActive()); // Preservar el estado activo
-            review.setCreatedAt(existingReview.getCreatedAt()); // Preservar fecha de creación
-            review.setUpdatedAt(LocalDateTime.now()); // Actualizar fecha de modificación
+            review.setActive(existingReview.getActive());
+            review.setCreatedAt(existingReview.getCreatedAt());
+            review.setUpdatedAt(LocalDateTime.now());
             
             Review reviewActualizado = reviewService.actualizarReview(id, review);
             return ResponseEntity.ok(new ReviewDTO(reviewActualizado));
@@ -141,9 +138,8 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarReview(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarReview(@PathVariable("id") Integer id) { // Corregido
         try {
-            // Verificar que la review existe y obtener su userId
             Optional<Review> reviewOpt = reviewService.obtenerPorId(id);
             if (reviewOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -152,7 +148,6 @@ public class ReviewController {
             
             Review existingReview = reviewOpt.get();
             
-            // Validar que el cliente solo pueda eliminar sus propias reseñas
             if (!securityUtils.isAdmin()) {
                 Integer currentUserId = securityUtils.getCurrentUserId();
                 if (currentUserId == null || !currentUserId.equals(existingReview.getUserId())) {
@@ -170,9 +165,8 @@ public class ReviewController {
     }
 
     @PatchMapping("/{id}/desactivar")
-    public ResponseEntity<?> desactivarReview(@PathVariable Integer id) {
+    public ResponseEntity<?> desactivarReview(@PathVariable("id") Integer id) { // Corregido
         try {
-            // Solo admin puede desactivar reseñas
             if (!securityUtils.isAdmin()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "No tienes permiso para desactivar reseñas"));
@@ -187,9 +181,8 @@ public class ReviewController {
     }
 
     @PatchMapping("/{id}/activar")
-    public ResponseEntity<?> activarReview(@PathVariable Integer id) {
+    public ResponseEntity<?> activarReview(@PathVariable("id") Integer id) { // Corregido
         try {
-            // Solo admin puede activar reseñas
             if (!securityUtils.isAdmin()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "No tienes permiso para activar reseñas"));

@@ -31,7 +31,7 @@ public class SizeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerSizePorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerSizePorId(@PathVariable("id") Integer id) {
         Optional<Size> sizeOpt = sizeService.obtenerPorId(id);
         if (sizeOpt.isPresent()) {
             SizeDTO sizeDTO = new SizeDTO(sizeOpt.get());
@@ -60,7 +60,7 @@ public class SizeController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarSize(@PathVariable Integer id, @RequestBody SizeDTO sizeDTO) {
+    public ResponseEntity<?> actualizarSize(@PathVariable("id") Integer id, @RequestBody SizeDTO sizeDTO) {
         try {
             Size size = new Size();
             size.setName(sizeDTO.getName());
@@ -77,7 +77,7 @@ public class SizeController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarSize(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarSize(@PathVariable("id") Integer id) {
         try {
             sizeService.eliminarSize(id);
             return ResponseEntity.ok(Map.of("message", "Size eliminado correctamente"));

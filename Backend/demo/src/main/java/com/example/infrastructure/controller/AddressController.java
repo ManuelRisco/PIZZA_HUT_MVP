@@ -31,7 +31,7 @@ public class AddressController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerAddressPorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerAddressPorId(@PathVariable("id") Integer id) { // Corregido
         Optional<Address> addressOpt = addressService.obtenerPorId(id);
         if (addressOpt.isPresent()) {
             AddressDTO addressDTO = new AddressDTO(addressOpt.get());
@@ -43,7 +43,7 @@ public class AddressController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<AddressDTO>> obtenerAddressesPorUserId(@PathVariable Integer userId) {
+    public ResponseEntity<List<AddressDTO>> obtenerAddressesPorUserId(@PathVariable("userId") Integer userId) { // Corregido
         List<Address> addresses = addressService.obtenerPorUserId(userId);
         List<AddressDTO> addressesDTO = addresses.stream()
             .map(AddressDTO::new)
@@ -71,7 +71,7 @@ public class AddressController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarAddress(@PathVariable Integer id, @RequestBody AddressDTO addressDTO) {
+    public ResponseEntity<?> actualizarAddress(@PathVariable("id") Integer id, @RequestBody AddressDTO addressDTO) { // Corregido
         try {
             Address address = new Address();
             address.setUserId(addressDTO.getUserId());
@@ -90,7 +90,7 @@ public class AddressController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarAddress(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarAddress(@PathVariable("id") Integer id) { // Corregido
         try {
             addressService.eliminarAddress(id);
             return ResponseEntity.ok(Map.of("message", "Address eliminado correctamente"));

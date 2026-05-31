@@ -51,7 +51,10 @@ public class FavoriteController {
     }
 
     @GetMapping("/{userId}/{pizzaId}")
-    public ResponseEntity<?> obtenerFavoritePorId(@PathVariable Integer userId, @PathVariable Integer pizzaId) {
+    public ResponseEntity<?> obtenerFavoritePorId(
+            @PathVariable("userId") Integer userId, 
+            @PathVariable("pizzaId") Integer pizzaId) {
+        
         // Validar que el cliente solo pueda ver sus propios favoritos
         if (!securityUtils.isAdmin()) {
             Integer currentUserId = securityUtils.getCurrentUserId();
@@ -73,7 +76,7 @@ public class FavoriteController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<?> obtenerFavoritesPorUserId(@PathVariable Integer userId) {
+    public ResponseEntity<?> obtenerFavoritesPorUserId(@PathVariable("userId") Integer userId) {
         // Validar que el cliente solo pueda ver sus propios favoritos
         if (!securityUtils.isAdmin()) {
             Integer currentUserId = securityUtils.getCurrentUserId();
@@ -91,8 +94,9 @@ public class FavoriteController {
     }
 
     @GetMapping("/pizza/{pizzaId}")
-    public ResponseEntity<List<FavoriteDTO>> obtenerFavoritesPorPizzaId(@PathVariable Integer pizzaId) {
-        // Solo ADMIN puede ver qué usuarios tienen como favorita una pizza
+    public ResponseEntity<List<FavoriteDTO>> obtenerFavoritesPorPizzaId(@PathVariable("pizzaId") Integer pizzaId) {
+        // Solo ADMIN debería ver qué usuarios tienen como favorita una pizza (por privacidad)
+        // Si necesitas que los usuarios lo vean, quita la lógica de seguridad aquí
         List<Favorite> favorites = favoriteService.obtenerPorPizzaId(pizzaId);
         List<FavoriteDTO> favoritesDTO = favorites.stream()
             .map(FavoriteDTO::new)
@@ -125,7 +129,9 @@ public class FavoriteController {
     }
 
     @DeleteMapping("/{userId}/{pizzaId}")
-    public ResponseEntity<?> eliminarFavorite(@PathVariable Integer userId, @PathVariable Integer pizzaId) {
+    public ResponseEntity<?> eliminarFavorite(
+            @PathVariable("userId") Integer userId, 
+            @PathVariable("pizzaId") Integer pizzaId) {
         try {
             // Validar que el cliente solo pueda eliminar sus propios favoritos
             if (!securityUtils.isAdmin()) {

@@ -33,7 +33,7 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerCategoriaPorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerCategoriaPorId(@PathVariable("id") Integer id) { // Corregido
         Optional<Category> categoryOpt = categoryService.obtenerPorId(id);
         if (categoryOpt.isPresent()) {
             CategoryDTO categoryDTO = new CategoryDTO(categoryOpt.get());
@@ -50,7 +50,6 @@ public class CategoryController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "El nombre de la categoría ya existe"));
         }
         
-        // Crear categoría desde DTO
         Category category = new Category();
         category.setName(categoryDTO.getName());
         category.setDescription(categoryDTO.getDescription());
@@ -64,8 +63,7 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> actualizarCategoria(@PathVariable Integer id, @RequestBody CategoryDTO categoryDTO) {
-        // Crear categoría desde DTO
+    public ResponseEntity<?> actualizarCategoria(@PathVariable("id") Integer id, @RequestBody CategoryDTO categoryDTO) { // Corregido
         Category categoryActualizada = new Category();
         categoryActualizada.setName(categoryDTO.getName());
         categoryActualizada.setDescription(categoryDTO.getDescription());
@@ -83,7 +81,7 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> eliminarCategoria(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarCategoria(@PathVariable("id") Integer id) { // Corregido
         boolean eliminado = categoryService.eliminarCategoria(id);
         if (eliminado) {
             return ResponseEntity.ok(Map.of("message", "Categoría eliminada correctamente"));

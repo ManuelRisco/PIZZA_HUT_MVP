@@ -31,7 +31,7 @@ public class OrderItemController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerOrderItemPorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerOrderItemPorId(@PathVariable("id") Integer id) {
         Optional<OrderItem> orderItemOpt = orderItemService.obtenerPorId(id);
         if (orderItemOpt.isPresent()) {
             OrderItemDTO orderItemDTO = new OrderItemDTO(orderItemOpt.get());
@@ -43,7 +43,7 @@ public class OrderItemController {
     }
 
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<List<OrderItemDTO>> obtenerOrderItemsPorOrderId(@PathVariable Integer orderId) {
+    public ResponseEntity<List<OrderItemDTO>> obtenerOrderItemsPorOrderId(@PathVariable("orderId") Integer orderId) {
         List<OrderItem> orderItems = orderItemService.obtenerPorOrderId(orderId);
         List<OrderItemDTO> orderItemsDTO = orderItems.stream()
             .map(OrderItemDTO::new)
@@ -74,7 +74,7 @@ public class OrderItemController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarOrderItem(@PathVariable Integer id, @RequestBody OrderItemDTO orderItemDTO) {
+    public ResponseEntity<?> actualizarOrderItem(@PathVariable("id") Integer id, @RequestBody OrderItemDTO orderItemDTO) {
         try {
             OrderItem orderItem = new OrderItem();
             orderItem.setOrderId(orderItemDTO.getOrderId());
@@ -96,7 +96,7 @@ public class OrderItemController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarOrderItem(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarOrderItem(@PathVariable("id") Integer id) {
         try {
             orderItemService.eliminarOrderItem(id);
             return ResponseEntity.ok(Map.of("message", "OrderItem eliminado correctamente"));

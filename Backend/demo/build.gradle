@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.5.8'
+	id 'org.springframework.boot' version '3.5.14'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -50,6 +50,17 @@ tasks.named('test') {
     jvmArgs = ["-javaagent:${classpath.find { it.name.contains('byte-buddy-agent') }.absolutePath}"]
 }
 
+// IMPORTANTE: La flag '-parameters' es REQUERIDA por Spring para resolver parámetros en request mappings
+// Sin ella, obtendrás: "Name for argument of type [java.lang.Integer] not specified, and parameter name information not available"
+// Si experimentas este error:
+//   1. Ejecuta: ./gradlew clean build
+//   2. Reinicia la aplicación Spring Boot
 tasks.withType(JavaCompile).configureEach {
 	options.compilerArgs.add('-parameters')
+}
+
+// Task conveniente para reconstruir desde cero
+task buildFresh() {
+	dependsOn clean, build
+	description = 'Limpia y construye desde cero (útil si hay errores de compilación)'
 }

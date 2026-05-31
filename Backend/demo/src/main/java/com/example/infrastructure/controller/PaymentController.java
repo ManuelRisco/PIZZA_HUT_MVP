@@ -31,7 +31,7 @@ public class PaymentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerPaymentPorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerPaymentPorId(@PathVariable("id") Integer id) {
         Optional<Payment> paymentOpt = paymentService.obtenerPorId(id);
         if (paymentOpt.isPresent()) {
             PaymentDTO paymentDTO = new PaymentDTO(paymentOpt.get());
@@ -43,7 +43,7 @@ public class PaymentController {
     }
 
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<?> obtenerPaymentPorOrderId(@PathVariable Integer orderId) {
+    public ResponseEntity<?> obtenerPaymentPorOrderId(@PathVariable("orderId") Integer orderId) {
         Optional<Payment> paymentOpt = paymentService.obtenerPorOrderId(orderId);
         if (paymentOpt.isPresent()) {
             PaymentDTO paymentDTO = new PaymentDTO(paymentOpt.get());
@@ -73,7 +73,7 @@ public class PaymentController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarPayment(@PathVariable Integer id, @RequestBody PaymentDTO paymentDTO) {
+    public ResponseEntity<?> actualizarPayment(@PathVariable("id") Integer id, @RequestBody PaymentDTO paymentDTO) {
         try {
             Payment payment = new Payment();
             payment.setOrderId(paymentDTO.getOrderId());
@@ -91,7 +91,7 @@ public class PaymentController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarPayment(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarPayment(@PathVariable("id") Integer id) {
         try {
             paymentService.eliminarPayment(id);
             return ResponseEntity.ok(Map.of("message", "Payment eliminado correctamente"));

@@ -29,7 +29,7 @@ public class OrderItemExtraController {
     }
 
     @GetMapping("/order-item/{orderItemId}")
-    public ResponseEntity<List<OrderItemExtraDTO>> obtenerPorOrderItemId(@PathVariable Integer orderItemId) {
+    public ResponseEntity<List<OrderItemExtraDTO>> obtenerPorOrderItemId(@PathVariable("orderItemId") Integer orderItemId) {
         List<OrderItemExtra> extras = orderItemExtraService.obtenerPorOrderItemId(orderItemId);
         List<OrderItemExtraDTO> extrasDTO = extras.stream()
             .map(OrderItemExtraDTO::new)
@@ -54,7 +54,7 @@ public class OrderItemExtraController {
     }
 
     @DeleteMapping("/order-item/{orderItemId}")
-    public ResponseEntity<Void> eliminarPorOrderItemId(@PathVariable Integer orderItemId) {
+    public ResponseEntity<Void> eliminarPorOrderItemId(@PathVariable("orderItemId") Integer orderItemId) {
         try {
             orderItemExtraService.eliminarPorOrderItemId(orderItemId);
             return ResponseEntity.noContent().build();
@@ -64,7 +64,7 @@ public class OrderItemExtraController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
+    public ResponseEntity<Void> eliminar(@PathVariable("id") Integer id) {
         try {
             orderItemExtraService.eliminar(id);
             return ResponseEntity.noContent().build();

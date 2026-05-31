@@ -39,7 +39,7 @@ public class PizzaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerPizzaPorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerPizzaPorId(@PathVariable("id") Integer id) {
         Optional<Pizza> pizzaOpt = pizzaService.obtenerPorId(id);
         if (pizzaOpt.isPresent()) {
             PizzaDTO pizzaDTO = new PizzaDTO(pizzaOpt.get());
@@ -79,7 +79,7 @@ public class PizzaController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> actualizarPizza(@PathVariable Integer id, @RequestBody PizzaCreateDTO pizzaDTO) {
+    public ResponseEntity<?> actualizarPizza(@PathVariable("id") Integer id, @RequestBody PizzaCreateDTO pizzaDTO) {
         // Buscar la categoría si se proporciona
         Category category = null;
         if (pizzaDTO.getCategoryId() != null) {
@@ -111,7 +111,7 @@ public class PizzaController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> eliminarPizza(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarPizza(@PathVariable("id") Integer id) {
         boolean eliminado = pizzaService.eliminarPizza(id);
         if (eliminado) {
             return ResponseEntity.ok(Map.of("message", "Pizza eliminada correctamente"));

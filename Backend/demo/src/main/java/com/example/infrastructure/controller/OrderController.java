@@ -63,7 +63,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerOrderPorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerOrderPorId(@PathVariable("id") Integer id) {
         Optional<Order> orderOpt = orderService.obtenerPorId(id);
         
         if (orderOpt.isEmpty()) {
@@ -87,7 +87,7 @@ public class OrderController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<?> obtenerOrdersPorUserId(@PathVariable Integer userId) {
+    public ResponseEntity<?> obtenerOrdersPorUserId(@PathVariable("userId") Integer userId) {
         // Validar que el cliente solo pueda ver sus propios pedidos
         if (!securityUtils.isAdmin()) {
             Integer currentUserId = securityUtils.getCurrentUserId();
@@ -105,7 +105,7 @@ public class OrderController {
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<OrderDTO>> obtenerOrdersPorStatus(@PathVariable String status) {
+    public ResponseEntity<List<OrderDTO>> obtenerOrdersPorStatus(@PathVariable("status") String status) {
         try {
             Order.OrderStatus orderStatus = Order.OrderStatus.valueOf(status.toUpperCase());
             List<Order> orders = orderService.obtenerPorStatus(orderStatus);
@@ -199,7 +199,7 @@ public class OrderController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarOrder(@PathVariable Integer id, @RequestBody OrderDTO orderDTO) {
+    public ResponseEntity<?> actualizarOrder(@PathVariable("id") Integer id, @RequestBody OrderDTO orderDTO) {
         try {
             // Validar deliveryType
             Order.DeliveryType deliveryType = Order.DeliveryType.DELIVERY; // Default
@@ -228,7 +228,7 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<?> cambiarEstado(@PathVariable Integer id, @RequestBody Map<String, String> payload) {
+    public ResponseEntity<?> cambiarEstado(@PathVariable("id") Integer id, @RequestBody Map<String, String> payload) {
         try {
             String nuevoEstado = payload.get("status");
             if (nuevoEstado == null) {
@@ -281,7 +281,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarOrder(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarOrder(@PathVariable("id") Integer id) {
         try {
             orderService.eliminarOrder(id);
             return ResponseEntity.ok(Map.of("message", "Order eliminado correctamente"));
@@ -444,7 +444,7 @@ public class OrderController {
     }
     
     @GetMapping("/{id}/items")
-    public ResponseEntity<List<OrderCompleteDTO.OrderItemCompleteDTO>> obtenerItemsCompletos(@PathVariable Integer id) {
+    public ResponseEntity<List<OrderCompleteDTO.OrderItemCompleteDTO>> obtenerItemsCompletos(@PathVariable("id") Integer id) {
         String sql = """
             SELECT 
                 oi.id,
@@ -496,4 +496,3 @@ public class OrderController {
         return ResponseEntity.ok(items);
     }
 }
-

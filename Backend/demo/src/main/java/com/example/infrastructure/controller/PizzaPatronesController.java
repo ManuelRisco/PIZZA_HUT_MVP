@@ -62,7 +62,7 @@ public class PizzaPatronesController {
      * SPECIFICATION PATTERN - Listar pizzas por categoría
      */
     @GetMapping("/categoria/{categoryId}")
-    public ResponseEntity<List<Pizza>> listarPizzasPorCategoria(@PathVariable Integer categoryId) {
+    public ResponseEntity<List<Pizza>> listarPizzasPorCategoria(@PathVariable("categoryId") Integer categoryId) { // Corregido
         CategoryPizzaSpecification spec = new CategoryPizzaSpecification(categoryId);
         List<Pizza> pizzas = pizzaService.listarPizzas().stream()
                 .filter(spec::isSatisfiedBy)
@@ -92,7 +92,7 @@ public class PizzaPatronesController {
      */
     @PostMapping("/{pizzaId}/extras")
     public ResponseEntity<Map<String, Object>> calcularPrecioConExtras(
-            @PathVariable Integer pizzaId,
+            @PathVariable("pizzaId") Integer pizzaId, // Corregido
             @RequestBody Map<String, List<String>> request) {
         
         Pizza pizza = pizzaService.obtenerPorId(pizzaId)

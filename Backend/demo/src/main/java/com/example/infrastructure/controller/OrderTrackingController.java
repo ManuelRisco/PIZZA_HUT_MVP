@@ -32,7 +32,7 @@ public class OrderTrackingController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerOrderTrackingPorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerOrderTrackingPorId(@PathVariable("id") Integer id) {
         Optional<OrderTracking> orderTrackingOpt = orderTrackingService.obtenerPorId(id);
         if (orderTrackingOpt.isPresent()) {
             OrderTrackingDTO orderTrackingDTO = new OrderTrackingDTO(orderTrackingOpt.get());
@@ -44,7 +44,7 @@ public class OrderTrackingController {
     }
 
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<List<OrderTrackingDTO>> obtenerOrderTrackingsPorOrderId(@PathVariable Integer orderId) {
+    public ResponseEntity<List<OrderTrackingDTO>> obtenerOrderTrackingsPorOrderId(@PathVariable("orderId") Integer orderId) {
         List<OrderTracking> orderTrackings = orderTrackingService.obtenerPorOrderId(orderId);
         List<OrderTrackingDTO> orderTrackingsDTO = orderTrackings.stream()
             .map(OrderTrackingDTO::new)
@@ -69,7 +69,7 @@ public class OrderTrackingController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarOrderTracking(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarOrderTracking(@PathVariable("id") Integer id) {
         try {
             orderTrackingService.eliminarOrderTracking(id);
             return ResponseEntity.ok(Map.of("message", "OrderTracking eliminado correctamente"));

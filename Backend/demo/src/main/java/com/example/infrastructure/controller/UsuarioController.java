@@ -132,7 +132,7 @@ public class UsuarioController {
 
     // Endpoints públicos para validación de duplicados
     @GetMapping("/verificar-email")
-    public ResponseEntity<Map<String, Boolean>> verificarEmail(@RequestParam String email) {
+    public ResponseEntity<Map<String, Boolean>> verificarEmail(@RequestParam("email") String email) { // Corregido
         boolean existe = usuarioService.obtenerPorEmail(email).isPresent();
         return ResponseEntity.ok(Map.of("existe", existe));
     }
@@ -266,7 +266,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/verificar-nombre")
-    public ResponseEntity<Map<String, Boolean>> verificarNombre(@RequestParam String nombre) {
+    public ResponseEntity<Map<String, Boolean>> verificarNombre(@RequestParam("nombre") String nombre) { // Corregido
         boolean existe = usuarioService.existePorNombre(nombre);
         return ResponseEntity.ok(Map.of("existe", existe));
     }
@@ -378,7 +378,7 @@ public class UsuarioController {
 
     @GetMapping("/usuarios/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> obtenerUsuarioPorId(@PathVariable Long id) {
+    public ResponseEntity<?> obtenerUsuarioPorId(@PathVariable("id") Long id) { // Corregido
         Optional<Usuario> usuarioOpt = usuarioService.obtenerPorId(id);
         if (usuarioOpt.isPresent()) {
             UsuarioDTO usuarioDTO = new UsuarioDTO(usuarioOpt.get());
@@ -390,7 +390,7 @@ public class UsuarioController {
 
     @PutMapping("/usuarios/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> actualizarUsuario(@PathVariable Long id, @RequestBody UsuarioCreateDTO usuarioDTO) {
+    public ResponseEntity<?> actualizarUsuario(@PathVariable("id") Long id, @RequestBody UsuarioCreateDTO usuarioDTO) { // Corregido
         try {
             // Crear usuario desde DTO
             Usuario usuarioActualizado = new Usuario();
@@ -416,7 +416,7 @@ public class UsuarioController {
 
     @DeleteMapping("/usuarios/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> eliminarUsuario(@PathVariable Long id) {
+    public ResponseEntity<?> eliminarUsuario(@PathVariable("id") Long id) { // Corregido
         boolean eliminado = usuarioService.eliminarUsuario(id);
         if (eliminado) {
             return ResponseEntity.ok(Map.of("message", "Usuario eliminado correctamente"));
@@ -431,7 +431,7 @@ public class UsuarioController {
      */
     @PatchMapping("/usuarios/{id}/inactivar")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> inactivarUsuario(@PathVariable Long id) {
+    public ResponseEntity<?> inactivarUsuario(@PathVariable("id") Long id) { // Corregido
         boolean inactivado = usuarioService.inactivarUsuario(id);
         if (inactivado) {
             return ResponseEntity.ok(Map.of("message", "Usuario inactivado correctamente"));
@@ -446,7 +446,7 @@ public class UsuarioController {
      */
     @PatchMapping("/usuarios/{id}/reactivar")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> reactivarUsuario(@PathVariable Long id) {
+    public ResponseEntity<?> reactivarUsuario(@PathVariable("id") Long id) { // Corregido
         boolean reactivado = usuarioService.reactivarUsuario(id);
         if (reactivado) {
             return ResponseEntity.ok(Map.of("message", "Usuario reactivado correctamente"));
@@ -461,7 +461,7 @@ public class UsuarioController {
      */
     @GetMapping("/usuarios/{id}/activo")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> verificarUsuarioActivo(@PathVariable Long id) {
+    public ResponseEntity<?> verificarUsuarioActivo(@PathVariable("id") Long id) { // Corregido
         boolean activo = usuarioService.estaActivo(id);
         return ResponseEntity.ok(Map.of("activo", activo));
     }
@@ -472,7 +472,7 @@ public class UsuarioController {
      */
     @PatchMapping("/usuarios/{id}/cambiar-password")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> cambiarPassword(@PathVariable Long id, @RequestBody Map<String, String> passwordData) {
+    public ResponseEntity<?> cambiarPassword(@PathVariable("id") Long id, @RequestBody Map<String, String> passwordData) { // Corregido
         try {
             String nuevaPassword = passwordData.get("password");
             if (nuevaPassword == null || nuevaPassword.isEmpty()) {

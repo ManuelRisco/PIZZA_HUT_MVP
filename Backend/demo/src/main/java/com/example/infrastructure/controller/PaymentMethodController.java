@@ -32,7 +32,7 @@ public class PaymentMethodController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerPorId(@PathVariable("id") Integer id) {
         Optional<PaymentMethod> paymentMethod = paymentMethodService.obtenerPorId(id);
         if (paymentMethod.isPresent()) {
             return ResponseEntity.ok(new PaymentMethodDTO(paymentMethod.get()));
@@ -73,7 +73,7 @@ public class PaymentMethodController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarMetodoPago(@PathVariable Integer id, @RequestBody PaymentMethodDTO paymentMethodDTO) {
+    public ResponseEntity<?> actualizarMetodoPago(@PathVariable("id") Integer id, @RequestBody PaymentMethodDTO paymentMethodDTO) {
         try {
             PaymentMethod paymentMethodActualizado = new PaymentMethod();
             paymentMethodActualizado.setName(paymentMethodDTO.getName());
@@ -94,7 +94,7 @@ public class PaymentMethodController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarMetodoPago(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarMetodoPago(@PathVariable("id") Integer id) {
         boolean eliminado = paymentMethodService.eliminarMetodoPago(id);
         if (eliminado) {
             return ResponseEntity.ok(Map.of("message", "Método de pago eliminado correctamente"));
@@ -104,7 +104,9 @@ public class PaymentMethodController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<?> cambiarEstado(@PathVariable Integer id, @RequestParam boolean active) {
+    public ResponseEntity<?> cambiarEstado(
+            @PathVariable("id") Integer id, 
+            @RequestParam("active") boolean active) {
         PaymentMethod paymentMethod = paymentMethodService.cambiarEstado(id, active);
         if (paymentMethod != null) {
             return ResponseEntity.ok(new PaymentMethodDTO(paymentMethod));

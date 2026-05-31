@@ -27,7 +27,7 @@ public class PizzaIngredientController {
     }
 
     @GetMapping("/{pizzaId}/{ingredientId}")
-    public ResponseEntity<?> obtenerPorId(@PathVariable Integer pizzaId, @PathVariable Integer ingredientId) {
+    public ResponseEntity<?> obtenerPorId(@PathVariable("pizzaId") Integer pizzaId, @PathVariable("ingredientId") Integer ingredientId) {
         PizzaIngredientId id = new PizzaIngredientId(pizzaId, ingredientId);
         Optional<PizzaIngredient> piOpt = pizzaIngredientService.obtenerPorId(id);
         if (piOpt.isPresent()) {
@@ -44,7 +44,7 @@ public class PizzaIngredientController {
     }
 
     @PutMapping("/{pizzaId}/{ingredientId}")
-    public ResponseEntity<?> actualizarPizzaIngrediente(@PathVariable Integer pizzaId, @PathVariable Integer ingredientId,
+    public ResponseEntity<?> actualizarPizzaIngrediente(@PathVariable("pizzaId") Integer pizzaId, @PathVariable("ingredientId") Integer ingredientId,
                                                        @RequestBody PizzaIngredient pizzaIngredientActualizado) {
         PizzaIngredientId id = new PizzaIngredientId(pizzaId, ingredientId);
         PizzaIngredient pi = pizzaIngredientService.actualizarPizzaIngrediente(id, pizzaIngredientActualizado);
@@ -56,7 +56,7 @@ public class PizzaIngredientController {
     }
 
     @DeleteMapping("/{pizzaId}/{ingredientId}")
-    public ResponseEntity<?> eliminarPizzaIngrediente(@PathVariable Integer pizzaId, @PathVariable Integer ingredientId) {
+    public ResponseEntity<?> eliminarPizzaIngrediente(@PathVariable("pizzaId") Integer pizzaId, @PathVariable("ingredientId") Integer ingredientId) {
         PizzaIngredientId id = new PizzaIngredientId(pizzaId, ingredientId);
         boolean eliminado = pizzaIngredientService.eliminarPizzaIngrediente(id);
         if (eliminado) {
@@ -67,12 +67,12 @@ public class PizzaIngredientController {
     }
 
     @GetMapping("/pizza/{pizzaId}")
-    public ResponseEntity<List<PizzaIngredient>> listarPorPizzaId(@PathVariable Integer pizzaId) {
+    public ResponseEntity<List<PizzaIngredient>> listarPorPizzaId(@PathVariable("pizzaId") Integer pizzaId) {
         return ResponseEntity.ok(pizzaIngredientService.listarPorPizzaId(pizzaId));
     }
 
     @GetMapping("/ingredient/{ingredientId}")
-    public ResponseEntity<List<PizzaIngredient>> listarPorIngredientId(@PathVariable Integer ingredientId) {
+    public ResponseEntity<List<PizzaIngredient>> listarPorIngredientId(@PathVariable("ingredientId") Integer ingredientId) {
         return ResponseEntity.ok(pizzaIngredientService.listarPorIngredientId(ingredientId));
     }
 }

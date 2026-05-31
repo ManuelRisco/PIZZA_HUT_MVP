@@ -43,7 +43,7 @@ public class IngredientController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerIngredientePorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerIngredientePorId(@PathVariable("id") Integer id) { // Corregido
         Optional<Ingredient> ingredientOpt = ingredientService.obtenerPorId(id);
         if (ingredientOpt.isPresent()) {
             IngredientDTO ingredientDTO = new IngredientDTO(ingredientOpt.get());
@@ -59,7 +59,6 @@ public class IngredientController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "El nombre del ingrediente ya existe"));
         }
         
-        // Crear ingrediente desde DTO
         Ingredient ingredient = new Ingredient();
         ingredient.setName(ingredientDTO.getName());
         ingredient.setExtraCost(ingredientDTO.getExtraCost());
@@ -71,8 +70,7 @@ public class IngredientController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarIngrediente(@PathVariable Integer id, @RequestBody IngredientDTO ingredientDTO) {
-        // Crear ingrediente desde DTO
+    public ResponseEntity<?> actualizarIngrediente(@PathVariable("id") Integer id, @RequestBody IngredientDTO ingredientDTO) { // Corregido
         Ingredient ingredientActualizado = new Ingredient();
         ingredientActualizado.setName(ingredientDTO.getName());
         ingredientActualizado.setExtraCost(ingredientDTO.getExtraCost());
@@ -88,7 +86,7 @@ public class IngredientController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarIngrediente(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarIngrediente(@PathVariable("id") Integer id) { // Corregido
         boolean eliminado = ingredientService.eliminarIngrediente(id);
         if (eliminado) {
             return ResponseEntity.ok(Map.of("message", "Ingrediente eliminado correctamente"));
@@ -98,7 +96,9 @@ public class IngredientController {
     }
 
     @PatchMapping("/{id}/availability")
-    public ResponseEntity<?> cambiarDisponibilidad(@PathVariable Integer id, @RequestParam boolean available) {
+    public ResponseEntity<?> cambiarDisponibilidad(
+            @PathVariable("id") Integer id,            // Corregido
+            @RequestParam("available") boolean available) { // Corregido: @RequestParam también lo necesita
         Optional<Ingredient> ingredientOpt = ingredientService.obtenerPorId(id);
         if (ingredientOpt.isPresent()) {
             Ingredient ingredient = ingredientOpt.get();

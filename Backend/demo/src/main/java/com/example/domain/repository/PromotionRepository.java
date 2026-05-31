@@ -3,6 +3,7 @@ package com.example.domain.repository;
 import com.example.domain.model.Promotion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -26,7 +27,7 @@ public interface PromotionRepository extends JpaRepository<Promotion, Integer> {
            "AND p.startDate <= :now AND p.endDate >= :now " +
            "AND p.deletedAt IS NULL " +
            "AND (p.usageLimit IS NULL OR p.usageCount < p.usageLimit)")
-    List<Promotion> findActivePromotions(LocalDateTime now);
+    List<Promotion> findActivePromotions(@Param("now") LocalDateTime now);
     
     // Buscar promociones activas por tipo
     @Query("SELECT p FROM Promotion p WHERE p.isActive = true " +
@@ -34,7 +35,7 @@ public interface PromotionRepository extends JpaRepository<Promotion, Integer> {
            "AND p.applicableTo = :applicableTo " +
            "AND p.deletedAt IS NULL " +
            "AND (p.usageLimit IS NULL OR p.usageCount < p.usageLimit)")
-    List<Promotion> findActivePromotionsByType(LocalDateTime now, Promotion.ApplicableTo applicableTo);
+    List<Promotion> findActivePromotionsByType(@Param("now") LocalDateTime now, @Param("applicableTo") Promotion.ApplicableTo applicableTo);
     
     // Buscar todas las activas (configuración)
     List<Promotion> findByIsActiveTrueAndDeletedAtIsNull();
@@ -42,11 +43,11 @@ public interface PromotionRepository extends JpaRepository<Promotion, Integer> {
     // Buscar promociones por rango de fechas
     @Query("SELECT p FROM Promotion p WHERE p.deletedAt IS NULL " +
            "AND p.startDate >= :startDate AND p.endDate <= :endDate")
-    List<Promotion> findByDateRange(LocalDateTime startDate, LocalDateTime endDate);
+    List<Promotion> findByDateRange(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
     
     // Buscar promociones próximas a vencer
     @Query("SELECT p FROM Promotion p WHERE p.isActive = true " +
            "AND p.endDate BETWEEN :now AND :futureDate " +
            "AND p.deletedAt IS NULL")
-    List<Promotion> findExpiringPromotions(LocalDateTime now, LocalDateTime futureDate);
+    List<Promotion> findExpiringPromotions(@Param("now") LocalDateTime now, @Param("futureDate") LocalDateTime futureDate);
 }
