@@ -3,7 +3,6 @@ package com.example.service;
 import com.example.domain.model.Promotion;
 import com.example.domain.repository.PromotionRepository;
 import com.example.domain.repository.OrderRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -16,11 +15,14 @@ import java.util.Optional;
 @Service
 public class PromotionService {
 
-    @Autowired
-    private PromotionRepository promotionRepository;
+    private final PromotionRepository promotionRepository;
     
-    @Autowired
-    private OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
+
+    public PromotionService(PromotionRepository promotionRepository, OrderRepository orderRepository) {
+        this.promotionRepository = promotionRepository;
+        this.orderRepository = orderRepository;
+    }
 
     public List<Promotion> listarPromociones() {
         return promotionRepository.findByDeletedAtIsNull();

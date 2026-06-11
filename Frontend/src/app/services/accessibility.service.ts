@@ -236,4 +236,36 @@ export class AccessibilityService {
     }
     return 'normal';
   }
+
+  /**
+   * Establece el modo dislexia
+   */
+  public setDyslexiaMode(active: boolean): void {
+    if (typeof document !== 'undefined') {
+      const html = document.documentElement;
+      if (active) {
+        html.setAttribute('data-dyslexia', 'true');
+      } else {
+        html.removeAttribute('data-dyslexia');
+      }
+      localStorage.setItem('dyslexia-mode', active ? 'true' : 'false');
+      this.announce(active ? 'Modo lectura fácil activado' : 'Modo lectura fácil desactivado', 'polite');
+    }
+  }
+
+  /**
+   * Establece la reducción de movimiento
+   */
+  public setReduceMotion(active: boolean): void {
+    if (typeof document !== 'undefined') {
+      const html = document.documentElement;
+      if (active) {
+        html.setAttribute('data-reduce-motion', 'true');
+      } else {
+        html.removeAttribute('data-reduce-motion');
+      }
+      localStorage.setItem('reduce-motion', active ? 'true' : 'false');
+      this.announce(active ? 'Reducción de movimiento activada' : 'Reducción de movimiento desactivada', 'polite');
+    }
+  }
 }

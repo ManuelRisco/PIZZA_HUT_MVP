@@ -4,7 +4,6 @@ import com.example.service.IngredientService;
 import com.example.domain.dto.IngredientDTO;
 import com.example.domain.model.Ingredient;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +18,11 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class IngredientController {
 
-    @Autowired
-    private IngredientService ingredientService;
+    private final IngredientService ingredientService;
+
+    public IngredientController(IngredientService ingredientService) {
+        this.ingredientService = ingredientService;
+    }
 
     @GetMapping
     public ResponseEntity<List<IngredientDTO>> listarIngredientes() {

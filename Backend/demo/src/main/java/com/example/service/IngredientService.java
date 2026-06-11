@@ -3,7 +3,6 @@ package com.example.service;
 import com.example.domain.model.Ingredient;
 import com.example.domain.repository.IngredientRepository;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,8 +11,11 @@ import java.util.Optional;
 @Service
 public class IngredientService {
 
-    @Autowired
-    private IngredientRepository ingredientRepository;
+    private final IngredientRepository ingredientRepository;
+
+    public IngredientService(IngredientRepository ingredientRepository) {
+        this.ingredientRepository = ingredientRepository;
+    }
 
     public List<Ingredient> listarIngredientes() {
         return ingredientRepository.findAll();

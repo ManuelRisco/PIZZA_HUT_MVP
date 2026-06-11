@@ -8,7 +8,6 @@ import com.example.service.UsuarioService;
 import com.example.service.AuditLogService;
 import com.example.service.SessionLogService;
 import com.example.security.JwtTokenProvider;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,17 +25,20 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200") // <-- Permite solicitudes desde tu frontend
 public class UsuarioController {
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
 
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private final JwtTokenProvider jwtTokenProvider;
     
-    @Autowired
-    private AuditLogService auditLogService;
+    private final AuditLogService auditLogService;
     
-    @Autowired
-    private SessionLogService sessionLogService;
+    private final SessionLogService sessionLogService;
+
+    public UsuarioController(UsuarioService usuarioService, JwtTokenProvider jwtTokenProvider, AuditLogService auditLogService, SessionLogService sessionLogService) {
+        this.usuarioService = usuarioService;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.auditLogService = auditLogService;
+        this.sessionLogService = sessionLogService;
+    }
 
     @PostMapping("/registro")
     public ResponseEntity<?> registrarUsuario(@RequestBody UsuarioCreateDTO usuarioDTO) {

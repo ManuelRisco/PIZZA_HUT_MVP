@@ -21,15 +21,17 @@
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
 
       <div class="form-group">
-        <label for="name">Nombre *</label>
+        <label for="name">Nombre <span aria-hidden="true">*</span></label>
         <div class="input-with-icon">
-          <i class="fas fa-user"></i>
+          <i class="fas fa-user" aria-hidden="true"></i>
           <input
             type="text"
             id="name"
             formControlName="name"
             placeholder="Ingresa tu nombre completo"
             [class.error]="registerForm.get('name')?.invalid && registerForm.get('name')?.touched"
+            aria-required="true"
+            [attr.aria-invalid]="registerForm.get('name')?.invalid && registerForm.get('name')?.touched ? 'true' : 'false'"
           />
         </div>
         <div class="error-message" *ngIf="registerForm.get('name')?.invalid && registerForm.get('name')?.touched">
@@ -41,15 +43,17 @@
       </div>
 
       <div class="form-group">
-        <label for="phone">Teléfono *</label>
+        <label for="phone">Teléfono <span aria-hidden="true">*</span></label>
         <div class="input-with-icon">
-          <i class="fas fa-phone"></i>
+          <i class="fas fa-phone" aria-hidden="true"></i>
           <input
             type="text"
             id="phone"
             formControlName="phone"
             placeholder="Ingresa tu teléfono de 9 dígitos"
             [class.error]="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched"
+            aria-required="true"
+            [attr.aria-invalid]="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched ? 'true' : 'false'"
           />
         </div>
         <div class="error-message" *ngIf="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched">
@@ -59,15 +63,17 @@
       </div>
 
       <div class="form-group">
-        <label for="email">Correo electrónico *</label>
+        <label for="email">Correo electrónico <span aria-hidden="true">*</span></label>
         <div class="input-with-icon">
-          <i class="fas fa-envelope"></i>
+          <i class="fas fa-envelope" aria-hidden="true"></i>
           <input
             type="email"
             id="email"
             formControlName="email"
             placeholder="tucorreo@gmail.com"
             [class.error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+            aria-required="true"
+            [attr.aria-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched ? 'true' : 'false'"
           />
         </div>
         <div class="error-message" *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
@@ -78,15 +84,17 @@
       </div>
 
       <div class="form-group">
-        <label for="password">Contraseña *</label>
+        <label for="password">Contraseña <span aria-hidden="true">*</span></label>
         <div class="input-with-icon">
-          <i class="fas fa-lock"></i>
+          <i class="fas fa-lock" aria-hidden="true"></i>
           <input
             type="password"
             id="password"
             formControlName="password"
             placeholder="Crea una contraseña (Ej: Admin123)"
             [class.error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+            aria-required="true"
+            [attr.aria-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched ? 'true' : 'false'"
           />
         </div>
         <div class="error-message" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
@@ -98,15 +106,17 @@
       </div>
 
       <div class="form-group">
-        <label for="confirmPassword">Repetir Contraseña *</label>
+        <label for="confirmPassword">Repetir Contraseña <span aria-hidden="true">*</span></label>
         <div class="input-with-icon">
-          <i class="fas fa-lock"></i>
+          <i class="fas fa-lock" aria-hidden="true"></i>
           <input
             type="password"
             id="confirmPassword"
             formControlName="confirmPassword"
             placeholder="Repite la contraseña"
             [class.error]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched"
+            aria-required="true"
+            [attr.aria-invalid]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched ? 'true' : 'false'"
           />
         </div>
         <div class="error-message" *ngIf="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched">
@@ -120,7 +130,7 @@
       <button
         type="submit"
         class="btn-register"
-        [disabled]="registerForm.invalid || loading"
+        [disabled]="loading"
       >
         <i class="fas fa-user-plus" *ngIf="!loading"></i>
         <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>

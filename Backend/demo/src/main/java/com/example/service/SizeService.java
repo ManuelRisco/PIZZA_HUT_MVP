@@ -2,7 +2,6 @@ package com.example.service;
 
 import com.example.domain.model.Size;
 import com.example.domain.repository.SizeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,8 +10,11 @@ import java.util.Optional;
 @Service
 public class SizeService {
 
-    @Autowired
-    private SizeRepository sizeRepository;
+    private final SizeRepository sizeRepository;
+
+    public SizeService(SizeRepository sizeRepository) {
+        this.sizeRepository = sizeRepository;
+    }
 
     public List<Size> listarSizes() {
         return sizeRepository.findAll();

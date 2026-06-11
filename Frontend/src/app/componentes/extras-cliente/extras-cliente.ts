@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ExtraService, Extra } from '../../services/extra.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { AccessibilityService } from '../../services/accessibility.service';
 
 @Component({
   selector: 'app-extras-cliente',
@@ -33,6 +34,7 @@ export class ExtrasClienteComponent implements OnInit {
   private extraService = inject(ExtraService);
   private cartService = inject(CartService);
   private authService = inject(AuthService);
+  private accessibility = inject(AccessibilityService);
 
   ngOnInit(): void {
     this.cargarExtras();
@@ -97,6 +99,7 @@ export class ExtrasClienteComponent implements OnInit {
       1
     );
     this.mostrarMensaje(`${extra.name} agregado al carrito`, false);
+    this.accessibility.announceAddToCart(extra.name);
   }
 
   obtenerIconoCategoria(categoria: string): string {

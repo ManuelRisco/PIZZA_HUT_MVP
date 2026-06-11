@@ -1,9 +1,10 @@
-﻿import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ValidatorFn, AbstractControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { UsuarioService } from '../../services/usuario.service';
 import { UsuarioPatronesService } from '../../services/usuario-patrones.service';
+import { AccessibilityService } from '../../services/accessibility.service';
 import { UsuarioDTO, UsuarioCreateDTO } from '../../models/usuario.interface';
 
 @Component({
@@ -29,7 +30,8 @@ export class Register implements OnInit {
     private formBuilder: FormBuilder,
     private usuarioService: UsuarioService,
     private usuarioPatronesService: UsuarioPatronesService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private accessibilityService: AccessibilityService
   ) {
     this.registerForm = this.formBuilder.group({
       name: ['', [
@@ -86,9 +88,19 @@ export class Register implements OnInit {
         this.registrarTradicional(formValue);
       }
     } else {
-      let errorMessage = 'Por favor, revisa los campos';
+      let errorMessage = 'Por favor, revisa los campos en rojo y corrige los errores.';
       this.mostrarMensajeError(errorMessage);
       this.registerForm.markAllAsTouched();
+      this.accessibilityService.announceError(errorMessage);
+      
+      // Anunciar el primer error específico
+      const controls = this.registerForm.controls;
+      for (const name in controls) {
+        if (controls[name].invalid) {
+          this.accessibilityService.announceValidationError(name, 'Campo inválido o incompleto');
+          break;
+        }
+      }
     }
   }
 
@@ -147,6 +159,7 @@ export class Register implements OnInit {
     }
 
     this.mostrarMensajeError(errorMessage);
+    this.accessibilityService.announceError(errorMessage);
     this.loading = false;
   }
 

@@ -3,7 +3,6 @@ package com.example.controller;
 import com.example.domain.dto.ExtraDTO;
 import com.example.domain.model.Extra;
 import com.example.service.ExtraService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +17,11 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class ExtraController {
 
-    @Autowired
-    private ExtraService extraService;
+    private final ExtraService extraService;
+
+    public ExtraController(ExtraService extraService) {
+        this.extraService = extraService;
+    }
 
     @GetMapping
     public ResponseEntity<List<ExtraDTO>> listarTodos() {

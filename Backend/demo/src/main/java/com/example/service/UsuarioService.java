@@ -8,7 +8,6 @@ import com.example.application.users.comportamiento.PasswordValidationStrategy;
 import com.example.application.users.comportamiento.UsuarioValidator;
 import com.example.application.users.comportamiento.UsuarioSpecification;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,13 +20,13 @@ import java.util.stream.Collectors;
 @SuppressWarnings("null")
 public class UsuarioService {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private UsuarioValidator validator;
 
-    public UsuarioService() {
+    public UsuarioService(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
         // Patrón Strategy - Configurar validador con estrategias
         this.validator = new UsuarioValidator();
         this.validator.addStrategy(new EmailValidationStrategy());

@@ -8,7 +8,6 @@ import com.example.domain.dto.OrderCompleteDTO;
 import com.example.domain.model.Order;
 import com.example.domain.model.Payment;
 import com.example.security.SecurityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -25,20 +24,23 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class OrderController {
 
-    @Autowired
-    private OrderService orderService;
+    private final OrderService orderService;
     
-    @Autowired
-    private PromotionService promotionService;
+    private final PromotionService promotionService;
     
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
     
-    @Autowired
-    private SecurityUtils securityUtils;
+    private final SecurityUtils securityUtils;
     
-    @Autowired
-    private PaymentService paymentService;
+    private final PaymentService paymentService;
+
+    public OrderController(OrderService orderService, PromotionService promotionService, JdbcTemplate jdbcTemplate, SecurityUtils securityUtils, PaymentService paymentService) {
+        this.orderService = orderService;
+        this.promotionService = promotionService;
+        this.jdbcTemplate = jdbcTemplate;
+        this.securityUtils = securityUtils;
+        this.paymentService = paymentService;
+    }
 
     @GetMapping
     public ResponseEntity<List<OrderDTO>> listarOrders() {

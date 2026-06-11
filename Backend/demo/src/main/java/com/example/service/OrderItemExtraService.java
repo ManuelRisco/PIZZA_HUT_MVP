@@ -3,7 +3,6 @@ package com.example.service;
 import com.example.domain.model.OrderItemExtra;
 import com.example.infrastructure.persistence.entities.OrderItemExtraEntity;
 import com.example.infrastructure.persistence.repository.OrderItemExtraRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,8 +12,11 @@ import java.util.stream.Collectors;
 @Service
 public class OrderItemExtraService {
 
-    @Autowired
-    private OrderItemExtraRepository orderItemExtraRepository;
+    private final OrderItemExtraRepository orderItemExtraRepository;
+
+    public OrderItemExtraService(OrderItemExtraRepository orderItemExtraRepository) {
+        this.orderItemExtraRepository = orderItemExtraRepository;
+    }
 
     public List<OrderItemExtra> listarTodos() {
         return orderItemExtraRepository.findAll()

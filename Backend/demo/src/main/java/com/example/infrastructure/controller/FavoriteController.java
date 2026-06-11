@@ -5,7 +5,6 @@ import com.example.domain.dto.FavoriteDTO;
 import com.example.domain.model.Favorite;
 import com.example.domain.model.FavoriteId;
 import com.example.security.SecurityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +19,14 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class FavoriteController {
 
-    @Autowired
-    private FavoriteService favoriteService;
+    private final FavoriteService favoriteService;
     
-    @Autowired
-    private SecurityUtils securityUtils;
+    private final SecurityUtils securityUtils;
+
+    public FavoriteController(FavoriteService favoriteService, SecurityUtils securityUtils) {
+        this.favoriteService = favoriteService;
+        this.securityUtils = securityUtils;
+    }
 
     @GetMapping
     public ResponseEntity<?> listarFavorites() {

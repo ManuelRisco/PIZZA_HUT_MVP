@@ -3,7 +3,6 @@ package com.example.controller;
 import com.example.domain.dto.SessionLogDTO;
 import com.example.domain.model.SessionLog;
 import com.example.service.SessionLogService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +18,11 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class SessionLogController {
 
-    @Autowired
-    private SessionLogService sessionLogService;
+    private final SessionLogService sessionLogService;
+
+    public SessionLogController(SessionLogService sessionLogService) {
+        this.sessionLogService = sessionLogService;
+    }
 
     @GetMapping("/activas")
     public ResponseEntity<List<SessionLogDTO>> listarSesionesActivas() {

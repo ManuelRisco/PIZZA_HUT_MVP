@@ -1,7 +1,6 @@
 package com.example.application.pizzas.estructurales;
 
 import com.example.domain.repository.IngredientRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import jakarta.annotation.PostConstruct;
 
@@ -11,8 +10,11 @@ import jakarta.annotation.PostConstruct;
 @Configuration
 public class DecoratorConfig {
 
-    @Autowired
-    private IngredientRepository ingredientRepository;
+    private final IngredientRepository ingredientRepository;
+
+    public DecoratorConfig(IngredientRepository ingredientRepository) {
+        this.ingredientRepository = ingredientRepository;
+    }
 
     @PostConstruct
     public void init() {

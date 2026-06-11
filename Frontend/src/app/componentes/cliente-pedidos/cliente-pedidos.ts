@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Order } from '../../services/order.service';
@@ -147,14 +147,17 @@ export class ClientePedidosComponent implements OnInit {
         next: (items) => {
           this.selectedOrderItems = items;
           this.showModal = true;
+          this.enfocarPrimerElementoModal();
         },
         error: (err) => {
           console.error('Error al cargar items:', err);
           this.showModal = true; // Mostrar modal aunque no se carguen los items
+          this.enfocarPrimerElementoModal();
         }
       });
     } else {
       this.showModal = true;
+      this.enfocarPrimerElementoModal();
     }
   }
 
@@ -162,6 +165,7 @@ export class ClientePedidosComponent implements OnInit {
     this.showModal = false;
     this.selectedOrder = null;
     this.selectedOrderItems = [];
+    this.devolverFocoElementoAnterior();
   }
 
   // Los clientes NO pueden cambiar el estado de sus pedidos
@@ -254,6 +258,7 @@ export class ClientePedidosComponent implements OnInit {
       comment: ''
     };
     this.showReviewModal = true;
+    this.enfocarPrimerElementoModal();
   }
 
   abrirModalEditarReview(order: OrderCompleteDTO): void {
@@ -279,6 +284,7 @@ export class ClientePedidosComponent implements OnInit {
       comment: reviewExistente.comment
     };
     this.showReviewModal = true;
+    this.enfocarPrimerElementoModal();
   }
 
   cerrarModalReview(): void {
@@ -291,6 +297,7 @@ export class ClientePedidosComponent implements OnInit {
       rating: 5,
       comment: ''
     };
+    this.devolverFocoElementoAnterior();
   }
 
   guardarReview(): void {
@@ -357,6 +364,76 @@ export class ClientePedidosComponent implements OnInit {
           this.mostrarMensaje('Error al eliminar la reseña', true);
         }
       });
+    }
+  }
+
+  // ACCESIBILIDAD: Control de Foco (Focus Trap)
+  private elementoPrevioAlModal: HTMLElement | null = null;
+
+  private enfocarPrimerElementoModal(): void {
+    if (typeof document !== 'undefined') {
+      this.elementoPrevioAlModal = document.activeElement as HTMLElement;
+      setTimeout(() => {
+        const modales = document.querySelectorAll('.modal.show');
+        if (modales.length > 0) {
+          const modalActivo = modales[modales.length - 1] as HTMLElement;
+          modalActivo.focus();
+        }
+      }, 100);
+    }
+  }
+
+  private devolverFocoElementoAnterior(): void {
+    if (this.elementoPrevioAlModal && typeof document !== 'undefined') {
+      setTimeout(() => {
+        this.elementoPrevioAlModal?.focus();
+        this.elementoPrevioAlModal = null;
+      }, 100);
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  manejarTecladoModal(event: KeyboardEvent): void {
+    if (!this.showModal && !this.showReviewModal) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      this.cerrarModal();
+      this.cerrarModalReview();
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      const modales = document.querySelectorAll('.modal.show');
+      if (modales.length === 0) return;
+      
+      const modalActivo = modales[modales.length - 1] as HTMLElement;
+      const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      const focusableElements = Array.from(modalActivo.querySelectorAll(focusableSelectors)) as HTMLElement[];
+      
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (!modalActivo.contains(document.activeElement)) {
+        firstElement.focus();
+        event.preventDefault();
+        return;
+      }
+
+      if (event.shiftKey) { // Shift + Tab
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          event.preventDefault();
+        }
+      } else { // Solo Tab
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          event.preventDefault();
+        }
+      }
     }
   }
 }

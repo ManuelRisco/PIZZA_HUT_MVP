@@ -2,7 +2,6 @@ package com.example.service;
 
 import com.example.domain.model.Extra;
 import com.example.domain.repository.ExtraRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -12,8 +11,11 @@ import java.util.Optional;
 @Service
 public class ExtraService {
 
-    @Autowired
-    private ExtraRepository extraRepository;
+    private final ExtraRepository extraRepository;
+
+    public ExtraService(ExtraRepository extraRepository) {
+        this.extraRepository = extraRepository;
+    }
 
     public List<Extra> listarExtras() {
         return extraRepository.findByDeletedAtIsNullOrderByDisplayOrderAsc();

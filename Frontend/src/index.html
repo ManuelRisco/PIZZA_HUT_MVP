@@ -26,6 +26,16 @@
     if (fontSize !== 'normal') {
       document.documentElement.setAttribute('data-font-size', fontSize);
     }
+
+    // Cargar modo dislexia
+    if (localStorage.getItem('dyslexia-mode') === 'true') {
+      document.documentElement.setAttribute('data-dyslexia', 'true');
+    }
+
+    // Cargar reducción de movimiento
+    if (localStorage.getItem('reduce-motion') === 'true') {
+      document.documentElement.setAttribute('data-reduce-motion', 'true');
+    }
   </script>
 </head>
 <body>
@@ -78,6 +88,40 @@
 
     window.getFontSize = function() {
       return document.documentElement.getAttribute('data-font-size') || 'normal';
+    };
+
+    // Funciones para modo dislexia
+    window.toggleDyslexiaMode = function() {
+      const html = document.documentElement;
+      const isActive = html.getAttribute('data-dyslexia') === 'true';
+      if (isActive) {
+        html.removeAttribute('data-dyslexia');
+        localStorage.setItem('dyslexia-mode', 'false');
+      } else {
+        html.setAttribute('data-dyslexia', 'true');
+        localStorage.setItem('dyslexia-mode', 'true');
+      }
+    };
+
+    window.getDyslexiaMode = function() {
+      return document.documentElement.getAttribute('data-dyslexia') === 'true';
+    };
+
+    // Funciones para reducción de movimiento
+    window.toggleReduceMotion = function() {
+      const html = document.documentElement;
+      const isActive = html.getAttribute('data-reduce-motion') === 'true';
+      if (isActive) {
+        html.removeAttribute('data-reduce-motion');
+        localStorage.setItem('reduce-motion', 'false');
+      } else {
+        html.setAttribute('data-reduce-motion', 'true');
+        localStorage.setItem('reduce-motion', 'true');
+      }
+    };
+
+    window.getReduceMotion = function() {
+      return document.documentElement.getAttribute('data-reduce-motion') === 'true';
     };
   </script>
 </body>

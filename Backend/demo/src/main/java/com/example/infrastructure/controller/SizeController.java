@@ -3,7 +3,6 @@ package com.example.infrastructure.controller;
 import com.example.service.SizeService;
 import com.example.domain.dto.SizeDTO;
 import com.example.domain.model.Size;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +17,11 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class SizeController {
 
-    @Autowired
-    private SizeService sizeService;
+    private final SizeService sizeService;
+
+    public SizeController(SizeService sizeService) {
+        this.sizeService = sizeService;
+    }
 
     @GetMapping
     public ResponseEntity<List<SizeDTO>> listarSizes() {

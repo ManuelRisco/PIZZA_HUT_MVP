@@ -4,7 +4,6 @@ import com.example.service.ReviewService;
 import com.example.domain.dto.ReviewDTO;
 import com.example.domain.model.Review;
 import com.example.security.SecurityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +19,14 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class ReviewController {
 
-    @Autowired
-    private ReviewService reviewService;
+    private final ReviewService reviewService;
     
-    @Autowired
-    private SecurityUtils securityUtils;
+    private final SecurityUtils securityUtils;
+
+    public ReviewController(ReviewService reviewService, SecurityUtils securityUtils) {
+        this.reviewService = reviewService;
+        this.securityUtils = securityUtils;
+    }
 
     @GetMapping
     public ResponseEntity<List<ReviewDTO>> listarReviews() {

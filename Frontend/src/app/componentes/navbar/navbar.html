@@ -96,6 +96,38 @@
             <span>{{ getFontSizeLabel(size) }}</span>
           </button>
         </div>
+
+        <div class="accessibility-divider" role="separator" aria-hidden="true"></div>
+
+        <!-- Sección de Modos Adicionales -->
+        <div class="accessibility-section" role="group" aria-label="Ajustes adicionales de accesibilidad">
+          <div class="accessibility-section-title">
+            <i class="bi bi-gear" aria-hidden="true"></i>
+            <span>Ajustes Adicionales</span>
+          </div>
+
+          <button
+            class="accessibility-option"
+            (click)="toggleDyslexiaMode()"
+            [class.active]="modoDislexia"
+            role="menuitemcheckbox"
+            [attr.aria-checked]="modoDislexia"
+            title="Activar o desactivar modo lectura fácil">
+            <i class="bi" [class.bi-toggle-on]="modoDislexia" [class.bi-toggle-off]="!modoDislexia" aria-hidden="true"></i>
+            <span>Lectura Fácil (Dislexia)</span>
+          </button>
+
+          <button
+            class="accessibility-option"
+            (click)="toggleReduceMotion()"
+            [class.active]="reducirMovimiento"
+            role="menuitemcheckbox"
+            [attr.aria-checked]="reducirMovimiento"
+            title="Reducir animaciones y movimiento">
+            <i class="bi" [class.bi-toggle-on]="reducirMovimiento" [class.bi-toggle-off]="!reducirMovimiento" aria-hidden="true"></i>
+            <span>Reducir Movimiento</span>
+          </button>
+        </div>
       </div>
     </li>
 

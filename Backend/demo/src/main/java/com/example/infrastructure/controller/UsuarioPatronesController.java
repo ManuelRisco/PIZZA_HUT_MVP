@@ -5,7 +5,6 @@ import com.example.application.users.comportamiento.AdminUsuarioSpecification;
 import com.example.application.users.estructurales.UsuarioSpecificationComposite;
 import com.example.application.users.comportamiento.ActiveUsuarioSpecification;
 import com.example.service.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +20,11 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:4200")
 public class UsuarioPatronesController {
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
+
+    public UsuarioPatronesController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
+    }
 
     /**
      * Endpoint que usa Factory Pattern para crear un cliente

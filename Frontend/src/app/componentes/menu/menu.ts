@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -392,12 +392,14 @@ export class MenuComponent implements OnInit {
     this.pizzaSeleccionada = pizza;
     this.tamanoSeleccionado = undefined;
     this.mostrarModalRapido = true;
+    this.enfocarPrimerElementoModal();
   }
 
   cerrarModalRapido(): void {
     this.mostrarModalRapido = false;
     this.pizzaSeleccionada = undefined;
     this.tamanoSeleccionado = undefined;
+    this.devolverFocoElementoAnterior();
   }
 
   agregarAlCarritoRapido(): void {
@@ -437,6 +439,7 @@ export class MenuComponent implements OnInit {
     this.precioCalculado = pizza.price || 0;
     this.descripcionPersonalizacion = pizza.name;
     this.mostrarModal = true;
+    this.enfocarPrimerElementoModal();
   }
 
   cerrarModal(): void {
@@ -444,6 +447,7 @@ export class MenuComponent implements OnInit {
     this.pizzaSeleccionada = undefined;
     this.tamanoSeleccionado = undefined;
     this.extrasSeleccionados = [];
+    this.devolverFocoElementoAnterior();
   }
 
   seleccionarTamano(tamano: SizeDTO): void {
@@ -566,5 +570,77 @@ export class MenuComponent implements OnInit {
     setTimeout(() => {
       this.mensaje = '';
     }, 2500);
+  }
+
+  // ACCESIBILIDAD: Control de Foco (Focus Trap)
+  private elementoPrevioAlModal: HTMLElement | null = null;
+
+  private enfocarPrimerElementoModal(): void {
+    if (typeof document !== 'undefined') {
+      this.elementoPrevioAlModal = document.activeElement as HTMLElement;
+      setTimeout(() => {
+        const modales = document.querySelectorAll('.modal.show');
+        if (modales.length > 0) {
+          const modalActivo = modales[modales.length - 1] as HTMLElement;
+          // Enfocar el contenedor del modal en lugar del primer botón
+          // Esto evita que el lector lea todo de golpe y le da el control al usuario
+          modalActivo.focus();
+        }
+      }, 100);
+    }
+  }
+
+  private devolverFocoElementoAnterior(): void {
+    if (this.elementoPrevioAlModal && typeof document !== 'undefined') {
+      setTimeout(() => {
+        this.elementoPrevioAlModal?.focus();
+        this.elementoPrevioAlModal = null;
+      }, 100);
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  manejarTecladoModal(event: KeyboardEvent): void {
+    if (!this.mostrarModal && !this.mostrarModalRapido) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      this.cerrarModal();
+      this.cerrarModalRapido();
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      const modales = document.querySelectorAll('.modal.show');
+      if (modales.length === 0) return;
+      
+      const modalActivo = modales[modales.length - 1] as HTMLElement;
+      const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      const focusableElements = Array.from(modalActivo.querySelectorAll(focusableSelectors)) as HTMLElement[];
+      
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (!modalActivo.contains(document.activeElement)) {
+        firstElement.focus();
+        event.preventDefault();
+        return;
+      }
+
+      if (event.shiftKey) { // Shift + Tab
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          event.preventDefault();
+        }
+      } else { // Solo Tab
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          event.preventDefault();
+        }
+      }
+    }
   }
 }

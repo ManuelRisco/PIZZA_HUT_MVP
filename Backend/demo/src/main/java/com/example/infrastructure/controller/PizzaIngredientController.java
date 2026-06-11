@@ -4,7 +4,6 @@ import com.example.domain.model.PizzaIngredient;
 import com.example.domain.model.PizzaIngredientId;
 import com.example.service.PizzaIngredientService;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +17,11 @@ import java.util.Optional;
 @CrossOrigin(origins = "http://localhost:4200")
 public class PizzaIngredientController {
 
-    @Autowired
-    private PizzaIngredientService pizzaIngredientService;
+    private final PizzaIngredientService pizzaIngredientService;
+
+    public PizzaIngredientController(PizzaIngredientService pizzaIngredientService) {
+        this.pizzaIngredientService = pizzaIngredientService;
+    }
 
     @GetMapping
     public ResponseEntity<List<PizzaIngredient>> listarPizzaIngredientes() {

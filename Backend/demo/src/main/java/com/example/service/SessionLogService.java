@@ -2,7 +2,6 @@ package com.example.service;
 
 import com.example.domain.model.SessionLog;
 import com.example.domain.repository.SessionLogRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -12,8 +11,11 @@ import java.util.Optional;
 @Service
 public class SessionLogService {
 
-    @Autowired
-    private SessionLogRepository sessionLogRepository;
+    private final SessionLogRepository sessionLogRepository;
+
+    public SessionLogService(SessionLogRepository sessionLogRepository) {
+        this.sessionLogRepository = sessionLogRepository;
+    }
 
     public SessionLog crearSesion(Integer userId, String sessionToken, String ipAddress, String userAgent) {
         SessionLog sessionLog = new SessionLog(userId, sessionToken, ipAddress, userAgent);

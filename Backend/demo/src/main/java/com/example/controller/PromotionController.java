@@ -3,7 +3,6 @@ package com.example.controller;
 import com.example.domain.dto.PromotionDTO;
 import com.example.domain.model.Promotion;
 import com.example.service.PromotionService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +18,11 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class PromotionController {
 
-    @Autowired
-    private PromotionService promotionService;
+    private final PromotionService promotionService;
+
+    public PromotionController(PromotionService promotionService) {
+        this.promotionService = promotionService;
+    }
 
     @GetMapping
     public ResponseEntity<List<PromotionDTO>> listarTodas() {

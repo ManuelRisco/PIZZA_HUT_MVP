@@ -3,7 +3,6 @@ package com.example.infrastructure.controller;
 import com.example.service.OrderItemExtraService;
 import com.example.domain.dto.OrderItemExtraDTO;
 import com.example.domain.model.OrderItemExtra;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +15,11 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class OrderItemExtraController {
 
-    @Autowired
-    private OrderItemExtraService orderItemExtraService;
+    private final OrderItemExtraService orderItemExtraService;
+
+    public OrderItemExtraController(OrderItemExtraService orderItemExtraService) {
+        this.orderItemExtraService = orderItemExtraService;
+    }
 
     @GetMapping
     public ResponseEntity<List<OrderItemExtraDTO>> listarTodos() {

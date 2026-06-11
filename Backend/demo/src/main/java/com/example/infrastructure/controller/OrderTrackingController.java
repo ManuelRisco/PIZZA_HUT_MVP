@@ -4,7 +4,6 @@ import com.example.service.OrderTrackingService;
 import com.example.domain.dto.OrderTrackingDTO;
 import com.example.domain.model.OrderTracking;
 import com.example.domain.model.Order;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +18,11 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class OrderTrackingController {
 
-    @Autowired
-    private OrderTrackingService orderTrackingService;
+    private final OrderTrackingService orderTrackingService;
+
+    public OrderTrackingController(OrderTrackingService orderTrackingService) {
+        this.orderTrackingService = orderTrackingService;
+    }
 
     @GetMapping
     public ResponseEntity<List<OrderTrackingDTO>> listarOrderTrackings() {

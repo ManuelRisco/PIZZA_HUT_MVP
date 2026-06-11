@@ -1,6 +1,5 @@
 package com.example.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.GrantedAuthority;
@@ -9,8 +8,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class SecurityUtils {
 
-    @Autowired
-    private JwtTokenProvider tokenProvider;
+    private final JwtTokenProvider tokenProvider;
+
+    public SecurityUtils(JwtTokenProvider tokenProvider) {
+        this.tokenProvider = tokenProvider;
+    }
 
     /**
      * Obtiene el email del usuario autenticado

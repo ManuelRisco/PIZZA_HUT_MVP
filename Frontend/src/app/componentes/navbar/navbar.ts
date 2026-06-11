@@ -26,6 +26,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
   mostrarMenuAccesibilidad: boolean = false;
   modoColorblind: 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' = 'none';
   tamanoFuente: 'pequena' | 'normal' | 'grande' | 'extra-grande' = 'normal';
+  modoDislexia: boolean = false;
+  reducirMovimiento: boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -76,6 +78,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     const target = event.target as HTMLElement;
     if (!target.closest('.user-menu-container')) {
       this.mostrarMenuUsuario = false;
+    }
+    if (!target.closest('.accessibility-menu-container')) {
+      this.mostrarMenuAccesibilidad = false;
     }
   }
 
@@ -172,6 +177,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.modoColorblind = ((window as any).getColorblindMode?.() || 'none') as any;
       // Cargar tamaño de fuente
       this.tamanoFuente = ((window as any).getFontSize?.() || 'normal') as any;
+      // Cargar modo dislexia
+      this.modoDislexia = (window as any).getDyslexiaMode?.() || false;
+      // Cargar reducción de movimiento
+      this.reducirMovimiento = (window as any).getReduceMotion?.() || false;
     }
   }
 
@@ -195,6 +204,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
       (window as any).setFontSize(size);
       this.tamanoFuente = size;
       this.accessibilityService.setFontSize(size);
+    }
+  }
+
+  toggleDyslexiaMode() {
+    if (typeof window !== 'undefined' && (window as any).toggleDyslexiaMode) {
+      (window as any).toggleDyslexiaMode();
+      this.modoDislexia = (window as any).getDyslexiaMode();
+      this.accessibilityService.setDyslexiaMode(this.modoDislexia);
+    }
+  }
+
+  toggleReduceMotion() {
+    if (typeof window !== 'undefined' && (window as any).toggleReduceMotion) {
+      (window as any).toggleReduceMotion();
+      this.reducirMovimiento = (window as any).getReduceMotion();
+      this.accessibilityService.setReduceMotion(this.reducirMovimiento);
     }
   }
 

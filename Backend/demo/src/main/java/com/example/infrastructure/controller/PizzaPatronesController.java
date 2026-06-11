@@ -8,7 +8,6 @@ import com.example.domain.model.Category;
 import com.example.domain.repository.CategoryRepository;
 import com.example.domain.repository.IngredientRepository;
 import com.example.service.PizzaService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,14 +24,17 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class PizzaPatronesController {
 
-    @Autowired
-    private PizzaService pizzaService;
+    private final PizzaService pizzaService;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
     
-    @Autowired
-    private IngredientRepository ingredientRepository;
+    private final IngredientRepository ingredientRepository;
+
+    public PizzaPatronesController(PizzaService pizzaService, CategoryRepository categoryRepository, IngredientRepository ingredientRepository) {
+        this.pizzaService = pizzaService;
+        this.categoryRepository = categoryRepository;
+        this.ingredientRepository = ingredientRepository;
+    }
 
     /**
      * SPECIFICATION PATTERN - Listar pizzas disponibles

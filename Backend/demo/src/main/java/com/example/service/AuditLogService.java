@@ -2,7 +2,6 @@ package com.example.service;
 
 import com.example.domain.model.AuditLog;
 import com.example.domain.repository.AuditLogRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -12,8 +11,11 @@ import java.util.Optional;
 @Service
 public class AuditLogService {
 
-    @Autowired
-    private AuditLogRepository auditLogRepository;
+    private final AuditLogRepository auditLogRepository;
+
+    public AuditLogService(AuditLogRepository auditLogRepository) {
+        this.auditLogRepository = auditLogRepository;
+    }
 
     public AuditLog registrar(AuditLog auditLog) {
         if (auditLog == null) {

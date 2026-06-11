@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { PromocionService, Promotion } from '../../services/promocion.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { AccessibilityService } from '../../services/accessibility.service';
 
 @Component({
   selector: 'app-promociones-cliente',
@@ -34,6 +35,7 @@ export class PromocionesClienteComponent implements OnInit {
   private promocionService = inject(PromocionService);
   private cartService = inject(CartService);
   private authService = inject(AuthService);
+  private accessibility = inject(AccessibilityService);
 
   ngOnInit(): void {
     this.cargarPromociones();
@@ -103,6 +105,7 @@ export class PromocionesClienteComponent implements OnInit {
   copiarCodigo(codigo: string): void {
     navigator.clipboard.writeText(codigo).then(() => {
       this.mostrarMensaje(`Código ${codigo} copiado al portapapeles`, false);
+      this.accessibility.announce(`Código ${codigo} copiado al portapapeles`);
     });
   }
 
@@ -118,11 +121,13 @@ export class PromocionesClienteComponent implements OnInit {
     this.promocionService.validarPromocion(this.codigoPromocion, total).subscribe({
       next: (response) => {
         this.mostrarMensaje('Código de promoción válido. Aplícalo en el checkout', false);
+        this.accessibility.announceSuccess('Código de promoción válido.');
         this.codigoPromocion = '';
         this.aplicandoCodigo = false;
       },
       error: (err) => {
         this.mostrarMensaje(err.error?.message || 'Código de promoción inválido', true);
+        this.accessibility.announceError(err.error?.message || 'Código de promoción inválido');
         this.aplicandoCodigo = false;
       }
     });

@@ -3,7 +3,6 @@ package com.example.infrastructure.controller;
 import com.example.service.PaymentService;
 import com.example.domain.dto.PaymentDTO;
 import com.example.domain.model.Payment;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +17,11 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class PaymentController {
 
-    @Autowired
-    private PaymentService paymentService;
+    private final PaymentService paymentService;
+
+    public PaymentController(PaymentService paymentService) {
+        this.paymentService = paymentService;
+    }
 
     @GetMapping
     public ResponseEntity<List<PaymentDTO>> listarPayments() {

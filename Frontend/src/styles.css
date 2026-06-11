@@ -1,4 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+
 :root {
   color-scheme: light;
 }
@@ -1080,6 +1082,62 @@ html[data-font-size="extra-grande"] p {
 html[data-font-size="grande"] li,
 html[data-font-size="extra-grande"] li {
   line-height: 1.8;
+}
+
+/* ========== ACCESIBILIDAD - CONTROL DE FOCO Y TECLADO ========== */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #ff0000;
+  color: white;
+  padding: 8px;
+  z-index: 9999;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid #ffff00;
+}
+
+#main-content:focus {
+  outline: none;
+}
+
+/* ========== ACCESIBILIDAD - REDUCCIÓN DE MOVIMIENTO ========== */
+html[data-reduce-motion="true"] *,
+html[data-reduce-motion="true"] *::before,
+html[data-reduce-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ========== ACCESIBILIDAD - MODO DISLEXIA (LECTURA FÁCIL) ========== */
+html[data-dyslexia="true"] {
+  --font-dyslexia: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
+}
+
+html[data-dyslexia="true"] body,
+html[data-dyslexia="true"] h1,
+html[data-dyslexia="true"] h2,
+html[data-dyslexia="true"] h3,
+html[data-dyslexia="true"] h4,
+html[data-dyslexia="true"] h5,
+html[data-dyslexia="true"] h6,
+html[data-dyslexia="true"] p,
+html[data-dyslexia="true"] a,
+html[data-dyslexia="true"] span,
+html[data-dyslexia="true"] button,
+html[data-dyslexia="true"] input,
+html[data-dyslexia="true"] textarea,
+html[data-dyslexia="true"] select {
+  font-family: var(--font-dyslexia) !important;
+  letter-spacing: 0.05em !important;
+  word-spacing: 0.15em !important;
+  line-height: 1.6 !important;
 }
 
 /* ========== FIN ACCESIBILIDAD ========== */

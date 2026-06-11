@@ -4,7 +4,6 @@ import com.example.domain.model.PaymentMethod;
 import com.example.domain.repository.PaymentMethodRepository;
 import com.example.infrastructure.persistence.entities.PaymentMethodEntity;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,8 +13,11 @@ import java.util.stream.Collectors;
 @Component
 public class JpaPaymentMethodRepository implements PaymentMethodRepository {
 
-    @Autowired
-    private SpringDataPaymentMethodRepository springDataRepository;
+    private final SpringDataPaymentMethodRepository springDataRepository;
+
+    public JpaPaymentMethodRepository(SpringDataPaymentMethodRepository springDataRepository) {
+        this.springDataRepository = springDataRepository;
+    }
 
     @Override
     public List<PaymentMethod> findAll() {

@@ -2,7 +2,6 @@ package com.example.service;
 
 import com.example.domain.model.OrderTracking;
 import com.example.domain.repository.OrderTrackingRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,8 +10,11 @@ import java.util.Optional;
 @Service
 public class OrderTrackingService {
 
-    @Autowired
-    private OrderTrackingRepository orderTrackingRepository;
+    private final OrderTrackingRepository orderTrackingRepository;
+
+    public OrderTrackingService(OrderTrackingRepository orderTrackingRepository) {
+        this.orderTrackingRepository = orderTrackingRepository;
+    }
 
     public List<OrderTracking> listarOrderTrackings() {
         return orderTrackingRepository.findAll();

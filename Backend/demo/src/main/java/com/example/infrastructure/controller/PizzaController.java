@@ -7,7 +7,6 @@ import com.example.domain.dto.PizzaDTO;
 import com.example.domain.model.Category;
 import com.example.domain.model.Pizza;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,11 +22,14 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class PizzaController {
 
-    @Autowired
-    private PizzaService pizzaService;
+    private final PizzaService pizzaService;
 
-    @Autowired
-    private CategoryService categoryService;
+    private final CategoryService categoryService;
+
+    public PizzaController(PizzaService pizzaService, CategoryService categoryService) {
+        this.pizzaService = pizzaService;
+        this.categoryService = categoryService;
+    }
 
     @GetMapping
     public ResponseEntity<List<PizzaDTO>> listarPizzas() {

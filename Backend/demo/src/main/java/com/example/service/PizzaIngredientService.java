@@ -4,7 +4,6 @@ import com.example.domain.model.PizzaIngredient;
 import com.example.domain.model.PizzaIngredientId;
 import com.example.domain.repository.PizzaIngredientRepository;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,8 +12,11 @@ import java.util.Optional;
 @Service
 public class PizzaIngredientService {
 
-    @Autowired
-    private PizzaIngredientRepository pizzaIngredientRepository;
+    private final PizzaIngredientRepository pizzaIngredientRepository;
+
+    public PizzaIngredientService(PizzaIngredientRepository pizzaIngredientRepository) {
+        this.pizzaIngredientRepository = pizzaIngredientRepository;
+    }
 
     public List<PizzaIngredient> listarPizzaIngredientes() {
         return pizzaIngredientRepository.findAll();
