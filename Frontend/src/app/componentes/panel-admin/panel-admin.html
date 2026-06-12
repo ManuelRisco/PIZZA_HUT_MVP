@@ -1,381 +1,318 @@
-<div class="dashboard-container" role="main" aria-label="Panel de administración">
+<div class="flex h-[calc(100vh-116px)] bg-gray-50 overflow-hidden font-sans" role="main" aria-label="Panel de administración">
   <!-- Sidebar -->
   <aside
-    class="sidebar"
-    [class.collapsed]="sidebarCollapsed"
+    class="bg-black text-white flex flex-col transition-all duration-300 relative z-50 h-full"
+    [class.w-[260px]]="!sidebarCollapsed"
+    [class.w-[80px]]="sidebarCollapsed"
     role="navigation"
     aria-label="Menú de navegación"
   >
-    <div class="sidebar-header">
+    <!-- Header Sidebar -->
+    <div class="flex items-center gap-3 p-4 border-b border-gray-800">
       <button
-        class="btn btn-link text-white"
+        class="text-gray-400 hover:text-white transition-colors"
         (click)="toggleSidebar()"
         [attr.aria-label]="sidebarCollapsed ? 'Expandir menú' : 'Contraer menú'"
         [attr.aria-expanded]="!sidebarCollapsed"
       >
-        <i class="bi bi-list fs-4" aria-hidden="true"></i>
+        <i class="bi bi-list text-2xl" aria-hidden="true"></i>
       </button>
-      <h5 class="text-white mb-0" *ngIf="!sidebarCollapsed" id="admin-panel-title">
-        <i class="bi bi-person-gear" aria-hidden="true"></i> Admin Panel
+      <h5 class="text-red-600 font-black text-xl mb-0 tracking-wider whitespace-nowrap overflow-hidden" *ngIf="!sidebarCollapsed" id="admin-panel-title">
+        PANEL ADMIN
       </h5>
     </div>
 
-    <!-- User Info -->
-    <div
-      class="user-info"
-      *ngIf="getCurrentUser() && !sidebarCollapsed"
-      role="region"
-      aria-label="Información del usuario"
-    >
-      <div class="text-center p-3 border-bottom border-secondary">
-        <div class="avatar mb-2" aria-label="Avatar del usuario">
-          {{ getCurrentUser()?.name ? getCurrentUser()!.name.charAt(0).toUpperCase() : 'U' }}
-        </div>
-        <div class="text-white fw-bold">{{ getCurrentUser()?.name }}</div>
-        <small class="text-success" aria-label="Rol del usuario">{{
-          getCurrentUser()?.role
-        }}</small>
-      </div>
-    </div>
-
     <!-- Navigation Menu -->
-    <nav class="sidebar-nav" role="navigation" aria-label="Opciones de administración">
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'dashboard'"
-        (click)="cambiarVista('dashboard')"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="vistaActual === 'dashboard' ? 'Dashboard (actual)' : 'Ir a Dashboard'"
-        [attr.aria-pressed]="vistaActual === 'dashboard'"
-      >
-        <i class="bi bi-speedometer2" aria-hidden="true"></i>
-        <span *ngIf="!sidebarCollapsed">Dashboard</span>
+    <nav class="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-1 sidebar-scroll" role="navigation" aria-label="Opciones de administración">
+      <!-- Nav Items -->
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'dashboard' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         (click)="cambiarVista('dashboard')">
+        <i class="bi bi-grid-fill text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Dashboard</span>
       </a>
 
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'usuarios'"
-        (click)="cambiarVista('usuarios')"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="vistaActual === 'usuarios' ? 'Usuarios (actual)' : 'Ir a Usuarios'"
-        [attr.aria-pressed]="vistaActual === 'usuarios'"
-      >
-        <i class="bi bi-people-fill" aria-hidden="true"></i>
-        <span *ngIf="!sidebarCollapsed">Usuarios</span>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'usuarios' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         (click)="cambiarVista('usuarios')">
+        <i class="bi bi-people text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Usuarios</span>
       </a>
 
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'pizzas'"
-        (click)="cambiarVista('pizzas')"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="vistaActual === 'pizzas' ? 'Pizzas (actual)' : 'Ir a Pizzas'"
-        [attr.aria-pressed]="vistaActual === 'pizzas'"
-      >
-        <i class="bi bi-circle-fill text-warning" aria-hidden="true"></i>
-        <span *ngIf="!sidebarCollapsed">Pizzas</span>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'pizzas' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         (click)="cambiarVista('pizzas')">
+        <i class="bi bi-pie-chart text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Pizzas</span>
       </a>
 
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'categorias'"
-        (click)="cambiarVista('categorias')"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="vistaActual === 'categorias' ? 'Categorías (actual)' : 'Ir a Categorías'"
-        [attr.aria-pressed]="vistaActual === 'categorias'"
-      >
-        <i class="bi bi-folder-fill" aria-hidden="true"></i>
-        <span *ngIf="!sidebarCollapsed">Categorías</span>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'categorias' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         (click)="cambiarVista('categorias')">
+        <i class="bi bi-tags text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Categorías</span>
       </a>
 
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'ingredientes'"
-        (click)="cambiarVista('ingredientes')"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="
-          vistaActual === 'ingredientes' ? 'Ingredientes (actual)' : 'Ir a Ingredientes'
-        "
-        [attr.aria-pressed]="vistaActual === 'ingredientes'"
-      >
-        <i class="bi bi-basket-fill" aria-hidden="true"></i>
-        <span *ngIf="!sidebarCollapsed">Ingredientes</span>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'ingredientes' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         (click)="cambiarVista('ingredientes')">
+        <i class="bi bi-droplet text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Ingredientes</span>
       </a>
 
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'sizes'"
-        (click)="cambiarVista('sizes')"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="vistaActual === 'sizes' ? 'Tamaños (actual)' : 'Ir a Tamaños'"
-        [attr.aria-pressed]="vistaActual === 'sizes'"
-      >
-        <i class="bi bi-rulers" aria-hidden="true"></i>
-        <span *ngIf="!sidebarCollapsed">Tamaños</span>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'sizes' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         (click)="cambiarVista('sizes')">
+        <i class="bi bi-rulers text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Tamaños</span>
       </a>
 
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'extras'"
-        (click)="cambiarVista('extras')"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="vistaActual === 'extras' ? 'Extras (actual)' : 'Ir a Extras'"
-        [attr.aria-pressed]="vistaActual === 'extras'"
-      >
-        <i class="bi bi-cup-straw" aria-hidden="true"></i>
-        <span *ngIf="!sidebarCollapsed">Extras</span>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'extras' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         (click)="cambiarVista('extras')">
+        <i class="bi bi-plus-square text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Extras</span>
       </a>
 
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'promociones'"
-        (click)="cambiarVista('promociones')"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="
-          vistaActual === 'promociones' ? 'Promociones (actual)' : 'Ir a Promociones'
-        "
-        [attr.aria-pressed]="vistaActual === 'promociones'"
-      >
-        <i class="bi bi-tag-fill" aria-hidden="true"></i>
-        <span *ngIf="!sidebarCollapsed">Promociones</span>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'promociones' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         (click)="cambiarVista('promociones')">
+        <i class="bi bi-tag text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Promociones</span>
       </a>
 
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'orders'"
-        (click)="cambiarVista('orders')"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="vistaActual === 'orders' ? 'Pedidos (actual)' : 'Ir a Pedidos'"
-        [attr.aria-pressed]="vistaActual === 'orders'"
-      >
-        <i class="bi bi-bag-fill" aria-hidden="true"></i>
-        <span *ngIf="!sidebarCollapsed">Pedidos</span>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'orders' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         (click)="cambiarVista('orders')">
+        <i class="bi bi-receipt text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Pedidos</span>
       </a>
 
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'payments'"
-        (click)="cambiarVista('payments')"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="vistaActual === 'payments' ? 'Pagos (actual)' : 'Ir a Pagos'"
-        [attr.aria-pressed]="vistaActual === 'payments'"
-      >
-        <i class="bi bi-credit-card-fill" aria-hidden="true"></i>
-        <span *ngIf="!sidebarCollapsed">Pagos</span>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'payments' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         (click)="cambiarVista('payments')">
+        <i class="bi bi-cash-coin text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Pagos</span>
       </a>
 
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'metodos-pago'"
-        (click)="cambiarVista('metodos-pago')"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="
-          vistaActual === 'metodos-pago' ? 'Métodos de Pago (actual)' : 'Ir a Métodos de Pago'
-        "
-        [attr.aria-pressed]="vistaActual === 'metodos-pago'"
-        >>
-        <i class="bi bi-wallet2"></i>
-        <span *ngIf="!sidebarCollapsed">Métodos de Pago</span>
-      </a>
-
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'reviews'"
-        (click)="cambiarVista('reviews')"
-      >
-        <i class="bi bi-star-fill"></i>
-        <span *ngIf="!sidebarCollapsed">Reseñas</span>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'reviews' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         (click)="cambiarVista('reviews')">
+        <i class="bi bi-star text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Reseñas</span>
       </a>
     </nav>
 
-    <!-- Logout Button - Fixed at bottom -->
-    <div class="sidebar-footer">
-      <div class="sidebar-divider"></div>
-      <a
-        class="nav-item"
-        [class.active]="vistaActual === 'mi-perfil'"
-        (click)="cambiarVista('mi-perfil')"
-      >
-        <i class="bi bi-person-circle"></i>
-        <span *ngIf="!sidebarCollapsed">Mi Perfil</span>
-      </a>
-      <a class="nav-item text-danger" (click)="cerrarSesion()">
-        <i class="bi bi-box-arrow-right"></i>
-        <span *ngIf="!sidebarCollapsed">Cerrar Sesión</span>
-      </a>
+    <!-- User Profile & Logout (Bottom) -->
+    <div class="border-t border-gray-800 p-4">
+      <div class="flex items-center gap-3 cursor-pointer hover:bg-gray-800 p-2 rounded-lg transition-colors"
+           (click)="cambiarVista('mi-perfil')" *ngIf="getCurrentUser()">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center font-bold text-white shadow overflow-hidden">
+          <img *ngIf="false" src="perfil.jpg" class="w-full h-full object-cover"> <!-- Simulación de avatar -->
+          <span *ngIf="true">{{ getCurrentUser()?.name?.charAt(0)?.toUpperCase() || 'A' }}</span>
+        </div>
+        <div *ngIf="!sidebarCollapsed" class="flex-1 overflow-hidden">
+          <p class="text-sm font-bold text-white truncate">{{ getCurrentUser()?.name || 'Administrador' }}</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wider">{{ getCurrentUser()?.role || 'ADMINISTRADOR' }}</p>
+        </div>
+      </div>
+      <button class="w-full mt-3 flex items-center gap-3 text-red-500 hover:text-red-400 hover:bg-gray-800 p-2 rounded-lg transition-colors"
+              (click)="cerrarSesion()">
+        <i class="bi bi-box-arrow-left text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="font-medium">Cerrar Sesión</span>
+      </button>
     </div>
   </aside>
 
   <!-- Main Content -->
-  <main class="main-content">
-    <div class="content-wrapper">
-      <!-- Vista Dashboard por defecto -->
-      <div *ngIf="vistaActual === 'dashboard'" class="dashboard-home">
-        <h2 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h2>
+  <main class="flex-1 flex flex-col overflow-hidden relative">
+    
 
-        <div class="row g-4">
-          <div class="col-md-3" (click)="cambiarVista('usuarios')" style="cursor: pointer">
-            <div class="stat-card bg-danger">
-              <i class="bi bi-people-fill"></i>
-              <div class="stat-info">
-                <h3>Usuarios</h3>
-                <p>Gestionar usuarios del sistema</p>
+    <!-- Scrollable Content -->
+    <div class="flex-1 overflow-y-auto p-4 md:p-8">
+      
+      <!-- Vista Dashboard HOME (El rediseño solicitado visual) -->
+      <div *ngIf="vistaActual === 'dashboard'" class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- Stats Cards Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Pedidos Hoy -->
+          <div class="bg-white rounded-2xl p-6 border border-gray-300 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+              <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-500">
+                <i class="bi bi-bag-check text-2xl"></i>
               </div>
+            </div>
+            <div>
+              <p class="text-gray-700 text-sm mb-1">Pedidos (Total)</p>
+              <h3 class="text-3xl font-black text-black">{{ totalPedidos }}</h3>
             </div>
           </div>
 
-          <div class="col-md-3" (click)="cambiarVista('pizzas')" style="cursor: pointer">
-            <div class="stat-card bg-danger">
-              <i class="bi bi-circle-fill"></i>
-              <div class="stat-info">
-                <h3>Pizzas</h3>
-                <p>Administrar menú de pizzas</p>
+          <!-- Ventas Mensuales -->
+          <div class="bg-white rounded-2xl p-6 border border-gray-300 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+              <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
+                <i class="bi bi-currency-dollar text-2xl"></i>
               </div>
+            </div>
+            <div>
+              <p class="text-gray-700 text-sm mb-1">Ventas (Total)</p>
+              <h3 class="text-3xl font-black text-black">S/ {{ totalVentas | number:'1.2-2' }}</h3>
             </div>
           </div>
 
-          <div class="col-md-3" (click)="cambiarVista('orders')" style="cursor: pointer">
-            <div class="stat-card bg-danger">
-              <i class="bi bi-bag-fill"></i>
-              <div class="stat-info">
-                <h3>Pedidos</h3>
-                <p>Ver y gestionar pedidos</p>
+          <!-- Usuarios Registrados -->
+          <div class="bg-white rounded-2xl p-6 border border-gray-300 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+              <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
+                <i class="bi bi-people text-2xl"></i>
               </div>
             </div>
-          </div>
-
-          <div class="col-md-3" (click)="cambiarVista('payments')" style="cursor: pointer">
-            <div class="stat-card bg-danger">
-              <i class="bi bi-credit-card-fill"></i>
-              <div class="stat-info">
-                <h3>Pagos</h3>
-                <p>Gestionar transacciones</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="row g-4 mt-2">
-          <div class="col-md-3" (click)="cambiarVista('categorias')" style="cursor: pointer">
-            <div class="stat-card bg-danger">
-              <i class="bi bi-folder-fill"></i>
-              <div class="stat-info">
-                <h3>Categorías</h3>
-                <p>Organizar productos</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-3" (click)="cambiarVista('ingredientes')" style="cursor: pointer">
-            <div class="stat-card bg-danger">
-              <i class="bi bi-basket-fill"></i>
-              <div class="stat-info">
-                <h3>Ingredientes</h3>
-                <p>Gestionar ingredientes</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-3" (click)="cambiarVista('extras')" style="cursor: pointer">
-            <div class="stat-card bg-danger">
-              <i class="bi bi-cup-straw"></i>
-              <div class="stat-info">
-                <h3>Extras</h3>
-                <p>Bebidas, postres, etc.</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-3" (click)="cambiarVista('promociones')" style="cursor: pointer">
-            <div class="stat-card bg-danger">
-              <i class="bi bi-tag-fill"></i>
-              <div class="stat-info">
-                <h3>Promociones</h3>
-                <p>Descuentos y ofertas</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-3" (click)="cambiarVista('reviews')" style="cursor: pointer">
-            <div class="stat-card bg-danger">
-              <i class="bi bi-star-fill"></i>
-              <div class="stat-info">
-                <h3>Reseñas</h3>
-                <p>Opiniones de clientes</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-3" (click)="cambiarVista('sizes')" style="cursor: pointer">
-            <div class="stat-card bg-danger">
-              <i class="bi bi-rulers"></i>
-              <div class="stat-info">
-                <h3>Tamaños</h3>
-                <p>Gestionar tamaños</p>
-              </div>
+            <div>
+              <p class="text-gray-700 text-sm mb-1">Calificación Promedio</p>
+              <h3 class="text-2xl font-black text-black">{{ promedioCalificacion | number:'1.1-1' }}/5.0</h3>
             </div>
           </div>
         </div>
-      </div>
-      <!-- Contenido dinámico según la vista seleccionada -->
-      <div *ngIf="vistaActual === 'usuarios'">
-        <app-usuarios></app-usuarios>
+
+        <!-- Charts and Top Items Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Gráfico Simulado -->
+          <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-300 shadow-sm flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h3 class="text-xl font-bold text-black">Ventas Semanales</h3>
+                <p class="text-sm text-gray-700">Resumen de ingresos de los últimos 7 días</p>
+              </div>
+              <select class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block p-2">
+                <option>Esta semana</option>
+                <option>Semana pasada</option>
+              </select>
+            </div>
+            <!-- Barras del gráfico CSS puro -->
+            <div class="flex-1 flex items-end justify-between gap-2 mt-4 pt-4 border-t border-gray-300 min-h-[200px]">
+              <div *ngFor="let dia of ventasSemanales" class="w-full flex flex-col items-center gap-2 h-full justify-end group relative">
+                <div class="w-full rounded-t-sm transition-all duration-300"
+                     [ngClass]="dia.porcentaje === 100 ? 'bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-gray-200 group-hover:bg-gray-300'"
+                     [style.height.%]="dia.porcentaje"></div>
+                <span class="text-xs font-bold" [ngClass]="dia.porcentaje === 100 ? 'text-black' : 'text-gray-400'">{{ dia.dia }}</span>
+                <!-- Tooltip -->
+                <div class="absolute -top-8 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                  S/ {{ dia.total | number:'1.2-2' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Más Vendidos -->
+          <div class="bg-white rounded-2xl p-6 border border-gray-300 shadow-sm flex flex-col">
+            <h3 class="text-xl font-bold text-black">Más Vendidos</h3>
+            <p class="text-sm text-gray-700 mb-6">Productos estrella del mes</p>
+            
+            <div class="space-y-4 flex-1">
+              <div class="flex items-center gap-4" *ngFor="let producto of masVendidos; let i = index">
+                <div class="w-14 h-14 rounded-lg bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center font-bold text-gray-400 text-xl">
+                  #{{ i + 1 }}
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-bold text-black text-sm">{{ producto.nombre }}</h4>
+                  <p class="text-xs text-gray-700">{{ producto.cantidad }} vendidos</p>
+                </div>
+                <span class="font-bold text-red-600">S/ {{ producto.precio }}</span>
+              </div>
+              <div *ngIf="masVendidos.length === 0" class="text-center text-gray-500 py-4 text-sm">
+                No hay ventas registradas.
+              </div>
+            </div>
+
+            <button class="w-full mt-6 py-2 px-4 border-2 border-gray-800 text-black rounded-lg font-bold hover:bg-gray-800 hover:text-white transition-colors" (click)="cambiarVista('pizzas')">
+              Ver todo el menú
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabla de Pedidos -->
+        <div class="bg-white rounded-2xl p-6 border border-gray-300 shadow-sm">
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <h3 class="text-xl font-bold text-black">Pedidos Recientes</h3>
+              <p class="text-sm text-gray-700">Monitoreo en tiempo real de las órdenes entrantes</p>
+            </div>
+            <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors shadow-md" (click)="descargarReporte()">
+              DESCARGAR REPORTE
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr class="bg-gray-50 text-gray-700 text-xs uppercase tracking-wider">
+                  <th class="py-3 px-4 rounded-l-lg font-semibold">ID Pedido</th>
+                  <th class="py-3 px-4 font-semibold">Cliente</th>
+                  <th class="py-3 px-4 font-semibold">Producto</th>
+                  <th class="py-3 px-4 font-semibold">Estado</th>
+                  <th class="py-3 px-4 font-semibold">Total</th>
+                  <th class="py-3 px-4 text-center rounded-r-lg font-semibold">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="text-sm divide-y divide-gray-50">
+                <tr class="hover:bg-gray-50 transition-colors" *ngFor="let pedido of pedidosRecientes">
+                  <td class="py-4 px-4 font-bold text-black">#PH-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
+                  <td class="py-4 px-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs shrink-0">
+                        {{ pedido.userName ? pedido.userName.charAt(0).toUpperCase() : 'U' }}
+                      </div>
+                      <span class="font-medium text-gray-700">{{ pedido.userName || 'Usuario Anónimo' }}</span>
+                    </div>
+                  </td>
+                  <td class="py-4 px-4 text-gray-600 font-medium">
+                    {{ pedido.items?.length ? pedido.items![0].quantity + 'x ' + (pedido.items![0].pizzaName || pedido.items![0].extraName) : 'Sin items' }}
+                    <span *ngIf="(pedido.items?.length || 0) > 1" class="text-xs text-gray-400">... y más</span>
+                  </td>
+                  <td class="py-4 px-4">
+                    <span class="px-3 py-1 rounded-full text-[10px] font-black tracking-wider"
+                          [ngClass]="{
+                            'bg-amber-100 text-amber-700': pedido.status === 'PENDING' || pedido.status === 'PREPARING',
+                            'bg-blue-100 text-blue-700': pedido.status === 'CONFIRMED' || pedido.status === 'OUT_FOR_DELIVERY' || pedido.status === 'IN_DELIVERY',
+                            'bg-emerald-100 text-emerald-700': pedido.status === 'DELIVERED',
+                            'bg-red-100 text-red-700': pedido.status === 'CANCELLED'
+                          }">
+                      {{ pedido.status }}
+                    </span>
+                  </td>
+                  <td class="py-4 px-4 font-black text-black">S/ {{ pedido.total | number:'1.2-2' }}</td>
+                  <td class="py-4 px-4 text-center">
+                    <button class="text-gray-400 hover:text-red-600 transition-colors" (click)="cambiarVista('orders')"><i class="bi bi-eye text-lg"></i></button>
+                  </td>
+                </tr>
+                <tr *ngIf="pedidosRecientes.length === 0">
+                  <td colspan="6" class="py-8 text-center text-gray-500">No hay pedidos recientes.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
-      <div *ngIf="vistaActual === 'pizzas'">
-        <app-pizzas></app-pizzas>
+      <!-- Rutas reales (Componentes de Angular) -->
+      <div class="max-w-7xl mx-auto" *ngIf="vistaActual !== 'dashboard'">
+        <div *ngIf="vistaActual === 'usuarios'"><app-usuarios></app-usuarios></div>
+        <div *ngIf="vistaActual === 'pizzas'"><app-pizzas></app-pizzas></div>
+        <div *ngIf="vistaActual === 'categorias'"><app-categorias></app-categorias></div>
+        <div *ngIf="vistaActual === 'ingredientes'"><app-ingredientes></app-ingredientes></div>
+        <div *ngIf="vistaActual === 'sizes'"><app-sizes></app-sizes></div>
+        <div *ngIf="vistaActual === 'extras'"><app-extras></app-extras></div>
+        <div *ngIf="vistaActual === 'promociones'"><app-promociones></app-promociones></div>
+        <div *ngIf="vistaActual === 'orders'"><app-orders></app-orders></div>
+        <div *ngIf="vistaActual === 'payments'"><app-payments></app-payments></div>
+        <div *ngIf="vistaActual === 'metodos-pago'"><app-metodos-pago></app-metodos-pago></div>
+        <div *ngIf="vistaActual === 'reviews'"><app-reviews></app-reviews></div>
+        <div *ngIf="vistaActual === 'mi-perfil'"><app-perfil-admin></app-perfil-admin></div>
       </div>
-
-      <div *ngIf="vistaActual === 'categorias'">
-        <app-categorias></app-categorias>
-      </div>
-
-      <div *ngIf="vistaActual === 'ingredientes'">
-        <app-ingredientes></app-ingredientes>
-      </div>
-
-      <div *ngIf="vistaActual === 'sizes'">
-        <app-sizes></app-sizes>
-      </div>
-
-      <div *ngIf="vistaActual === 'extras'">
-        <app-extras></app-extras>
-      </div>
-
-      <div *ngIf="vistaActual === 'promociones'">
-        <app-promociones></app-promociones>
-      </div>
-
-      <div *ngIf="vistaActual === 'orders'">
-        <app-orders></app-orders>
-      </div>
-
-      <div *ngIf="vistaActual === 'payments'">
-        <app-payments></app-payments>
-      </div>
-
-      <div *ngIf="vistaActual === 'metodos-pago'">
-        <app-metodos-pago></app-metodos-pago>
-      </div>
-
-      <div *ngIf="vistaActual === 'reviews'">
-        <app-reviews></app-reviews>
-      </div>
-
-      <div *ngIf="vistaActual === 'mi-perfil'">
-        <app-perfil-admin></app-perfil-admin>
-      </div>
+      
     </div>
   </main>
 </div>

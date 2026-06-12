@@ -1,75 +1,78 @@
-<div class="content-wrapper">
-  <div class="page-header">
-    <h2><i class="bi bi-person-circle"></i> Mi Perfil</h2>
-    <p class="text-muted">Gestiona tu información personal y contraseña</p>
+<div class="max-w-6xl mx-auto">
+  <div class="flex flex-col mb-8">
+    <h2 class="text-3xl font-black text-gray-800 flex items-center gap-3">
+      <i class="bi bi-person-badge-fill text-red-600 drop-shadow-sm"></i> Mi Perfil
+    </h2>
+    <p class="text-gray-500 font-medium mt-1 ml-10">Gestiona tu información personal y configuración de seguridad</p>
   </div>
 
   <!-- Mensajes -->
-  <div *ngIf="mensaje" class="alert" [ngClass]="{'alert-success': tipoMensaje === 'success', 'alert-danger': tipoMensaje === 'error'}" role="alert">
-    <i class="bi" [ngClass]="{'bi-check-circle': tipoMensaje === 'success', 'bi-exclamation-circle': tipoMensaje === 'error'}"></i>
-    {{ mensaje }}
+  <div *ngIf="mensaje" class="mb-6">
+    <div class="px-5 py-4 rounded-xl flex items-center gap-3 font-medium shadow-sm" 
+         [ngClass]="tipoMensaje === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'">
+      <i class="bi text-xl" [ngClass]="tipoMensaje === 'success' ? 'bi-check-circle-fill text-emerald-500' : 'bi-exclamation-triangle-fill text-red-500'"></i>
+      {{ mensaje }}
+    </div>
   </div>
 
-  <div class="row">
-    <!-- Información Personal -->
-    <div class="col-lg-8">
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white">
-          <h5 class="mb-0"><i class="bi bi-person-lines-fill"></i> Información Personal</h5>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Panel Principal (Izquierda) -->
+    <div class="lg:col-span-2 space-y-8">
+      
+      <!-- Información Personal -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+            <i class="bi bi-person-lines-fill text-lg"></i>
+          </div>
+          <h5 class="text-xl font-bold text-gray-800 m-0">Información Personal</h5>
         </div>
-        <div class="card-body">
-          <form (ngSubmit)="actualizarDatos()">
-            <div class="mb-3">
-              <label for="nombre" class="form-label">Nombre Completo *</label>
-              <input 
-                type="text" 
-                class="form-control" 
-                id="nombre" 
-                [(ngModel)]="usuarioEditado.name" 
-                name="nombre"
-                required>
+        
+        <div class="p-6">
+          <form (ngSubmit)="actualizarDatos()" class="space-y-5">
+            <div>
+              <label for="nombre" class="block text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Nombre Completo <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <i class="bi bi-person text-gray-400"></i>
+                </div>
+                <input type="text" id="nombre" name="nombre" [(ngModel)]="usuarioEditado.name" required
+                       class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800 font-medium">
+              </div>
             </div>
 
-            <div class="mb-3">
-              <label for="email" class="form-label">Email *</label>
-              <input 
-                type="email" 
-                class="form-control" 
-                id="email" 
-                [(ngModel)]="usuarioEditado.email" 
-                name="email"
-                required>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label for="email" class="block text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Email <span class="text-red-500">*</span></label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <i class="bi bi-envelope text-gray-400"></i>
+                  </div>
+                  <input type="email" id="email" name="email" [(ngModel)]="usuarioEditado.email" required
+                         class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800 font-medium">
+                </div>
+              </div>
+
+              <div>
+                <label for="telefono" class="block text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Teléfono</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <i class="bi bi-telephone text-gray-400"></i>
+                  </div>
+                  <input type="tel" id="telefono" name="telefono" [(ngModel)]="usuarioEditado.phone" placeholder="Opcional"
+                         class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800 font-medium">
+                </div>
+              </div>
             </div>
 
-            <div class="mb-3">
-              <label for="telefono" class="form-label">Teléfono</label>
-              <input 
-                type="tel" 
-                class="form-control" 
-                id="telefono" 
-                [(ngModel)]="usuarioEditado.phone" 
-                name="telefono"
-                placeholder="Opcional">
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Rol</label>
-              <input 
-                type="text" 
-                class="form-control" 
-                [value]="usuarioEditado.role" 
-                readonly
-                disabled>
-            </div>
-
-            <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-primary" [disabled]="cargando">
-                <span *ngIf="cargando" class="spinner-border spinner-border-sm me-2"></span>
-                <i class="bi bi-save" *ngIf="!cargando"></i>
+            <div class="pt-5 mt-2 border-t border-gray-100 flex gap-3">
+              <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed" [disabled]="cargando">
+                <i class="bi bi-arrow-repeat animate-spin" *ngIf="cargando"></i>
+                <i class="bi bi-floppy-fill" *ngIf="!cargando"></i>
                 {{ cargando ? 'Guardando...' : 'Guardar Cambios' }}
               </button>
-              <button type="button" class="btn btn-secondary" (click)="cancelarEdicion()" [disabled]="cargando">
-                <i class="bi bi-x-circle"></i> Cancelar
+              <button type="button" class="px-6 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold rounded-xl transition-colors flex items-center gap-2" (click)="cancelarEdicion()" [disabled]="cargando">
+                <i class="bi bi-x-lg"></i> Cancelar
               </button>
             </div>
           </form>
@@ -77,84 +80,102 @@
       </div>
     </div>
 
-    <!-- Panel Lateral -->
-    <div class="col-lg-4">
+    <!-- Panel Lateral (Derecha) -->
+    <div class="lg:col-span-1 space-y-6">
+      
       <!-- Información de Cuenta -->
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-info text-white">
-          <h5 class="mb-0"><i class="bi bi-shield-check"></i> Información de Cuenta</h5>
+      <div class="bg-gray-900 rounded-2xl shadow-lg border border-gray-800 overflow-hidden text-white relative">
+        <div class="absolute top-0 right-0 p-4 opacity-10">
+          <i class="bi bi-shield-lock-fill text-8xl"></i>
         </div>
-        <div class="card-body">
-          <div class="mb-3">
-            <strong>ID de Usuario:</strong>
-            <p class="text-muted mb-0">{{ usuario?.id }}</p>
-          </div>
-          <div class="mb-3">
-            <strong>Rol:</strong>
-            <p class="mb-0">
-              <span class="badge bg-success">{{ usuario?.role }}</span>
-            </p>
-          </div>
+        
+        <div class="px-6 py-5 border-b border-gray-800 relative z-10">
+          <h5 class="text-lg font-bold m-0 flex items-center gap-2">
+            <i class="bi bi-info-circle text-blue-400"></i> Detalles de Cuenta
+          </h5>
+        </div>
+        
+        <div class="p-6 relative z-10 space-y-4">
           <div>
-            <strong>Email Registrado:</strong>
-            <p class="text-muted mb-0">{{ usuario?.email }}</p>
+            <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ID de Usuario</span>
+            <span class="font-mono bg-black/50 px-2 py-1 rounded text-sm text-gray-300 border border-gray-700">{{ usuario?.id || '---' }}</span>
+          </div>
+          
+          <div>
+            <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Nivel de Acceso</span>
+            <span class="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg text-sm font-bold">
+              <i class="bi bi-star-fill text-xs"></i> {{ usuario?.role || 'ADMIN' }}
+            </span>
+          </div>
+          
+          <div>
+            <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Estado</span>
+            <span class="inline-flex items-center gap-1.5 text-blue-400 font-medium text-sm">
+              <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Activo
+            </span>
           </div>
         </div>
       </div>
 
-      <!-- Cambiar Contraseña -->
-      <div class="card shadow-sm">
-        <div class="card-header bg-warning text-dark">
-          <h5 class="mb-0"><i class="bi bi-key-fill"></i> Seguridad</h5>
+      <!-- Seguridad / Contraseña -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+            <i class="bi bi-shield-check text-lg"></i>
+          </div>
+          <h5 class="text-lg font-bold text-gray-800 m-0">Seguridad</h5>
         </div>
-        <div class="card-body">
-          <div *ngIf="!mostrarCambioPassword">
-            <p class="text-muted mb-3">Mantén tu cuenta segura actualizando tu contraseña regularmente.</p>
-            <button type="button" class="btn btn-warning w-100" (click)="mostrarCambioPassword = true">
-              <i class="bi bi-key"></i> Cambiar Contraseña
+        
+        <div class="p-6">
+          <div *ngIf="!mostrarCambioPassword" class="text-center py-2">
+            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400">
+              <i class="bi bi-key-fill text-2xl"></i>
+            </div>
+            <p class="text-gray-500 text-sm mb-5">Actualiza tu contraseña regularmente para mantener tu cuenta segura.</p>
+            <button type="button" class="w-full bg-white border-2 border-gray-200 hover:border-gray-800 hover:bg-gray-800 hover:text-white text-gray-800 font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 group" (click)="mostrarCambioPassword = true">
+              <i class="bi bi-lock-fill text-gray-400 group-hover:text-white transition-colors"></i> Cambiar Contraseña
             </button>
           </div>
 
-          <div *ngIf="mostrarCambioPassword">
-            <form (ngSubmit)="cambiarPassword()">
-              <div class="mb-3">
-                <label for="nuevaPassword" class="form-label">Nueva Contraseña *</label>
-                <input 
-                  type="password" 
-                  class="form-control" 
-                  id="nuevaPassword" 
-                  [(ngModel)]="nuevaPassword" 
-                  name="nuevaPassword"
-                  placeholder="Mínimo 6 caracteres"
-                  required>
+          <div *ngIf="mostrarCambioPassword" class="animate-in fade-in slide-in-from-top-4 duration-300">
+            <form (ngSubmit)="cambiarPassword()" class="space-y-4">
+              <div>
+                <label for="nuevaPassword" class="block text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Nueva Contraseña <span class="text-red-500">*</span></label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <i class="bi bi-key text-gray-400"></i>
+                  </div>
+                  <input type="password" id="nuevaPassword" name="nuevaPassword" [(ngModel)]="nuevaPassword" placeholder="Mínimo 6 caracteres" required
+                         class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-800 focus:border-gray-800 outline-none transition-all">
+                </div>
               </div>
 
-              <div class="mb-3">
-                <label for="confirmarPassword" class="form-label">Confirmar Contraseña *</label>
-                <input 
-                  type="password" 
-                  class="form-control" 
-                  id="confirmarPassword" 
-                  [(ngModel)]="confirmarPassword" 
-                  name="confirmarPassword"
-                  placeholder="Repite la contraseña"
-                  required>
+              <div>
+                <label for="confirmarPassword" class="block text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Confirmar Contraseña <span class="text-red-500">*</span></label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <i class="bi bi-check2-all text-gray-400"></i>
+                  </div>
+                  <input type="password" id="confirmarPassword" name="confirmarPassword" [(ngModel)]="confirmarPassword" placeholder="Repite la contraseña" required
+                         class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-800 focus:border-gray-800 outline-none transition-all">
+                </div>
               </div>
 
-              <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-warning flex-fill" [disabled]="cargando">
-                  <span *ngIf="cargando" class="spinner-border spinner-border-sm me-2"></span>
-                  <i class="bi bi-check-lg" *ngIf="!cargando"></i>
-                  {{ cargando ? 'Cambiando...' : 'Cambiar' }}
+              <div class="pt-2 flex gap-2">
+                <button type="submit" class="flex-1 bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed" [disabled]="cargando">
+                  <i class="bi bi-arrow-repeat animate-spin" *ngIf="cargando"></i>
+                  <i class="bi bi-check-circle-fill" *ngIf="!cargando"></i>
+                  {{ cargando ? 'Cambiando...' : 'Actualizar' }}
                 </button>
-                <button type="button" class="btn btn-secondary" (click)="cancelarCambioPassword()" [disabled]="cargando">
-                  <i class="bi bi-x-lg"></i>
+                <button type="button" class="w-12 flex items-center justify-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 rounded-xl transition-colors" (click)="cancelarCambioPassword()" [disabled]="cargando" title="Cancelar">
+                  <i class="bi bi-x-lg font-bold"></i>
                 </button>
               </div>
             </form>
           </div>
         </div>
       </div>
+      
     </div>
   </div>
 </div>

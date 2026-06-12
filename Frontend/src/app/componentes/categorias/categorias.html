@@ -1,224 +1,192 @@
-<div class="categorias-container">
-	<div class="header">
-		<div class="d-flex align-items-center gap-3">
-			<h1>Gestión de Categorías</h1>
-		</div>
-		<button class="btn-primary" (click)="abrirFormulario()" *ngIf="!showForm">
-			<i class="fas fa-plus"></i> Nueva Categoría
-		</button>
-	</div>
+<div class="max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div class="flex items-center gap-3">
+      <h2 class="text-2xl font-black text-gray-800">
+        <i class="bi bi-tags-fill text-red-600 mr-2"></i> Gestión de Categorías
+      </h2>
+    </div>
+    <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition-colors shadow-sm" 
+            (click)="abrirFormulario()" *ngIf="!showForm">
+      <i class="bi bi-plus-lg font-bold"></i> Nueva Categoría
+    </button>
+  </div>
 
-	<div class="alert alert-success" *ngIf="success">{{ success }}</div>
-	<div class="alert alert-error" *ngIf="error">{{ error }}</div>
+  <!-- Mensajes de éxito y error -->
+  <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2" *ngIf="success">
+    <i class="bi bi-check-circle-fill"></i> {{ success }}
+  </div>
+  <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2" *ngIf="error">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+  </div>
 
-	<div class="loading" *ngIf="loading">
-		<i class="fas fa-spinner fa-spin"></i> Cargando...
-	</div>
+  <!-- Indicador de carga -->
+  <div class="flex justify-center items-center py-12 text-gray-400" *ngIf="loading">
+    <i class="bi bi-arrow-repeat animate-spin text-3xl mr-3 text-red-600"></i> <span class="text-lg font-medium">Cargando...</span>
+  </div>
 
-	<div class="form-container" *ngIf="showForm">
-		<div class="form-header">
-			<h2>{{ editMode ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
-			<button class="btn-close" (click)="cancelar()">
-				<i class="fas fa-times"></i>
-			</button>
-		</div>
+  <!-- Formulario -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6" *ngIf="showForm">
+    <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+      <h5 class="text-xl font-bold text-gray-800">
+        <i class="bi bi-pencil-fill text-red-600 mr-2"></i> {{ editMode ? 'Editar Categoría' : 'Nueva Categoría' }}
+      </h5>
+      <button class="text-gray-400 hover:text-red-600 transition-colors" (click)="cancelar()">
+        <i class="bi bi-x-lg text-xl"></i>
+      </button>
+    </div>
 
-		<form [formGroup]="categoriaForm" (ngSubmit)="guardarCategoria()" class="categoria-form">
-			<div class="form-row">
-				<div class="form-group">
-					<label for="name">Nombre *</label>
-					<input
-						id="name"
-						type="text"
-						formControlName="name"
-						class="form-control"
-									maxlength="100"
-						[class.error]="categoriaForm.get('name')?.invalid && categoriaForm.get('name')?.touched"
-					>
-					<div class="error-message" *ngIf="categoriaForm.get('name')?.invalid && categoriaForm.get('name')?.touched">
-						<span *ngIf="categoriaForm.get('name')?.errors?.['required']">El nombre es requerido</span>
-						<span *ngIf="categoriaForm.get('name')?.errors?.['minlength']">El nombre debe tener al menos 2 caracteres</span>
-									<span *ngIf="categoriaForm.get('name')?.errors?.['maxlength']">El nombre no puede exceder los 100 caracteres</span>
-					</div>
-											<div class="error-message" *ngIf="verificarNombreDuplicado() && categoriaForm.get('name')?.touched">
-						Ya existe una categoría con este nombre
-					</div>
-				</div>
+    <form [formGroup]="categoriaForm" (ngSubmit)="guardarCategoria()" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="name" class="block text-sm font-bold text-gray-700 mb-1">Nombre *</label>
+          <input id="name" type="text" formControlName="name" maxlength="100"
+                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                 [ngClass]="categoriaForm.get('name')?.invalid && categoriaForm.get('name')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="categoriaForm.get('name')?.invalid && categoriaForm.get('name')?.touched">
+            <span *ngIf="categoriaForm.get('name')?.errors?.['required']">El nombre es requerido</span>
+            <span *ngIf="categoriaForm.get('name')?.errors?.['minlength']">El nombre debe tener al menos 2 caracteres</span>
+            <span *ngIf="categoriaForm.get('name')?.errors?.['maxlength']">El nombre no puede exceder los 100 caracteres</span>
+          </div>
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="verificarNombreDuplicado() && categoriaForm.get('name')?.touched">
+            Ya existe una categoría con este nombre
+          </div>
+        </div>
 
-				<div class="form-group">
-					<label for="displayOrder">Orden de visualización *</label>
-					<input
-						id="displayOrder"
-						type="number"
-						formControlName="displayOrder"
-						class="form-control"
-									min="1"
-						[class.error]="categoriaForm.get('displayOrder')?.invalid && categoriaForm.get('displayOrder')?.touched"
-					>
-					<div class="error-message" *ngIf="categoriaForm.get('displayOrder')?.invalid && categoriaForm.get('displayOrder')?.touched">
-						<span *ngIf="categoriaForm.get('displayOrder')?.errors?.['required']">El orden es requerido</span>
-									<span *ngIf="categoriaForm.get('displayOrder')?.errors?.['min']">El orden debe ser 1 o mayor</span>
-					</div>
-								<div class="error-message" *ngIf="verificarOrdenDuplicado() && categoriaForm.get('displayOrder')?.touched">
-									Ya existe una categoría con ese orden de visualización
-								</div>
-				</div>
-			</div>
+        <div>
+          <label for="displayOrder" class="block text-sm font-bold text-gray-700 mb-1">Orden de visualización *</label>
+          <input id="displayOrder" type="number" formControlName="displayOrder" min="1"
+                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                 [ngClass]="categoriaForm.get('displayOrder')?.invalid && categoriaForm.get('displayOrder')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="categoriaForm.get('displayOrder')?.invalid && categoriaForm.get('displayOrder')?.touched">
+            <span *ngIf="categoriaForm.get('displayOrder')?.errors?.['required']">El orden es requerido</span>
+            <span *ngIf="categoriaForm.get('displayOrder')?.errors?.['min']">El orden debe ser 1 o mayor</span>
+          </div>
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="verificarOrdenDuplicado() && categoriaForm.get('displayOrder')?.touched">
+            Ya existe una categoría con ese orden de visualización
+          </div>
+        </div>
+      </div>
 
-			<div class="form-row">
-				<div class="form-group">
-					<label for="description">Descripción</label>
-					<textarea
-						id="description"
-						formControlName="description"
-						class="form-control"
-						rows="3"
-						placeholder="Descripción breve de la categoría"
-					></textarea>
-				</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="description" class="block text-sm font-bold text-gray-700 mb-1">Descripción</label>
+          <textarea id="description" formControlName="description" rows="3" placeholder="Descripción breve de la categoría"
+                    class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"></textarea>
+        </div>
 
-				<div class="form-group">
-					<label for="imageUrl">URL de la imagen</label>
-					<input
-						id="imageUrl"
-						type="text"
-						formControlName="imageUrl"
-						class="form-control"
-						placeholder="https://..."
-					>
-				</div>
-			</div>
+        <div>
+          <label for="imageUrl" class="block text-sm font-bold text-gray-700 mb-1">URL de la imagen</label>
+          <input id="imageUrl" type="text" formControlName="imageUrl" placeholder="https://..."
+                 class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
+        </div>
+      </div>
 
-			<div class="form-actions">
-				<button type="button" class="btn-secondary" (click)="cancelar()">
-					Cancelar
-				</button>
-				<button type="submit" class="btn-primary" [disabled]="categoriaForm.invalid || loading">
-					<i class="fas fa-save"></i>
-					{{ editMode ? 'Actualizar' : 'Crear' }} Categoría
-				</button>
-			</div>
-		</form>
-	</div>
+      <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
+        <button type="button" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg transition-colors" (click)="cancelar()">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="categoriaForm.invalid || loading">
+          <i class="bi bi-save"></i>
+          {{ editMode ? 'Actualizar' : 'Crear' }} Categoría
+        </button>
+      </div>
+    </form>
+  </div>
 
-	<div class="table-container" *ngIf="!showForm">
-		<div class="card-header">
-			<h2>Lista de Categorías ({{ categorias.length }})</h2>
-		</div>
+  <!-- Lista de Categorías -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" *ngIf="!showForm">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+      <h5 class="text-lg font-bold text-gray-800 m-0">Lista de Categorías ({{ categorias.length }})</h5>
+    </div>
 
-		<!-- Grid de categorías en 3 columnas -->
-		<div *ngIf="categorias.length > 0; else noCategorias">
-			<div class="row g-3 p-3">
-				<div class="col-md-4" *ngFor="let categoria of categoriasPaginadas; trackBy: trackByCategoriaId; let i = index">
-					<div class="card h-100 shadow-sm">
-						<div class="row g-0">
-							<!-- Imagen de la categoría -->
-							<div class="col-4">
-								<div class="p-3 h-100 d-flex align-items-center justify-content-center">
-									<img 
-										*ngIf="categoria.imageUrl"
-										[src]="getOptimizedImageUrl(categoria.imageUrl)" 
-										[alt]="'Imagen de ' + categoria.name"
-										[loading]="i < 6 ? 'eager' : 'lazy'"
-										[attr.fetchpriority]="i === 0 ? 'high' : (i < 6 ? 'auto' : 'low')"
-										class="img-fluid rounded"
-										style="width: 120px; height: 120px; object-fit: cover;"
-										decoding="async"
-										onerror="this.style.display='none'">
-									<div 
-										*ngIf="!categoria.imageUrl"
-										class="placeholder-image d-flex align-items-center justify-content-center rounded"
-										style="width: 120px; height: 120px; background-color: #f8f9fa; border: 2px dashed #dee2e6;">
-										<i class="fas fa-tag fa-3x text-muted"></i>
-									</div>
-								</div>
-							</div>
+    <!-- Grid de categorías -->
+    <div *ngIf="categorias.length > 0; else noCategorias" class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-red-200 hover:shadow-md transition-all group flex" *ngFor="let categoria of categoriasPaginadas; trackBy: trackByCategoriaId; let i = index">
+          
+          <!-- Imagen de la categoría -->
+          <div class="w-1/3 bg-gray-50 flex items-center justify-center p-4 border-r border-gray-100">
+            <img *ngIf="categoria.imageUrl"
+                 [src]="getOptimizedImageUrl(categoria.imageUrl)" 
+                 [alt]="categoria.name"
+                 [loading]="i < 6 ? 'eager' : 'lazy'"
+                 [attr.fetchpriority]="i === 0 ? 'high' : (i < 6 ? 'auto' : 'low')"
+                 class="w-full h-full object-cover rounded shadow-sm max-w-[100px] max-h-[100px]"
+                 decoding="async"
+                 onerror="this.style.display='none'">
+            <div *ngIf="!categoria.imageUrl"
+                 class="w-full h-full flex items-center justify-center rounded border-2 border-dashed border-gray-300 max-w-[100px] max-h-[100px]">
+              <i class="bi bi-tags text-3xl text-gray-300"></i>
+            </div>
+          </div>
 
-							<!-- Información de la categoría -->
-							<div class="col-8">
-								<div class="card-body p-3">
-									<!-- Header con nombre y ID -->
-									<div class="d-flex justify-content-between align-items-start mb-2">
-										<div class="flex-grow-1">
-											<h5 class="card-title mb-1">
-												<i class="fas fa-tag text-primary me-1"></i>
-												{{ categoria.name }}
-											</h5>
-											<small class="text-muted">#{{ categoria.id }}</small>
-										</div>
-										<span class="badge bg-info">
-											Orden: {{ categoria.displayOrder ?? 0 }}
-										</span>
-									</div>
+          <!-- Información de la categoría -->
+          <div class="w-2/3 p-4 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-start mb-2">
+                <div>
+                  <h5 class="font-black text-gray-800 text-lg leading-tight mb-1 group-hover:text-red-600 transition-colors">{{ categoria.name }}</h5>
+                  <p class="text-xs text-gray-400 font-mono">#{{ categoria.id }}</p>
+                </div>
+                <span class="bg-blue-50 text-blue-600 text-xs font-bold px-2 py-1 rounded-md border border-blue-100 shadow-sm" title="Orden de visualización">
+                  <i class="bi bi-list-ol"></i> {{ categoria.displayOrder ?? 0 }}
+                </span>
+              </div>
 
-									<!-- Descripción -->
-									<p class="card-text text-muted small mb-2">
-										<span *ngIf="categoria.description; else noDescription">
-											{{ categoria.description.length > 80 ? (categoria.description | slice:0:80) + '...' : categoria.description }}
-										</span>
-										<ng-template #noDescription>
-											<span class="text-muted fst-italic">Sin descripción</span>
-										</ng-template>
-									</p>
+              <p class="text-gray-500 text-xs mb-3 line-clamp-2" *ngIf="categoria.description">
+                {{ categoria.description }}
+              </p>
+              <p class="text-gray-400 text-xs mb-3 italic" *ngIf="!categoria.description">
+                Sin descripción
+              </p>
 
-									<!-- Fecha de actualización -->
-									<div class="mb-3">
-										<small class="text-muted">
-											<i class="fas fa-clock me-1"></i>
-											Actualizado: 
-											<span *ngIf="categoria.updatedAt; else noUpdateDate">
-												{{ formatearFecha(categoria.updatedAt) }}
-											</span>
-											<ng-template #noUpdateDate>N/D</ng-template>
-										</small>
-									</div>
+              <div class="text-xs text-gray-400 flex items-center gap-1 mb-3">
+                <i class="bi bi-clock"></i> Actualizado:
+                <span *ngIf="categoria.updatedAt">{{ formatearFecha(categoria.updatedAt) }}</span>
+                <span *ngIf="!categoria.updatedAt">N/D</span>
+              </div>
+            </div>
 
-									<!-- Botones de acción -->
-									<div class="d-flex gap-1">
-										<button
-											type="button"
-											class="btn btn-sm btn-primary flex-fill"
-											(click)="editarCategoria(categoria)"
-											title="Editar categoría">
-											<i class="fas fa-edit me-1"></i>
-											Editar
-										</button>
-										
-										<button
-											type="button"
-											class="btn btn-sm btn-danger"
-											*ngIf="puedeEliminar(categoria.id)"
-											(click)="eliminarCategoria(categoria.id!, categoria.name)"
-											title="Eliminar categoría">
-											<i class="fas fa-trash-alt"></i>
-										</button>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+            <!-- Botones de acción -->
+            <div class="flex gap-2 mt-auto">
+              <button class="flex-1 bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-700 font-bold py-1.5 px-2 rounded-lg text-xs transition-colors flex items-center justify-center gap-1"
+                      (click)="editarCategoria(categoria)" title="Editar">
+                <i class="bi bi-pencil-fill"></i> Editar
+              </button>
+              
+              <button *ngIf="puedeEliminar(categoria.id)"
+                      class="flex-1 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold py-1.5 px-2 rounded-lg text-xs transition-colors flex items-center justify-center gap-1"
+                      (click)="eliminarCategoria(categoria.id!, categoria.name)" title="Eliminar">
+                <i class="bi bi-trash-fill"></i> Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-			<!-- Paginación -->
-			<app-pagination 
-				*ngIf="categorias.length > 0"
-				[currentPage]="currentPage" 
-				[totalItems]="categorias.length" 
-				[itemsPerPage]="itemsPerPage"
-				(pageChange)="onPageChange($event)">
-			</app-pagination>
-		</div>
+      <!-- Paginación -->
+      <div class="mt-6" *ngIf="categorias.length > 0">
+        <app-pagination 
+          [currentPage]="currentPage" 
+          [totalItems]="categorias.length" 
+          [itemsPerPage]="itemsPerPage"
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
+      </div>
+    </div>
 
-		<ng-template #noCategorias>
-			<div class="empty-state">
-				<i class="fas fa-folder-open"></i>
-				<h3>No hay categorías registradas</h3>
-				<p>Comience creando la primera categoría</p>
-				<button class="btn-primary" (click)="abrirFormulario()">
-					<i class="fas fa-plus"></i> Crear Primera Categoría
-				</button>
-			</div>
-		</ng-template>
-	</div>
+    <ng-template #noCategorias>
+      <div class="py-16 px-6 text-center flex flex-col items-center">
+        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
+          <i class="bi bi-folder2-open text-4xl"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-1">No hay categorías</h3>
+        <p class="text-gray-500 text-sm mb-6 max-w-sm">Comience creando la primera categoría para organizar sus productos.</p>
+        <button class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-lg transition-colors" (click)="abrirFormulario()">
+          Crear Primera Categoría
+        </button>
+      </div>
+    </ng-template>
+  </div>
 </div>

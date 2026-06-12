@@ -15,6 +15,16 @@ import { PerfilAdminComponent } from '../perfil-admin/perfil-admin';
 import { ExtrasComponent } from '../extras/extras';
 import { Promociones } from '../promociones/promociones';
 
+// Services for dashboard data
+import { UsuarioService } from '../../services/usuario.service';
+import { Order } from '../../services/order.service';
+import { Payment } from '../../services/payment.service';
+import { Review } from '../../services/review.service';
+import { PizzaService } from '../../services/pizza.service';
+import { OrderCompleteDTO } from '../../models/admin.interface';
+import * as ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+
 @Component({
   selector: 'app-panel-admin',
   standalone: true,
@@ -40,10 +50,27 @@ export class PanelAdmin implements OnInit {
   vistaActual: string = 'dashboard';
   sidebarCollapsed: boolean = false;
 
+  // Stats
+  totalPedidos: number = 0;
+  totalVentas: number = 0;
+  totalUsuarios: number = 0;
+  promedioCalificacion: number = 0;
+
+  // Nuevas propiedades para dashboard
+  pedidosRecientes: OrderCompleteDTO[] = [];
+  todosLosPedidos: OrderCompleteDTO[] = [];
+  masVendidos: any[] = [];
+  ventasSemanales: any[] = [];
+
   constructor(
     private authService: AuthService, 
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private usuarioService: UsuarioService,
+    private orderService: Order,
+    private paymentService: Payment,
+    private reviewService: Review,
+    private pizzaService: PizzaService
   ) {}
 
   ngOnInit() {
@@ -60,6 +87,232 @@ export class PanelAdmin implements OnInit {
         this.vistaActual = vistaGuardada;
       }
     }
+
+    this.cargarEstadisticas();
+  }
+
+  cargarEstadisticas(): void {
+    // Cargar total de usuarios
+    this.usuarioService.listarUsuarios().subscribe({
+      next: (usuarios) => {
+        this.totalUsuarios = usuarios.length;
+      },
+      error: (err) => console.error('Error al cargar usuarios:', err)
+    });
+
+    // Cargar total de pedidos
+    this.orderService.obtenerTodos().subscribe({
+      next: (pedidos) => {
+        this.totalPedidos = pedidos.length;
+      },
+      error: (err) => console.error('Error al cargar pedidos:', err)
+    });
+
+    // Cargar total de ventas (Suma de montos de pagos)
+    this.paymentService.obtenerTodos().subscribe({
+      next: (pagos) => {
+        this.totalVentas = pagos.reduce((sum, pago) => sum + (pago.amount || 0), 0);
+      },
+      error: (err) => console.error('Error al cargar pagos:', err)
+    });
+
+    // Cargar calificación promedio
+    this.reviewService.obtenerTodos().subscribe({
+      next: (reviews) => {
+        if (reviews.length > 0) {
+          const sum = reviews.reduce((acc, rev) => acc + (rev.rating || 0), 0);
+          this.promedioCalificacion = sum / reviews.length;
+        }
+      },
+      error: (err) => console.error('Error al cargar reseñas:', err)
+    });
+
+    // Cargar pedidos recientes, ventas semanales y más vendidos
+    this.orderService.obtenerTodosCompletos().subscribe({
+      next: (pedidos) => {
+        this.todosLosPedidos = pedidos;
+        // Pedidos Recientes
+        // Ordenamos por fecha de forma descendente y tomamos los 5 últimos
+        const pedidosOrdenados = [...pedidos].sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
+        this.pedidosRecientes = pedidosOrdenados.slice(0, 5);
+
+        // Ventas Semanales
+        this.calcularVentasSemanales(pedidos);
+
+        // Más Vendidos
+        this.calcularMasVendidos(pedidos);
+      },
+      error: (err) => console.error('Error al cargar pedidos completos:', err)
+    });
+  }
+
+  calcularVentasSemanales(pedidos: OrderCompleteDTO[]): void {
+    const hoy = new Date();
+    hoy.setHours(23, 59, 59, 999); // Final del día actual
+    
+    interface VentaDiaria {
+      dia: string;
+      fecha: string;
+      total: number;
+      porcentaje: number;
+    }
+    const ventas: VentaDiaria[] = [];
+    const dias = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
+    
+    // Inicializar los últimos 7 días
+    for (let i = 6; i >= 0; i--) {
+      const fecha = new Date(hoy);
+      fecha.setDate(hoy.getDate() - i);
+      ventas.push({
+        dia: dias[fecha.getDay()],
+        fecha: fecha.toDateString(),
+        total: 0,
+        porcentaje: 0
+      });
+    }
+
+    // Sumar totales por día
+    pedidos.forEach(pedido => {
+      if (pedido.createdAt && pedido.status !== 'CANCELLED') {
+        const fechaPedido = new Date(pedido.createdAt);
+        // Verificar si pertenece a los últimos 7 días
+        const diffTime = Math.abs(hoy.getTime() - fechaPedido.getTime());
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 7) {
+          // Encontrar el día correcto en nuestro arreglo
+          const fechaStr = fechaPedido.toDateString();
+          const diaEncontrado = ventas.find(v => v.fecha === fechaStr);
+          if (diaEncontrado) {
+            diaEncontrado.total += (pedido.total || 0);
+          }
+        }
+      }
+    });
+
+    // Calcular porcentajes para la altura de las barras CSS
+    const maxTotal = Math.max(...ventas.map(v => v.total));
+    ventas.forEach(v => {
+      // Usar 5% mínimo para que la barra se vea si es 0
+      v.porcentaje = maxTotal > 0 ? Math.max((v.total / maxTotal) * 100, 5) : 5;
+    });
+
+    this.ventasSemanales = ventas;
+  }
+
+  calcularMasVendidos(pedidos: OrderCompleteDTO[]): void {
+    const conteoProductos: { [key: string]: { nombre: string, cantidad: number, precio: number } } = {};
+
+    pedidos.forEach(pedido => {
+      if (pedido.status !== 'CANCELLED' && pedido.items) {
+        pedido.items.forEach(item => {
+          const nombreProducto = item.pizzaName || item.extraName || 'Producto Desconocido';
+          if (!conteoProductos[nombreProducto]) {
+            conteoProductos[nombreProducto] = {
+              nombre: nombreProducto,
+              cantidad: 0,
+              precio: item.unitPrice || 0
+            };
+          }
+          conteoProductos[nombreProducto].cantidad += (item.quantity || 1);
+        });
+      }
+    });
+
+    // Convertir objeto a array y ordenar de mayor a menor
+    const masVendidosArr = Object.values(conteoProductos)
+      .sort((a, b) => b.cantidad - a.cantidad)
+      .slice(0, 3); // Top 3
+
+    this.masVendidos = masVendidosArr;
+  }
+
+  async descargarReporte(): Promise<void> {
+    if (this.todosLosPedidos.length === 0) {
+      alert('No hay datos para exportar.');
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Reporte de Ventas');
+
+    // 1. Título Principal
+    worksheet.mergeCells('A1', 'F1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'REPORTE GENERAL DE VENTAS - PIZZA HUT';
+    titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC8102E' } }; // Rojo
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    worksheet.getRow(1).height = 30;
+
+    // 2. Subtítulo con fecha
+    worksheet.mergeCells('A2', 'F2');
+    const subtitleCell = worksheet.getCell('A2');
+    subtitleCell.value = `Generado el: ${new Date().toLocaleString()}`;
+    subtitleCell.font = { name: 'Arial', size: 11, italic: true, color: { argb: 'FF555555' } };
+    subtitleCell.alignment = { vertical: 'middle', horizontal: 'center' }; // Ahora centrado como en la imagen
+    
+    // 3. Definir Columnas (sin propiedad header para que no sobreescriba la Fila 1)
+    worksheet.columns = [
+      { key: 'id', width: 15 },
+      { key: 'cliente', width: 35 },
+      { key: 'correo', width: 35 },
+      { key: 'estado', width: 20 },
+      { key: 'total', width: 20 },
+      { key: 'fecha', width: 25 }
+    ];
+
+    // 4. Estilo de encabezados de la tabla (Fila 3)
+    const headerRow = worksheet.getRow(3);
+    headerRow.values = ['Codigo', 'Nombres', 'Correo', 'Estado', 'Total', 'Hora'];
+    headerRow.height = 20;
+    headerRow.eachCell((cell) => {
+      cell.font = { name: 'Arial', size: 11, color: { argb: 'FF000000' } }; // Texto negro sin negrita extrema
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } }, left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } }, right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    // 5. Agregar filas y dar formato a los datos
+    this.todosLosPedidos.forEach(p => {
+      const row = worksheet.addRow({
+        id: `PH-${p.id?.toString().padStart(4, '0')}`,
+        cliente: p.userName || 'Usuario Anónimo',
+        correo: p.userEmail || 'No registrado',
+        estado: p.status,
+        total: p.total,
+        fecha: p.createdAt ? new Date(p.createdAt).toLocaleString() : 'N/A'
+      });
+
+      row.height = 20;
+      row.eachCell((cell, colNumber) => {
+        // Bordes finos negros para todas las celdas de datos
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } }, left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } }, right: { style: 'thin', color: { argb: 'FF000000' } }
+        };
+        
+        // Todo centrado
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+        // Formato específico para la columna Total
+        if (colNumber === 5) {
+          cell.numFmt = '"S/" #,##0.00';
+          cell.font = { bold: true, color: { argb: 'FF008000' } }; // Verde
+        }
+      });
+    });
+
+    // 6. Generar archivo binario y descargar
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(blob, `Reporte_General_PizzaHut_${new Date().getTime()}.xlsx`);
   }
 
   cambiarVista(vista: string): void {

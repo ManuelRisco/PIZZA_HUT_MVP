@@ -1,162 +1,180 @@
-<div class="dashboard-container">
+<div class="flex h-[calc(100vh-116px)] bg-gray-50 overflow-hidden font-sans" role="main">
   <!-- Sidebar -->
-  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
-    <div class="sidebar-header">
-      <button class="btn btn-link text-white" (click)="toggleSidebar()">
-        <i class="bi bi-list fs-4"></i>
+  <aside
+    class="bg-black text-white flex flex-col transition-all duration-300 relative z-50 h-full"
+    [class.w-[260px]]="!sidebarCollapsed"
+    [class.w-[80px]]="sidebarCollapsed"
+  >
+    <!-- Header Sidebar -->
+    <div class="flex items-center gap-3 p-4 border-b border-gray-800">
+      <button
+        class="text-gray-400 hover:text-white transition-colors"
+        (click)="toggleSidebar()"
+      >
+        <i class="bi bi-list text-2xl" aria-hidden="true"></i>
       </button>
-      <h5 class="text-white mb-0" *ngIf="!sidebarCollapsed">
-        <i class="bi bi-person-circle"></i> Mi Panel
+      <h5 class="text-red-600 font-black text-xl mb-0 tracking-wider whitespace-nowrap overflow-hidden" *ngIf="!sidebarCollapsed">
+        PIZZA HUT
       </h5>
     </div>
 
-    <!-- User Info -->
-    <div class="user-info" *ngIf="getCurrentUser() && !sidebarCollapsed">
-      <div class="text-center p-3 border-bottom border-secondary">
-        <div class="avatar mb-2">
-          {{ getCurrentUser()?.name ? getCurrentUser()!.name.charAt(0).toUpperCase() : 'U' }}
-        </div>
-        <div class="text-white fw-bold">{{ getCurrentUser()?.name }}</div>
-        <small class="text-info">Cliente</small>
-      </div>
-    </div>
-
     <!-- Navigation Menu -->
-    <nav class="sidebar-nav">
-      <a class="nav-item" 
-         [class.active]="vistaActual === 'dashboard'"
+    <nav class="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-1 sidebar-scroll">
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'dashboard' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
          (click)="cambiarVista('dashboard')">
-        <i class="bi bi-speedometer2"></i>
-        <span *ngIf="!sidebarCollapsed">Dashboard</span>
+        <i class="bi bi-grid-fill text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Dashboard</span>
       </a>
       
-      <a class="nav-item" 
-         [class.active]="vistaActual === 'perfil'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'perfil' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
          (click)="cambiarVista('perfil')">
-        <i class="bi bi-person-circle"></i>
-        <span *ngIf="!sidebarCollapsed">Mi Perfil</span>
+        <i class="bi bi-person-circle text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Mi Perfil</span>
       </a>
       
-      <a class="nav-item" 
-         [class.active]="vistaActual === 'pedidos'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'pedidos' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
          (click)="cambiarVista('pedidos')">
-        <i class="bi bi-bag-fill"></i>
-        <span *ngIf="!sidebarCollapsed">Mis Pedidos</span>
+        <i class="bi bi-bag-fill text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Mis Pedidos</span>
       </a>
       
-      <a class="nav-item" 
-         [class.active]="vistaActual === 'resenas'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'resenas' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
          (click)="cambiarVista('resenas')">
-        <i class="bi bi-star-fill"></i>
-        <span *ngIf="!sidebarCollapsed">Mis Reseñas</span>
+        <i class="bi bi-star-fill text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Mis Reseñas</span>
       </a>
       
-      <a class="nav-item" 
-         [class.active]="vistaActual === 'favoritos'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+         [ngClass]="vistaActual === 'favoritos' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
          (click)="cambiarVista('favoritos')">
-        <i class="bi bi-heart-fill"></i>
-        <span *ngIf="!sidebarCollapsed">Favoritos</span>
-      </a>
-      
-      <!-- Logout Button -->
-      <a class="nav-item text-danger" (click)="cerrarSesion()">
-        <i class="bi bi-box-arrow-right"></i>
-        <span *ngIf="!sidebarCollapsed">Cerrar Sesión</span>
+        <i class="bi bi-heart-fill text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Favoritos</span>
       </a>
     </nav>
-    </aside>
+
+    <!-- User Profile & Logout (Bottom) -->
+    <div class="border-t border-gray-800 p-4">
+      <div class="flex items-center gap-3 cursor-pointer hover:bg-gray-800 p-2 rounded-lg transition-colors"
+           (click)="cambiarVista('perfil')" *ngIf="getCurrentUser()">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center font-bold text-white shadow overflow-hidden">
+          <span *ngIf="true">{{ getCurrentUser()?.name?.charAt(0)?.toUpperCase() || 'U' }}</span>
+        </div>
+        <div *ngIf="!sidebarCollapsed" class="flex-1 overflow-hidden">
+          <p class="text-sm font-bold text-white truncate">{{ getCurrentUser()?.name || 'Cliente' }}</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wider">Cliente</p>
+        </div>
+      </div>
+      <button class="w-full mt-3 flex items-center gap-3 text-red-500 hover:text-red-400 hover:bg-gray-800 p-2 rounded-lg transition-colors"
+              (click)="cerrarSesion()">
+        <i class="bi bi-box-arrow-left text-lg min-w-[24px]"></i>
+        <span *ngIf="!sidebarCollapsed" class="font-medium">Cerrar Sesión</span>
+      </button>
+    </div>
+  </aside>
 
   <!-- Main Content -->
-  <main class="main-content">
-    <!-- Dashboard View -->
-    <div *ngIf="vistaActual === 'dashboard'" class="content-section">
-      <div class="content-header">
-        <h2><i class="bi bi-speedometer2 me-2"></i>Dashboard</h2>
-        <p class="text-muted">Accede rápidamente a las funciones de tu cuenta</p>
-      </div>
+  <main class="flex-1 flex flex-col overflow-hidden relative">
+    
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon bg-primary">
-            <i class="bi bi-bag-fill"></i>
+    <!-- Scrollable Content -->
+    <div class="flex-1 overflow-y-auto p-4 md:p-8">
+      
+      <!-- Dashboard View -->
+      <div *ngIf="vistaActual === 'dashboard'" class="max-w-7xl mx-auto space-y-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-black text-black mb-2">¡Hola, {{ getCurrentUser()?.name?.split(' ')?.[0] || 'Cliente' }}!</h2>
+          <p class="text-gray-700">Aquí tienes un resumen rápido de tu actividad.</p>
+        </div>
+
+        <!-- Stats Cards Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="bg-white rounded-2xl p-6 border border-red-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer" (click)="cambiarVista('pedidos')">
+            <div class="flex justify-between items-start mb-4">
+              <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-500">
+                <i class="bi bi-bag-check text-2xl"></i>
+              </div>
+            </div>
+            <div>
+              <p class="text-gray-700 text-sm mb-1">Mis Pedidos</p>
+              <h3 class="text-xl font-black text-black">Ver historial</h3>
+            </div>
           </div>
-          <div class="stat-info">
-            <h3>Mis Pedidos</h3>
-            <p>Ver historial de pedidos</p>
-            <button class="btn btn-sm btn-primary" (click)="cambiarVista('pedidos')">
-              Ver Pedidos
-            </button>
+
+          <div class="bg-white rounded-2xl p-6 border border-amber-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer" (click)="cambiarVista('resenas')">
+            <div class="flex justify-between items-start mb-4">
+              <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
+                <i class="bi bi-star text-2xl"></i>
+              </div>
+            </div>
+            <div>
+              <p class="text-gray-700 text-sm mb-1">Mis Reseñas</p>
+              <h3 class="text-xl font-black text-black">Gestionar</h3>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-6 border border-rose-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer" (click)="cambiarVista('favoritos')">
+            <div class="flex justify-between items-start mb-4">
+              <div class="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500">
+                <i class="bi bi-heart text-2xl"></i>
+              </div>
+            </div>
+            <div>
+              <p class="text-gray-700 text-sm mb-1">Favoritos</p>
+              <h3 class="text-xl font-black text-black">Tus preferidas</h3>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-6 border border-emerald-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer" (click)="cambiarVista('perfil')">
+            <div class="flex justify-between items-start mb-4">
+              <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
+                <i class="bi bi-person text-2xl"></i>
+              </div>
+            </div>
+            <div>
+              <p class="text-gray-700 text-sm mb-1">Mi Perfil</p>
+              <h3 class="text-xl font-black text-black">Editar info</h3>
+            </div>
           </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon bg-warning">
-            <i class="bi bi-star-fill"></i>
+      </div>
+
+      <!-- Vistas Secundarias -->
+      <div class="max-w-7xl mx-auto" *ngIf="vistaActual !== 'dashboard'">
+        <!-- Perfil View -->
+        <div *ngIf="vistaActual === 'perfil'">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold text-black"><i class="bi bi-person-circle text-red-600 mr-2"></i> Mi Perfil</h2>
           </div>
-          <div class="stat-info">
-            <h3>Mis Reseñas</h3>
-            <p>Gestiona tus reseñas</p>
-            <button class="btn btn-sm btn-warning" (click)="cambiarVista('resenas')">
-              Ver Reseñas
-            </button>
-          </div>
+          <app-cliente-perfil></app-cliente-perfil>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon bg-danger">
-            <i class="bi bi-heart-fill"></i>
+        <!-- Pedidos View -->
+        <div *ngIf="vistaActual === 'pedidos'">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold text-black"><i class="bi bi-bag-fill text-red-600 mr-2"></i> Mis Pedidos</h2>
           </div>
-          <div class="stat-info">
-            <h3>Favoritos</h3>
-            <p>Tus pizzas favoritas</p>
-            <button class="btn btn-sm btn-danger" (click)="cambiarVista('favoritos')">
-              Ver Favoritos
-            </button>
-          </div>
+          <app-cliente-pedidos></app-cliente-pedidos>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon bg-success">
-            <i class="bi bi-person-circle"></i>
+        <!-- Reseñas View -->
+        <div *ngIf="vistaActual === 'resenas'">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold text-black"><i class="bi bi-star-fill text-red-600 mr-2"></i> Mis Reseñas</h2>
           </div>
-          <div class="stat-info">
-            <h3>Mi Perfil</h3>
-            <p>Editar información personal</p>
-            <button class="btn btn-sm btn-success" (click)="cambiarVista('perfil')">
-              Ver Perfil
-            </button>
-          </div>
+          <app-reviews></app-reviews>
+        </div>
+
+        <!-- Favoritos View -->
+        <div *ngIf="vistaActual === 'favoritos'">
+          <app-favoritos></app-favoritos>
         </div>
       </div>
-    </div>
-
-    <!-- Perfil View -->
-    <div *ngIf="vistaActual === 'perfil'" class="content-section">
-      <div class="content-header">
-        <h2><i class="bi bi-person-circle me-2"></i>Mi Perfil</h2>
-      </div>
-      <app-cliente-perfil></app-cliente-perfil>
-    </div>
-
-    <!-- Pedidos View -->
-    <div *ngIf="vistaActual === 'pedidos'" class="content-section">
-      <div class="content-header">
-        <h2><i class="bi bi-bag-fill me-2"></i>Mis Pedidos</h2>
-      </div>
-      <app-cliente-pedidos></app-cliente-pedidos>
-    </div>
-
-    <!-- Reseñas View -->
-    <div *ngIf="vistaActual === 'resenas'" class="content-section">
-      <div class="content-header">
-        <h2><i class="bi bi-star-fill me-2"></i>Mis Reseñas</h2>
-      </div>
-      <app-reviews></app-reviews>
-    </div>
-
-    <!-- Favoritos View -->
-    <div *ngIf="vistaActual === 'favoritos'" class="content-section">
-      <app-favoritos></app-favoritos>
+      
     </div>
   </main>
 </div>

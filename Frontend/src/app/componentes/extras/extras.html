@@ -1,150 +1,211 @@
-<div class="extras-container">
-  <div class="header">
-    <h1><i class="bi bi-cup-straw me-2"></i>Gestión de Extras</h1>
-    <button class="btn-primary" (click)="abrirFormulario()" *ngIf="!showForm">
-      <i class="bi bi-plus-lg"></i> Nuevo Extra
+<div class="max-w-7xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <div class="flex items-center gap-3">
+      <h2 class="text-2xl font-black text-gray-800">
+        <i class="bi bi-cup-straw text-red-600 mr-2"></i> Gestión de Extras
+      </h2>
+    </div>
+    <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition-colors shadow-sm" 
+            (click)="abrirFormulario()" *ngIf="!showForm">
+      <i class="bi bi-plus-lg font-bold"></i> Nuevo Extra
     </button>
   </div>
 
   <!-- Filtros por categoría -->
-  <div class="filtros-container" *ngIf="!showForm">
-    <span class="filtros-label">Categorías:</span>
-    <div class="filtros-buttons">
-      <button 
-        class="btn-filter" 
-        [class.active]="filtroCategoria === 'TODOS'"
-        (click)="cambiarFiltro('TODOS')">
-        <i class="bi bi-grid"></i> Todos
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-col sm:flex-row items-center gap-4" *ngIf="!showForm">
+    <span class="font-bold text-gray-700 whitespace-nowrap"><i class="bi bi-funnel text-gray-400 mr-2"></i>Categorías:</span>
+    <div class="flex flex-wrap gap-2">
+      <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
+              [ngClass]="filtroCategoria === 'TODOS' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
+              (click)="cambiarFiltro('TODOS')">
+        <i class="bi bi-grid mr-1"></i> Todos
       </button>
-      <button 
-        *ngFor="let cat of categorias"
-        class="btn-filter" 
-        [class.active]="filtroCategoria === cat.value"
-        (click)="cambiarFiltro(cat.value)">
-        <i class="bi" [ngClass]="cat.icon"></i> {{ cat.label }}
+      <button *ngFor="let cat of categorias"
+              class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
+              [ngClass]="filtroCategoria === cat.value ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
+              (click)="cambiarFiltro(cat.value)">
+        <i class="bi mr-1" [ngClass]="cat.icon"></i> {{ cat.label }}
       </button>
     </div>
   </div>
 
   <!-- Mensajes -->
-  <div class="alert alert-success" *ngIf="success">{{ success }}</div>
-  <div class="alert alert-error" *ngIf="error">{{ error }}</div>
-  <div class="loading" *ngIf="loading"><i class="bi bi-hourglass-split"></i> Cargando...</div>
+  <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2" *ngIf="success">
+    <i class="bi bi-check-circle-fill"></i> {{ success }}
+  </div>
+  <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2" *ngIf="error">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+  </div>
+  <div class="flex justify-center items-center py-12 text-gray-400" *ngIf="loading">
+    <i class="bi bi-arrow-repeat animate-spin text-3xl mr-3 text-red-600"></i> <span class="text-lg font-medium">Cargando...</span>
+  </div>
 
   <!-- Formulario -->
-  <div class="form-container" *ngIf="showForm">
-    <div class="form-header">
-      <h2>{{ editMode ? 'Editar Extra' : 'Nuevo Extra' }}</h2>
-      <button class="btn-close" (click)="cancelar()"><i class="bi bi-x-lg"></i></button>
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6" *ngIf="showForm">
+    <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+      <h5 class="text-xl font-bold text-gray-800">
+        <i class="bi bi-pencil-fill text-red-600 mr-2"></i> {{ editMode ? 'Editar Extra' : 'Nuevo Extra' }}
+      </h5>
+      <button class="text-gray-400 hover:text-red-600 transition-colors" (click)="cancelar()">
+        <i class="bi bi-x-lg text-xl"></i>
+      </button>
     </div>
 
-    <form [formGroup]="extraForm" (ngSubmit)="guardarExtra()" class="form-grid">
-      <div class="form-group">
-        <label for="name">Nombre *</label>
-        <input id="name" type="text" formControlName="name" class="form-control" placeholder="Ej: Coca Cola">
-        <div class="error-message" *ngIf="extraForm.get('name')?.invalid && extraForm.get('name')?.touched">
-          El nombre es requerido (mín. 2 caracteres)
+    <form [formGroup]="extraForm" (ngSubmit)="guardarExtra()" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="name" class="block text-sm font-bold text-gray-700 mb-1">Nombre *</label>
+          <input id="name" type="text" formControlName="name" placeholder="Ej: Coca Cola"
+                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                 [ngClass]="extraForm.get('name')?.invalid && extraForm.get('name')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="extraForm.get('name')?.invalid && extraForm.get('name')?.touched">
+            El nombre es requerido (mín. 2 caracteres)
+          </div>
+        </div>
+
+        <div>
+          <label for="price" class="block text-sm font-bold text-gray-700 mb-1">Precio (S/) *</label>
+          <input id="price" type="number" step="0.01" formControlName="price" placeholder="0.00"
+                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                 [ngClass]="extraForm.get('price')?.invalid && extraForm.get('price')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="extraForm.get('price')?.invalid && extraForm.get('price')?.touched">
+            El precio es requerido
+          </div>
+        </div>
+
+        <div class="md:col-span-2">
+          <label for="description" class="block text-sm font-bold text-gray-700 mb-1">Descripción</label>
+          <textarea id="description" formControlName="description" rows="3" placeholder="Descripción del producto"
+                    class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"></textarea>
+        </div>
+
+        <div>
+          <label for="category" class="block text-sm font-bold text-gray-700 mb-1">Categoría *</label>
+          <select id="category" formControlName="category"
+                  class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
+            <option *ngFor="let cat of categorias" [value]="cat.value">{{ cat.label }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="displayOrder" class="block text-sm font-bold text-gray-700 mb-1">Orden de visualización</label>
+          <input id="displayOrder" type="number" formControlName="displayOrder" placeholder="0"
+                 class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="flex items-center gap-3 cursor-pointer p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
+            <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+              <input type="checkbox" formControlName="isAvailable" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in-out" [ngStyle]="{'transform': extraForm.get('isAvailable')?.value ? 'translateX(100%)' : 'translateX(0)', 'border-color': extraForm.get('isAvailable')?.value ? '#10B981' : '#E5E7EB'}"/>
+              <label class="toggle-label block overflow-hidden h-5 rounded-full cursor-pointer transition-colors duration-200 ease-in-out" [ngClass]="extraForm.get('isAvailable')?.value ? 'bg-emerald-500' : 'bg-gray-300'"></label>
+            </div>
+            <div>
+              <span class="block text-sm font-bold text-gray-700">Disponible para la venta</span>
+              <span class="block text-xs text-gray-500">Determina si el cliente puede agregarlo a su pedido</span>
+            </div>
+          </label>
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="price">Precio (S/) *</label>
-        <input id="price" type="number" step="0.01" formControlName="price" class="form-control" placeholder="0.00">
-        <div class="error-message" *ngIf="extraForm.get('price')?.invalid && extraForm.get('price')?.touched">
-          El precio es requerido
-        </div>
-      </div>
-
-      <div class="form-group full-width">
-        <label for="description">Descripción</label>
-        <textarea id="description" formControlName="description" class="form-control" rows="3" placeholder="Descripción del producto"></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="category">Categoría *</label>
-        <select id="category" formControlName="category" class="form-control">
-          <option *ngFor="let cat of categorias" [value]="cat.value">{{ cat.label }}</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="displayOrder">Orden de visualización</label>
-        <input id="displayOrder" type="number" formControlName="displayOrder" class="form-control" placeholder="0">
-      </div>
-
-      <div class="form-group full-width">
-        <label class="checkbox-label">
-          <input type="checkbox" formControlName="isAvailable">
-          <span>Disponible para la venta</span>
-        </label>
-      </div>
-
-      <div class="form-actions full-width">
-        <button type="button" class="btn-secondary" (click)="cancelar()">Cancelar</button>
-        <button type="submit" class="btn-primary" [disabled]="extraForm.invalid || loading">
-          <i class="bi bi-save"></i> {{ editMode ? 'Actualizar' : 'Crear' }}
+      <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
+        <button type="button" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg transition-colors" (click)="cancelar()">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="extraForm.invalid || loading">
+          <i class="bi bi-save"></i>
+          {{ editMode ? 'Actualizar' : 'Crear' }}
         </button>
       </div>
     </form>
   </div>
 
   <!-- Tabla -->
-  <div class="table-container" *ngIf="!showForm">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Categoría</th>
-          <th>Precio</th>
-          <th>Orden</th>
-          <th>Disponible</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let extra of extrasPaginados">
-          <td>
-            <strong>{{ extra.name }}</strong>
-            <small *ngIf="extra.description">{{ extra.description }}</small>
-          </td>
-          <td>
-            <span class="badge-category">
-              <i class="bi" [ngClass]="obtenerIconoCategoria(extra.category)"></i>
-              {{ obtenerNombreCategoria(extra.category) }}
-            </span>
-          </td>
-          <td class="price">S/ {{ extra.price | number:'1.2-2' }}</td>
-          <td>
-            <span class="badge-order">
-              {{ extra.displayOrder || 0 }}
-            </span>
-          </td>
-          <td>
-            <button 
-              class="btn-toggle" 
-              [class.active]="extra.isAvailable"
-              (click)="cambiarDisponibilidad(extra.id!)">
-              <i class="bi" [ngClass]="extra.isAvailable ? 'bi-check-circle-fill' : 'bi-x-circle'"></i>
-              {{ extra.isAvailable ? 'Sí' : 'No' }}
-            </button>
-          </td>
-          <td class="actions">
-            <button class="btn-action btn-edit" (click)="editarExtra(extra)" title="Editar">
-              <i class="bi bi-pencil"></i>
-            </button>
-            <button class="btn-action btn-delete" (click)="eliminarExtra(extra.id!)" title="Eliminar">
-              <i class="bi bi-trash"></i>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" *ngIf="!showForm">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+      <h5 class="text-lg font-bold text-gray-800 m-0">Lista de Extras ({{ extras.length }})</h5>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-900 text-white text-sm uppercase tracking-wider">
+            <th class="px-6 py-4 font-bold rounded-tl-lg">Nombre</th>
+            <th class="px-6 py-4 font-bold">Categoría</th>
+            <th class="px-6 py-4 font-bold text-right">Precio</th>
+            <th class="px-6 py-4 font-bold text-center">Orden</th>
+            <th class="px-6 py-4 font-bold text-center">Disponible</th>
+            <th class="px-6 py-4 font-bold text-center rounded-tr-lg">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 text-gray-700">
+          <tr class="hover:bg-gray-50 transition-colors" *ngFor="let extra of extrasPaginados">
+            <td class="px-6 py-4">
+              <div class="font-bold text-gray-800 text-base mb-1">{{ extra.name }}</div>
+              <div class="text-xs text-gray-500 line-clamp-1" *ngIf="extra.description">{{ extra.description }}</div>
+            </td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold" 
+                    [ngClass]="{
+                      'bg-blue-50 text-blue-700 border border-blue-100': extra.category === 'BEBIDA',
+                      'bg-amber-50 text-amber-700 border border-amber-100': extra.category === 'POSTRE',
+                      'bg-purple-50 text-purple-700 border border-purple-100': extra.category === 'COMPLEMENTO'
+                    }">
+                <i class="bi" [ngClass]="obtenerIconoCategoria(extra.category)"></i>
+                {{ obtenerNombreCategoria(extra.category) }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <span class="text-emerald-600 font-black text-lg">S/ {{ extra.price | number:'1.2-2' }}</span>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <span class="bg-gray-100 text-gray-600 font-bold px-2 py-1 rounded-md text-xs border border-gray-200">
+                {{ extra.displayOrder || 0 }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <button class="inline-flex items-center justify-center font-bold px-3 py-1.5 rounded-lg text-xs transition-colors border"
+                      [ngClass]="extra.isAvailable ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'"
+                      (click)="cambiarDisponibilidad(extra.id!)">
+                <i class="bi mr-1.5" [ngClass]="extra.isAvailable ? 'bi-check-circle-fill' : 'bi-x-circle'"></i>
+                {{ extra.isAvailable ? 'Sí' : 'No' }}
+              </button>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex gap-2 justify-center">
+                <button class="bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-700 font-bold w-8 h-8 rounded-lg text-sm transition-colors flex items-center justify-center" 
+                        (click)="editarExtra(extra)" title="Editar">
+                  <i class="bi bi-pencil-fill"></i>
+                </button>
+                <button class="bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold w-8 h-8 rounded-lg text-sm transition-colors flex items-center justify-center" 
+                        (click)="eliminarExtra(extra.id!)" title="Eliminar">
+                  <i class="bi bi-trash-fill"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="extras.length === 0">
+            <td colspan="6" class="px-6 py-16 text-center">
+              <div class="flex flex-col items-center">
+                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
+                  <i class="bi bi-cup-straw text-3xl"></i>
+                </div>
+                <h5 class="text-gray-800 font-bold text-lg mb-1">No hay extras registrados</h5>
+                <p class="text-gray-500 text-sm">Haz clic en "Nuevo Extra" para agregar el primero.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <app-pagination
-      [currentPage]="currentPage"
-      [totalItems]="extras.length"
-      [itemsPerPage]="itemsPerPage"
-      (pageChange)="onPageChange($event)"
-    ></app-pagination>
+    <!-- Paginación -->
+    <div class="p-6 border-t border-gray-100" *ngIf="extras.length > 0">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="extras.length"
+        [itemsPerPage]="itemsPerPage"
+        (pageChange)="onPageChange($event)">
+      </app-pagination>
+    </div>
   </div>
 </div>

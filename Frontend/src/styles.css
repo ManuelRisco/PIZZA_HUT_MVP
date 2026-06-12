@@ -235,14 +235,119 @@ html[data-contraste="alto"] tbody tr:hover {
   background-color: #1a1a1a !important;
 }
 
+/* ========== CARRITO DE COMPRAS ========== */
+html[data-contraste="alto"] .cart-summary,
+html[data-contraste="alto"] .empty-state,
+html[data-contraste="alto"] .cart-item,
+html[data-contraste="alto"] .address-form,
+html[data-contraste="alto"] .payment-card-form,
+html[data-contraste="alto"] .payment-mobile-form,
+html[data-contraste="alto"] .radio-option,
+html[data-contraste="alto"] .promo-section,
+html[data-contraste="alto"] .promo-applied {
+  background-color: #000 !important;
+  color: #fff !important;
+  border: 1px solid #ffff00 !important;
+}
+
+html[data-contraste="alto"] .cart-summary label,
+html[data-contraste="alto"] .summary-field label,
+html[data-contraste="alto"] .cart-summary h2,
+html[data-contraste="alto"] .cart-summary h3,
+html[data-contraste="alto"] .address-form h3,
+html[data-contraste="alto"] .radio-option span {
+  color: #ffff00 !important;
+}
+
+html[data-contraste="alto"] .radio-option:hover {
+  background-color: #1a1a1a !important;
+  border-color: #00ffff !important;
+}
+
+html[data-contraste="alto"] .radio-option:hover span {
+  color: #00ffff !important;
+}
+
+html[data-contraste="alto"] .quantity-control {
+  background-color: #000 !important;
+  border: 1px solid #ffff00 !important;
+}
+
+html[data-contraste="alto"] .quantity-control .quantity-display {
+  color: #fff !important;
+}
+
+html[data-contraste="alto"] .quantity-control button {
+  color: #ffff00 !important;
+}
+
+html[data-contraste="alto"] .quantity-control button:hover:not(:disabled) {
+  background-color: #1a1a1a !important;
+  color: #00ffff !important;
+}
+
+html[data-contraste="alto"] .item-info p,
+html[data-contraste="alto"] .unit-price,
+html[data-contraste="alto"] .helper-text {
+  color: #cccccc !important;
+}
+
+html[data-contraste="alto"] .line-total,
+html[data-contraste="alto"] .summary-row.total,
+html[data-contraste="alto"] .item-info h3 {
+  color: #ffff00 !important;
+}
+
+html[data-contraste="alto"] .remove-button {
+  color: #ff5555 !important;
+}
+
+html[data-contraste="alto"] .remove-button:hover {
+  color: #ffaaaa !important;
+}
+
+html[data-contraste="alto"] .promo-input {
+  background-color: #000 !important;
+  color: #ffff00 !important;
+  border: 2px solid #ffff00 !important;
+}
+
+html[data-contraste="alto"] .promo-input:focus {
+  border-color: #00ffff !important;
+  outline: 3px solid #00ffff !important;
+}
+
+html[data-contraste="alto"] .btn-promo,
+html[data-contraste="alto"] .btn-remove-promo {
+  background-color: #000 !important;
+  color: #ffff00 !important;
+  border: 1px solid #ffff00 !important;
+}
+
+html[data-contraste="alto"] .btn-promo:hover,
+html[data-contraste="alto"] .btn-remove-promo:hover {
+  background-color: #1a1a1a !important;
+  color: #00ffff !important;
+  border-color: #00ffff !important;
+}
+
 /* Dropdowns y menús */
 html[data-contraste="alto"] .dropdown-content,
-html[data-contraste="alto"] .user-dropdown {
+html[data-contraste="alto"] .user-dropdown,
+html[data-contraste="alto"] .accessibility-dropdown {
   background-color: #000 !important;
   border: 2px solid #ffff00 !important;
 }
 
 /* Items dentro del dropdown - MÁS ESPECÍFICO */
+html[data-contraste="alto"] .accessibility-section-title {
+  color: #ffff00 !important;
+}
+
+html[data-contraste="alto"] .accessibility-section-title span {
+  color: #ffff00 !important;
+}
+
 html[data-contraste="alto"] .dropdown-item {
   background-color: #000 !important;
   color: #ffff00 !important;
@@ -334,7 +439,8 @@ html[data-contraste="alto"] .cart-badge {
 }
 
 /* Dividers */
-html[data-contraste="alto"] .dropdown-divider {
+html[data-contraste="alto"] .dropdown-divider,
+html[data-contraste="alto"] .accessibility-divider {
   background-color: #ffff00 !important;
 }
 

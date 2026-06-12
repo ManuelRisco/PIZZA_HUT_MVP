@@ -1,200 +1,225 @@
-<div class="container-fluid py-4">
+<div class="max-w-7xl mx-auto">
   <!-- Header -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-          <h2 class="mb-0">
-            <i class="fas fa-star me-2"></i>
-            Gestión de Reseñas
-          </h2>
-        </div>
-        <span class="badge bg-primary fs-5 px-3 py-2">
-          <i class="fas fa-comments me-2"></i>
-          {{ reviews.length }} reseñas
-        </span>
-      </div>
+  <div class="flex justify-between items-center mb-6">
+    <div class="flex items-center gap-3">
+      <h2 class="text-2xl font-black text-gray-800">
+        <i class="bi bi-star-fill text-yellow-400 mr-2 drop-shadow-sm"></i> Gestión de Reseñas
+      </h2>
     </div>
+    <span class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg shadow-sm flex items-center gap-2">
+      <i class="bi bi-chat-square-text-fill"></i>
+      {{ reviews.length }} reseñas
+    </span>
   </div>
 
   <!-- Mensajes de éxito y error -->
-  <div class="row mb-3" *ngIf="mensaje">
-    <div class="col-12">
-      <div class="alert alert-dismissible fade show" [ngClass]="error ? 'alert-danger' : 'alert-success'">
-        <i class="fas" [ngClass]="error ? 'fa-exclamation-circle' : 'fa-check-circle'" class="me-2"></i>
+  <div class="mb-6" *ngIf="mensaje">
+    <div class="px-4 py-3 rounded-lg flex items-center justify-between" 
+         [ngClass]="error ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'">
+      <div class="flex items-center gap-2">
+        <i class="bi" [ngClass]="error ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
         {{ mensaje }}
-        <button type="button" class="btn-close" (click)="mensaje = ''"></button>
       </div>
+      <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" (click)="mensaje = ''">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
   </div>
 
   <!-- Estadísticas de Reseñas -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card shadow">
-        <div class="card-header bg-light">
-          <h5 class="mb-0">
-            <i class="fas fa-chart-bar me-2"></i>
-            Estadísticas de Reseñas
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="row text-center">
-            <div class="col">
-              <div class="p-3 border rounded">
-                <i class="fas fa-star fa-2x text-warning mb-2"></i>
-                <h3 class="text-success mb-1">{{ getCountByRating(5) }}</h3>
-                <small class="text-muted">5 estrellas</small>
-              </div>
-            </div>
-            <div class="col">
-              <div class="p-3 border rounded">
-                <i class="fas fa-star fa-2x text-warning mb-2"></i>
-                <h3 class="text-primary mb-1">{{ getCountByRating(4) }}</h3>
-                <small class="text-muted">4 estrellas</small>
-              </div>
-            </div>
-            <div class="col">
-              <div class="p-3 border rounded">
-                <i class="fas fa-star fa-2x text-warning mb-2"></i>
-                <h3 class="text-info mb-1">{{ getCountByRating(3) }}</h3>
-                <small class="text-muted">3 estrellas</small>
-              </div>
-            </div>
-            <div class="col">
-              <div class="p-3 border rounded">
-                <i class="fas fa-star fa-2x text-secondary mb-2"></i>
-                <h3 class="text-warning mb-1">{{ getCountByRating(2) }}</h3>
-                <small class="text-muted">2 estrellas</small>
-              </div>
-            </div>
-            <div class="col">
-              <div class="p-3 border rounded">
-                <i class="fas fa-star fa-2x text-secondary mb-2"></i>
-                <h3 class="text-danger mb-1">{{ getCountByRating(1) }}</h3>
-                <small class="text-muted">1 estrella</small>
-              </div>
-            </div>
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+      <h5 class="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
+        <i class="bi bi-bar-chart-fill text-indigo-500"></i>
+        Estadísticas de Reseñas
+      </h5>
+    </div>
+    <div class="p-6">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+        <!-- 5 Estrellas -->
+        <div class="p-4 border border-emerald-100 bg-emerald-50/30 rounded-xl transition-transform hover:-translate-y-1 hover:shadow-sm">
+          <div class="flex justify-center mb-2">
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
           </div>
+          <h3 class="text-2xl font-black text-emerald-600 mb-1">{{ getCountByRating(5) }}</h3>
+          <small class="text-emerald-800 font-bold text-xs uppercase tracking-wider">5 estrellas</small>
+        </div>
+        
+        <!-- 4 Estrellas -->
+        <div class="p-4 border border-blue-100 bg-blue-50/30 rounded-xl transition-transform hover:-translate-y-1 hover:shadow-sm">
+          <div class="flex justify-center mb-2">
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star text-gray-300 text-xl"></i>
+          </div>
+          <h3 class="text-2xl font-black text-blue-600 mb-1">{{ getCountByRating(4) }}</h3>
+          <small class="text-blue-800 font-bold text-xs uppercase tracking-wider">4 estrellas</small>
+        </div>
+        
+        <!-- 3 Estrellas -->
+        <div class="p-4 border border-indigo-100 bg-indigo-50/30 rounded-xl transition-transform hover:-translate-y-1 hover:shadow-sm">
+          <div class="flex justify-center mb-2">
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star text-gray-300 text-xl"></i>
+            <i class="bi bi-star text-gray-300 text-xl"></i>
+          </div>
+          <h3 class="text-2xl font-black text-indigo-600 mb-1">{{ getCountByRating(3) }}</h3>
+          <small class="text-indigo-800 font-bold text-xs uppercase tracking-wider">3 estrellas</small>
+        </div>
+        
+        <!-- 2 Estrellas -->
+        <div class="p-4 border border-amber-100 bg-amber-50/30 rounded-xl transition-transform hover:-translate-y-1 hover:shadow-sm">
+          <div class="flex justify-center mb-2">
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star text-gray-300 text-xl"></i>
+            <i class="bi bi-star text-gray-300 text-xl"></i>
+            <i class="bi bi-star text-gray-300 text-xl"></i>
+          </div>
+          <h3 class="text-2xl font-black text-amber-600 mb-1">{{ getCountByRating(2) }}</h3>
+          <small class="text-amber-800 font-bold text-xs uppercase tracking-wider">2 estrellas</small>
+        </div>
+        
+        <!-- 1 Estrella -->
+        <div class="p-4 border border-red-100 bg-red-50/30 rounded-xl transition-transform hover:-translate-y-1 hover:shadow-sm md:col-span-1 col-span-2">
+          <div class="flex justify-center mb-2">
+            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
+            <i class="bi bi-star text-gray-300 text-xl"></i>
+            <i class="bi bi-star text-gray-300 text-xl"></i>
+            <i class="bi bi-star text-gray-300 text-xl"></i>
+            <i class="bi bi-star text-gray-300 text-xl"></i>
+          </div>
+          <h3 class="text-2xl font-black text-red-600 mb-1">{{ getCountByRating(1) }}</h3>
+          <small class="text-red-800 font-bold text-xs uppercase tracking-wider">1 estrella</small>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Grid de reseñas -->
-  <div class="row">
-    <div class="col-12">
-      <div class="card shadow">
-        <div class="card-header bg-light">
-          <h5 class="mb-0">
-            <i class="fas fa-list me-2"></i>
-            Todas las Reseñas
-          </h5>
-        </div>
-        <div class="card-body">
-          <!-- Indicador de carga -->
-          <div *ngIf="cargando" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Cargando...</span>
-            </div>
-            <p class="mt-3 text-muted">Cargando reseñas...</p>
-          </div>
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+      <h5 class="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
+        <i class="bi bi-grid-fill text-gray-500"></i>
+        Todas las Reseñas
+      </h5>
+    </div>
+    
+    <div class="p-6">
+      <!-- Indicador de carga -->
+      <div *ngIf="cargando" class="flex flex-col items-center justify-center py-12">
+        <i class="bi bi-arrow-repeat animate-spin text-4xl text-indigo-600 mb-4"></i>
+        <p class="text-gray-500 font-medium text-lg">Cargando reseñas...</p>
+      </div>
 
-          <!-- Grid de reseñas -->
-          <div class="row g-3" *ngIf="!cargando">
-            <div class="col-md-6 col-lg-4" *ngFor="let review of reviewsPaginados">
-              <div class="card h-100 shadow-sm border-0">
-                <div class="card-header"
-                     [ngClass]="getRatingColor(review.rating)">
-                  <div class="d-flex justify-content-between align-items-center text-black">
-                    <div>
-                      <div class="fw-bold">
-                        <i class="fas fa-user-circle me-1"></i>
-                        Usuario #{{ review.userId }}
-                      </div>
-                      <small>
-                        <i class="fas fa-receipt me-1"></i>
-                        Pedido #{{ review.orderId }}
-                      </small>
-                    </div>
-                    <div class="stars fs-4">
-                      <i *ngFor="let estrella of getEstrellas(review.rating)"
-                         class="fas {{estrella}} text-warning"></i>
-                    </div>
-                  </div>
-                </div>
-                <div class="card-body">
-                  <div class="mb-3">
-                    <strong class="d-block mb-2">
-                      <i class="fas fa-star text-warning me-1"></i>
-                      Calificación: {{ review.rating }}/5
-                    </strong>
-                  </div>
-                  <div *ngIf="review.comment" class="mb-3">
-                    <p class="card-text fst-italic">
-                      <i class="fas fa-quote-left text-muted me-1"></i>
-                      {{ review.comment }}
-                      <i class="fas fa-quote-right text-muted ms-1"></i>
-                    </p>
-                  </div>
-                  <div *ngIf="!review.comment" class="mb-3">
-                    <p class="card-text text-muted fst-italic">
-                      <i class="fas fa-comment-slash me-1"></i>
-                      Sin comentario
-                    </p>
-                  </div>
-                  <small class="text-muted d-block">
-                    <i class="fas fa-calendar-alt me-1"></i>
-                    {{ review.createdAt | date: 'dd/MM/yyyy HH:mm' }}
-                  </small>
-                  <div *ngIf="review.active === false" class="mt-2">
-                    <span class="badge bg-danger">
-                      <i class="fas fa-ban me-1"></i>
-                      Reseña Desactivada
-                    </span>
-                  </div>
-                </div>
-                <div class="card-footer bg-transparent border-top" *ngIf="isAdmin">
-                  <div class="d-flex gap-2">
-                    <button
-                      *ngIf="review.active !== false"
-                      class="btn btn-sm btn-warning w-100"
-                      (click)="desactivarReview(review.id!)"
-                      title="Desactivar reseña">
-                      <i class="fas fa-ban me-1"></i>
-                      Desactivar
-                    </button>
-                    <button
-                      *ngIf="review.active === false"
-                      class="btn btn-sm btn-success w-100"
-                      (click)="activarReview(review.id!)"
-                      title="Activar reseña">
-                      <i class="fas fa-check me-1"></i>
-                      Activar
-                    </button>
-                  </div>
-                </div>
+      <!-- Grid de reseñas -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" *ngIf="!cargando && reviews.length > 0">
+        <div class="bg-white border rounded-xl overflow-hidden transition-all hover:shadow-md flex flex-col h-full" 
+             *ngFor="let review of reviewsPaginados"
+             [ngClass]="{
+               'border-emerald-200': review.rating === 5,
+               'border-blue-200': review.rating === 4,
+               'border-indigo-200': review.rating === 3,
+               'border-amber-200': review.rating === 2,
+               'border-red-200': review.rating === 1,
+               'opacity-60 grayscale-[50%]': review.active === false
+             }">
+          
+          <!-- Header -->
+          <div class="px-5 py-4 border-b flex justify-between items-start gap-4"
+               [ngClass]="{
+                 'bg-emerald-50 border-emerald-100': review.rating === 5,
+                 'bg-blue-50 border-blue-100': review.rating === 4,
+                 'bg-indigo-50 border-indigo-100': review.rating === 3,
+                 'bg-amber-50 border-amber-100': review.rating === 2,
+                 'bg-red-50 border-red-100': review.rating === 1,
+                 'bg-gray-100 border-gray-200': review.active === false
+               }">
+            <div>
+              <div class="font-bold text-gray-900 flex items-center gap-2 mb-1">
+                <i class="bi bi-person-circle text-gray-500 text-lg"></i>
+                Usuario #{{ review.userId }}
+              </div>
+              <div class="text-xs font-bold text-gray-600 bg-white/60 px-2 py-0.5 rounded w-fit border border-gray-200">
+                <i class="bi bi-receipt"></i> Pedido #{{ review.orderId }}
               </div>
             </div>
-
-            <div class="col-12" *ngIf="reviews.length === 0">
-              <div class="text-center py-5">
-                <i class="fas fa-star fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No hay reseñas para mostrar</h5>
-                <p class="text-muted">Las reseñas de los clientes aparecerán aquí</p>
-              </div>
+            <div class="flex text-yellow-400 text-lg drop-shadow-sm bg-white/80 px-2 py-1 rounded-lg border border-white">
+              <i *ngFor="let estrella of getEstrellas(review.rating)"
+                 class="bi" [ngClass]="estrella === 'fa-star' ? 'bi-star-fill' : (estrella === 'fa-star-half-alt' ? 'bi-star-half' : 'bi-star text-gray-300')"></i>
             </div>
           </div>
-
-          <!-- Paginación -->
-          <app-pagination
-            *ngIf="reviews.length > 0 && !cargando"
-            [currentPage]="currentPage"
-            [totalItems]="reviews.length"
-            [itemsPerPage]="itemsPerPage"
-            (pageChange)="onPageChange($event)">
-          </app-pagination>
+          
+          <!-- Body -->
+          <div class="p-5 flex-grow flex flex-col">
+            <div class="mb-4 flex-grow">
+              <div *ngIf="review.comment" class="relative">
+                <i class="bi bi-quote text-4xl text-gray-100 absolute -top-2 -left-2 z-0"></i>
+                <p class="text-gray-700 italic relative z-10 font-medium">
+                  "{{ review.comment }}"
+                </p>
+              </div>
+              <div *ngIf="!review.comment" class="flex items-center justify-center h-full min-h-[4rem]">
+                <p class="text-gray-400 italic text-sm flex items-center gap-2">
+                  <i class="bi bi-chat-square-text"></i> Sin comentario
+                </p>
+              </div>
+            </div>
+            
+            <div class="flex justify-between items-end mt-4 pt-4 border-t border-gray-100">
+              <div class="text-xs text-gray-500 font-medium flex items-center gap-1.5">
+                <i class="bi bi-calendar3"></i>
+                {{ review.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+              </div>
+              <span *ngIf="review.active === false" class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider flex items-center gap-1">
+                <i class="bi bi-slash-circle"></i> Oculta
+              </span>
+            </div>
+          </div>
+          
+          <!-- Footer Admin -->
+          <div class="px-5 py-3 bg-gray-50 border-t border-gray-100" *ngIf="isAdmin">
+            <button *ngIf="review.active !== false"
+                    class="w-full bg-white border border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+                    (click)="desactivarReview(review.id!)"
+                    title="Desactivar reseña (ocultar)">
+              <i class="bi bi-eye-slash-fill"></i> Ocultar Reseña
+            </button>
+            <button *ngIf="review.active === false"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
+                    (click)="activarReview(review.id!)"
+                    title="Activar reseña (mostrar)">
+              <i class="bi bi-eye-fill"></i> Mostrar Reseña
+            </button>
+          </div>
         </div>
+      </div>
+
+      <!-- Estado vacío -->
+      <div class="col-span-full py-16 flex flex-col items-center justify-center text-center" *ngIf="!cargando && reviews.length === 0">
+        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
+          <i class="bi bi-star text-4xl"></i>
+        </div>
+        <h5 class="text-gray-800 font-bold text-xl mb-2">No hay reseñas para mostrar</h5>
+        <p class="text-gray-500 max-w-md">Las reseñas de los clientes aparecerán aquí cuando califiquen sus pedidos.</p>
+      </div>
+
+      <!-- Paginación -->
+      <div class="mt-8 pt-6 border-t border-gray-100" *ngIf="reviews.length > 0 && !cargando">
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalItems]="reviews.length"
+          [itemsPerPage]="itemsPerPage"
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
       </div>
     </div>
   </div>

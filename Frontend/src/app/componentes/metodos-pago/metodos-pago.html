@@ -1,256 +1,275 @@
-<div class="container-fluid py-4">
+<div class="p-6 font-sans">
   <!-- Header -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-          <h2 class="mb-0">
-            <i class="fas fa-credit-card me-2"></i>
-            Gestión de Métodos de Pago
-          </h2>
-        </div>
-        <button class="btn btn-success" (click)="abrirFormularioNuevo()">
-          <i class="fas fa-plus me-2"></i>
-          Nuevo Método
-        </button>
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 pb-4 border-b border-gray-200">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-xl bg-gray-900 flex items-center justify-center text-white shrink-0 shadow-sm">
+        <i class="bi bi-credit-card-fill text-xl"></i>
+      </div>
+      <div>
+        <h2 class="text-2xl font-black text-gray-800 m-0">Gestión de Métodos de Pago</h2>
+        <p class="text-sm font-medium text-gray-500 m-0">Administra las formas de pago disponibles</p>
       </div>
     </div>
+    <button class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-xl transition-all shadow-sm flex items-center gap-2 whitespace-nowrap" (click)="abrirFormularioNuevo()">
+      <i class="bi bi-plus-lg"></i>
+      <span>Nuevo Método</span>
+    </button>
   </div>
 
   <!-- Mensajes de éxito/error -->
-  <div class="row mb-3" *ngIf="mensajeExito">
-    <div class="col-12">
-      <div class="alert alert-success alert-dismissible fade show">
-        <i class="fas fa-check-circle me-2"></i>{{ mensajeExito }}
-        <button type="button" class="btn-close" (click)="mensajeExito = ''"></button>
+  @if (mensajeExito) {
+    <div class="mb-6 px-5 py-4 rounded-xl flex items-center justify-between font-medium shadow-sm border bg-emerald-50 text-emerald-800 border-emerald-200">
+      <div class="flex items-center gap-3">
+        <i class="bi bi-check-circle-fill text-emerald-500 text-xl"></i>
+        <span>{{ mensajeExito }}</span>
       </div>
+      <button type="button" class="text-emerald-600 hover:text-emerald-800 transition-colors" (click)="mensajeExito = ''">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
-  </div>
+  }
 
-  <div class="row mb-3" *ngIf="mensajeError">
-    <div class="col-12">
-      <div class="alert alert-danger alert-dismissible fade show">
-        <i class="fas fa-exclamation-circle me-2"></i>{{ mensajeError }}
-        <button type="button" class="btn-close" (click)="mensajeError = ''"></button>
+  @if (mensajeError) {
+    <div class="mb-6 px-5 py-4 rounded-xl flex items-center justify-between font-medium shadow-sm border bg-red-50 text-red-800 border-red-200">
+      <div class="flex items-center gap-3">
+        <i class="bi bi-exclamation-triangle-fill text-red-500 text-xl"></i>
+        <span>{{ mensajeError }}</span>
       </div>
+      <button type="button" class="text-red-600 hover:text-red-800 transition-colors" (click)="mensajeError = ''">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
-  </div>
+  }
 
   <!-- Tabla de métodos de pago -->
-  <div class="row">
-    <div class="col-12">
-      <div class="card shadow">
-        <div class="card-header bg-light">
-          <h5 class="mb-0">
-            <i class="fas fa-list me-2"></i>
-            Lista de Métodos de Pago ({{ metodosPago.length }})
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-              <thead class="table-dark">
-                <tr>
-                  <th style="width: 5%;">ID</th>
-                  <th style="width: 20%;">Nombre</th>
-                  <th style="width: 30%;">Descripción</th>
-                  <th style="width: 10%;">Orden</th>
-                  <th style="width: 10%;">Estado</th>
-                  <th style="width: 15%;">Fecha Creación</th>
-                  <th style="width: 10%;" class="text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let metodo of metodosPagoPaginados">
-                  <td>{{ metodo.id }}</td>
-                  <td><strong>{{ metodo.name }}</strong></td>
-                  <td><small class="text-muted">{{ metodo.description || '-' }}</small></td>
-                  <td>
-                    <span class="badge bg-info">{{ metodo.displayOrder }}</span>
-                  </td>
-                  <td>
-                    <span class="badge" [ngClass]="metodo.isActive ? 'bg-success' : 'bg-danger'">
-                      {{ metodo.isActive ? 'Activo' : 'Inactivo' }}
-                    </span>
-                  </td>
-                  <td>
-                    <small>{{ metodo.createdAt | date:'dd/MM/yyyy HH:mm' }}</small>
-                  </td>
-                  <td>
-                    <div class="d-flex gap-1 justify-content-center">
-                      <button 
-                        type="button"
-                        class="btn btn-sm btn-primary" 
-                        (click)="abrirFormularioEditar(metodo)"
-                        title="Editar">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button 
-                        type="button"
-                        class="btn btn-sm" 
-                        [ngClass]="metodo.isActive ? 'btn-warning' : 'btn-success'"
-                        (click)="cambiarEstado(metodo)"
-                        [title]="metodo.isActive ? 'Desactivar' : 'Activar'">
-                        <i class="fas" [ngClass]="metodo.isActive ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
-                      </button>
-                      <button 
-                        type="button"
-                        class="btn btn-sm btn-danger" 
-                        (click)="eliminarMetodoPago(metodo)"
-                        title="Eliminar">
-                        <i class="fas fa-trash-alt"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr *ngIf="metodosPago.length === 0">
-                  <td colspan="7" class="text-center py-5">
-                    <i class="fas fa-credit-card fa-3x text-muted mb-3"></i>
-                    <h5 class="text-muted">No hay métodos de pago registrados</h5>
-                    <p class="text-muted">Haz clic en "Nuevo Método" para agregar el primero</p>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
-            <!-- Paginación -->
-            <app-pagination 
-              *ngIf="metodosPago.length > 0"
-              [currentPage]="currentPage" 
-              [totalItems]="metodosPago.length" 
-              [itemsPerPage]="itemsPerPage"
-              (pageChange)="onPageChange($event)">
-            </app-pagination>
-          </div>
-        </div>
-      </div>
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+      <h5 class="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
+        <i class="bi bi-list-ul text-gray-400"></i>
+        Lista de Métodos ({{ metodosPago.length }})
+      </h5>
     </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-900 text-white text-sm uppercase tracking-wider">
+            <th class="px-6 py-4 font-bold w-16">ID</th>
+            <th class="px-6 py-4 font-bold">Nombre</th>
+            <th class="px-6 py-4 font-bold">Descripción</th>
+            <th class="px-6 py-4 font-bold w-24">Orden</th>
+            <th class="px-6 py-4 font-bold w-32">Estado</th>
+            <th class="px-6 py-4 font-bold w-48">Creación</th>
+            <th class="px-6 py-4 font-bold text-center w-40">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (metodo of metodosPagoPaginados; track metodo.id) {
+            <tr class="hover:bg-gray-50 transition-colors group">
+              <td class="px-6 py-4 text-sm font-bold text-gray-500">{{ metodo.id }}</td>
+              <td class="px-6 py-4">
+                <span class="font-black text-gray-800">{{ metodo.name }}</span>
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-500">
+                {{ metodo.description || '-' }}
+              </td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center justify-center min-w-[2rem] h-8 px-2 rounded-lg bg-blue-50 text-blue-700 font-bold text-sm border border-blue-100 shadow-sm">
+                  {{ metodo.displayOrder }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm"
+                      [ngClass]="metodo.isActive ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-red-100 text-red-800 border border-red-200'">
+                  <span class="w-1.5 h-1.5 rounded-full" [ngClass]="metodo.isActive ? 'bg-emerald-500' : 'bg-red-500'"></span>
+                  {{ metodo.isActive ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm font-medium text-gray-500">
+                {{ metodo.createdAt | date:'dd/MM/yyyy HH:mm' }}
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center justify-center gap-2 transition-opacity">
+                  <button class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors shadow-sm" 
+                          (click)="abrirFormularioEditar(metodo)" title="Editar">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                  <button class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors shadow-sm" 
+                          [ngClass]="metodo.isActive ? 'bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white'"
+                          (click)="cambiarEstado(metodo)" [title]="metodo.isActive ? 'Desactivar' : 'Activar'">
+                    <i class="bi" [ngClass]="metodo.isActive ? 'bi-toggle-on' : 'bi-toggle-off'"></i>
+                  </button>
+                  <button class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white flex items-center justify-center transition-colors shadow-sm" 
+                          (click)="eliminarMetodoPago(metodo)" title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          @if (metodosPago.length === 0) {
+            <tr>
+              <td colspan="7" class="px-6 py-16 text-center">
+                <div class="flex flex-col items-center justify-center text-gray-400">
+                  <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                    <i class="bi bi-credit-card text-4xl"></i>
+                  </div>
+                  <h5 class="text-lg font-bold text-gray-800 mb-1">No hay métodos de pago</h5>
+                  <p class="text-sm font-medium text-gray-500 max-w-sm">Haz clic en "Nuevo Método" para agregar opciones de pago al checkout.</p>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    @if (metodosPago.length > itemsPerPage) {
+      <div class="p-4 border-t border-gray-100 bg-gray-50">
+        <app-pagination 
+          [currentPage]="currentPage" 
+          [totalItems]="metodosPago.length" 
+          [itemsPerPage]="itemsPerPage"
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
+      </div>
+    }
   </div>
 
   <!-- Información adicional -->
-  <div class="row mt-4">
-    <div class="col-12">
-      <div class="card bg-light shadow-sm">
-        <div class="card-body">
-          <h6 class="card-title">
-            <i class="fas fa-info-circle me-2 text-info"></i>
-            Información
-          </h6>
-          <ul class="mb-0 small">
-            <li>Los métodos de pago activos estarán disponibles para los clientes en el checkout.</li>
-            <li>El orden de visualización determina cómo se muestran los métodos en el frontend.</li>
-            <li>No se pueden eliminar métodos de pago que estén asociados a órdenes existentes.</li>
-          </ul>
-        </div>
-      </div>
+  <div class="bg-blue-50 border border-blue-100 rounded-2xl p-6 shadow-sm flex items-start gap-4">
+    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+      <i class="bi bi-info-circle-fill text-xl"></i>
+    </div>
+    <div>
+      <h6 class="text-blue-900 font-bold mb-2">Información Importante</h6>
+      <ul class="text-blue-800 text-sm space-y-1 list-disc pl-4 marker:text-blue-400">
+        <li>Los métodos de pago activos estarán disponibles para los clientes en el checkout.</li>
+        <li>El orden de visualización determina cómo se muestran los métodos en el frontend.</li>
+        <li>No se pueden eliminar métodos de pago que estén asociados a órdenes existentes.</li>
+      </ul>
     </div>
   </div>
 </div>
 
 <!-- Modal para crear/editar método de pago -->
-<div class="modal fade show d-block" *ngIf="mostrarFormulario" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title">
-          <i class="fas me-2" [ngClass]="modoEdicion ? 'fa-edit' : 'fa-plus-circle'"></i>
+@if (mostrarFormulario) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <div class="bg-gray-900 px-6 py-4 flex justify-between items-center text-white shrink-0">
+        <h5 class="text-lg font-bold flex items-center gap-2 m-0">
+          <i class="bi" [ngClass]="modoEdicion ? 'bi-pencil-square text-blue-400' : 'bi-plus-circle-fill text-emerald-400'"></i>
           {{ modoEdicion ? 'Editar Método de Pago' : 'Nuevo Método de Pago' }}
         </h5>
-        <button type="button" class="btn-close btn-close-white" (click)="cerrarFormulario()"></button>
+        <button type="button" class="text-gray-400 hover:text-white transition-colors" (click)="cerrarFormulario()">
+          <i class="bi bi-x-lg text-xl"></i>
+        </button>
       </div>
-      <div class="modal-body">
+      
+      <div class="p-6 overflow-y-auto">
         <form (ngSubmit)="guardarMetodoPago()">
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="name" class="form-label fw-bold">
-                <i class="fas fa-tag me-1"></i>
-                Nombre <span class="text-danger">*</span>
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+            
+            <div class="md:col-span-6 space-y-2">
+              <label for="name" class="block text-sm font-bold text-gray-700 uppercase tracking-wider">
+                Nombre <span class="text-red-500">*</span>
               </label>
-              <input 
-                type="text" 
-                class="form-control" 
-                [ngClass]="{'is-invalid': mensajeAdvertenciaNombre}"
-                id="name" 
-                [(ngModel)]="formulario.name" 
-                name="name"
-                placeholder="Ej: Efectivo, Tarjeta, Yape"
-                (input)="validarNombre()"
-                required>
-              <div *ngIf="mensajeAdvertenciaNombre" class="invalid-feedback d-block">
-                {{ mensajeAdvertenciaNombre }}
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <i class="bi bi-tag-fill"></i>
+                </div>
+                <input 
+                  type="text" 
+                  class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 font-medium rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
+                  [ngClass]="{'border-red-500 focus:ring-red-500 focus:border-red-500': mensajeAdvertenciaNombre}"
+                  id="name" 
+                  [(ngModel)]="formulario.name" 
+                  name="name"
+                  placeholder="Ej: Efectivo, Tarjeta, Yape"
+                  (input)="validarNombre()"
+                  required>
               </div>
+              @if (mensajeAdvertenciaNombre) {
+                <p class="text-xs font-bold text-red-500 mt-1 flex items-center gap-1">
+                  <i class="bi bi-exclamation-triangle-fill"></i> {{ mensajeAdvertenciaNombre }}
+                </p>
+              }
             </div>
 
-            <div class="col-md-3 mb-3">
-              <label for="displayOrder" class="form-label fw-bold">
-                <i class="fas fa-sort-numeric-down me-1"></i>
-                Orden de Visualización
+            <div class="md:col-span-3 space-y-2">
+              <label for="displayOrder" class="block text-sm font-bold text-gray-700 uppercase tracking-wider">
+                Orden
               </label>
-              <input 
-                type="number" 
-                class="form-control" 
-                [ngClass]="{'is-invalid': mensajeAdvertenciaOrden}"
-                id="displayOrder" 
-                [(ngModel)]="formulario.displayOrder" 
-                name="displayOrder"
-                (input)="validarDisplayOrder()"
-                min="0">
-              <div *ngIf="mensajeAdvertenciaOrden" class="invalid-feedback d-block">
-                {{ mensajeAdvertenciaOrden }}
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <i class="bi bi-sort-numeric-down"></i>
+                </div>
+                <input 
+                  type="number" 
+                  class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 font-medium rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
+                  [ngClass]="{'border-red-500 focus:ring-red-500 focus:border-red-500': mensajeAdvertenciaOrden}"
+                  id="displayOrder" 
+                  [(ngModel)]="formulario.displayOrder" 
+                  name="displayOrder"
+                  (input)="validarDisplayOrder()"
+                  min="0">
               </div>
+              @if (mensajeAdvertenciaOrden) {
+                <p class="text-xs font-bold text-red-500 mt-1 flex items-center gap-1">
+                  <i class="bi bi-exclamation-triangle-fill"></i> {{ mensajeAdvertenciaOrden }}
+                </p>
+              }
             </div>
 
-            <div class="col-md-3 mb-3">
-              <label class="form-label fw-bold d-block">
-                <i class="fas fa-toggle-on me-1"></i>
+            <div class="md:col-span-3 space-y-2 flex flex-col justify-end">
+              <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider">
                 Estado
               </label>
-              <div class="form-check form-switch mt-2">
-                <input 
-                  class="form-check-input" 
-                  type="checkbox" 
-                  id="isActive" 
-                  [(ngModel)]="formulario.isActive" 
-                  name="isActive">
-                <label class="form-check-label" for="isActive">
-                  {{ formulario.isActive ? 'Activo' : 'Inactivo' }}
-                </label>
-              </div>
+              <button type="button" class="w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors border shadow-sm"
+                      [ngClass]="formulario.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'"
+                      (click)="formulario.isActive = !formulario.isActive">
+                <i class="bi" [ngClass]="formulario.isActive ? 'bi-toggle-on text-emerald-500 text-xl' : 'bi-toggle-off text-xl'"></i>
+                {{ formulario.isActive ? 'Activo' : 'Inactivo' }}
+              </button>
             </div>
 
-            <div class="col-12 mb-3">
-              <label for="description" class="form-label fw-bold">
-                <i class="fas fa-align-left me-1"></i>
+            <div class="md:col-span-12 space-y-2">
+              <label for="description" class="block text-sm font-bold text-gray-700 uppercase tracking-wider">
                 Descripción
               </label>
-              <textarea 
-                class="form-control" 
-                id="description" 
-                rows="2" 
-                [(ngModel)]="formulario.description" 
-                name="description"
-                placeholder="Descripción del método de pago"></textarea>
+              <div class="relative">
+                <textarea 
+                  class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 font-medium rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[100px] resize-y" 
+                  id="description" 
+                  [(ngModel)]="formulario.description" 
+                  name="description"
+                  placeholder="Instrucciones o descripción del método de pago..."></textarea>
+              </div>
             </div>
+            
           </div>
         </form>
       </div>
-      <div class="modal-footer">
+      
+      <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
         <button 
           type="button" 
-          class="btn btn-secondary" 
+          class="bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold py-2.5 px-5 rounded-xl transition-colors flex items-center gap-2 shadow-sm" 
           (click)="cerrarFormulario()">
-          <i class="fas fa-times me-2"></i>
           Cancelar
         </button>
         <button 
           type="button" 
-          class="btn btn-primary" 
+          class="bg-gray-900 hover:bg-black text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed" 
           (click)="guardarMetodoPago()"
           [disabled]="!puedeGuardar()">
-          <i class="fas fa-save me-2"></i>
-          Guardar
+          <i class="bi bi-save"></i>
+          Guardar Método
         </button>
       </div>
+      
     </div>
   </div>
-</div>
+}
