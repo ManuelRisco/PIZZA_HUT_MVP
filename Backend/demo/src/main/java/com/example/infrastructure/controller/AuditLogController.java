@@ -1,4 +1,4 @@
-package com.example.controller;
+package com.example.infrastructure.controller;
 
 import com.example.domain.dto.AuditLogDTO;
 import com.example.domain.model.AuditLog;

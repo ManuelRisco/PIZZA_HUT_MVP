@@ -91,13 +91,11 @@ export class Pizzas implements OnInit {
    * SPECIFICATION PATTERN - Aplicar filtros a las pizzas
    */
   aplicarFiltro(filtro: 'todas' | 'disponibles' | 'populares' | 'disponibles-populares'): void {
-    console.log('🔍 Cambiando filtro a:', filtro);
     this.filtroActivo = filtro;
     this.loading = true;
     this.limpiarMensajes();
 
     if (filtro === 'todas') {
-      console.log('📋 Mostrando todas las pizzas');
       this.cargarPizzas();
       return;
     }
@@ -105,16 +103,13 @@ export class Pizzas implements OnInit {
     let observable;
     switch(filtro) {
       case 'disponibles':
-        console.log('✅ Filtro aplicado: Solo pizzas disponibles (Specification Pattern)');
         observable = this.pizzaPatronesService.listarPizzasDisponibles();
         break;
       case 'populares':
-        console.log('⭐ Filtro aplicado: Solo pizzas populares (Specification Pattern)');
         observable = this.pizzaPatronesService.listarPizzasPopulares();
         break;
       case 'disponibles-populares':
         // COMPOSITE PATTERN - Combinar filtros
-        console.log('🔥 Filtro aplicado: Pizzas disponibles Y populares (Composite Specification Pattern)');
         observable = this.pizzaPatronesService.listarPizzasDisponiblesYPopulares();
         break;
       default:
@@ -124,7 +119,6 @@ export class Pizzas implements OnInit {
 
     observable.subscribe({
       next: (pizzas) => {
-        console.log(`📊 ${pizzas.length} pizza(s) encontrada(s) con el filtro: ${filtro}`);
         this.pizzas = pizzas;
         this.aplicarPaginacion();
         this.loading = false;
@@ -205,7 +199,6 @@ export class Pizzas implements OnInit {
    * DECORATOR PATTERN - Mostrar opciones de extras
    */
   mostrarOpcionesExtras(pizza: PizzaDTO): void {
-    console.log('🍕 DECORATOR PATTERN - Abriendo modal de extras para:', pizza.name);
     this.pizzaSeleccionadaExtras = pizza;
     this.extrasSeleccionados = [];
     this.precioConExtras = pizza.price;
@@ -231,7 +224,6 @@ export class Pizzas implements OnInit {
     this.ingredientService.obtenerDisponibles().subscribe({
       next: (ingredientes) => {
         this.ingredientesDisponibles = ingredientes;
-        console.log('🌿 Ingredientes disponibles cargados:', ingredientes.length);
       },
       error: (error) => {
         console.error('❌ Error al cargar ingredientes:', error);
@@ -248,7 +240,6 @@ export class Pizzas implements OnInit {
     this.sizeService.obtenerTodos().subscribe({
       next: (tamanos) => {
         this.tamanosDisponibles = tamanos.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
-        console.log('📏 Tamaños disponibles cargados:', tamanos.length);
       },
       error: (error) => {
         console.error('❌ Error al cargar tamaños:', error);
@@ -262,7 +253,6 @@ export class Pizzas implements OnInit {
    */
   seleccionarTamano(tamano: SizeDTO): void {
     this.tamanoSeleccionado = tamano;
-    console.log('📏 Tamaño seleccionado:', tamano.name, '- Costo extra: S/', tamano.extraCost);
     this.calcularPrecioConExtras();
   }
 
@@ -273,20 +263,15 @@ export class Pizzas implements OnInit {
     const index = this.extrasSeleccionados.indexOf(extra);
     if (index > -1) {
       this.extrasSeleccionados.splice(index, 1);
-      console.log('➖ Extra removido:', extra);
     } else {
       this.extrasSeleccionados.push(extra);
-      console.log('➕ Extra agregado:', extra);
     }
-    
-    console.log('📦 Extras actuales:', this.extrasSeleccionados);
     
     if (this.extrasSeleccionados.length > 0 && this.pizzaSeleccionadaExtras) {
       this.calcularPrecioConExtras();
     } else if (this.pizzaSeleccionadaExtras) {
       this.precioConExtras = this.pizzaSeleccionadaExtras.price;
       this.descripcionConExtras = this.pizzaSeleccionadaExtras.name;
-      console.log('💲 Precio base restaurado: $', this.precioConExtras);
     }
   }
 
@@ -295,8 +280,6 @@ export class Pizzas implements OnInit {
    */
   calcularPrecioConExtras(): void {
     if (!this.pizzaSeleccionadaExtras || !this.pizzaSeleccionadaExtras.id) return;
-
-    console.log('🧮 Calculando precio con extras:', this.extrasSeleccionados);
     
     if (this.extrasSeleccionados.length > 0) {
       this.pizzaPatronesService.calcularPrecioConExtras(
@@ -315,8 +298,6 @@ export class Pizzas implements OnInit {
           
           this.precioConExtras = precioTotal;
           this.descripcionConExtras = descripcion;
-          console.log('✨ DECORATOR PATTERN - Precio calculado: S/', precioTotal);
-          console.log('📝 Descripción:', descripcion);
         },
         error: (error) => {
           console.error('❌ Error al calcular extras:', error);
@@ -338,7 +319,6 @@ export class Pizzas implements OnInit {
   }
 
   cerrarExtras(): void {
-    console.log('❌ Cerrando modal de extras');
     this.mostrarExtras = false;
     this.pizzaSeleccionadaExtras = undefined;
     this.extrasSeleccionados = [];
@@ -414,10 +394,8 @@ export class Pizzas implements OnInit {
 
       if (this.editMode && this.selectedPizzaId) {
         // Actualizar pizza existente
-        console.log('✏️ Actualizando pizza ID:', this.selectedPizzaId, pizzaData);
         this.pizzaService.actualizarPizza(this.selectedPizzaId, pizzaData).subscribe({
           next: (pizzaActualizada) => {
-            console.log('✅ Pizza actualizada exitosamente:', pizzaActualizada);
             this.mostrarMensajeExito('Pizza actualizada correctamente');
             // Actualizar la pizza específica en la lista sin recargar todo
             this.actualizarPizzaEnLista(pizzaActualizada);
@@ -432,10 +410,8 @@ export class Pizzas implements OnInit {
         });
       } else {
         // Crear nueva pizza
-        console.log('➕ Creando nueva pizza:', pizzaData);
         this.pizzaService.crearPizza(pizzaData).subscribe({
           next: (nuevaPizza) => {
-            console.log('✅ Pizza creada exitosamente:', nuevaPizza);
             this.mostrarMensajeExito('Pizza creada correctamente');
             // Agregar la nueva pizza al principio de la lista
             this.agregarPizzaALista(nuevaPizza);
@@ -450,7 +426,6 @@ export class Pizzas implements OnInit {
         });
       }
     } else {
-      console.warn('⚠️ Formulario inválido');
       this.mostrarMensajeError('Por favor, complete todos los campos requeridos correctamente');
     }
   }
@@ -459,11 +434,8 @@ export class Pizzas implements OnInit {
     if (confirm(`¿Está seguro de que desea eliminar la pizza "${nombre}"?`)) {
       this.loading = true;
       
-      console.log('🗑️ Eliminando pizza:', nombre, '(ID:', id + ')');
-      
       this.pizzaService.eliminarPizza(id).subscribe({
         next: (response) => {
-          console.log('✅ Pizza eliminada exitosamente del servidor');
 
           this.mostrarMensajeExito('Pizza eliminada correctamente');
 
@@ -481,7 +453,6 @@ export class Pizzas implements OnInit {
         }
       });
     } else {
-      console.log('❌ Eliminación cancelada por el usuario');
     }
   }
 
@@ -546,3 +517,5 @@ export class Pizzas implements OnInit {
     this.aplicarFiltroSinLoading();
   }
 }
+
+

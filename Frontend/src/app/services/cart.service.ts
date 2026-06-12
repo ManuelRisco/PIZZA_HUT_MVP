@@ -169,7 +169,6 @@ export class CartService {
       }
       return parsed.filter(item => item?.id && item?.name);
     } catch (error) {
-      console.warn('No se pudo cargar el carrito desde localStorage', error);
       return [];
     }
   }
@@ -183,7 +182,7 @@ export class CartService {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch (error) {
-      console.warn('No se pudo guardar el carrito en localStorage', error);
     }
   }
 }
+

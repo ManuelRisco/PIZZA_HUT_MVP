@@ -121,7 +121,6 @@ export class CheckoutService {
         // Manejar extras (bebidas, postres, etc.)
         if (item.type === 'extra') {
           if (!item.extraId) {
-            console.warn(`Extra "${item.name}" no tiene extraId válido, se omitirá`);
             return of(null);
           }
 
@@ -213,3 +212,4 @@ export class CheckoutService {
     return new Error(message);
   }
 }
+

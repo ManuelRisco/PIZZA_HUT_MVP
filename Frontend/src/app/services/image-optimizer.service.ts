@@ -64,7 +64,6 @@ export class ImageOptimizerService {
       // Si no es reconocida, devolver la URL original
       return imageUrl;
     } catch (error) {
-      console.warn('Error optimizando imagen:', error);
       return imageUrl;
     }
   }
@@ -157,3 +156,4 @@ export class ImageOptimizerService {
     };
   }
 }
+

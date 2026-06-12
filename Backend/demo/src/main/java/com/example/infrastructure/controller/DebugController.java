@@ -1,4 +1,4 @@
-package com.example.controller;
+package com.example.infrastructure.controller;
 
 import com.example.security.JwtTokenProvider;
 import org.springframework.http.ResponseEntity;

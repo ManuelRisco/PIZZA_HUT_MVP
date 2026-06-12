@@ -84,19 +84,15 @@ export class ClientePedidosComponent implements OnInit {
       return;
     }
 
-    console.log('Cargando pedidos para usuario ID:', currentUser.id);
-
     // Obtener todos los pedidos completos y filtrar los del usuario
     this.orderService.obtenerTodosCompletos().subscribe({
       next: (data) => {
-        console.log('Pedidos completos recibidos:', data);
         // Filtrar solo los pedidos del usuario actual
         this.orders = data
           .filter(order => order.userId === currentUser.id)
           .sort((a, b) => {
             return new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime();
           });
-        console.log('Pedidos del usuario:', this.orders);
         this.aplicarFiltro();
         this.loading = false;
       },
@@ -172,7 +168,6 @@ export class ClientePedidosComponent implements OnInit {
   cambiarEstado(order: OrderCompleteDTO, nuevoEstado: string): void {
     // Este método está aquí para compatibilidad con el template pero no hace nada
     // Solo los administradores pueden cambiar estados
-    console.log('Los clientes no pueden cambiar el estado de sus pedidos');
   }
 
   esPickup(order: OrderCompleteDTO): boolean {
@@ -437,3 +432,4 @@ export class ClientePedidosComponent implements OnInit {
     }
   }
 }
+

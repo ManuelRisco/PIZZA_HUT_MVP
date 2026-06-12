@@ -1,13 +1,11 @@
 package com.example.service;
 
 import com.example.domain.model.OrderItemExtra;
-import com.example.infrastructure.persistence.entities.OrderItemExtraEntity;
-import com.example.infrastructure.persistence.repository.OrderItemExtraRepository;
+import com.example.domain.repository.OrderItemExtraRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class OrderItemExtraService {
@@ -19,27 +17,16 @@ public class OrderItemExtraService {
     }
 
     public List<OrderItemExtra> listarTodos() {
-        return orderItemExtraRepository.findAll()
-            .stream()
-            .map(OrderItemExtraEntity::toDomain)
-            .collect(Collectors.toList());
+        return orderItemExtraRepository.findAll();
     }
 
     public List<OrderItemExtra> obtenerPorOrderItemId(Integer orderItemId) {
-        return orderItemExtraRepository.findByOrderItemId(orderItemId)
-            .stream()
-            .map(OrderItemExtraEntity::toDomain)
-            .collect(Collectors.toList());
+        return orderItemExtraRepository.findByOrderItemId(orderItemId);
     }
 
     @Transactional
     public OrderItemExtra crearOrderItemExtra(OrderItemExtra orderItemExtra) {
-        OrderItemExtraEntity entity = OrderItemExtraEntity.fromDomain(orderItemExtra);
-        if (entity == null) {
-            throw new IllegalArgumentException("No se pudo crear la entidad OrderItemExtra");
-        }
-        OrderItemExtraEntity savedEntity = orderItemExtraRepository.save(entity);
-        return savedEntity.toDomain();
+        return orderItemExtraRepository.save(orderItemExtra);
     }
 
     @Transactional

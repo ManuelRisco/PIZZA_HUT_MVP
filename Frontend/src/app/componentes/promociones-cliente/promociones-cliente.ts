@@ -59,12 +59,8 @@ export class PromocionesClienteComponent implements OnInit {
         });
         this.aplicarFiltros();
         this.loading = false;
-
-        // Debug: mostrar cuántas promociones se cargaron
-        console.log(`Promociones cargadas: ${this.promociones.length}`);
       },
       error: (err) => {
-        console.error('Error al cargar promociones:', err);
         this.error = 'Error al cargar las promociones';
         this.loading = false;
       }
@@ -135,7 +131,6 @@ export class PromocionesClienteComponent implements OnInit {
 
   esVigente(promo: Promotion): boolean {
     if (!promo.startDate || !promo.endDate) {
-      console.warn('Promoción sin fechas:', promo);
       return false;
     }
 
@@ -147,7 +142,6 @@ export class PromocionesClienteComponent implements OnInit {
 
       // Validar que las fechas sean válidas
       if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
-        console.warn('Fechas inválidas para promoción:', promo);
         return false;
       }
 
@@ -155,12 +149,7 @@ export class PromocionesClienteComponent implements OnInit {
       const esVigente = ahora >= inicio && ahora <= fin;
 
       if (!esVigente) {
-        console.debug(`Promoción ${promo.code} no vigente:`, {
-          ahora: ahora.toISOString(),
-          inicio: inicio.toISOString(),
-          fin: fin.toISOString(),
-          isActive: promo.isActive
-        });
+        // Promoción no vigente
       }
 
       return esVigente;
@@ -209,3 +198,4 @@ export class PromocionesClienteComponent implements OnInit {
     }, 3000);
   }
 }
+

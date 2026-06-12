@@ -1,10 +1,10 @@
-package com.example.infrastructure.persistence.repository;
+package com.example.infrastructure.persistence.repositories;
 
 import com.example.infrastructure.persistence.entities.OrderItemExtraEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
-public interface OrderItemExtraRepository extends JpaRepository<OrderItemExtraEntity, Integer> {
+public interface SpringDataOrderItemExtraRepository extends JpaRepository<OrderItemExtraEntity, Integer> {
     
     List<OrderItemExtraEntity> findByOrderItemId(Integer orderItemId);
     

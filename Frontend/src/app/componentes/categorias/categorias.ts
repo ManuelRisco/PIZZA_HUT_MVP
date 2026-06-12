@@ -359,7 +359,6 @@ export class Categorias implements OnInit {
         minute: '2-digit'
       });
     } catch (error) {
-      console.warn('Error al formatear fecha:', error);
       return 'N/D';
     }
   }
@@ -371,3 +370,4 @@ export class Categorias implements OnInit {
     return this.imageOptimizer.optimizeImageUrl(imageUrl, 'low');
   }
 }
+

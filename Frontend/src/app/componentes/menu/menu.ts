@@ -93,7 +93,6 @@ export class MenuComponent implements OnInit {
     this.favoriteService.obtenerFavoritosPorUserId(this.currentUserId).subscribe({
       next: (favoritos) => {
         this.favoritosPizzaIds = new Set(favoritos.map(f => f.pizzaId));
-        console.log('⭐ Favoritos cargados:', this.favoritosPizzaIds.size);
         
         // Aplicar ordenamiento por favoritos
         this.aplicarOrdenamientoFavoritos();
@@ -131,7 +130,6 @@ export class MenuComponent implements OnInit {
           this.favoritosPizzaIds.delete(pizzaId);
           this.mostrarMensaje('Eliminado de favoritos', false);
           this.accessibility.announceRemovedFromFavorites(pizzaName);
-          console.log('💔 Pizza eliminada de favoritos:', pizzaId);
           
           // Reordenar después de eliminar favorito
           this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzasFiltradas]);
@@ -149,7 +147,6 @@ export class MenuComponent implements OnInit {
           this.favoritosPizzaIds.add(pizzaId);
           this.mostrarMensaje('Agregado a favoritos', false);
           this.accessibility.announceAddedToFavorites(pizzaName);
-          console.log('💖 Pizza agregada a favoritos:', pizzaId);
           
           // Reordenar después de agregar favorito
           this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzasFiltradas]);
@@ -217,9 +214,7 @@ export class MenuComponent implements OnInit {
     
     // Pre-cargar en segundo plano sin bloquear la UI
     this.imageCacheService.preloadImages(optimizedUrls).then(() => {
-      console.log(`✅ ${optimizedUrls.length} imágenes optimizadas pre-cargadas en caché`);
     }).catch(error => {
-      console.warn('Algunas imágenes no se pudieron pre-cargar:', error);
     });
   }
   
@@ -644,3 +639,5 @@ export class MenuComponent implements OnInit {
     }
   }
 }
+
+

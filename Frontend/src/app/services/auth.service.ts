@@ -214,7 +214,6 @@ export class AuthService {
 
     // Si el token está expirado, limpiar la sesión inmediatamente
     if (this.isTokenExpired()) {
-      console.warn('Token expirado al cargar. Limpiando sesión...');
       this.clearSession();
       return;
     }
@@ -259,17 +258,8 @@ export class AuthService {
   // NOTA: Solo usar en desarrollo, no en producción
   debugTokenInfo(): void {
     const tokenData = this.getTokenData();
-    if (tokenData) {
-      console.log('Token Info:', {
-        email: tokenData.email,
-        name: tokenData.name,
-        role: tokenData.role,
-        iat: new Date(tokenData.iat * 1000),
-        exp: new Date(tokenData.exp * 1000),
-        isExpired: this.isTokenExpired()
-      });
-    } else {
-      console.log('No token found or invalid token');
+    if (!tokenData) {
+      // No token found
     }
   }
 
@@ -310,7 +300,7 @@ export class AuthService {
       })
     ).subscribe({
       next: (response) => {
-        console.log('Token renovado automáticamente');
+        // Token renovado
       },
       error: (error) => {
         console.error('Error al renovar token:', error);
@@ -377,3 +367,4 @@ export class AuthService {
     });
   }
 }
+

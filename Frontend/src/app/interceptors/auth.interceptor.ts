@@ -22,7 +22,6 @@ export class AuthInterceptor implements HttpInterceptor {
         catchError((error: HttpErrorResponse) => {
           // Si el backend rechaza el token (401/403), cerrar sesión
           if (error.status === 401 || error.status === 403) {
-            console.warn('Token inválido. Limpiando sesión...');
             this.authService.logout();
           }
           return throwError(() => error);
@@ -32,7 +31,6 @@ export class AuthInterceptor implements HttpInterceptor {
 
     // Si hay token pero está expirado, limpiar sin redirigir
     if (token && this.authService.isTokenExpired()) {
-      console.warn('Token expirado. No se enviará en la petición');
       this.authService.clearSessionSilently();
     }
 

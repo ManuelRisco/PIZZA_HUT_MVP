@@ -81,7 +81,6 @@ export class ImageCacheService {
       const cacheArray = Array.from(this.imageCache.entries());
       sessionStorage.setItem('image-cache', JSON.stringify(cacheArray));
     } catch (error) {
-      console.warn('No se pudo guardar el caché de imágenes:', error);
     }
   }
 
@@ -96,7 +95,6 @@ export class ImageCacheService {
         this.imageCache = new Map(cacheArray);
       }
     } catch (error) {
-      console.warn('No se pudo cargar el caché de imágenes:', error);
     }
   }
 
@@ -116,3 +114,4 @@ export class ImageCacheService {
     return this.imageCache.size;
   }
 }
+

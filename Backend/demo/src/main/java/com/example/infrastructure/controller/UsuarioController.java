@@ -42,7 +42,6 @@ public class UsuarioController {
 
     @PostMapping("/registro")
     public ResponseEntity<?> registrarUsuario(@RequestBody UsuarioCreateDTO usuarioDTO) {
-        System.out.println("Intentando registrar usuario: " + usuarioDTO.getEmail());
         
         // Crear usuario desde DTO
         Usuario usuario = new Usuario();

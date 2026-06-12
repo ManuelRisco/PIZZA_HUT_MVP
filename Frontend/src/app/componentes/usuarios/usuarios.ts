@@ -180,7 +180,6 @@ export class Usuarios implements OnInit, OnDestroy {
         this.usuarios = [...usuarios];
         this.aplicarPaginacion();
         this.loading = false;
-        console.log('✅ Filtro aplicado: Solo administradores (Specification Pattern)');
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -201,7 +200,6 @@ export class Usuarios implements OnInit, OnDestroy {
         this.usuarios = [...usuarios];
         this.aplicarPaginacion();
         this.loading = false;
-        console.log('✅ Filtro aplicado: Solo usuarios activos (Specification Pattern)');
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -222,7 +220,6 @@ export class Usuarios implements OnInit, OnDestroy {
         this.usuarios = [...usuarios];
         this.aplicarPaginacion();
         this.loading = false;
-        console.log('✅ Filtro aplicado: Admins activos (Composite Specification Pattern)');
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -239,7 +236,6 @@ export class Usuarios implements OnInit, OnDestroy {
    */
   cambiarFiltro(filtro: 'todos' | 'admins' | 'activos' | 'admins-activos'): void {
     this.filtroActivo = filtro;
-    console.log(`🔍 Cambiando filtro a: ${filtro}`);
     this.aplicarFiltro();
   }
 

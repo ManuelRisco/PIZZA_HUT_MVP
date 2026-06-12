@@ -40,7 +40,6 @@ export class Reviews implements OnInit {
       // Admin ve todas las reseñas
       this.reviewService.obtenerTodos().subscribe({
         next: (data) => {
-          console.log('Reseñas cargadas:', data);
           this.reviews = data.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
           this.cargando = false;
           this.aplicarPaginacion();
@@ -57,7 +56,6 @@ export class Reviews implements OnInit {
       if (currentUser && currentUser.id) {
         this.reviewService.obtenerPorUsuario(currentUser.id).subscribe({
           next: (data) => {
-            console.log('Reseñas del cliente cargadas:', data);
             this.reviews = data.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
             this.cargando = false;
             this.aplicarPaginacion();
