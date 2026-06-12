@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, ElementRef, HostListener, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -16,13 +16,15 @@ import { AuthService } from '../../services/auth.service';
 import { AccessibilityService } from '../../services/accessibility.service';
 import { SizeDTO, IngredientDTO } from '../../models/admin.interface';
 
+import { RouterModule } from '@angular/router';
+
 @Component({
   selector: 'app-menu',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './menu.html',
   styleUrls: ['./menu.css']
 })
-export class MenuComponent implements OnInit {
+export class MenuComponent implements OnInit, AfterViewInit {
   pizzas: PizzaDTO[] = [];
   pizzasFiltradas: PizzaDTO[] = [];
   searchTerm: string = '';
@@ -66,6 +68,9 @@ export class MenuComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   
+  private el = inject(ElementRef);
+  private scrollObserver?: IntersectionObserver;
+  
   @ViewChild('searchInput', { static: false }) searchInput?: ElementRef;
 
   ngOnInit(): void {
@@ -75,6 +80,29 @@ export class MenuComponent implements OnInit {
     
     // Announce menu is ready for screen readers
     this.accessibility.announce('Menú de pizzas cargado. Usa la búsqueda para filtrar pizzas');
+  }
+
+  ngAfterViewInit(): void {
+    this.scrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('opacity-100', 'translate-y-0');
+          entry.target.classList.remove('opacity-0', 'translate-y-12');
+          this.scrollObserver?.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    this.setupScrollAnimations();
+  }
+
+  private setupScrollAnimations(): void {
+    if (!this.scrollObserver) return;
+    
+    setTimeout(() => {
+      this.el.nativeElement.querySelectorAll('.animate-on-scroll').forEach((elem: any) => {
+        this.scrollObserver?.observe(elem);
+      });
+    }, 200); // Dar un poco de tiempo para que Angular renderice el @for
   }
 
   verificarAutenticacion(): void {
@@ -190,6 +218,9 @@ export class MenuComponent implements OnInit {
         
         // Aplicar ordenamiento por favoritos si ya se cargaron
         this.aplicarOrdenamientoFavoritos();
+        
+        // Setup animations for newly loaded pizzas
+        this.setupScrollAnimations();
       },
       error: (error) => {
         console.error('Error al cargar datos:', error);
@@ -258,6 +289,9 @@ export class MenuComponent implements OnInit {
         this.accessibility.announce('No se encontraron pizzas con ese criterio de búsqueda');
       }
     }
+    
+    // Setup animations for filtered pizzas
+    this.setupScrollAnimations();
   }
 
   /**

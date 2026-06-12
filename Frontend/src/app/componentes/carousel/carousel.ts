@@ -25,14 +25,46 @@ export class Carousel implements OnInit, OnDestroy {
   constructor(private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
-    this.intervalId = setInterval(() => {
-      this.prevIndex.set(this.currentIndex());
-      this.currentIndex.set((this.currentIndex() + 1) % this.images.length);
-      this.cdr.markForCheck();
-    }, 5000);
+    this.startAutoPlay();
   }
 
   ngOnDestroy() {
-    clearInterval(this.intervalId);
+    this.stopAutoPlay();
+  }
+
+  startAutoPlay() {
+    this.intervalId = setInterval(() => {
+      this.next();
+    }, 5000);
+  }
+
+  stopAutoPlay() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
+  }
+
+  next() {
+    this.prevIndex.set(this.currentIndex());
+    this.currentIndex.set((this.currentIndex() + 1) % this.images.length);
+    this.cdr.markForCheck();
+  }
+
+  prev() {
+    this.prevIndex.set(this.currentIndex());
+    this.currentIndex.set((this.currentIndex() - 1 + this.images.length) % this.images.length);
+    this.cdr.markForCheck();
+  }
+
+  goTo(index: number) {
+    if (this.currentIndex() !== index) {
+      this.prevIndex.set(this.currentIndex());
+      this.currentIndex.set(index);
+      this.cdr.markForCheck();
+      
+      // Reiniciar el timer al hacer click manual
+      this.stopAutoPlay();
+      this.startAutoPlay();
+    }
   }
 }

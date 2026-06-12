@@ -1,5 +1,14 @@
-<div class="home-container">
+<div class="flex flex-col min-h-screen">
+  
+  <!-- Carrusel Original -->
   <app-carousel></app-carousel>
-  <app-sobre-nosotros></app-sobre-nosotros>
-  <app-menu></app-menu>
+
+  <!-- Menu Section -->
+  <div id="menu-section" class="bg-gray-50 py-12">
+    <div class="container mx-auto px-4 md:px-8">
+      <!-- Mantenemos el componente de menú que ahora se rediseñará por dentro -->
+      <app-menu></app-menu>
+    </div>
+  </div>
+
 </div>

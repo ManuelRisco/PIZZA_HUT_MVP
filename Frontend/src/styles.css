@@ -1,5 +1,10 @@
-/* You can add global styles to this file, and also import other style files */
 @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* You can add global styles to this file, and also import other style files */
 
 :root {
   color-scheme: light;
@@ -36,11 +41,41 @@ html[data-contraste="alto"] {
   --color-hover: #ffff00;
 }
 
-/* Aplicar alto contraste a todos los elementos */
-html[data-contraste="alto"] * {
+/* Aplicar alto contraste a elementos estructurales pero preservar componentes visuales */
+html[data-contraste="alto"] body,
+html[data-contraste="alto"] main,
+html[data-contraste="alto"] section,
+html[data-contraste="alto"] article,
+html[data-contraste="alto"] footer,
+html[data-contraste="alto"] header,
+html[data-contraste="alto"] .card,
+html[data-contraste="alto"] .bg-white,
+html[data-contraste="alto"] .bg-gray-50,
+html[data-contraste="alto"] .bg-gray-100 {
   background-color: #000 !important;
   color: #fff !important;
-  border-color: #fff !important;
+}
+
+html[data-contraste="alto"] h1,
+html[data-contraste="alto"] h2,
+html[data-contraste="alto"] h3,
+html[data-contraste="alto"] h4,
+html[data-contraste="alto"] p,
+html[data-contraste="alto"] span:not(.text-transparent),
+html[data-contraste="alto"] label {
+  color: #fff !important;
+}
+
+html[data-contraste="alto"] .text-gray-500,
+html[data-contraste="alto"] .text-gray-600,
+html[data-contraste="alto"] .text-gray-900 {
+  color: #ffff00 !important;
+}
+
+html[data-contraste="alto"] img,
+html[data-contraste="alto"] svg,
+html[data-contraste="alto"] i.bi {
+  filter: contrast(120%) saturate(120%) !important;
 }
 
 /* Mantener los estilos de navegación visible */
@@ -313,9 +348,10 @@ html[data-contraste="alto"] [class*="warning"] {
   border: 2px solid #ffff00 !important;
 }
 
-/* Imágenes - agregar borde para mejor visibilidad */
-html[data-contraste="alto"] img {
-  border: 2px solid #ffff00 !important;
+/* Imágenes - mejorar visibilidad sin romper diseño */
+html[data-contraste="alto"] img:not(.object-cover) {
+  /* Opcional: un ligero borde solo a las imágenes sueltas, no fondos ni carruseles */
+  border: 1px solid #ffff00 !important;
 }
 
 /* Texto para mejorar contraste */

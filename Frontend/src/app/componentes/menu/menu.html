@@ -1,172 +1,110 @@
-<div class="combo-container" role="main" aria-label="Menú de Pizzas">
-  <!-- Título del Menú -->
-  <div class="search-container">
-    <div class="text-center mb-4">
-      <h1 class="text-white fw-bold" style="font-size: 3.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
-        Menú de Pizzas
-      </h1>
+<div class="container mx-auto px-4 md:px-8 py-8" role="main" aria-label="Menú de Pizzas">
+  <!-- Título -->
+  <div class="mb-8">
+    <div class="relative">
+      <h2 class="text-3xl font-black uppercase tracking-tight text-gray-900">
+        Favoritos del Menú
+      </h2>
+      <div class="w-16 h-1 bg-red-600 mt-2"></div>
     </div>
   </div>
 
   @if (mensaje) {
-    <div class="alert" [ngClass]="esError ? 'alert-danger' : 'alert-success'" role="status" aria-live="polite">
+    <div class="p-4 mb-4 rounded" [ngClass]="esError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'" role="status" aria-live="polite">
       {{ mensaje }}
     </div>
   }
 
-  <!-- Buscador de pizzas -->
+  <!-- Buscador -->
   @if (!loading && pizzas.length > 0) {
-    <div class="search-container">
-      <!-- Mensaje de favoritos -->
-      @if (favoritosPizzaIds.size > 0) {
-        <div class="alert alert-info d-flex align-items-center mb-3" style="background-color: #ffe6e6; border-color: #dc3545; color: #721c24;" role="status" aria-live="polite">
-          <i class="fas fa-heart me-2" style="color: #dc3545;" aria-hidden="true"></i>
-          <span>
-            Tus <strong>{{ favoritosPizzaIds.size }}</strong> 
-            {{ favoritosPizzaIds.size === 1 ? 'pizza favorita aparece' : 'pizzas favoritas aparecen' }} primero
-          </span>
-        </div>
-      }
-      
-      <div class="search-box" role="search">
-        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+    <div class="mb-8">
+      <div class="relative max-w-md">
+        <i class="bi bi-search absolute left-3 top-3 text-gray-400"></i>
         <input 
           #searchInput
           type="text" 
-          class="search-input" 
-          placeholder="Buscar pizzas por nombre o descripción..."
-          aria-label="Buscar pizzas por nombre o descripción"
-          aria-describedby="search-help"
+          class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent font-sans" 
+          placeholder="Buscar pizzas..."
           [(ngModel)]="searchTerm"
           (input)="filtrarPizzas()"
         >
-        <span id="search-help" class="visually-hidden">
-          Escribe para filtrar pizzas. Presiona Escape para borrar la búsqueda.
-        </span>
         @if (searchTerm) {
-          <button class="clear-search" (click)="limpiarBuscador()" type="button" aria-label="Borrar búsqueda">
-            <i class="fas fa-times" aria-hidden="true"></i>
+          <button class="absolute right-3 top-2 text-gray-400 hover:text-gray-600" (click)="limpiarBuscador()">
+            <i class="bi bi-x-lg text-lg"></i>
           </button>
         }
       </div>
-      @if (searchTerm && pizzasFiltradas.length === 0) {
-        <div class="no-results" role="status" aria-live="polite">
-          <i class="fas fa-search" aria-hidden="true"></i>
-          <p>No se encontraron pizzas con "{{ searchTerm }}"</p>
-        </div>
-      }
-      @if (searchTerm && pizzasFiltradas.length > 0) {
-        <div class="search-results-count" role="status" aria-live="polite">
-          {{ pizzasFiltradas.length }} {{ pizzasFiltradas.length === 1 ? 'resultado' : 'resultados' }}
-        </div>
-      }
     </div>
   }
 
-  <!-- Loading spinner -->
+  <!-- Loading -->
   @if (loading) {
-    <div class="text-center py-4">
-      <div class="spinner-border text-primary" role="status" aria-label="Cargando pizzas">
-        <span class="visually-hidden">Cargando pizzas...</span>
-      </div>
-      <p class="mt-2">Cargando pizzas...</p>
+    <div class="flex justify-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-red-600"></div>
     </div>
   }
 
-  <!-- Error message -->
-  @if (error && !loading) {
-    <div class="alert alert-danger" role="alert">
-      <i class="fas fa-exclamation-circle me-2" aria-hidden="true"></i>
-      {{ error }}
-    </div>
-  }
-
-  <!-- Pizza cards -->
-  <div role="listbox" aria-label="Lista de pizzas disponibles" class="pizzas-list">
+  <!-- Grid de Pizzas -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8" role="listbox" aria-label="Lista de pizzas disponibles">
     @for (pizza of pizzasFiltradas; track pizza.id; let i = $index) {
-      <div 
-        class="combo-card" 
-        [id]="'pizza-' + pizza.id"
-        [class.highlight]="pizzaHighlightId === pizza.id"
-        role="option"
-        [attr.aria-selected]="false"
-        tabindex="0"
-      >
-        <div class="image-container" style="position: relative;">
-          <!-- Badge de favorito -->
-          @if (esFavorito(pizza.id || 0)) {
-            <span 
-              class="badge bg-danger text-dark"
-              style="position: absolute; top: 10px; left: 10px; z-index: 10; font-size: 0.75rem; padding: 0.35em 0.65em;"
-              aria-label="Agregada a favoritos"
-            >
-              <i class="fas fa-heart me-1" aria-hidden="true"></i>Favorito
-            </span>
-          }
-          
-          <!-- Botón de favorito -->
-          @if (pizza.id) {
-            <button
-              type="button"
-              class="btn btn-sm"
-              (click)="toggleFavorito(pizza.id, $event)"
-              [title]="esFavorito(pizza.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
-              [aria-label]="esFavorito(pizza.id) ? 'Quitar ' + pizza.name + ' de favoritos' : 'Agregar ' + pizza.name + ' a favoritos'"
-              style="position: absolute; top: 10px; right: 10px; z-index: 10; background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%; width: 40px; height: 40px; padding: 0; font-size: 1.3rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.2s;"
-            >
-              <i 
-                class="fa-heart" 
-                [class.fas]="esFavorito(pizza.id)" 
-                [class.far]="!esFavorito(pizza.id)"
-                [style.color]="esFavorito(pizza.id) ? '#dc3545' : '#6c757d'"
-                aria-hidden="true"
-              ></i>
-            </button>
-          }
-          
-          @if (!imagenesCargadas.has(pizza.id || 0) && !isImageCached(pizza.imageUrl || '')) {
-            <div class="image-skeleton" aria-hidden="true"></div>
-          }
+      <div class="animate-on-scroll opacity-0 translate-y-12 transition-all duration-1000 ease-out bg-white border border-gray-200 shadow-sm hover:shadow-lg flex flex-col h-full relative font-sans" [id]="'pizza-' + pizza.id" role="option" tabindex="0">
+        
+        <!-- Popular Badge (simulado para los 2 primeros si no hay búsqueda) -->
+        @if (i < 2 && !searchTerm) {
+          <div class="absolute top-4 right-4 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-sm uppercase tracking-wider">
+            Popular
+          </div>
+        }
+
+        <!-- Botón de favorito -->
+        <button
+          type="button"
+          class="absolute top-4 left-4 z-10 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center shadow hover:bg-white transition-colors"
+          (click)="toggleFavorito(pizza.id || 0, $event)"
+          [title]="esFavorito(pizza.id || 0) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
+        >
+          <i class="bi text-lg" [class.bi-heart-fill]="esFavorito(pizza.id || 0)" [class.bi-heart]="!esFavorito(pizza.id || 0)" [class.text-red-600]="esFavorito(pizza.id || 0)" [class.text-gray-500]="!esFavorito(pizza.id || 0)"></i>
+        </button>
+
+        <!-- Imagen -->
+        <div class="relative pt-[75%] bg-gray-50 overflow-hidden">
           <img 
             [src]="getOptimizedImageUrl(pizza.imageUrl)" 
-            [alt]="pizza.name + ' - ' + formatearPrecio(pizza.price)"
+            [alt]="pizza.name"
+            class="absolute inset-0 w-full h-full object-cover object-center"
             [loading]="i < 3 ? 'eager' : 'lazy'"
-            [attr.fetchpriority]="i === 0 ? 'high' : (i < 3 ? 'auto' : 'low')"
-            [class.loaded]="imagenesCargadas.has(pizza.id || 0) || isImageCached(pizza.imageUrl || '')"
             (load)="onImageLoad(pizza.id || 0)"
             (error)="onImageError($event)"
-            decoding="async"
           >
         </div>
-        <h2>{{ pizza.name }}</h2>
-        <h3>{{ pizza.description || 'Deliciosa pizza con ingredientes frescos' }}</h3>
-        <p aria-label="Precio desde">Desde {{ formatearPrecio(pizza.price) }}</p>
-        <div class="combo-actions">
-          <button 
-            class="btn btn-outline-primary" 
-            (click)="abrirModalAgregarRapido(pizza)"
-            aria-label="Agregar rápidamente {{ pizza.name }}"
-          >
-            <i class="fas fa-plus me-2" aria-hidden="true"></i>Agregar
-          </button>
-          <button 
-            class="btn btn-primary" 
-            (click)="abrirModalPersonalizacion(pizza)"
-            aria-label="Personalizar {{ pizza.name }}"
-          >
-            <i class="fas fa-magic me-2" aria-hidden="true"></i>Personalizar
-          </button>
+
+        <!-- Contenido -->
+        <div class="p-6 flex flex-col flex-grow border-t border-gray-100">
+          <h3 class="text-xl font-black text-gray-900 uppercase mb-2">{{ pizza.name }}</h3>
+          <p class="text-gray-500 text-sm mb-6 flex-grow leading-relaxed">{{ pizza.description || 'Deliciosa pizza con ingredientes frescos' }}</p>
+          
+          <div class="flex items-center justify-between mt-auto">
+            <div class="text-red-600 font-bold text-xl">
+              S/ {{ pizza.price | number:'1.2-2' }}
+            </div>
+            <button 
+              class="w-10 h-10 bg-gray-900 hover:bg-black text-white rounded flex items-center justify-center transition-colors"
+              (click)="abrirModalPersonalizacion(pizza)"
+              aria-label="Agregar al carrito"
+            >
+              <i class="bi bi-cart-plus text-lg"></i>
+            </button>
+          </div>
         </div>
       </div>
     }
   </div>
 
-  <!-- Message when no pizzas available -->
-  @if (!loading && pizzas.length === 0 && !error) {
-    <div class="text-center py-5" role="status" aria-live="polite">
-      <i class="fas fa-pizza-slice fa-3x text-muted mb-3" aria-hidden="true"></i>
-      <h5 class="text-muted">No hay pizzas disponibles</h5>
-      <p class="text-muted">Vuelve más tarde para ver nuestras deliciosas pizzas</p>
+  @if (!loading && pizzasFiltradas.length === 0) {
+    <div class="text-center py-16 text-gray-500">
+      <i class="bi bi-search text-5xl mb-4 opacity-50"></i>
+      <h3 class="text-xl font-bold">No encontramos pizzas</h3>
+      <p>Intenta con otra búsqueda o vuelve más tarde.</p>
     </div>
   }
 </div>

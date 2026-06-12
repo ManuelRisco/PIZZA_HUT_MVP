@@ -1,8 +1,54 @@
-<div class="carousel-container">
-  <img *ngFor="let img of images; let i = index"
-       [src]="img"
-       [class.active]="i === currentIndex()"
-       [class.prev]="i === prevIndex() && prevIndex() !== currentIndex()"
-       class="carousel-img"
-       alt="Imagen carrusel">
+<div class="relative w-full h-[600px] md:h-[800px] lg:h-screen overflow-hidden group">
+  <!-- Imágenes del Carrusel -->
+  <div *ngFor="let img of images; let i = index"
+       class="absolute inset-0 w-full h-full transition-opacity duration-[1500ms] ease-in-out"
+       [ngClass]="{
+         'opacity-100 z-10': i === currentIndex(),
+         'opacity-0 z-0': i !== currentIndex()
+       }">
+    <img [src]="img" class="w-full h-full object-cover transform scale-105 transition-transform duration-[10000ms] ease-out" [ngClass]="{'scale-100': i === currentIndex()}" alt="Pizza Hut Promoción">
+  </div>
+  
+  <!-- Overlay oscuro (como en la referencia) -->
+  <div class="absolute inset-0 bg-black/60 z-10 pointer-events-none"></div>
+
+  <!-- Contenido Central -->
+  <div class="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-4 md:px-12">
+    <!-- Título Principal -->
+    <h1 class="text-white text-5xl md:text-7xl lg:text-8xl font-serif font-bold tracking-wide drop-shadow-2xl mb-6">
+      El Auténtico<br/>Sabor en Cada Trozo
+    </h1>
+    
+    <!-- Subtítulo -->
+    <p class="text-gray-200 text-lg md:text-xl max-w-2xl font-light tracking-wide mb-10 drop-shadow-md">
+      Maestría en la cocina, horneada a la perfección. Una tradición que perdura en cada bocado de nuestras mejores pizzas.
+    </p>
+
+    <!-- Botón Principal -->
+    <button class="bg-[#c8102e] hover:bg-[#a50a23] text-white font-bold py-4 px-10 rounded-sm uppercase tracking-widest text-sm transition-colors duration-300 shadow-lg"
+            onclick="document.getElementById('menu-section')?.scrollIntoView({behavior: 'smooth'})">
+      Ver Menú
+    </button>
+  </div>
+
+  <!-- Flecha Izquierda -->
+  <button (click)="prev()"
+          class="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 flex items-center justify-center border border-yellow-500/50 rounded text-yellow-500 hover:bg-yellow-500 hover:text-black transition-colors duration-300 bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100">
+    <i class="bi bi-chevron-left text-xl"></i>
+  </button>
+
+  <!-- Flecha Derecha -->
+  <button (click)="next()"
+          class="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 flex items-center justify-center border border-yellow-500/50 rounded text-yellow-500 hover:bg-yellow-500 hover:text-black transition-colors duration-300 bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100">
+    <i class="bi bi-chevron-right text-xl"></i>
+  </button>
+
+  <!-- Indicadores Inferiores (Puntos) -->
+  <div class="absolute bottom-8 left-0 right-0 z-30 flex justify-center space-x-3">
+    <button *ngFor="let img of images; let i = index"
+            (click)="goTo(i)"
+            class="w-3 h-3 rounded-full border border-yellow-500 transition-colors duration-300"
+            [ngClass]="i === currentIndex() ? 'bg-yellow-500' : 'bg-transparent hover:bg-yellow-500/50'">
+    </button>
+  </div>
 </div>
