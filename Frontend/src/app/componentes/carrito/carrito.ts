@@ -17,6 +17,9 @@ import { ImageOptimizerService } from '../../services/image-optimizer.service';
 import { PromocionService } from '../../services/promocion.service';
 import { AccessibilityService } from '../../services/accessibility.service';
 import { ToastService } from '../../services/toast.service';
+import { Payment } from '../../services/payment.service';
+
+declare var KR: any;
 
 @Component({
   selector: 'app-carrito',
@@ -175,6 +178,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
     private promocionService: PromocionService,
     private accessibility: AccessibilityService,
     private toastService: ToastService,
+    private paymentService: Payment,
     private router: Router,
   ) {}
 
@@ -345,13 +349,23 @@ export class CarritoComponent implements OnInit, OnDestroy {
       };
     }
 
+    // Simular que el pago fue exitoso automáticamente
     payload.payment = {
       paymentMethodId: this.selectedPaymentMethodId,
       amount: this.totals.total,
-      status: 'PENDING',
-      transactionId: this.generateTransactionId(),
+      status: 'PAID',
+      transactionId: 'SIM-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
     };
 
+    // Llamar directamente al backend
+    this.finalizarCheckoutBackend(payload);
+  }
+
+
+
+  finalizarCheckoutBackend(payload: CheckoutPayload): void {
+    this.isProcessing = true;
+    
     const sub = this.checkoutService.checkout(payload).subscribe({
       next: (result) => {
         this.isProcessing = false;

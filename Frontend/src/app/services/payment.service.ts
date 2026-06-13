@@ -38,4 +38,8 @@ export class Payment {
   eliminar(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/payments/${id}`);
   }
+
+  crearTokenIzipay(amount: number): Observable<{ formToken: string }> {
+    return this.http.post<{ formToken: string }>(`${this.apiUrl}/payments/create-token`, { amount }, this.httpOptions);
+  }
 }

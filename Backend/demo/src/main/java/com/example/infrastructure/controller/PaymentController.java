@@ -9,8 +9,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.example.application.payments.PaymentApplicationService;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -18,9 +21,11 @@ import java.util.stream.Collectors;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PaymentApplicationService paymentApplicationService;
 
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentService paymentService, PaymentApplicationService paymentApplicationService) {
         this.paymentService = paymentService;
+        this.paymentApplicationService = paymentApplicationService;
     }
 
     @GetMapping
@@ -100,6 +105,32 @@ public class PaymentController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/create-token")
+    public ResponseEntity<Map<String, String>> createToken(@RequestBody PaymentRequest request) {
+        try {
+            String token = paymentApplicationService.generatePaymentToken(request.getAmount());
+            Map<String, String> response = new HashMap<>();
+            response.put("formToken", token);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    public static class PaymentRequest {
+        private double amount;
+
+        public double getAmount() {
+            return amount;
+        }
+
+        public void setAmount(double amount) {
+            this.amount = amount;
         }
     }
 }
