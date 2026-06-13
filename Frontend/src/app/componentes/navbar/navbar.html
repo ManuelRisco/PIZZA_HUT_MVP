@@ -1,23 +1,39 @@
 <nav class="navbar" aria-label="Navegación principal">
-  <div class="navbar-links">
-    <span><a [routerLink]="['']" aria-label="Inicio - Pizza Hut">🍕 Pizza Hut</a></span>
+  <!-- Fondo oscurecido cuando el menú móvil está abierto -->
+  <div class="mobile-overlay" [class.active]="isMobileMenuOpen" (click)="toggleMobileMenu()"></div>
+
+  <div class="navbar-header">
+    <div class="navbar-logo">
+      <a [routerLink]="['']" aria-label="Inicio - Pizza Hut">🍕 Pizza Hut</a>
+    </div>
+    
+    <!-- Botón Hamburguesa -->
+    <button class="hamburger-btn" (click)="toggleMobileMenu()" aria-label="Abrir menú" [class.open]="isMobileMenuOpen">
+      <i class="bi" [class.bi-list]="!isMobileMenuOpen" [class.bi-x-lg]="isMobileMenuOpen"></i>
+    </button>
   </div>
 
-  <ul class="navbar-links" role="menubar" aria-label="Menú de navegación">
+  <ul class="navbar-links" [class.mobile-open]="isMobileMenuOpen" role="menubar" aria-label="Menú de navegación">
     <li role="none">
-      <a [routerLink]="['/menu']" role="menuitem" alt="M" aria-label="Ir a Menú (Alt+M)">Menú</a>
+    <li role="none">
+      <a (click)="navegarA('/menu')" role="menuitem" alt="M" aria-label="Ir a Menú (Alt+M)" style="cursor: pointer;">Menú</a>
     </li>
     <li role="none">
-      <a [routerLink]="['/extras']" role="menuitem" aria-label="Extras - Bebidas y postres">Extras</a>
+      <a (click)="navegarA('/extras')" role="menuitem" aria-label="Extras - Bebidas y postres" style="cursor: pointer;">Extras</a>
     </li>
     <li role="none">
-      <a [routerLink]="['/promociones']" role="menuitem" aria-label="Promociones y ofertas">Promociones</a>
+      <a (click)="navegarA('/promociones')" role="menuitem" aria-label="Promociones y ofertas" style="cursor: pointer;">Promociones</a>
     </li>
     <li class="cart-link" role="none">
-      <a [routerLink]="['/cart']" role="menuitem" alt="C" aria-label="Carrito de compras (Alt+C) con {{ cartCount }} artículos">
+      <a (click)="navegarA('/cart')" role="menuitem" alt="C" aria-label="Carrito de compras (Alt+C) con {{ cartCount }} artículos" style="cursor: pointer;">
         <i class="bi bi-cart3" aria-hidden="true"></i>
         <span>Carrito</span>
         <span class="cart-badge" *ngIf="cartCount > 0" aria-label="Número de artículos: {{ cartCount }}">{{ cartCount }}</span>
+      </a>
+    </li>
+    <li role="none">
+      <a (click)="navegarA('/ubicacion')" role="menuitem" aria-label="Ubicación y Contacto" style="cursor: pointer;">
+        <i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Ubicación
       </a>
     </li>
 

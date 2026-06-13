@@ -169,3 +169,33 @@ footer .foo-row .foo-col ul li a:hover {
 .foo-bottom {
     text-align: center;
 }
+
+/* Responsive Footer */
+@media (max-width: 768px) {
+  footer .foo-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  footer .foo-row .foo-col {
+    width: 100% !important;
+    margin: 0 !important;
+    text-align: center;
+  }
+
+  footer .foo-row .foo-col h2 {
+    font-size: 20px;
+    line-height: 1.4;
+  }
+
+  footer .foo-row .foo-col ul {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  footer .foo-row .foo-col ul li {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+}

@@ -29,6 +29,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
   modoDislexia: boolean = false;
   reducirMovimiento: boolean = false;
 
+  // Estado para Menú Móvil
+  isMobileMenuOpen: boolean = false;
+
   constructor(
     private authService: AuthService,
     private cartService: CartService,
@@ -67,6 +70,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
   }
 
+  toggleMobileMenu() {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+    // Cerrar otros menús si se abre el móvil
+    if (this.isMobileMenuOpen) {
+      this.mostrarMenuUsuario = false;
+      this.mostrarMenuAccesibilidad = false;
+    }
+  }
+
   toggleMenuUsuario() {
     this.mostrarMenuUsuario = !this.mostrarMenuUsuario;
     const estado = this.mostrarMenuUsuario ? 'abierto' : 'cerrado';
@@ -81,6 +93,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
     if (!target.closest('.accessibility-menu-container')) {
       this.mostrarMenuAccesibilidad = false;
+    }
+    // Cerrar menú móvil al hacer click fuera
+    if (!target.closest('.navbar-links') && !target.closest('.hamburger-btn') && this.isMobileMenuOpen) {
+      this.isMobileMenuOpen = false;
     }
   }
 
@@ -134,6 +150,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   navegarA(ruta: string) {
     this.mostrarMenuUsuario = false;
+    this.isMobileMenuOpen = false;
 
     // Si es la ruta de perfil del admin, navegar al panel y cambiar vista
     if (ruta === '/admin/perfil') {

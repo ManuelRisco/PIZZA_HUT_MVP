@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { Join} from './componentes/join/join';
 import { Home } from './componentes/home/home';
 import { SobreNosotros } from './componentes/sobre-nosotros/sobre-nosotros';
+import { Ubicacion } from './componentes/ubicacion/ubicacion';
 import { MenuComponent } from './componentes/menu/menu';
 import { Register } from './componentes/register/register';
 import { PanelAdmin } from './componentes/panel-admin/panel-admin';
@@ -34,6 +35,7 @@ export const routes: Routes = [
   { path: 'promociones', component: PromocionesClienteComponent },
   { path: 'cart', component: CarritoComponent },
   { path: 'sobre-nosotros', component: SobreNosotros },
+  { path: 'ubicacion', component: Ubicacion },
   { path: 'register', component: Register },
   
   // Rutas de Cliente

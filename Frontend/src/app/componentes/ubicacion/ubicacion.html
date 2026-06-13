@@ -1,0 +1,117 @@
+<section class="py-20 bg-[#141414] min-h-screen text-white font-sans">
+  <div class="container mx-auto px-4 md:px-8 max-w-6xl">
+    
+    <!-- Header -->
+    <div class="text-center mb-16">
+      <h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tight text-white font-serif">
+        Ubicación y Contacto
+      </h1>
+      <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto font-medium">
+        Visítanos y vive la experiencia. Estamos listos para atenderte con el calor de nuestros hornos.
+      </p>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+      
+      <!-- Información de Contacto -->
+      <div class="bg-[#1a1a1a] rounded-2xl p-8 md:p-12 border border-[#333] shadow-2xl">
+        <h2 class="text-2xl font-bold mb-8 text-white">Información de Contacto</h2>
+        
+        <div class="space-y-8">
+          <!-- Item 1 -->
+          <div class="flex items-start gap-4">
+            <div class="mt-1">
+              <i class="bi bi-geo-alt text-xl text-gray-400"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-white mb-1">Dirección</h3>
+              <p class="text-gray-400">Pizza Hut - Mega Plaza Villa Chorrillos</p>
+              <p class="text-gray-400">Av. Alameda Sur esquina con Av. San Marcos 15067</p>
+              <p class="text-gray-400">Chorrillos, Lima</p>
+            </div>
+          </div>
+          
+          <!-- Item 2 -->
+          <div class="flex items-start gap-4">
+            <div class="mt-1">
+              <i class="bi bi-clock text-xl text-gray-400"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-white mb-1">Horarios de Atención</h3>
+              <p class="text-gray-400">Lunes a Domingo: 11:00 AM - 10:00 PM</p>
+            </div>
+          </div>
+          
+          <!-- Item 3 -->
+          <div class="flex items-start gap-4">
+            <div class="mt-1">
+              <i class="bi bi-telephone text-xl text-gray-400"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-white mb-1">Reservas y Delivery</h3>
+              <p class="text-gray-400">+51 990 401 696</p>
+              <p class="text-gray-400">pizzahut_delivery@pizzahut.com.pe</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mapa de Google Maps -->
+      <div class="rounded-2xl overflow-hidden border border-[#333] shadow-2xl h-[450px] lg:h-auto relative">
+        
+        <!-- Skeleton Loader -->
+        <div *ngIf="!mapLoaded" class="absolute inset-0 bg-[#1a1a1a] flex flex-col items-center justify-center z-10 animate-pulse">
+          <div class="w-12 h-12 border-4 border-red-700 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p class="text-gray-400 font-medium tracking-wide">Cargando mapa interactivo...</p>
+        </div>
+
+        <!-- Iframe de Google Maps -->
+        <iframe 
+          (load)="onMapLoad()"
+          src="https://maps.google.com/maps?q=Pizza%20Hut%20Mega%20Plaza%20Villa%20Chorrillos&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+          width="100%" 
+          height="100%" 
+          style="border:0;" 
+          allowfullscreen="" 
+          referrerpolicy="no-referrer-when-downgrade"
+          class="w-full h-full grayscale-[20%] contrast-125 relative z-0 transition-opacity duration-500"
+          [ngClass]="{'opacity-0': !mapLoaded, 'opacity-100': mapLoaded}">
+        </iframe>
+      </div>
+    </div>
+
+    <!-- Sección Delivery -->
+    <div class="bg-gradient-to-r from-[#c8102e] to-[#a50a23] rounded-3xl overflow-hidden shadow-2xl relative mt-20">
+      <div class="grid grid-cols-1 md:grid-cols-2">
+        
+        <!-- Texto Delivery -->
+        <div class="p-10 md:p-16 flex flex-col justify-center">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm text-white font-bold text-xs uppercase tracking-widest w-max mb-6">
+            <i class="bi bi-motorcycle"></i> Entrega Rápida
+          </div>
+          <h2 class="text-3xl md:text-5xl font-black mb-6 text-white leading-tight">
+            También lo llevamos a la puerta de tu casa
+          </h2>
+          <p class="text-white/90 text-lg font-medium mb-8">
+            Nuestros repartidores se aseguran de que tu pizza llegue siempre caliente y en perfectas condiciones. ¡Pide ahora y disfruta sin salir de casa!
+          </p>
+          <a [routerLink]="['/menu']" class="bg-white text-[#c8102e] hover:bg-gray-100 font-bold py-4 px-8 rounded-full shadow-lg transition-transform hover:-translate-y-1 w-max inline-flex items-center gap-2">
+            Hacer un Pedido <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+        
+        <!-- Imagen -->
+        <div class="relative h-[400px] md:h-auto md:min-h-full">
+          <img 
+            src="/pizza_delivery_hero.webp" 
+            alt="Pizza Hut Delivery" 
+            class="absolute inset-0 w-full h-full object-cover object-top md:object-center"
+          >
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>

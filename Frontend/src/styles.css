@@ -51,8 +51,10 @@ html[data-contraste="alto"] header,
 html[data-contraste="alto"] .card,
 html[data-contraste="alto"] .bg-white,
 html[data-contraste="alto"] .bg-gray-50,
-html[data-contraste="alto"] .bg-gray-100 {
+html[data-contraste="alto"] .bg-gray-100,
+html[data-contraste="alto"] [class*="bg-gradient-"] {
   background-color: #000 !important;
+  background-image: none !important;
   color: #fff !important;
 }
 
@@ -61,13 +63,21 @@ html[data-contraste="alto"] h2,
 html[data-contraste="alto"] h3,
 html[data-contraste="alto"] h4,
 html[data-contraste="alto"] p,
-html[data-contraste="alto"] span:not(.text-transparent),
+html[data-contraste="alto"] span,
 html[data-contraste="alto"] label {
   color: #fff !important;
 }
 
+html[data-contraste="alto"] .text-transparent {
+  color: #ffff00 !important;
+  -webkit-text-fill-color: #ffff00 !important;
+  background-image: none !important;
+}
+
 html[data-contraste="alto"] .text-gray-500,
 html[data-contraste="alto"] .text-gray-600,
+html[data-contraste="alto"] .text-gray-700,
+html[data-contraste="alto"] .text-gray-800,
 html[data-contraste="alto"] .text-gray-900 {
   color: #ffff00 !important;
 }
