@@ -14,6 +14,7 @@ import { ImageOptimizerService } from '../../services/image-optimizer.service';
 import { FavoriteService } from '../../services/favorite.service';
 import { AuthService } from '../../services/auth.service';
 import { AccessibilityService } from '../../services/accessibility.service';
+import { ToastService } from '../../services/toast.service';
 import { SizeDTO, IngredientDTO } from '../../models/admin.interface';
 
 import { RouterModule } from '@angular/router';
@@ -30,8 +31,6 @@ export class MenuComponent implements OnInit, AfterViewInit {
   searchTerm: string = '';
   loading = false;
   error = '';
-  mensaje = '';
-  esError = false;
 
   // Control de carga de imágenes
   imagenesCargadas = new Set<number>();
@@ -65,6 +64,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
   private favoriteService = inject(FavoriteService);
   private authService = inject(AuthService);
   private accessibility = inject(AccessibilityService);
+  private toastService = inject(ToastService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   
@@ -139,7 +139,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
     event.stopPropagation(); // Evitar que se active el click del contenedor
 
     if (!this.isLoggedIn) {
-      this.mostrarMensaje('Debes iniciar sesión para agregar favoritos', true);
+      this.toastService.showError('Debes iniciar sesión para agregar favoritos');
       setTimeout(() => {
         this.router.navigate(['/join']);
       }, 1500);
@@ -156,7 +156,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
       this.favoriteService.eliminarFavorito(this.currentUserId, pizzaId).subscribe({
         next: () => {
           this.favoritosPizzaIds.delete(pizzaId);
-          this.mostrarMensaje('Eliminado de favoritos', false);
+          this.toastService.showSuccess('Eliminado de favoritos');
           this.accessibility.announceRemovedFromFavorites(pizzaName);
           
           // Reordenar después de eliminar favorito
@@ -164,7 +164,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
         },
         error: (error) => {
           console.error('Error al eliminar favorito:', error);
-          this.mostrarMensaje('Error al eliminar de favoritos', true);
+          this.toastService.showError('Error al eliminar de favoritos');
           this.accessibility.announceError('No se pudo eliminar de favoritos');
         }
       });
@@ -173,7 +173,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
       this.favoriteService.agregarFavorito(this.currentUserId, pizzaId).subscribe({
         next: () => {
           this.favoritosPizzaIds.add(pizzaId);
-          this.mostrarMensaje('Agregado a favoritos', false);
+          this.toastService.showSuccess('Agregado a favoritos');
           this.accessibility.announceAddedToFavorites(pizzaName);
           
           // Reordenar después de agregar favorito
@@ -181,7 +181,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
         },
         error: (error) => {
           console.error('Error al agregar favorito:', error);
-          this.mostrarMensaje('Error al agregar a favoritos', true);
+          this.toastService.showError('Error al agregar a favoritos');
           this.accessibility.announceError('No se pudo agregar a favoritos');
         }
       });
@@ -433,7 +433,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
 
   agregarAlCarritoRapido(): void {
     if (!this.pizzaSeleccionada || !this.tamanoSeleccionado) {
-      this.mostrarMensaje('Por favor selecciona un tamaño', true);
+      this.toastService.showError('Por favor selecciona un tamaño');
       return;
     }
 
@@ -451,12 +451,12 @@ export class MenuComponent implements OnInit, AfterViewInit {
         quantity: 1
       });
 
-      this.mostrarMensaje(`${this.pizzaSeleccionada.name} agregado al carrito`);
+      this.toastService.showSuccess(`${this.pizzaSeleccionada.name} agregado al carrito`);
       this.accessibility.announceAddToCart(this.pizzaSeleccionada.name);
       this.cerrarModalRapido();
     } catch (error) {
       console.error('Error al agregar al carrito:', error);
-      this.mostrarMensaje('No se pudo agregar al carrito', true);
+      this.toastService.showError('No se pudo agregar al carrito');
       this.accessibility.announceError('No se pudo agregar al carrito');
     }
   }
@@ -541,7 +541,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
 
   agregarAlCarritoPersonalizado(): void {
     if (!this.pizzaSeleccionada || !this.tamanoSeleccionado) {
-      this.mostrarMensaje('Por favor selecciona un tamaño', true);
+      this.toastService.showError('Por favor selecciona un tamaño');
       return;
     }
 
@@ -558,12 +558,12 @@ export class MenuComponent implements OnInit, AfterViewInit {
         extras: this.extrasSeleccionados
       });
 
-      this.mostrarMensaje(`${this.pizzaSeleccionada.name} agregado al carrito`);
+      this.toastService.showSuccess(`${this.pizzaSeleccionada.name} agregado al carrito`);
       this.accessibility.announceAddToCart(this.pizzaSeleccionada.name);
       this.cerrarModal();
     } catch (error) {
       console.error('Error al agregar al carrito:', error);
-      this.mostrarMensaje('No se pudo agregar al carrito', true);
+      this.toastService.showError('No se pudo agregar al carrito');
       this.accessibility.announceError('No se pudo agregar al carrito');
     }
   }
@@ -591,14 +591,6 @@ export class MenuComponent implements OnInit, AfterViewInit {
     if (pizzaId) {
       this.imagenesCargadas.add(pizzaId);
     }
-  }
-
-  private mostrarMensaje(texto: string, esError = false): void {
-    this.mensaje = texto;
-    this.esError = esError;
-    setTimeout(() => {
-      this.mensaje = '';
-    }, 2500);
   }
 
   // ACCESIBILIDAD: Control de Foco (Focus Trap)

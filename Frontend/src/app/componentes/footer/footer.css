@@ -193,9 +193,61 @@ footer .foo-row .foo-col ul li a:hover {
     flex-direction: column;
     align-items: center;
   }
+}
 
-  footer .foo-row .foo-col ul li {
-    width: 100%;
-    margin-bottom: 1rem;
-  }
+/* =========================================================================
+   ALTO CONTRASTE (HIGH CONTRAST MODE)
+   ========================================================================= */
+:host-context(html[data-contraste="alto"]) footer {
+  background: #000;
+  border-top: 2px solid #ffff00;
+}
+
+:host-context(html[data-contraste="alto"]) .foo-copy {
+  background: #000;
+  border-top: 1px solid #ffff00;
+}
+
+:host-context(html[data-contraste="alto"]) footer .foo-row .foo-col h2,
+:host-context(html[data-contraste="alto"]) footer .foo-row .foo-col ul li a,
+:host-context(html[data-contraste="alto"]) .foo-copy p,
+:host-context(html[data-contraste="alto"]) .foo-copy span,
+:host-context(html[data-contraste="alto"]) .foo-copy a,
+:host-context(html[data-contraste="alto"]) footer form .f-input input {
+  color: #ffff00 !important;
+}
+
+:host-context(html[data-contraste="alto"]) footer a {
+  border: none !important;
+}
+
+:host-context(html[data-contraste="alto"]) footer form .f-input input {
+  background: #000;
+  border: 2px solid #ffff00;
+}
+
+:host-context(html[data-contraste="alto"]) footer form .f-input .hm-btn-round {
+  background: #000;
+  color: #ffff00;
+  border: 2px solid #ffff00;
+}
+
+:host-context(html[data-contraste="alto"]) footer form .f-input .hm-btn-round:hover {
+  background: #ffff00;
+  color: #000 !important;
+}
+
+:host-context(html[data-contraste="alto"]) .foo-col ul li a i {
+  color: #ffff00 !important;
+  filter: none !important;
+}
+
+:host-context(html[data-contraste="alto"]) footer .foo-row .foo-col ul li a:hover {
+  background: #ffff00;
+  color: #000 !important;
+  text-decoration: none;
+}
+
+:host-context(html[data-contraste="alto"]) .foo-col ul li a:hover i {
+  color: #000 !important;
 }

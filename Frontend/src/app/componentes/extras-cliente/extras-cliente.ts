@@ -5,6 +5,7 @@ import { ExtraService, Extra } from '../../services/extra.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 import { AccessibilityService } from '../../services/accessibility.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-extras-cliente',
@@ -20,8 +21,6 @@ export class ExtrasClienteComponent implements OnInit {
   categoriaSeleccionada: string = 'TODOS';
   loading = false;
   error = '';
-  mensaje = '';
-  esError = false;
 
   categorias = [
     { value: 'TODOS', label: 'Todos', icon: 'bi-grid' },
@@ -35,6 +34,7 @@ export class ExtrasClienteComponent implements OnInit {
   private cartService = inject(CartService);
   private authService = inject(AuthService);
   private accessibility = inject(AccessibilityService);
+  private toastService = inject(ToastService);
 
   ngOnInit(): void {
     this.cargarExtras();
@@ -98,7 +98,7 @@ export class ExtrasClienteComponent implements OnInit {
       extra.category || 'EXTRA',
       1
     );
-    this.mostrarMensaje(`${extra.name} agregado al carrito`, false);
+    this.toastService.showSuccess(`${extra.name} agregado al carrito`);
     this.accessibility.announceAddToCart(extra.name);
   }
 
@@ -110,13 +110,5 @@ export class ExtrasClienteComponent implements OnInit {
   obtenerNombreCategoria(categoria: string): string {
     const cat = this.categorias.find(c => c.value === categoria);
     return cat?.label || categoria;
-  }
-
-  private mostrarMensaje(texto: string, error: boolean): void {
-    this.mensaje = texto;
-    this.esError = error;
-    setTimeout(() => {
-      this.mensaje = '';
-    }, 3000);
   }
 }

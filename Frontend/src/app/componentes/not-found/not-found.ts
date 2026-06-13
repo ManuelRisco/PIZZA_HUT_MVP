@@ -15,10 +15,10 @@ import { CommonModule } from '@angular/common';
         <p>La página que buscas no existe, pero tenemos deliciosas pizzas esperándote.</p>
 
         <div class="action-buttons">
-          <button class="btn-home" (click)="goHome()">
+          <button class="btn-home" (click)="navegarA('/')">
             <i class="fas fa-home"></i> Ir al Inicio
           </button>
-          <button class="btn-menu" (click)="goMenu()">
+          <button class="btn-menu" (click)="navegarA('/menu')">
             <i class="fas fa-pizza-slice"></i> Ver Menú
           </button>
         </div>
@@ -26,10 +26,11 @@ import { CommonModule } from '@angular/common';
         <div class="suggested-links">
           <h3>¿Quizás buscabas?</h3>
           <ul>
-            <li><a (click)="goHome()" href="javascript:void(0)">Inicio</a></li>
-            <li><a (click)="goMenu()" href="javascript:void(0)">Menú de Pizzas</a></li>
-            <li><a (click)="goAbout()" href="javascript:void(0)">Sobre Nosotros</a></li>
-            <li><a (click)="goLogin()" href="javascript:void(0)">Iniciar Sesión</a></li>
+            <li><a (click)="navegarA('/menu')" href="javascript:void(0)">Menú</a></li>
+            <li><a (click)="navegarA('/extras')" href="javascript:void(0)">Extras</a></li>
+            <li><a (click)="navegarA('/promociones')" href="javascript:void(0)">Promociones</a></li>
+            <li><a (click)="navegarA('/cart')" href="javascript:void(0)">Carrito</a></li>
+            <li><a (click)="navegarA('/ubicacion')" href="javascript:void(0)">Ubicación</a></li>
           </ul>
         </div>
       </div>
@@ -57,6 +58,8 @@ import { CommonModule } from '@angular/common';
     .pizza-icon {
       font-size: 80px;
       margin-bottom: 20px;
+      display: inline-block;
+      animation: spin 3s linear infinite;
     }
 
     @keyframes spin {
@@ -155,20 +158,59 @@ import { CommonModule } from '@angular/common';
       text-decoration: underline;
     }
 
-    @media (max-width: 480px) {
+    /* Responsive */
+    @media (max-width: 768px) {
       .not-found-content {
         padding: 30px 20px;
+        width: 90%;
       }
+
+      h1 { font-size: 24px; }
+      h2 { font-size: 36px; }
 
       .action-buttons {
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
       }
 
       .btn-home, .btn-menu {
         width: 100%;
-        max-width: 200px;
+        max-width: none;
+        justify-content: center;
       }
+    }
+
+    /* Alto Contraste */
+    :host-context(html[data-contraste="alto"]) .not-found-content {
+      background: #000;
+      border: 2px solid #ffff00;
+      box-shadow: none;
+    }
+
+    :host-context(html[data-contraste="alto"]) h1,
+    :host-context(html[data-contraste="alto"]) h2,
+    :host-context(html[data-contraste="alto"]) p,
+    :host-context(html[data-contraste="alto"]) h3,
+    :host-context(html[data-contraste="alto"]) .suggested-links a {
+      color: #ffff00 !important;
+      border: none !important;
+    }
+
+    :host-context(html[data-contraste="alto"]) .suggested-links {
+      border-top-color: #ffff00;
+    }
+
+    :host-context(html[data-contraste="alto"]) .btn-home,
+    :host-context(html[data-contraste="alto"]) .btn-menu {
+      background: #000 !important;
+      color: #ffff00 !important;
+      border: 2px solid #ffff00 !important;
+    }
+
+    :host-context(html[data-contraste="alto"]) .btn-home:hover,
+    :host-context(html[data-contraste="alto"]) .btn-menu:hover {
+      background: #ffff00 !important;
+      color: #000 !important;
     }
   `]
 })
@@ -176,19 +218,7 @@ export class NotFoundComponent {
 
   constructor(private router: Router) {}
 
-  goHome(): void {
-    this.router.navigate(['/']);
-  }
-
-  goMenu(): void {
-    this.router.navigate(['/menu']);
-  }
-
-  goAbout(): void {
-    this.router.navigate(['/sobre-nosotros']);
-  }
-
-  goLogin(): void {
-    this.router.navigate(['/join']);
+  navegarA(ruta: string): void {
+    this.router.navigate([ruta]);
   }
 }

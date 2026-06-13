@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './componentes/navbar/navbar';
 import { FooterComponent } from "./componentes/footer/footer";
+import { ToastComponent } from './componentes/toast/toast.component';
 
 @Component({    
   selector: 'app-root',
@@ -10,6 +11,7 @@ import { FooterComponent } from "./componentes/footer/footer";
   imports: [
     NavbarComponent,
     FooterComponent,
+    ToastComponent,
     RouterOutlet,
 ],
   templateUrl: './app.html',

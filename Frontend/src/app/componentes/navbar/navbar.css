@@ -654,3 +654,24 @@
   }
 }
 
+/* =========================================================================
+   ALTO CONTRASTE (HIGH CONTRAST MODE)
+   ========================================================================= */
+:host-context(html[data-contraste="alto"]) .user-menu-text,
+:host-context(html[data-contraste="alto"]) .navbar-links a span,
+:host-context(html[data-contraste="alto"]) .navbar-links button.accessibility-button span,
+:host-context(html[data-contraste="alto"]) .navbar-links button.accessibility-button i,
+:host-context(html[data-contraste="alto"]) .cart-badge {
+  color: #ffff00 !important;
+}
+
+:host-context(html[data-contraste="alto"]) .cart-badge {
+  border-color: #ffff00 !important;
+  background: #000 !important;
+}
+
+:host-context(html[data-contraste="alto"]) .user-avatar {
+  background: #000 !important;
+  color: #ffff00 !important;
+  border: 2px solid #ffff00 !important;
+}

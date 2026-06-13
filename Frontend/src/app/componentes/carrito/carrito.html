@@ -1,10 +1,6 @@
 <section class="cart-wrapper" role="main" aria-label="Carrito de compras">
   <h1 id="cart-title">Tu carrito</h1>
 
-  @if (mensaje) {
-    <div class="alert alert-info" role="status" aria-live="polite" aria-label="Mensaje del carrito">{{ mensaje }}</div>
-  }
-
   @if (checkoutSuccess) {
     <div class="alert alert-success" role="status" aria-live="assertive" aria-label="Confirmación de pago">{{ checkoutSuccess }}</div>
   }
@@ -22,7 +18,12 @@
     </div>
   } @else {
     <div class="cart-grid">
-      <div class="cart-items" role="listbox" aria-label="Items en el carrito">
+      <!-- Columna Principal -->
+      <div class="cart-column products-column">
+        
+        <div class="cart-items-container" role="listbox" aria-label="Items en el carrito">
+          <!-- Productos -->
+          <h2 class="section-title" style="margin-top: 0;">Tus Productos</h2>
         @for (item of items; track item.id; let i = $index) {
           <article class="cart-item" role="option" [attr.aria-label]="item.name + ', tamaño ' + (item.size | titlecase) + ', cantidad ' + item.quantity">
             <img 
@@ -31,37 +32,42 @@
               [loading]="i < 3 ? 'eager' : 'lazy'"
               [attr.fetchpriority]="i === 0 ? 'high' : (i < 3 ? 'auto' : 'low')"
               decoding="async"
+              class="item-image"
             >
-            <div class="item-info">
-              <h3 id="item-name-{{ item.id }}">{{ item.name }}</h3>
-              <p aria-label="Tamaño">Tamaño: {{ item.size | titlecase }}</p>
+            <div class="item-content">
+              <div class="item-header">
+                <h3 id="item-name-{{ item.id }}">{{ item.name }}</h3>
+                <span class="line-total" aria-label="Total para este item">S/. {{ (item.unitPrice * item.quantity) | number:'1.2-2' }}</span>
+              </div>
+              <p class="item-size" aria-label="Tamaño">Tamaño: {{ item.size | titlecase }} <span class="unit-price-text">(S/. {{ item.unitPrice | number:'1.2-2' }} c/u)</span></p>
               @if (tieneExtras(item)) {
                 <p class="extras-info" aria-label="Ingredientes adicionales">
-                  <i class="bi bi-plus-circle-fill" aria-hidden="true"></i>
-                  <strong>Extras:</strong> {{ getExtrasNombres(item) }}
+                  <i class="bi bi-plus-circle-fill" aria-hidden="true"></i> {{ getExtrasNombres(item) }}
                 </p>
               }
-              <span class="unit-price" aria-label="Precio unitario">S/. {{ item.unitPrice | number:'1.2-2' }} c/u</span>
-            </div>
-            <div class="item-actions">
-              <div class="quantity-control" role="group" [attr.aria-label]="'Control de cantidad para ' + item.name">
-                <button (click)="decrementar(item)" [disabled]="item.quantity <= 1" [attr.aria-label]="'Disminuir cantidad de ' + item.name">−</button>
-                <span class="quantity-display" aria-label="Cantidad actual">{{ item.quantity }}</span>
-                <button (click)="incrementar(item)" [attr.aria-label]="'Aumentar cantidad de ' + item.name">+</button>
+              <div class="item-footer">
+                <div class="quantity-control" role="group" [attr.aria-label]="'Control de cantidad para ' + item.name">
+                  <button (click)="decrementar(item)" [disabled]="item.quantity <= 1" [attr.aria-label]="'Disminuir cantidad de ' + item.name">−</button>
+                  <span class="quantity-display" aria-label="Cantidad actual">{{ item.quantity }}</span>
+                  <button (click)="incrementar(item)" [attr.aria-label]="'Aumentar cantidad de ' + item.name">+</button>
+                </div>
+                <button class="remove-button" (click)="eliminar(item)" [attr.aria-label]="'Quitar ' + item.name + ' del carrito'">
+                  <i class="bi bi-trash" aria-hidden="true"></i> Quitar
+                </button>
               </div>
-              <span class="line-total" aria-label="Total para este item">S/. {{ (item.unitPrice * item.quantity) | number:'1.2-2' }}</span>
-              <button class="remove-button" (click)="eliminar(item)" [attr.aria-label]="'Quitar ' + item.name + ' del carrito'">
-                <i class="bi bi-trash" aria-hidden="true"></i>
-                Quitar
-              </button>
             </div>
           </article>
         }
       </div>
+      </div>
 
-      <aside class="cart-summary" role="complementary" aria-label="Resumen del pedido">
-        <h2 id="summary-title">Resumen</h2>
-        
+      <!-- Columna 2: Entrega y Pago -->
+      <div class="cart-column checkout-column">
+          
+          <!-- Sección de Entrega -->
+          <section class="checkout-section">
+            <h2 class="section-title"><i class="bi bi-geo-alt"></i> Entrega</h2>
+            
         <!-- Tipo de entrega -->
         <div class="summary-field">
           <label id="delivery-type-label">Tipo de entrega</label>
@@ -206,10 +212,13 @@
             }
           </fieldset>
         }
-      
+        </section>
 
-        <div class="summary-field">
-          <label for="paymentMethod">Método de pago</label>
+        <!-- Sección de Pago -->
+        <section class="checkout-section">
+          <h2 class="section-title"><i class="bi bi-credit-card"></i> Pago</h2>
+          <div class="summary-field">
+            <label for="paymentMethod">Método de pago</label>
           @if (!paymentMethodsLoaded) {
             <div class="loading-placeholder" role="status" aria-label="Cargando opciones de pago">Cargando opciones...</div>
           } @else if (paymentMethods.length === 0) {
@@ -335,8 +344,14 @@
             aria-label="Notas especiales para el pedido"
             aria-describedby="notes-help"
           ></textarea>
-          <small id="notes-help" class="form-text text-muted">Máximo 500 caracteres</small>
         </div>
+        </section>
+      </div>
+
+      <!-- Columna 3: Resumen -->
+      <aside class="cart-column summary-column" role="complementary" aria-label="Resumen del pedido">
+        <div class="summary-card">
+          <h2 id="summary-title" class="summary-card-title">Resumen de tu pedido</h2>
 
         <!-- Código promocional -->
         <section class="promo-section" aria-label="Código promocional">
@@ -435,16 +450,63 @@
             <span>Proceder con mi pedido</span>
           }
         </button>
-        <a class="btn-link" routerLink="/menu" aria-label="Volver al menú para seguir comprando">Seguir comprando</a>
-        <button 
-          class="btn-secondary" 
-          (click)="vaciar()" 
-          [disabled]="items.length === 0 || isProcessing"
-          aria-label="Eliminar todos los items del carrito"
-        >
-          Vaciar carrito
-        </button>
+          <a class="btn-link" routerLink="/menu" aria-label="Volver al menú para seguir comprando">Añadir más productos</a>
+          <button 
+            class="btn-secondary" 
+            (click)="vaciar()" 
+            [disabled]="items.length === 0 || isProcessing || isSuccess"
+            aria-label="Eliminar todos los items del carrito"
+          >
+            Vaciar carrito
+          </button>
+        </div>
       </aside>
     </div>
   }
+
+  <!-- Modal de confirmación de eliminación -->
+  @if (showDeleteModal && itemToDelete) {
+    <div class="delete-modal-overlay" (click)="cerrarModalEliminar()">
+      <div class="delete-modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-icon">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <h3>¿Eliminar producto?</h3>
+        <p>¿Estás seguro que deseas quitar <strong>{{ itemToDelete.name }}</strong> de tu carrito?</p>
+        <div class="modal-actions">
+          <button class="btn-cancel" (click)="cerrarModalEliminar()">Cancelar</button>
+          <button class="btn-confirm-delete" (click)="confirmarEliminar()">Sí, eliminar</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Overlay de Procesamiento -->
+  @if (isProcessing && !isSuccess) {
+    <div class="processing-overlay">
+      <div class="processing-content">
+        <div class="pizza-loader"></div>
+        <h3>Procesando tu pedido...</h3>
+        <p>Por favor no cierres esta ventana</p>
+      </div>
+    </div>
+  }
+
+  <!-- Overlay de Éxito -->
+  @if (isSuccess) {
+    <div class="success-overlay">
+      <div class="success-content">
+        <div class="success-icon-container">
+          <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+        </div>
+        <h2>¡Pedido Confirmado!</h2>
+        <p>Tu deliciosa pizza está empezando a prepararse. Te enviaremos los detalles a tu correo.</p>
+        <button class="btn-primary" (click)="cerrarExito()">Aceptar</button>
+      </div>
+    </div>
+  }
+
 </section>

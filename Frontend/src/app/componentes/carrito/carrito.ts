@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CartService } from '../../services/cart.service';
 import { CartItem, CartTotals } from '../../models/cart-item.model';
@@ -16,23 +16,25 @@ import { AuthService } from '../../services/auth.service';
 import { ImageOptimizerService } from '../../services/image-optimizer.service';
 import { PromocionService } from '../../services/promocion.service';
 import { AccessibilityService } from '../../services/accessibility.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-carrito',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './carrito.html',
-  styleUrl: './carrito.css'
+  styleUrl: './carrito.css',
 })
 export class CarritoComponent implements OnInit, OnDestroy {
   onSavedAddressChange(): void {
     if (this.addressOption === 'saved' && this.selectedAddressId) {
-      const dir = this.direcciones.find(d => d.id === this.selectedAddressId);
+      const dir = this.direcciones.find((d) => d.id === this.selectedAddressId);
       if (dir) {
         this.addressForm.line1 = dir.line1;
         this.addressForm.city = dir.city;
         this.addressForm.district = dir.district;
-        this.addressForm.reference = (typeof dir.reference === 'string' && dir.reference.trim().length > 0) ? dir.reference : '';
+        this.addressForm.reference =
+          typeof dir.reference === 'string' && dir.reference.trim().length > 0 ? dir.reference : '';
       } else {
         this.addressForm.reference = '';
       }
@@ -44,7 +46,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
     line1: '',
     city: '',
     district: '',
-    reference: ''
+    reference: '',
   };
   newAddressError = '';
 
@@ -64,7 +66,11 @@ export class CarritoComponent implements OnInit, OnDestroy {
       this.newAddressError = 'No se pudo identificar el usuario.';
       return;
     }
-    if (!this.newAddressForm.line1.trim() || !this.newAddressForm.city.trim() || !this.newAddressForm.district.trim()) {
+    if (
+      !this.newAddressForm.line1.trim() ||
+      !this.newAddressForm.city.trim() ||
+      !this.newAddressForm.district.trim()
+    ) {
       this.newAddressError = 'Completa todos los campos obligatorios.';
       return;
     }
@@ -73,7 +79,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
       line1: this.newAddressForm.line1.trim(),
       city: this.newAddressForm.city.trim(),
       district: this.newAddressForm.district.trim(),
-      reference: this.newAddressForm.reference.trim()
+      reference: this.newAddressForm.reference.trim(),
     };
     this.addressService.crear(newAddress).subscribe({
       next: (address) => {
@@ -85,7 +91,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.newAddressError = 'No se pudo guardar la dirección.';
-      }
+      },
     });
   }
   ngOnChanges(): void {
@@ -98,7 +104,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
 
   private actualizarAddressForm(): void {
     if (this.selectedAddressId && this.direcciones.length > 0) {
-      const dir = this.direcciones.find(d => d.id === this.selectedAddressId);
+      const dir = this.direcciones.find((d) => d.id === this.selectedAddressId);
       if (dir) {
         this.addressForm.line1 = dir.line1;
         this.addressForm.city = dir.city;
@@ -124,21 +130,27 @@ export class CarritoComponent implements OnInit, OnDestroy {
   notes = '';
   checkoutError = '';
   checkoutSuccess = '';
+
   isProcessing = false;
+  isSuccess = false;
   private subs: Subscription[] = [];
-    direcciones: AddressDTO[] = [];
-    selectedAddressId: number | null = null;
+  direcciones: AddressDTO[] = [];
+  selectedAddressId: number | null = null;
+
+  // Modal de eliminación
+  showDeleteModal = false;
+  itemToDelete: CartItem | null = null;
 
   // Delivery type
   deliveryType: 'PICKUP' | 'DELIVERY' = 'DELIVERY';
-  baseDeliveryFee = 5.00; // Costo de delivery por defecto
+  baseDeliveryFee = 5.0; // Costo de delivery por defecto
 
   // Address form
   addressForm = {
     line1: '',
     city: '',
     district: '',
-    reference: ''
+    reference: '',
   };
 
   // Mapa de ingredientes para mostrar nombres
@@ -157,16 +169,18 @@ export class CarritoComponent implements OnInit, OnDestroy {
     private checkoutService: CheckoutService,
     private paymentMethodService: PaymentMethodService,
     private ingredientService: IngredientService,
-  private imageOptimizer: ImageOptimizerService,
-  private addressService: AddressService,
-  private authService: AuthService,
-  private promocionService: PromocionService,
-  private accessibility: AccessibilityService,
+    private imageOptimizer: ImageOptimizerService,
+    private addressService: AddressService,
+    private authService: AuthService,
+    private promocionService: PromocionService,
+    private accessibility: AccessibilityService,
+    private toastService: ToastService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
     this.subs.push(
-      this.cartService.items$.subscribe(items => {
+      this.cartService.items$.subscribe((items) => {
         this.items = items;
         this.recalcularTotales(); // Recalcular según el tipo de delivery
         // Announce cart update
@@ -175,39 +189,42 @@ export class CarritoComponent implements OnInit, OnDestroy {
         } else {
           this.accessibility.announceCartTotal(this.totals.total);
         }
-      })
+      }),
     );
 
     this.loadPaymentMethods();
     this.loadIngredientes();
     this.cargarPromocionGuardada(); // Cargar código promocional guardado
 
-      // Cargar direcciones del usuario autenticado
-      const userId = this.authService.obtenerUsuarioId();
-      if (userId) {
-        this.addressService.obtenerPorUserId(userId).subscribe({
-          next: (direcciones) => {
-            // Filtrar direcciones únicas por line1, city, district
-            this.direcciones = direcciones.filter((dir, idx, arr) =>
-              arr.findIndex(d => d.line1 === dir.line1 && d.city === dir.city && d.district === dir.district) === idx
-            );
-          },
-          error: () => {
-            this.direcciones = [];
-          }
-        });
-      }
+    // Cargar direcciones del usuario autenticado
+    const userId = this.authService.obtenerUsuarioId();
+    if (userId) {
+      this.addressService.obtenerPorUserId(userId).subscribe({
+        next: (direcciones) => {
+          // Filtrar direcciones únicas por line1, city, district
+          this.direcciones = direcciones.filter(
+            (dir, idx, arr) =>
+              arr.findIndex(
+                (d) => d.line1 === dir.line1 && d.city === dir.city && d.district === dir.district,
+              ) === idx,
+          );
+        },
+        error: () => {
+          this.direcciones = [];
+        },
+      });
+    }
 
     if (this.deliveryType === 'DELIVERY') {
       this.addressOption = 'saved';
     }
-    
+
     // Announce cart ready
     this.accessibility.announce('Carrito cargado. Revisa tus items y procede al pago');
   }
 
   ngOnDestroy(): void {
-    this.subs.forEach(sub => sub.unsubscribe());
+    this.subs.forEach((sub) => sub.unsubscribe());
   }
 
   actualizarCantidad(item: CartItem, valor: string): void {
@@ -231,9 +248,22 @@ export class CarritoComponent implements OnInit, OnDestroy {
   }
 
   eliminar(item: CartItem): void {
-    this.cartService.removeItem(item.id);
-    this.mostrarMensaje(`${item.name} eliminado del carrito`);
-    this.accessibility.announceRemoveFromCart(item.name);
+    this.itemToDelete = item;
+    this.showDeleteModal = true;
+  }
+
+  confirmarEliminar(): void {
+    if (this.itemToDelete) {
+      this.cartService.removeItem(this.itemToDelete.id);
+      this.mostrarMensaje(`${this.itemToDelete.name} eliminado del carrito`);
+      this.accessibility.announceRemoveFromCart(this.itemToDelete.name);
+      this.cerrarModalEliminar();
+    }
+  }
+
+  cerrarModalEliminar(): void {
+    this.showDeleteModal = false;
+    this.itemToDelete = null;
   }
 
   vaciar(): void {
@@ -253,9 +283,10 @@ export class CarritoComponent implements OnInit, OnDestroy {
     }
 
     if (!this.selectedPaymentMethodId) {
-      this.checkoutError = this.paymentMethods.length === 0
-        ? 'No hay métodos de pago disponibles en este momento.'
-        : 'Selecciona un método de pago para continuar.';
+      this.checkoutError =
+        this.paymentMethods.length === 0
+          ? 'No hay métodos de pago disponibles en este momento.'
+          : 'Selecciona un método de pago para continuar.';
       return;
     }
 
@@ -266,8 +297,12 @@ export class CarritoComponent implements OnInit, OnDestroy {
     }
 
     // Si opción es 'saved', copiar datos al formulario antes de validar
-    if (this.deliveryType === 'DELIVERY' && this.addressOption === 'saved' && this.selectedAddressId) {
-      const dir = this.direcciones.find(d => d.id === this.selectedAddressId);
+    if (
+      this.deliveryType === 'DELIVERY' &&
+      this.addressOption === 'saved' &&
+      this.selectedAddressId
+    ) {
+      const dir = this.direcciones.find((d) => d.id === this.selectedAddressId);
       if (dir) {
         this.addressForm.line1 = dir.line1;
         this.addressForm.city = dir.city;
@@ -306,7 +341,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
         line1: this.addressForm.line1.trim(),
         city: this.addressForm.city.trim(),
         district: this.addressForm.district.trim(),
-        reference: this.addressForm.reference.trim() || undefined
+        reference: this.addressForm.reference.trim() || undefined,
       };
     }
 
@@ -314,46 +349,59 @@ export class CarritoComponent implements OnInit, OnDestroy {
       paymentMethodId: this.selectedPaymentMethodId,
       amount: this.totals.total,
       status: 'PENDING',
-      transactionId: this.generateTransactionId()
+      transactionId: this.generateTransactionId(),
     };
 
     const sub = this.checkoutService.checkout(payload).subscribe({
       next: (result) => {
-  this.checkoutSuccess = `Pedido creado correctamente.`;
-  this.checkoutError = '';
-  this.notes = '';
-  const defaultMethod = this.paymentMethods[0] ?? null;
-  this.onPaymentMethodChange(defaultMethod);
-        this.resetPaymentForms();
-        this.limpiarPromocionDeStorage(); // Limpiar promoción al completar compra
         this.isProcessing = false;
-        this.accessibility.announceSuccess('Pedido completado. Recibirás confirmación por email');
+        this.isSuccess = true;
+        this.accessibility.announceSuccess('Pedido confirmado con éxito.');
+        this.resetPaymentForms();
+        this.limpiarPromocionDeStorage();
       },
       error: (err) => {
         this.checkoutError = err?.message ?? 'No se pudo completar el pedido.';
         this.isProcessing = false;
         this.accessibility.announceError(this.checkoutError);
-      }
+      },
     });
 
     this.subs.push(sub);
   }
 
+  cerrarExito(): void {
+    this.isSuccess = false;
+    this.router.navigate(['/menu']);
+  }
+
   get isCheckoutDisabled(): boolean {
     if (this.deliveryType === 'DELIVERY') {
       if (this.addressOption === 'saved') {
-        return this.items.length === 0 || this.isProcessing || !this.selectedPaymentMethodId || this.direcciones.length === 0 || !this.selectedAddressId;
+        return (
+          this.items.length === 0 ||
+          this.isProcessing ||
+          !this.selectedPaymentMethodId ||
+          this.direcciones.length === 0 ||
+          !this.selectedAddressId
+        );
       }
       if (this.addressOption === 'new') {
-        return this.items.length === 0 || this.isProcessing || !this.selectedPaymentMethodId || !this.addressForm.line1.trim() || !this.addressForm.city.trim() || !this.addressForm.district.trim();
+        return (
+          this.items.length === 0 ||
+          this.isProcessing ||
+          !this.selectedPaymentMethodId ||
+          !this.addressForm.line1.trim() ||
+          !this.addressForm.city.trim() ||
+          !this.addressForm.district.trim()
+        );
       }
     }
     return this.items.length === 0 || this.isProcessing || !this.selectedPaymentMethodId;
   }
 
   private mostrarMensaje(texto: string): void {
-    this.mensaje = texto;
-    setTimeout(() => this.mensaje = '', 2000);
+    this.toastService.showSuccess(texto);
   }
 
   private loadPaymentMethods(): void {
@@ -373,7 +421,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
         this.paymentMethodsLoaded = true;
         this.selectedPaymentMethodId = null;
         this.selectedPaymentMethod = null;
-      }
+      },
     });
 
     this.subs.push(sub);
@@ -382,7 +430,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
   loadIngredientes(): void {
     this.ingredientService.obtenerTodos().subscribe({
       next: (ingredientes) => {
-        ingredientes.forEach(ing => {
+        ingredientes.forEach((ing) => {
           if (ing.id) {
             this.ingredientesMap.set(ing.id.toString(), ing);
           }
@@ -390,7 +438,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error al cargar ingredientes:', error);
-      }
+      },
     });
   }
 
@@ -400,8 +448,8 @@ export class CarritoComponent implements OnInit, OnDestroy {
     }
 
     const nombres = item.extras
-      .map(id => this.ingredientesMap.get(id)?.name || id)
-      .filter(nombre => nombre);
+      .map((id) => this.ingredientesMap.get(id)?.name || id)
+      .filter((nombre) => nombre);
 
     return nombres.join(', ');
   }
@@ -412,7 +460,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
 
   onPaymentMethodChange(method: PaymentMethodDTO | number | null): void {
     if (typeof method === 'number') {
-      this.selectedPaymentMethod = this.paymentMethods.find(m => m.id === method) ?? null;
+      this.selectedPaymentMethod = this.paymentMethods.find((m) => m.id === method) ?? null;
     } else {
       this.selectedPaymentMethod = method;
     }
@@ -483,7 +531,9 @@ export class CarritoComponent implements OnInit, OnDestroy {
     const details: string[] = [];
 
     if (this.requiresMobileDetails) {
-      details.push(`Pago móvil ${this.mobileForm.phone.trim()} referencia ${this.mobileForm.reference.trim()}`);
+      details.push(
+        `Pago móvil ${this.mobileForm.phone.trim()} referencia ${this.mobileForm.reference.trim()}`,
+      );
     }
 
     const extra = details.join(' | ');
@@ -549,7 +599,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
         line1: '',
         city: '',
         district: '',
-        reference: ''
+        reference: '',
       };
     }
 
@@ -564,7 +614,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
             line1: '',
             city: '',
             district: '',
-            reference: ''
+            reference: '',
           };
         }
       } else if (this.addressOption === 'new') {
@@ -573,7 +623,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
           line1: '',
           city: '',
           district: '',
-          reference: ''
+          reference: '',
         };
         this.selectedAddressId = null;
       }
@@ -590,13 +640,13 @@ export class CarritoComponent implements OnInit, OnDestroy {
       this.totals = {
         ...baseTotals,
         deliveryFee: 0,
-        total: baseTotals.subtotal - this.promoDiscount
+        total: baseTotals.subtotal - this.promoDiscount,
       };
     } else {
       this.totals = {
         ...baseTotals,
         deliveryFee: this.baseDeliveryFee,
-        total: baseTotals.subtotal + this.baseDeliveryFee - this.promoDiscount
+        total: baseTotals.subtotal + this.baseDeliveryFee - this.promoDiscount,
       };
     }
   }
@@ -657,28 +707,31 @@ export class CarritoComponent implements OnInit, OnDestroy {
     // Obtener items del carrito para calcular descuento solo sobre items aplicables
     const items = this.cartService.getItemsSnapshot();
 
-    this.promocionService.validarPromocion(this.promoCode.trim(), subtotal, userId || undefined, items).subscribe({
-      next: (response) => {
-        if (response.valid) {
-          this.promoApplied = true;
-          this.promoDiscount = response.discount;
-          this.promoSuccess = response.message || `Código aplicado: -S/. ${response.discount.toFixed(2)}`;
-          this.guardarPromocionEnStorage(); // Guardar en localStorage
-          this.recalcularTotales();
-        } else {
-          this.promoError = response.message || 'Código promocional inválido';
+    this.promocionService
+      .validarPromocion(this.promoCode.trim(), subtotal, userId || undefined, items)
+      .subscribe({
+        next: (response) => {
+          if (response.valid) {
+            this.promoApplied = true;
+            this.promoDiscount = response.discount;
+            this.promoSuccess =
+              response.message || `Código aplicado: -S/. ${response.discount.toFixed(2)}`;
+            this.guardarPromocionEnStorage(); // Guardar en localStorage
+            this.recalcularTotales();
+          } else {
+            this.promoError = response.message || 'Código promocional inválido';
+            this.promoApplied = false;
+            this.promoDiscount = 0;
+          }
+          this.isValidatingPromo = false;
+        },
+        error: (err) => {
+          this.promoError = err?.error?.message || 'No se pudo validar el código';
           this.promoApplied = false;
           this.promoDiscount = 0;
-        }
-        this.isValidatingPromo = false;
-      },
-      error: (err) => {
-        this.promoError = err?.error?.message || 'No se pudo validar el código';
-        this.promoApplied = false;
-        this.promoDiscount = 0;
-        this.isValidatingPromo = false;
-      }
-    });
+          this.isValidatingPromo = false;
+        },
+      });
   }
 
   /**
@@ -701,7 +754,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
     const promoData = {
       code: this.promoCode,
       discount: this.promoDiscount,
-      applied: this.promoApplied
+      applied: this.promoApplied,
     };
     localStorage.setItem('cart_promo', JSON.stringify(promoData));
   }
