@@ -1,0 +1,184 @@
+<div class="max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div class="flex items-center gap-3">
+      <h2 class="text-2xl font-black text-gray-800">
+        <i class="bi bi-credit-card-2-front-fill text-red-600 mr-2"></i> Gestión de Pagos
+      </h2>
+    </div>
+    
+    <div class="relative">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <i class="bi bi-funnel text-gray-400"></i>
+      </div>
+      <select class="pl-9 pr-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block outline-none transition-colors shadow-sm font-bold" 
+              [(ngModel)]="filtroEstado" (change)="aplicarFiltro()">
+        <option value="TODOS">Todos los estados</option>
+        <option value="PENDING">Pendiente</option>
+        <option value="PAID">Pagado</option>
+        <option value="FAILED">Fallido</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Mensajes de éxito y error -->
+  <div class="mb-6" *ngIf="mensaje">
+    <div class="px-4 py-3 rounded-lg flex items-center justify-between" 
+         [ngClass]="error ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'">
+      <div class="flex items-center gap-2">
+        <i class="bi" [ngClass]="error ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
+        {{ mensaje }}
+      </div>
+      <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" (click)="mensaje = ''">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tarjetas de resumen -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+    <!-- Total Pagos -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center gap-4 transition-transform hover:-translate-y-1">
+      <div class="w-14 h-14 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600">
+        <i class="bi bi-receipt text-2xl"></i>
+      </div>
+      <div>
+        <h6 class="text-sm font-bold text-gray-500 mb-1">Total Pagos</h6>
+        <h3 class="text-2xl font-black text-gray-800 m-0">{{ payments.length }}</h3>
+      </div>
+    </div>
+    
+    <!-- Pagados -->
+    <div class="bg-emerald-600 rounded-2xl shadow-sm border border-emerald-500 p-6 flex items-center gap-4 text-white transition-transform hover:-translate-y-1">
+      <div class="w-14 h-14 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm">
+        <i class="bi bi-check-circle-fill text-2xl"></i>
+      </div>
+      <div>
+        <h6 class="text-sm font-bold text-emerald-100 mb-1">Pagados</h6>
+        <h3 class="text-2xl font-black m-0">{{ getCountByStatus('PAID') }}</h3>
+      </div>
+    </div>
+    
+    <!-- Pendientes -->
+    <div class="bg-amber-400 rounded-2xl shadow-sm border border-amber-300 p-6 flex items-center gap-4 text-amber-950 transition-transform hover:-translate-y-1">
+      <div class="w-14 h-14 rounded-xl flex items-center justify-center bg-white/30 backdrop-blur-sm">
+        <i class="bi bi-clock-fill text-2xl"></i>
+      </div>
+      <div>
+        <h6 class="text-sm font-bold text-amber-800 mb-1">Pendientes</h6>
+        <h3 class="text-2xl font-black m-0">{{ getCountByStatus('PENDING') }}</h3>
+      </div>
+    </div>
+    
+    <!-- Fallidos -->
+    <div class="bg-red-600 rounded-2xl shadow-sm border border-red-500 p-6 flex items-center gap-4 text-white transition-transform hover:-translate-y-1">
+      <div class="w-14 h-14 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm">
+        <i class="bi bi-x-circle-fill text-2xl"></i>
+      </div>
+      <div>
+        <h6 class="text-sm font-bold text-red-100 mb-1">Fallidos</h6>
+        <h3 class="text-2xl font-black m-0">{{ getCountByStatus('FAILED') }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading) {
+    <div class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
+      <div class="animate-spin rounded-full h-12 w-12 border-4 border-red-200 border-t-red-600 mb-4"></div>
+      <p class="text-gray-500 font-medium">Cargando los pagos...</p>
+    </div>
+  }
+
+  <!-- Tabla de pagos -->
+  @if (!loading) {
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+      <h5 class="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
+        <i class="bi bi-list-ul text-gray-500"></i>
+        Lista de Pagos ({{ filteredPayments.length }})
+      </h5>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse min-w-[1000px]">
+        <thead>
+          <tr class="bg-gray-900 text-white text-sm uppercase tracking-wider">
+            <th class="px-6 py-4 font-bold rounded-tl-lg w-24">ID</th>
+            <th class="px-6 py-4 font-bold">Pedido</th>
+            <th class="px-6 py-4 font-bold text-right">Monto</th>
+            <th class="px-6 py-4 font-bold text-center">Estado</th>
+            <th class="px-6 py-4 font-bold">ID Transacción</th>
+            <th class="px-6 py-4 font-bold rounded-tr-lg">Fecha</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 text-gray-700">
+          <tr class="hover:bg-gray-50 transition-colors" *ngFor="let payment of paymentsPaginados">
+            <td class="px-6 py-4">
+              <span class="font-bold text-gray-800 text-lg">#{{ payment.id }}</span>
+            </td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-sm font-bold border border-blue-100">
+                <i class="bi bi-bag-check"></i> Pedido #{{ payment.orderId }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <span class="text-emerald-600 font-black text-lg">S/ {{ payment.amount | number:'1.2-2' }}</span>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <span class="px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 border"
+                    [ngClass]="{
+                      'bg-amber-50 text-amber-700 border-amber-200': payment.status === 'PENDING',
+                      'bg-emerald-50 text-emerald-700 border-emerald-200': payment.status === 'PAID',
+                      'bg-red-50 text-red-700 border-red-200': payment.status === 'FAILED'
+                    }">
+                <i class="bi" [ngClass]="{
+                  'bi-clock': payment.status === 'PENDING',
+                  'bi-check-circle-fill': payment.status === 'PAID',
+                  'bi-x-circle-fill': payment.status === 'FAILED'
+                }"></i>
+                {{ getEstadoTexto(payment.status) }}
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <span class="text-sm font-mono bg-gray-100 text-gray-600 px-2.5 py-1 rounded border border-gray-200" *ngIf="payment.transactionId">
+                {{ payment.transactionId }}
+              </span>
+              <span class="text-sm text-gray-400 italic" *ngIf="!payment.transactionId">
+                N/A
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                <i class="bi bi-calendar-event text-gray-400"></i>
+                {{ payment.createdAt | date: 'short' }}
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredPayments.length === 0">
+            <td colspan="6" class="px-6 py-16 text-center">
+              <div class="flex flex-col items-center">
+                <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
+                  <i class="bi bi-credit-card-2-front text-4xl"></i>
+                </div>
+                <h5 class="text-gray-800 font-bold text-xl mb-2">No hay pagos para mostrar</h5>
+                <p class="text-gray-500 max-w-md">Los pagos aparecerán aquí cuando los clientes realicen transacciones o ajusta los filtros actuales.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    <div class="p-6 border-t border-gray-100" *ngIf="filteredPayments.length > 0">
+      <app-pagination 
+        [currentPage]="currentPage" 
+        [totalItems]="filteredPayments.length" 
+        [itemsPerPage]="itemsPerPage"
+        (pageChange)="onPageChange($event)">
+      </app-pagination>
+    </div>
+  </div>
+  }
+</div>

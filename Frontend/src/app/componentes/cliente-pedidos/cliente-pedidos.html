@@ -1,0 +1,406 @@
+<div class="max-w-6xl mx-auto">
+  <!-- Header & Filters -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+    <div class="flex items-center gap-3">
+      <h2 class="text-2xl font-black text-gray-800 flex items-center gap-2 m-0">
+        <i class="bi bi-bag-check-fill text-red-600"></i> Historial de Pedidos
+      </h2>
+    </div>
+    
+    <div class="flex flex-wrap gap-3 w-full md:w-auto">
+      <div class="relative flex-1 md:flex-none">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <i class="bi bi-shop text-gray-400"></i>
+        </div>
+        <select class="w-full pl-9 pr-8 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl focus:ring-red-500 focus:border-red-500 appearance-none shadow-sm" [(ngModel)]="filtroDeliveryType" (change)="aplicarFiltro()">
+          <option value="TODOS">Todos los tipos</option>
+          <option value="PICKUP">Recojo en tienda</option>
+          <option value="DELIVERY">Delivery</option>
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-400">
+          <i class="bi bi-chevron-down text-xs"></i>
+        </div>
+      </div>
+      
+      <div class="relative flex-1 md:flex-none">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <i class="bi bi-funnel text-gray-400"></i>
+        </div>
+        <select class="w-full pl-9 pr-8 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl focus:ring-red-500 focus:border-red-500 appearance-none shadow-sm" [(ngModel)]="filtroEstado" (change)="aplicarFiltro()">
+          <option value="TODOS">Todos los estados</option>
+          <option value="PENDING">Pendiente</option>
+          <option value="CONFIRMED">Confirmado</option>
+          <option value="PREPARING">Preparando</option>
+          <option value="OUT_FOR_DELIVERY">En camino</option>
+          <option value="DELIVERED">Entregado</option>
+          <option value="CANCELLED">Cancelado</option>
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-400">
+          <i class="bi bi-chevron-down text-xs"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensajes -->
+  <div *ngIf="mensaje" class="mb-6">
+    <div class="px-5 py-4 rounded-xl flex items-center gap-3 font-medium shadow-sm" 
+         [ngClass]="error ? 'bg-red-50 text-red-800 border border-red-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'">
+      <i class="bi text-xl" [ngClass]="error ? 'bi-exclamation-triangle-fill text-red-500' : 'bi-check-circle-fill text-emerald-500'"></i>
+      <span class="flex-1">{{ mensaje }}</span>
+      <button class="text-gray-400 hover:text-gray-600 transition-colors" (click)="mensaje = ''"><i class="bi bi-x-lg"></i></button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading) {
+    <div class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
+      <div class="animate-spin rounded-full h-12 w-12 border-4 border-red-200 border-t-red-600 mb-4"></div>
+      <p class="text-gray-500 font-medium">Cargando historial de pedidos...</p>
+    </div>
+  }
+
+  <!-- Cards de Pedidos -->
+  @if (!loading) {
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+      <h5 class="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
+        <i class="bi bi-list-ul text-gray-500"></i> Mis Pedidos ({{ filteredOrders.length }})
+      </h5>
+    </div>
+
+    <div class="p-4 md:p-6 bg-gray-50/30">
+      <div class="space-y-4">
+        
+        <!-- Order Card -->
+        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow group" *ngFor="let order of ordersPaginados">
+          
+          <!-- Header Card -->
+          <div class="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"
+               [ngClass]="order.status === 'DELIVERED' ? 'bg-emerald-50/30' : (order.status === 'CANCELLED' ? 'bg-red-50/30' : 'bg-blue-50/30')">
+            <div class="flex items-center gap-3 flex-wrap">
+              <span class="text-lg font-black text-gray-800">#{{ order.id }}</span>
+              <span class="px-3 py-1 rounded-lg text-xs font-bold border flex items-center gap-1.5"
+                    [ngClass]="{
+                      'bg-amber-50 text-amber-700 border-amber-200': order.status === 'PENDING',
+                      'bg-blue-50 text-blue-700 border-blue-200': order.status === 'CONFIRMED' || order.status === 'PREPARING',
+                      'bg-indigo-50 text-indigo-700 border-indigo-200': order.status === 'OUT_FOR_DELIVERY',
+                      'bg-emerald-50 text-emerald-700 border-emerald-200': order.status === 'DELIVERED',
+                      'bg-red-50 text-red-700 border-red-200': order.status === 'CANCELLED'
+                    }">
+                <i class="bi" [ngClass]="{
+                  'bi-clock': order.status === 'PENDING',
+                  'bi-check-circle-fill': order.status === 'CONFIRMED',
+                  'bi-fire': order.status === 'PREPARING',
+                  'bi-bicycle': order.status === 'OUT_FOR_DELIVERY',
+                  'bi-box-seam-fill': order.status === 'DELIVERED',
+                  'bi-x-circle-fill': order.status === 'CANCELLED'
+                }"></i>
+                {{ getEstadoTexto(order.status) }}
+              </span>
+              <span class="px-3 py-1 rounded-lg text-xs font-bold border flex items-center gap-1.5"
+                    [ngClass]="esPickup(order) ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-orange-50 text-orange-700 border-orange-200'">
+                <i class="bi" [ngClass]="esPickup(order) ? 'bi-shop' : 'bi-scooter'"></i>
+                {{ esPickup(order) ? 'PICKUP' : 'DELIVERY' }}
+              </span>
+            </div>
+            
+            <div class="flex flex-col items-end text-right w-full sm:w-auto">
+              <span class="text-xl font-black text-emerald-600">S/ {{ order.total | number:'1.2-2' }}</span>
+              <span class="text-xs text-gray-500 font-medium flex items-center gap-1"><i class="bi bi-calendar3"></i> {{ order.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+
+          <!-- Body Card -->
+          <div class="p-5 flex flex-col lg:flex-row gap-6">
+            
+            <!-- Delivery Info -->
+            <div class="flex-1 space-y-4 border-b lg:border-b-0 lg:border-r border-gray-100 pb-4 lg:pb-0 pr-0 lg:pr-6">
+              
+              <div *ngIf="esDelivery(order) && order.addressLine1">
+                <h6 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2"><i class="bi bi-geo-alt-fill text-gray-300"></i> Dirección de Envío</h6>
+                <p class="font-medium text-gray-800 mb-0.5">{{ order.addressLine1 }}</p>
+                <p class="text-sm text-gray-500 mb-1">{{ order.addressDistrict }}, {{ order.addressCity }}</p>
+                <p class="text-xs text-gray-400 italic bg-gray-50 p-2 rounded-lg border border-gray-100 mt-2" *ngIf="order.addressReference">
+                  <i class="bi bi-info-circle"></i> Ref: {{ order.addressReference }}
+                </p>
+              </div>
+
+              <div *ngIf="esPickup(order)" class="bg-purple-50 border border-purple-100 rounded-xl p-4 flex gap-3 items-center">
+                <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center shrink-0">
+                  <i class="bi bi-shop text-xl"></i>
+                </div>
+                <div>
+                  <h6 class="font-bold text-purple-800 m-0">Recojo en Tienda</h6>
+                  <p class="text-sm text-purple-600 m-0">El pedido será recogido en el local</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resumen numérico -->
+            <div class="w-full lg:w-48 shrink-0">
+              <h6 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2"><i class="bi bi-receipt text-gray-300"></i> Resumen</h6>
+              <div class="space-y-1.5 text-sm">
+                <div class="flex justify-between text-gray-600"><span>Subtotal:</span> <span class="font-bold text-gray-800">S/ {{ order.subtotal | number:'1.2-2' }}</span></div>
+                <div class="flex justify-between text-gray-600">
+                  <span>Envío:</span> 
+                  <span class="font-bold" [ngClass]="order.deliveryFee === 0 ? 'text-emerald-600' : 'text-gray-800'">S/ {{ order.deliveryFee | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex justify-between text-red-600 font-bold" *ngIf="order.discount && order.discount > 0">
+                  <span>Dcto:</span> 
+                  <span>-S/ {{ order.discount | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="w-full lg:w-48 shrink-0 flex flex-col gap-2 justify-end">
+              <button class="w-full bg-white border border-gray-200 hover:border-gray-800 hover:bg-gray-50 text-gray-800 font-bold py-2.5 px-4 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-sm" (click)="verDetalles(order)">
+                <i class="bi bi-eye"></i> Ver Detalles
+              </button>
+              
+              <button *ngIf="puedeDejarReview(order)" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-sm" (click)="abrirModalReview(order)">
+                <i class="bi bi-star-fill text-yellow-300"></i> Calificar Pedido
+              </button>
+              
+              <button *ngIf="order.status === 'DELIVERED' && yaHaResenadoPedido(order.id || 0)" class="w-full bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold py-2.5 px-4 rounded-xl text-sm transition-colors flex items-center justify-center gap-2" (click)="abrirModalEditarReview(order)">
+                <i class="bi bi-pencil-square"></i> Editar Reseña
+              </button>
+            </div>
+
+          </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div *ngIf="filteredOrders.length === 0" class="py-16 flex flex-col items-center text-center">
+          <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 text-gray-300 mb-4">
+            <i class="bi bi-bag-x text-5xl"></i>
+          </div>
+          <h5 class="text-xl font-bold text-gray-800 mb-2">No tienes pedidos aún</h5>
+          <p class="text-gray-500 max-w-sm">Cuando realices una compra, aparecerá aquí todo tu historial y estado de pedidos.</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Paginación -->
+    <div class="p-5 border-t border-gray-100 bg-white" *ngIf="filteredOrders.length > 0">
+      <app-pagination 
+        [currentPage]="currentPage" 
+        [totalItems]="filteredOrders.length" 
+        [itemsPerPage]="itemsPerPage"
+        (pageChange)="onPageChange($event)">
+      </app-pagination>
+    </div>
+  </div>
+  }
+</div>
+
+<!-- Modal Detalles Pedido -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/70 backdrop-blur-sm animate-in fade-in duration-200" *ngIf="showModal">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+    
+    <div class="px-6 py-4 bg-gray-900 text-white flex justify-between items-center shrink-0">
+      <h5 class="font-bold text-lg m-0 flex items-center gap-2">
+        <i class="bi bi-receipt"></i>
+        Detalle del Pedido #{{ selectedOrder?.id }}
+      </h5>
+      <button class="text-gray-400 hover:text-white transition-colors" (click)="cerrarModal()">
+        <i class="bi bi-x-lg text-xl"></i>
+      </button>
+    </div>
+
+    <div class="p-6 overflow-y-auto flex-1 bg-gray-50 space-y-6" *ngIf="selectedOrder">
+      
+      <!-- Grid Info Superior -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Info General -->
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+          <h6 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2"><i class="bi bi-info-circle text-gray-300"></i> Información General</h6>
+          <div class="space-y-3 text-sm">
+            <div class="flex justify-between"><span class="text-gray-500">Fecha:</span> <span class="font-medium text-gray-800">{{ selectedOrder.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span></div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500">Estado:</span> 
+              <span class="px-2.5 py-1 rounded text-xs font-bold border"
+                    [ngClass]="{
+                      'bg-amber-50 text-amber-700 border-amber-200': selectedOrder.status === 'PENDING',
+                      'bg-emerald-50 text-emerald-700 border-emerald-200': selectedOrder.status === 'DELIVERED',
+                      'bg-red-50 text-red-700 border-red-200': selectedOrder.status === 'CANCELLED',
+                      'bg-blue-50 text-blue-700 border-blue-200': selectedOrder.status !== 'PENDING' && selectedOrder.status !== 'DELIVERED' && selectedOrder.status !== 'CANCELLED'
+                    }">
+                {{ getEstadoTexto(selectedOrder.status) }}
+              </span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500">Tipo:</span>
+              <span class="px-2.5 py-1 rounded text-xs font-bold border"
+                    [ngClass]="esPickup(selectedOrder) ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-orange-50 text-orange-700 border-orange-200'">
+                {{ esPickup(selectedOrder) ? 'Recojo en tienda' : 'Delivery' }}
+              </span>
+            </div>
+            <div class="flex justify-between"><span class="text-gray-500">Pago:</span> <span class="font-medium text-gray-800">{{ selectedOrder.paymentMethodName || 'Efectivo/Tarjeta' }}</span></div>
+          </div>
+        </div>
+
+        <!-- Dirección -->
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm" *ngIf="esDelivery(selectedOrder) && selectedOrder.addressLine1">
+          <h6 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2"><i class="bi bi-geo-alt text-gray-300"></i> Entrega a</h6>
+          <p class="font-medium text-gray-800 mb-1">{{ selectedOrder.addressLine1 }}</p>
+          <p class="text-sm text-gray-500 mb-3">{{ selectedOrder.addressDistrict }}, {{ selectedOrder.addressCity }}</p>
+          <div class="bg-amber-50 border border-amber-100 p-3 rounded-lg flex gap-2 text-sm text-amber-800" *ngIf="selectedOrder.addressReference">
+            <i class="bi bi-info-circle-fill shrink-0 mt-0.5"></i>
+            <span>{{ selectedOrder.addressReference }}</span>
+          </div>
+        </div>
+
+        <div class="bg-purple-50 p-5 rounded-xl border border-purple-200 shadow-sm flex flex-col items-center justify-center text-center" *ngIf="esPickup(selectedOrder)">
+          <i class="bi bi-shop text-4xl text-purple-400 mb-2"></i>
+          <h6 class="font-bold text-purple-800 mb-1">Retiro en Tienda</h6>
+          <p class="text-sm text-purple-600 m-0">Acércate al mostrador principal e indica el número de tu pedido.</p>
+        </div>
+      </div>
+
+      <!-- Items Table -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-3 border-b border-gray-100 bg-gray-50">
+          <h6 class="text-xs font-bold text-gray-600 uppercase tracking-wider m-0 flex items-center gap-2"><i class="bi bi-box-seam"></i> Detalle de Productos</h6>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm min-w-[800px]">
+            <thead class="bg-white border-b border-gray-100 text-gray-500">
+              <tr>
+                <th class="px-5 py-3 font-medium">Producto</th>
+                <th class="px-5 py-3 font-medium">Extra/Tamaño</th>
+                <th class="px-5 py-3 font-medium text-center">Cant.</th>
+                <th class="px-5 py-3 font-medium text-right">Precio</th>
+                <th class="px-5 py-3 font-medium text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr class="hover:bg-gray-50" *ngFor="let item of selectedOrderItems">
+                <td class="px-5 py-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                         [ngClass]="item.itemType === 'EXTRA' ? 'bg-indigo-50 text-indigo-600' : 'bg-red-50 text-red-600'">
+                      <i class="bi" [ngClass]="item.itemType === 'EXTRA' ? 'bi-cup-straw' : 'bi-pie-chart-fill'"></i>
+                    </div>
+                    <span class="font-bold text-gray-800">{{ item.pizzaName || 'Extra #' + item.extraId }}</span>
+                  </div>
+                </td>
+                <td class="px-5 py-4">
+                  <span class="text-gray-600 text-xs" *ngIf="item.itemType !== 'EXTRA'">{{ item.sizeName }}</span>
+                  <div class="text-xs text-gray-500 mt-1" *ngIf="item.extras && item.extras.length > 0">
+                    <span class="bg-gray-100 px-1.5 py-0.5 rounded mr-1" *ngFor="let e of item.extras">+{{e}}</span>
+                  </div>
+                </td>
+                <td class="px-5 py-4 text-center">
+                  <span class="bg-gray-100 text-gray-800 font-bold px-2 py-1 rounded">{{ item.quantity }}</span>
+                </td>
+                <td class="px-5 py-4 text-right text-gray-500">S/ {{ item.unitPrice | number:'1.2-2' }}</td>
+                <td class="px-5 py-4 text-right font-bold text-gray-800">S/ {{ item.lineTotal | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Totales -->
+        <div class="bg-gray-50 px-5 py-4 border-t border-gray-100 flex justify-end">
+          <table class="text-sm">
+            <tbody>
+              <tr>
+                <td class="text-right text-gray-600 pr-6 py-1">Subtotal:</td>
+                <td class="text-right font-bold text-gray-800">S/ {{ selectedOrder.subtotal | number:'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td class="text-right text-gray-600 pr-6 py-1">Costo de Envío:</td>
+                <td class="text-right" [ngClass]="selectedOrder.deliveryFee === 0 ? 'text-emerald-600 font-bold' : 'font-bold text-gray-800'">
+                  {{ selectedOrder.deliveryFee === 0 ? 'GRATIS' : 'S/ ' + (selectedOrder.deliveryFee | number:'1.2-2') }}
+                </td>
+              </tr>
+              <tr *ngIf="selectedOrder.discount && selectedOrder.discount > 0">
+                <td class="text-right text-red-600 font-bold pr-6 py-1">Descuento:</td>
+                <td class="text-right text-red-600 font-bold">-S/ {{ selectedOrder.discount | number:'1.2-2' }}</td>
+              </tr>
+              <tr class="border-t border-gray-200">
+                <td class="text-right font-bold text-gray-800 text-base pr-6 py-3 mt-2">Total a Pagar:</td>
+                <td class="text-right font-black text-emerald-600 text-xl py-3 mt-2">S/ {{ selectedOrder.total | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div *ngIf="selectedOrder.notes" class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex gap-3 text-yellow-800 text-sm">
+        <i class="bi bi-sticky shrink-0 mt-0.5"></i>
+        <div>
+          <span class="font-bold block mb-0.5">Notas del cliente:</span>
+          {{ selectedOrder.notes }}
+        </div>
+      </div>
+
+    </div>
+    
+    <div class="px-6 py-4 bg-white border-t border-gray-100 flex justify-end shrink-0">
+      <button class="bg-gray-900 hover:bg-black text-white font-bold py-2.5 px-6 rounded-xl transition-colors" (click)="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Calificar -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/70 backdrop-blur-sm animate-in fade-in duration-200" *ngIf="showReviewModal">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+    
+    <div class="px-6 py-4 flex justify-between items-center shrink-0 border-b border-gray-100" [ngClass]="editandoReview ? 'bg-amber-50' : 'bg-emerald-50'">
+      <h5 class="font-bold text-lg m-0 flex items-center gap-2" [ngClass]="editandoReview ? 'text-amber-800' : 'text-emerald-800'">
+        <i class="bi" [ngClass]="editandoReview ? 'bi-pencil-square' : 'bi-star-fill'"></i>
+        {{ editandoReview ? 'Editar Reseña' : 'Calificar Pedido' }}
+      </h5>
+      <button class="text-gray-400 hover:text-gray-600 transition-colors" (click)="cerrarModalReview()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-6">
+      
+      <div class="text-center">
+        <label class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Tu Puntuación</label>
+        <div class="flex justify-center gap-2 mb-3">
+          <button type="button" class="text-4xl transition-transform hover:scale-110 focus:outline-none" 
+                  *ngFor="let star of [1,2,3,4,5]" 
+                  (click)="nuevaReview.rating = star"
+                  [ngClass]="star <= nuevaReview.rating ? 'text-yellow-400 drop-shadow-sm' : 'text-gray-200 hover:text-yellow-200'">
+            <i class="bi" [ngClass]="star <= nuevaReview.rating ? 'bi-star-fill' : 'bi-star'"></i>
+          </button>
+        </div>
+        <span class="inline-block bg-yellow-100 text-yellow-800 font-bold px-3 py-1 rounded-full text-sm">
+          {{ nuevaReview.rating }} estrella{{ nuevaReview.rating !== 1 ? 's' : '' }}
+        </span>
+      </div>
+      
+      <div>
+        <label for="reviewComment" class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Cuéntanos más (Opcional)</label>
+        <textarea id="reviewComment" [(ngModel)]="nuevaReview.comment" rows="4" maxlength="500" placeholder="¿Qué te pareció la comida y el servicio?"
+                  class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none text-gray-700"></textarea>
+        <div class="flex justify-end mt-2">
+          <span class="text-xs text-gray-400 font-medium">{{ (nuevaReview.comment || '').length }}/500</span>
+        </div>
+      </div>
+      
+    </div>
+    
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
+      <button class="flex-1 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold py-2.5 px-4 rounded-xl transition-colors" (click)="cerrarModalReview()">Cancelar</button>
+      
+      <button *ngIf="editandoReview" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2.5 px-4 rounded-xl border border-red-200 transition-colors flex justify-center items-center gap-2" (click)="eliminarReview(orderParaReview!); cerrarModalReview()">
+        <i class="bi bi-trash"></i> Borrar
+      </button>
+      
+      <button class="flex-[2] text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" 
+              [ngClass]="editandoReview ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-600 hover:bg-emerald-700'"
+              (click)="guardarReview()"
+              [disabled]="nuevaReview.rating < 1">
+        <i class="bi bi-send-fill"></i> {{ editandoReview ? 'Guardar Cambios' : 'Enviar Reseña' }}
+      </button>
+    </div>
+  </div>
+</div>

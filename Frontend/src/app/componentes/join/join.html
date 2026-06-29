@@ -1,0 +1,107 @@
+<div class="login-page">
+  <div class="login-form-section">
+    <div class="login-form-container">
+      <div class="login-header mb-4">
+        <h2 class="login-title">¡Inicia Sesión!</h2>
+      </div>
+
+      <!-- Formulario de login -->
+      <form (ngSubmit)="onLogin($event)" #loginForm="ngForm">
+
+        <!-- Correo electrónico -->
+        <div class="form-group">
+          <label for="email">Correo electrónico</label>
+          <div class="input-with-icon" [class.has-error]="fieldErrors['email']">
+            <i class="fas fa-envelope"></i>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Ingresar correo electrónico"
+              [(ngModel)]="usuario.email"
+              (input)="onEmailChange()"
+              required
+              [class.input-error]="fieldErrors['email']"
+            />
+          </div>
+          @if (fieldErrors['email']) {
+            <small class="error-message">
+              <i class="fas fa-exclamation-triangle"></i>
+              {{ fieldErrors['email'] }}
+            </small>
+          }
+        </div>
+
+        <!-- Contraseña -->
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <div class="input-with-icon" [class.has-error]="fieldErrors['password']">
+            <i class="fas fa-lock"></i>
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password"
+              name="password"
+              placeholder="Ingresar contraseña"
+              [(ngModel)]="usuario.password"
+              (input)="onPasswordChange()"
+              required
+              [class.input-error]="fieldErrors['password']"
+            />
+            <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'" 
+               (click)="showPassword = !showPassword" 
+               style="position: absolute; right: -15px; top: 12px; cursor: pointer; color: #888; left: auto;"></i>
+          </div>
+          @if (fieldErrors['password']) {
+            <small class="error-message">
+              <i class="fas fa-exclamation-triangle"></i>
+              {{ fieldErrors['password'] }}
+            </small>
+          }
+        </div>
+
+        <!-- Error general o de validación de backend -->
+        @if (loginError) {
+          <div class="alert alert-error mb-3 text-red-600 bg-red-50 p-3 rounded border border-red-200 flex items-start gap-2">
+            <i class="fas fa-exclamation-circle mt-1"></i>
+            <div>
+              @if (serverError) {
+                <strong>Error de conexión</strong>
+              } @else {
+                <strong>Error de acceso</strong>
+              }
+              <p class="text-sm m-0">{{ loginError }}</p>
+            </div>
+          </div>
+        }
+
+        <!-- Indicador de carga -->
+        @if (loading) {
+          <div class="loading mb-3">
+            <i class="fas fa-spinner fa-spin"></i> Verificando credenciales...
+          </div>
+        }
+
+        <!-- Botón login -->
+        <button
+          type="submit"
+          class="btn-login"
+          [disabled]="loading">
+          @if (!loading) {
+            <i class="fas fa-sign-in-alt"></i>
+          }
+          @if (loading) {
+            <i class="fas fa-spinner fa-spin"></i>
+          }
+          {{ loading ? 'Iniciando...' : 'Iniciar sesión' }}
+        </button>
+
+        <!-- Enlace a registro -->
+        <div class="text-center mt-3">
+          <p>¿No tienes una cuenta?
+            <a routerLink="/register" class="register-link">¡Regístrate ya!</a>
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

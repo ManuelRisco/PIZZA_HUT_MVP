@@ -1,0 +1,670 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to right, rgb(200, 16, 46), rgb(165, 10, 35));
+  color: #fff;
+  padding: 0.75rem 2rem;
+  box-shadow: 0 2px 8px rgba(34, 34, 34, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 5000;
+}
+
+.navbar-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.navbar-links {
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.cart-link {
+  position: relative;
+}
+
+.cart-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cart-link i {
+  font-size: 1.1rem;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background: #ffd600;
+  color: #222;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* ========== SELECTOR DE IDIOMA ========== */
+.language-menu-container {
+  position: relative;
+}
+
+.language-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(8px);
+}
+
+.language-button:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.lang-flag-btn {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.lang-chevron {
+  font-size: 0.65rem;
+  opacity: 0.8;
+  transition: transform 0.3s ease;
+}
+
+.lang-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.language-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  animation: langDropIn 0.25s ease;
+  z-index: 2000;
+}
+
+@keyframes langDropIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.88rem;
+  color: #333;
+  text-align: left;
+}
+
+.language-option:last-child {
+  border-bottom: none;
+}
+
+.language-option:hover {
+  background: #fef2f2;
+  color: #c8102e;
+}
+
+.language-option.active {
+  background: #fef2f2;
+  color: #c8102e;
+  font-weight: 600;
+}
+
+.lang-flag {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.lang-name {
+  flex: 1;
+}
+
+.lang-check {
+  color: #c8102e;
+  font-size: 0.85rem;
+}
+/* ========== FIN SELECTOR DE IDIOMA ========== */
+
+
+.navbar-links a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+
+.navbar-links a:hover {
+  background: #ffd600;
+  color: #222;
+}
+
+/* User Menu Container */
+.user-menu-container {
+  position: relative;
+}
+
+.user-menu-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.user-menu-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.user-icon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.5px;
+}
+
+.user-avatar.admin {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
+}
+
+.user-menu-text {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrow-icon {
+  font-size: 0.75rem;
+  transition: transform 0.3s ease;
+}
+
+.user-menu-button:hover .arrow-icon {
+  transform: rotate(180deg);
+}
+
+/* Dropdown */
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 280px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: slideDown 0.3s ease;
+  z-index: 2000;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-content {
+  padding: 0.5rem 0;
+}
+
+.dropdown-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* User Info in Dropdown */
+.user-info-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.avatar-circle {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.avatar-circle.admin {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.user-name {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+}
+
+.user-email {
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+.user-role {
+  font-size: 0.8rem;
+  color: #e53e3e;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Dropdown Items */
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #2d3748;
+  font-size: 0.9rem;
+}
+
+.dropdown-item i {
+  font-size: 1.1rem;
+  width: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.dropdown-item:hover {
+  background: #f7fafc;
+  color: #c8102e;
+}
+
+.dropdown-item.primary {
+  background: linear-gradient(to right, #c8102e, #a50a23);
+  color: #fff;
+  font-weight: 600;
+  margin: 0.5rem;
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+}
+
+.dropdown-item.primary:hover {
+  background: linear-gradient(to right, #a50a23, #8a0820);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(200, 16, 46, 0.3);
+}
+
+.dropdown-item.highlight {
+  color: black;
+  font-weight: 600;
+  margin: 0.5rem;
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+}
+
+.dropdown-item.highlight:hover {
+  transform: translateY(-1px);
+}
+
+.dropdown-item.danger {
+  color: #e53e3e;
+}
+
+.dropdown-item.danger:hover {
+  background: #fff5f5;
+  color: #c53030;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.5rem 0;
+}
+
+
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .navbar {
+    padding: 0.75rem 1rem;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .navbar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    z-index: 5002;
+  }
+
+  .hamburger-btn {
+    display: flex;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 5003;
+    transition: transform 0.3s;
+    padding: 0.2rem;
+  }
+
+  .hamburger-btn:focus, .hamburger-btn:active {
+    outline: none;
+    background: transparent;
+    border: none;
+  }
+
+  .hamburger-btn.open {
+    transform: rotate(90deg);
+  }
+
+  .mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 5000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .mobile-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .navbar-links {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 85%;
+    max-width: 360px;
+    height: 100vh;
+    background: #141414; /* Dark premium background */
+    flex-direction: column;
+    align-items: stretch; /* Aligns all children to left/full width */
+    justify-content: flex-start;
+    padding: 6rem 1.5rem 3rem; /* Push content down so it doesn't collide with the X */
+    gap: 0.5rem;
+    z-index: 5001;
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -15px 0 40px rgba(0,0,0,0.8);
+    overflow-y: auto;
+    border-top: none;
+  }
+
+  .navbar-links.mobile-open {
+    right: 0;
+  }
+
+  .navbar-links li {
+    width: 100%;
+    margin: 0;
+  }
+
+  .navbar-links a {
+    font-size: 1.15rem;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: #f1f1f1;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .navbar-links a i {
+    margin-right: 0.8rem;
+    font-size: 1.3rem;
+  }
+
+  .navbar-links a:hover, .navbar-links a:active {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+  }
+
+  /* User Button */
+  .user-menu-button {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0.9rem 1.2rem;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: #f1f1f1;
+  }
+
+  .user-menu-button:hover {
+    background: rgba(255,255,255,0.08);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .user-menu-button i {
+    margin-right: 0.8rem;
+    font-size: 1.3rem;
+  }
+
+  .user-menu-text {
+    display: inline;
+  }
+
+  /* Dropdowns Inside Curtain */
+  .user-dropdown {
+    position: static;
+    min-width: 100%;
+    margin-top: 0.2rem;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+    padding-left: 1.5rem; /* Indent sub-menus */
+    animation: slideDown 0.3s ease;
+  }
+
+  .dropdown-item {
+    color: #ccc;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  .dropdown-item:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+  }
+
+  .dropdown-divider {
+    background: rgba(255,255,255,0.1);
+    margin: 0.5rem 0;
+  }
+
+  /* User Info Specifics */
+  .user-info-dropdown {
+    padding: 0.5rem 1rem 1rem;
+  }
+
+  .user-name {
+    color: #fff;
+    font-size: 1.1rem;
+  }
+
+  .user-email {
+    color: #888;
+  }
+
+  .dropdown-item.primary {
+    margin: 0.5rem 0;
+  }
+
+  /* Language Selector in Mobile */
+  .language-button {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0.9rem 1.2rem;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: #f1f1f1;
+  }
+
+  .language-button:hover {
+    background: rgba(255,255,255,0.08);
+    transform: none;
+  }
+
+  .lang-flag-btn {
+    font-size: 1.4rem;
+    margin-right: 0.5rem;
+  }
+
+  .language-dropdown {
+    position: static;
+    min-width: 100%;
+    margin-top: 0.2rem;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+    padding-left: 1.5rem;
+    border-radius: 0;
+  }
+
+  .language-option {
+    color: #ccc;
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    border-bottom: none;
+    font-size: 1rem;
+  }
+
+  .language-option:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+  }
+
+  .language-option.active {
+    background: rgba(200, 16, 46, 0.2);
+    color: #ff6b81;
+  }
+
+  .lang-check {
+    color: #ff6b81;
+  }
+}
+
+/* Ocultar overlay y hamburguesa en escritorio */
+@media (min-width: 1025px) {
+  .hamburger-btn, .mobile-overlay {
+    display: none;
+  }
+  .navbar-header {
+    display: block;
+  }
+}
+
+/* =========================================================================
+   ALTO CONTRASTE (HIGH CONTRAST MODE)
+   ========================================================================= */
+:host-context(html[data-contraste="alto"]) .user-menu-text,
+:host-context(html[data-contraste="alto"]) .navbar-links a span,
+:host-context(html[data-contraste="alto"]) .cart-badge {
+  color: #ffff00 !important;
+}
+
+:host-context(html[data-contraste="alto"]) .cart-badge {
+  border-color: #ffff00 !important;
+  background: #000 !important;
+}
+
+:host-context(html[data-contraste="alto"]) .user-avatar {
+  background: #000 !important;
+  color: #ffff00 !important;
+  border: 2px solid #ffff00 !important;
+}

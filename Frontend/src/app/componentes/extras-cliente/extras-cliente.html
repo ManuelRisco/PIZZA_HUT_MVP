@@ -1,0 +1,142 @@
+<div class="max-w-6xl mx-auto font-sans">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b border-gray-200">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 shrink-0">
+        <i class="bi bi-basket-fill text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-black text-gray-800 m-0">Extras y Complementos</h1>
+        <p class="text-sm font-medium text-gray-500 m-0">Complementa tu pedido con bebidas, postres y más</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  @if (error && !loading) {
+    <div class="mb-6 px-5 py-4 rounded-xl flex items-center gap-3 font-medium shadow-sm border bg-red-50 text-red-800 border-red-200">
+      <i class="bi bi-exclamation-triangle-fill text-red-500 text-xl"></i>
+      <span>{{ error }}</span>
+    </div>
+  }
+
+  <!-- Filtros y Buscador -->
+  <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
+    
+    <div class="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
+      @for (cat of categorias; track cat.value) {
+        <button 
+          class="px-4 py-2 rounded-xl text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-2 border border-transparent" 
+          [ngClass]="categoriaSeleccionada === cat.value ? 'bg-red-600 text-white shadow-md' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-800'"
+          (click)="cambiarCategoria(cat.value)">
+          <i class="bi" [ngClass]="cat.icon"></i>
+          <span>{{ cat.label }}</span>
+        </button>
+      }
+    </div>
+
+    @if (!loading && extras.length > 0) {
+      <div class="w-full md:w-64 relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+          <i class="bi bi-search"></i>
+        </div>
+        <input 
+          type="text" 
+          class="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all" 
+          placeholder="Buscar extras..."
+          [(ngModel)]="searchTerm"
+          (input)="aplicarFiltros()"
+        >
+        @if (searchTerm) {
+          <button class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-red-500 transition-colors" (click)="limpiarBuscador()" type="button">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="flex flex-col items-center justify-center py-16">
+      <div class="animate-spin rounded-full h-12 w-12 border-4 border-red-200 border-t-red-600 mb-4"></div>
+      <p class="text-gray-500 font-medium">Cargando extras...</p>
+    </div>
+  }
+
+  <!-- Grid de Extras -->
+  @if (!loading && extrasFiltrados.length > 0) {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+      @for (extra of extrasFiltrados; track extra.id) {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col relative group"
+             [ngClass]="!extra.isAvailable ? 'opacity-75 grayscale-[0.5]' : ''">
+          
+          <!-- Contenido -->
+          <div class="p-6 flex flex-col flex-1 relative z-10">
+            <!-- Badge Categoría -->
+            <div class="mb-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold w-max"
+                 [ngClass]="{
+                   'bg-blue-50 text-blue-700': extra.category === 'BEBIDA',
+                   'bg-amber-50 text-amber-700': extra.category === 'POSTRE',
+                   'bg-purple-50 text-purple-700': extra.category === 'COMPLEMENTO',
+                   'bg-gray-100 text-gray-700': extra.category !== 'BEBIDA' && extra.category !== 'POSTRE' && extra.category !== 'COMPLEMENTO'
+                 }">
+              <i class="bi" [ngClass]="obtenerIconoCategoria(extra.category || '')"></i>
+              {{ obtenerNombreCategoria(extra.category || '') }}
+            </div>
+
+            <h3 class="text-xl font-black text-gray-800 mb-2 line-clamp-1">{{ extra.name }}</h3>
+            
+            @if (extra.description) {
+              <p class="text-sm text-gray-500 mb-6 line-clamp-2 flex-1">{{ extra.description }}</p>
+            } @else {
+              <div class="mb-6 flex-1"></div>
+            }
+
+            <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
+              <div class="flex flex-col">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Precio</span>
+                <span class="text-xl font-black text-emerald-600">S/ {{ extra.price | number:'1.2-2' }}</span>
+              </div>
+
+              <button 
+                class="px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
+                [ngClass]="extra.isAvailable ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm' : 'bg-gray-200 text-gray-500 cursor-not-allowed'"
+                (click)="agregarAlCarrito(extra)"
+                [disabled]="!extra.isAvailable">
+                <i class="bi bi-cart-plus-fill text-lg"></i>
+                <span class="hidden sm:inline">Agregar</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Overlay No Disponible -->
+          @if (!extra.isAvailable) {
+            <div class="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-20">
+              <span class="bg-red-600 text-white font-bold px-4 py-2 rounded-xl transform -rotate-12 shadow-lg border-2 border-white">
+                No disponible
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Sin Resultados -->
+  @if (!loading && extrasFiltrados.length === 0 && !error) {
+    <div class="bg-white rounded-2xl border border-gray-100 p-12 flex flex-col items-center justify-center text-center shadow-sm">
+      <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-6">
+        <i class="bi bi-search text-5xl"></i>
+      </div>
+      <h3 class="text-xl font-bold text-gray-800 mb-2">No se encontraron extras</h3>
+      <p class="text-gray-500 max-w-sm mb-6">No hay complementos que coincidan con tu búsqueda o filtros actuales.</p>
+      
+      @if (searchTerm || categoriaSeleccionada !== 'TODOS') {
+        <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow flex items-center gap-2" (click)="searchTerm = ''; categoriaSeleccionada = 'TODOS'; aplicarFiltros()">
+          <i class="bi bi-arrow-repeat"></i> Ver todos los extras
+        </button>
+      }
+    </div>
+  }
+</div>

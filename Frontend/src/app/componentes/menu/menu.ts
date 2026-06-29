@@ -1,0 +1,653 @@
+import { Component, OnInit, inject, ViewChild, ElementRef, HostListener, AfterViewInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { PizzaService } from '../../services/pizza.service';
+import { PizzaDTO } from '../../models/pizza.interface';
+import { CartService } from '../../services/cart.service';
+import { Size } from '../../services/size.service';
+import { IngredientService } from '../../services/ingredient.service';
+import { PizzaPatronesService } from '../../services/pizza-patrones.service';
+import { ImageCacheService } from '../../services/image-cache.service';
+import { ImageOptimizerService } from '../../services/image-optimizer.service';
+import { FavoriteService } from '../../services/favorite.service';
+import { AuthService } from '../../services/auth.service';
+import { AccessibilityService } from '../../services/accessibility.service';
+import { ToastService } from '../../services/toast.service';
+import { TranslateService } from '../../services/translate.service';
+import { SizeDTO, IngredientDTO } from '../../models/admin.interface';
+
+import { RouterModule } from '@angular/router';
+
+@Component({
+  selector: 'app-menu',
+  imports: [CommonModule, FormsModule, RouterModule],
+  templateUrl: './menu.html',
+  styleUrls: ['./menu.css']
+})
+export class MenuComponent implements OnInit, AfterViewInit {
+  pizzas: PizzaDTO[] = [];
+  pizzasFiltradas: PizzaDTO[] = [];
+  searchTerm: string = '';
+  loading = false;
+  error = '';
+
+  // Control de carga de imágenes
+  imagenesCargadas = new Set<number>();
+
+  // Modal de personalización
+  mostrarModal = false;
+  mostrarModalRapido = false;
+  pizzaSeleccionada?: PizzaDTO;
+  tamanosDisponibles: SizeDTO[] = [];
+  ingredientesDisponibles: IngredientDTO[] = [];
+  tamanoSeleccionado?: SizeDTO;
+  extrasSeleccionados: string[] = [];
+  precioCalculado = 0;
+  descripcionPersonalizacion = '';
+
+  // Variables para favoritos
+  favoritosPizzaIds: Set<number> = new Set();
+  isLoggedIn: boolean = false;
+  currentUserId: number | null = null;
+
+  // Variable para highlight
+  pizzaHighlightId: number | null = null;
+
+  private pizzaService = inject(PizzaService);
+  private cartService = inject(CartService);
+  private sizeService = inject(Size);
+  private ingredientService = inject(IngredientService);
+  private pizzaPatronesService = inject(PizzaPatronesService);
+  private imageCacheService = inject(ImageCacheService);
+  private imageOptimizer = inject(ImageOptimizerService);
+  private favoriteService = inject(FavoriteService);
+  private authService = inject(AuthService);
+  private accessibility = inject(AccessibilityService);
+  private toastService = inject(ToastService);
+  private translateService = inject(TranslateService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  
+  private el = inject(ElementRef);
+  private scrollObserver?: IntersectionObserver;
+  
+  @ViewChild('searchInput', { static: false }) searchInput?: ElementRef;
+
+  ngOnInit(): void {
+    this.cargarDatosIniciales();
+    this.verificarAutenticacion();
+    this.manejarHighlight();
+    
+    // Announce menu is ready for screen readers
+    this.accessibility.announce('Menú de pizzas cargado. Usa la búsqueda para filtrar pizzas');
+  }
+
+  ngAfterViewInit(): void {
+    this.scrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('opacity-100', 'translate-y-0');
+          entry.target.classList.remove('opacity-0', 'translate-y-12');
+          this.scrollObserver?.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    this.setupScrollAnimations();
+  }
+
+  private setupScrollAnimations(): void {
+    if (!this.scrollObserver) return;
+    
+    setTimeout(() => {
+      this.el.nativeElement.querySelectorAll('.animate-on-scroll').forEach((elem: any) => {
+        this.scrollObserver?.observe(elem);
+      });
+    }, 200); // Dar un poco de tiempo para que Angular renderice el @for
+  }
+
+  verificarAutenticacion(): void {
+    this.isLoggedIn = this.authService.estaAutenticado();
+    if (this.isLoggedIn) {
+      this.currentUserId = this.authService.obtenerUsuarioId();
+      if (this.currentUserId) {
+        this.cargarFavoritos();
+      }
+    }
+  }
+
+  cargarFavoritos(): void {
+    if (!this.currentUserId) return;
+    
+    this.favoriteService.obtenerFavoritosPorUserId(this.currentUserId).subscribe({
+      next: (favoritos) => {
+        this.favoritosPizzaIds = new Set(favoritos.map(f => f.pizzaId));
+        
+        // Aplicar ordenamiento por favoritos
+        this.aplicarOrdenamientoFavoritos();
+      },
+      error: (error) => {
+        console.error('Error al cargar favoritos:', error);
+      }
+    });
+  }
+
+  esFavorito(pizzaId: number): boolean {
+    return this.favoritosPizzaIds.has(pizzaId);
+  }
+
+  toggleFavorito(pizzaId: number, event: Event): void {
+    event.stopPropagation(); // Evitar que se active el click del contenedor
+
+    if (!this.isLoggedIn) {
+      this.toastService.showError('Debes iniciar sesión para agregar favoritos');
+      setTimeout(() => {
+        this.router.navigate(['/join']);
+      }, 1500);
+      return;
+    }
+
+    if (!this.currentUserId) return;
+
+    const esFav = this.esFavorito(pizzaId);
+    const pizzaName = this.pizzas.find(p => p.id === pizzaId)?.name || 'Pizza';
+
+    if (esFav) {
+      // Eliminar de favoritos
+      this.favoriteService.eliminarFavorito(this.currentUserId, pizzaId).subscribe({
+        next: () => {
+          this.favoritosPizzaIds.delete(pizzaId);
+          this.toastService.showSuccess('Eliminado de favoritos');
+          this.accessibility.announceRemovedFromFavorites(pizzaName);
+          
+          // Reordenar después de eliminar favorito
+          this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzasFiltradas]);
+        },
+        error: (error) => {
+          console.error('Error al eliminar favorito:', error);
+          this.toastService.showError('Error al eliminar de favoritos');
+          this.accessibility.announceError('No se pudo eliminar de favoritos');
+        }
+      });
+    } else {
+      // Agregar a favoritos
+      this.favoriteService.agregarFavorito(this.currentUserId, pizzaId).subscribe({
+        next: () => {
+          this.favoritosPizzaIds.add(pizzaId);
+          this.toastService.showSuccess('Agregado a favoritos');
+          this.accessibility.announceAddedToFavorites(pizzaName);
+          
+          // Reordenar después de agregar favorito
+          this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzasFiltradas]);
+        },
+        error: (error) => {
+          console.error('Error al agregar favorito:', error);
+          this.toastService.showError('Error al agregar a favoritos');
+          this.accessibility.announceError('No se pudo agregar a favoritos');
+        }
+      });
+    }
+  }
+
+  cargarDatosIniciales(): void {
+    this.loading = true;
+    
+    // Cargar pizzas, tamaños e ingredientes en paralelo
+    forkJoin({
+      pizzas: this.pizzaService.listarPizzas(),
+      sizes: this.sizeService.obtenerTodos(),
+      ingredientes: this.ingredientService.obtenerDisponibles()
+    }).subscribe({
+      next: (response) => {
+        // Pizzas
+        const pizzasDisponibles = response.pizzas.filter(pizza => pizza.isAvailable);
+        this.pizzas = pizzasDisponibles.length > 0 ? pizzasDisponibles : response.pizzas;
+        this.pizzasFiltradas = [...this.pizzas]; // Inicializar pizzas filtradas
+        
+        // Tamaños
+        this.tamanosDisponibles = response.sizes.sort((a, b) => 
+          (a.displayOrder || 0) - (b.displayOrder || 0)
+        );
+        
+        // Ingredientes
+        this.ingredientesDisponibles = response.ingredientes.filter(ing => ing.isAvailable);
+        
+        this.loading = false;
+        
+        // Pre-cargar imágenes en segundo plano
+        this.precargarImagenes();
+        
+        // Aplicar ordenamiento por favoritos si ya se cargaron
+        this.aplicarOrdenamientoFavoritos();
+        
+        // Setup animations for newly loaded pizzas
+        this.setupScrollAnimations();
+        
+        // Retraducir elementos dinámicos
+        setTimeout(() => {
+          this.translateService.retranslate();
+        }, 300);
+      },
+      error: (error) => {
+        console.error('Error al cargar datos:', error);
+        this.error = 'Error al cargar el menú';
+        this.loading = false;
+      }
+    });
+  }
+  
+  /**
+   * Pre-carga todas las imágenes del menú en segundo plano (versiones optimizadas)
+   */
+  private precargarImagenes(): void {
+    const imageUrls = this.pizzas
+      .map(p => p.imageUrl)
+      .filter(url => url && url.trim() !== '') as string[];
+    
+    // Optimizar las URLs antes de pre-cargar
+    const optimizedUrls = imageUrls.map(url => 
+      this.imageOptimizer.optimizeImageUrl(url, 'medium')
+    );
+    
+    // Pre-cargar en segundo plano sin bloquear la UI
+    this.imageCacheService.preloadImages(optimizedUrls).then(() => {
+    }).catch(error => {
+    });
+  }
+  
+  /**
+   * Verifica si una imagen ya está en caché (versión optimizada)
+   */
+  isImageCached(imageUrl: string | undefined): boolean {
+    if (!imageUrl) return false;
+    const optimizedUrl = this.imageOptimizer.optimizeImageUrl(imageUrl, 'medium');
+    return this.imageCacheService.isImageCached(optimizedUrl);
+  }
+
+  /**
+   * Filtra las pizzas según el término de búsqueda y ordena favoritos primero
+   */
+  filtrarPizzas(): void {
+    const termino = this.searchTerm.toLowerCase().trim();
+    
+    let pizzasFiltradas: PizzaDTO[];
+    
+    if (!termino) {
+      pizzasFiltradas = [...this.pizzas];
+    } else {
+      pizzasFiltradas = this.pizzas.filter(pizza => 
+        pizza.name.toLowerCase().includes(termino) ||
+        (pizza.description && pizza.description.toLowerCase().includes(termino))
+      );
+    }
+
+    // Ordenar: favoritos primero
+    this.pizzasFiltradas = this.ordenarPorFavoritos(pizzasFiltradas);
+    
+    // Announce search results for accessibility
+    if (termino) {
+      const resultCount = this.pizzasFiltradas.length;
+      if (resultCount > 0) {
+        this.accessibility.announce(
+          `Búsqueda completada. Se encontraron ${resultCount} ${resultCount === 1 ? 'pizza' : 'pizzas'}`
+        );
+      } else {
+        this.accessibility.announce('No se encontraron pizzas con ese criterio de búsqueda');
+      }
+    }
+    
+    // Setup animations for filtered pizzas
+    this.setupScrollAnimations();
+  }
+
+  /**
+   * Ordena las pizzas poniendo los favoritos primero
+   */
+  private ordenarPorFavoritos(pizzas: PizzaDTO[]): PizzaDTO[] {
+    return pizzas.sort((a, b) => {
+      const aEsFavorito = this.esFavorito(a.id || 0);
+      const bEsFavorito = this.esFavorito(b.id || 0);
+      
+      // Si ambos son favoritos o ambos no lo son, mantener orden original
+      if (aEsFavorito === bEsFavorito) {
+        return 0;
+      }
+      
+      // Los favoritos van primero
+      return aEsFavorito ? -1 : 1;
+    });
+  }
+
+  /**
+   * Aplica el ordenamiento por favoritos solo si las pizzas ya están cargadas
+   */
+  private aplicarOrdenamientoFavoritos(): void {
+    if (this.pizzas.length > 0) {
+      this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzasFiltradas]);
+    }
+  }
+
+  /**
+   * Maneja el parámetro de highlight para iluminar una pizza específica
+   */
+  private manejarHighlight(): void {
+    this.route.queryParams.subscribe(params => {
+      const highlightId = params['highlight'];
+      if (highlightId) {
+        this.pizzaHighlightId = +highlightId;
+        // Scroll suave después de que las pizzas se hayan cargado
+        setTimeout(() => {
+          this.scrollToPizza(this.pizzaHighlightId!);
+        }, 500);
+        // Remover highlight después de unos segundos
+        setTimeout(() => {
+          this.pizzaHighlightId = null;
+        }, 3000);
+      }
+    });
+  }
+
+  /**
+   * Hace scroll suave hacia una pizza específica
+   */
+  private scrollToPizza(pizzaId: number): void {
+    const pizzaElement = document.getElementById(`pizza-${pizzaId}`);
+    if (pizzaElement) {
+      pizzaElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center',
+        inline: 'nearest'
+      });
+    }
+  }
+
+  /**
+   * Limpia el buscador y reaplica ordenamiento
+   */
+  limpiarBuscador(): void {
+    this.searchTerm = '';
+    this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzas]);
+    this.accessibility.announce('Búsqueda borrada. Mostrando todas las pizzas disponibles');
+    
+    // Set focus back to search input
+    setTimeout(() => {
+      this.searchInput?.nativeElement?.focus();
+    }, 100);
+  }
+
+  /**
+   * Obtiene la URL optimizada de una imagen
+   */
+  getOptimizedImageUrl(imageUrl: string | undefined): string {
+    return this.imageOptimizer.optimizeImageUrl(imageUrl, 'medium');
+  }
+
+  cargarPizzasDisponibles(): void {
+    this.loading = true;
+    this.pizzaService.listarPizzas().subscribe({
+      next: (pizzas) => {
+        // Filtrar solo las pizzas disponibles (temporal: mostrar todas si no hay disponibles)
+        const pizzasDisponibles = pizzas.filter(pizza => pizza.isAvailable);
+        this.pizzas = pizzasDisponibles.length > 0 ? pizzasDisponibles : pizzas;
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar pizzas:', error);
+        this.error = 'Error al cargar las pizzas';
+        this.loading = false;
+      }
+    });
+  }
+
+  cargarTamanos(): void {
+    this.sizeService.obtenerTodos().subscribe({
+      next: (sizes) => {
+        this.tamanosDisponibles = sizes.sort((a, b) => 
+          (a.displayOrder || 0) - (b.displayOrder || 0)
+        );
+      },
+      error: (error) => {
+        console.error('Error al cargar tamaños:', error);
+      }
+    });
+  }
+
+  cargarIngredientes(): void {
+    this.ingredientService.obtenerDisponibles().subscribe({
+      next: (ingredientes) => {
+        this.ingredientesDisponibles = ingredientes.filter(ing => ing.isAvailable);
+      },
+      error: (error) => {
+        console.error('Error al cargar ingredientes:', error);
+      }
+    });
+  }
+
+  abrirModalAgregarRapido(pizza: PizzaDTO): void {
+    this.pizzaSeleccionada = pizza;
+    this.tamanoSeleccionado = undefined;
+    this.mostrarModalRapido = true;
+    this.enfocarPrimerElementoModal();
+  }
+
+  cerrarModalRapido(): void {
+    this.mostrarModalRapido = false;
+    this.pizzaSeleccionada = undefined;
+    this.tamanoSeleccionado = undefined;
+    this.devolverFocoElementoAnterior();
+  }
+
+  agregarAlCarritoRapido(): void {
+    if (!this.pizzaSeleccionada || !this.tamanoSeleccionado) {
+      this.toastService.showError('Por favor selecciona un tamaño');
+      return;
+    }
+
+    try {
+      // Calcular precio simple: base + tamaño extra
+      const precioTotal = this.pizzaSeleccionada.price + (this.tamanoSeleccionado.extraCost || 0);
+      
+      this.cartService.addItem({
+        pizza: {
+          ...this.pizzaSeleccionada,
+          price: precioTotal
+        },
+        size: this.tamanoSeleccionado.name,
+        sizeId: this.tamanoSeleccionado.id, // Agregar el ID del tamaño
+        quantity: 1
+      });
+
+      this.toastService.showSuccess(`${this.pizzaSeleccionada.name} agregado al carrito`);
+      this.accessibility.announceAddToCart(this.pizzaSeleccionada.name);
+      this.cerrarModalRapido();
+    } catch (error) {
+      console.error('Error al agregar al carrito:', error);
+      this.toastService.showError('No se pudo agregar al carrito');
+      this.accessibility.announceError('No se pudo agregar al carrito');
+    }
+  }
+
+  abrirModalPersonalizacion(pizza: PizzaDTO): void {
+    this.pizzaSeleccionada = pizza;
+    this.tamanoSeleccionado = undefined;
+    this.extrasSeleccionados = [];
+    this.precioCalculado = pizza.price || 0;
+    this.descripcionPersonalizacion = pizza.name;
+    this.mostrarModal = true;
+    this.enfocarPrimerElementoModal();
+  }
+
+  cerrarModal(): void {
+    this.mostrarModal = false;
+    this.pizzaSeleccionada = undefined;
+    this.tamanoSeleccionado = undefined;
+    this.extrasSeleccionados = [];
+    this.devolverFocoElementoAnterior();
+  }
+
+  seleccionarTamano(tamano: SizeDTO): void {
+    this.tamanoSeleccionado = tamano;
+    this.calcularPrecio();
+  }
+
+  toggleExtra(ingredienteId: string): void {
+    const index = this.extrasSeleccionados.indexOf(ingredienteId);
+    if (index >= 0) {
+      this.extrasSeleccionados.splice(index, 1);
+    } else {
+      this.extrasSeleccionados.push(ingredienteId);
+    }
+    this.calcularPrecio();
+  }
+
+  calcularPrecio(): void {
+    if (!this.pizzaSeleccionada) return;
+
+    // Precio base de la pizza (sin modificaciones)
+    const precioBasePizza = this.pizzaSeleccionada.price || 0;
+    const costoTamano = this.tamanoSeleccionado?.extraCost || 0;
+    
+    let descripcion = this.pizzaSeleccionada.name;
+    if (this.tamanoSeleccionado) {
+      descripcion += ` - ${this.tamanoSeleccionado.name}`;
+    }
+
+    // Calcular costos de extras localmente de forma inmediata (el endpoint /patrones/*/extras ya no existe en el nuevo backend)
+    const costosExtras = this.extrasSeleccionados.reduce((total, extraId) => {
+      const ingrediente = this.ingredientesDisponibles.find(i => i.id?.toString() === extraId);
+      return total + (ingrediente?.extraCost || 0);
+    }, 0);
+
+    this.precioCalculado = precioBasePizza + costoTamano + costosExtras;
+    this.descripcionPersonalizacion = descripcion;
+  }
+
+  agregarAlCarritoPersonalizado(): void {
+    if (!this.pizzaSeleccionada || !this.tamanoSeleccionado) {
+      this.toastService.showError('Por favor selecciona un tamaño');
+      return;
+    }
+
+    try {
+      // Agregar al carrito con la información personalizada
+      this.cartService.addItem({
+        pizza: {
+          ...this.pizzaSeleccionada,
+          price: this.precioCalculado
+        },
+        size: this.tamanoSeleccionado.name,
+        sizeId: this.tamanoSeleccionado.id, // Agregar el ID del tamaño
+        quantity: 1,
+        extras: this.extrasSeleccionados
+      });
+
+      this.toastService.showSuccess(`${this.pizzaSeleccionada.name} agregado al carrito`);
+      this.accessibility.announceAddToCart(this.pizzaSeleccionada.name);
+      this.cerrarModal();
+    } catch (error) {
+      console.error('Error al agregar al carrito:', error);
+      this.toastService.showError('No se pudo agregar al carrito');
+      this.accessibility.announceError('No se pudo agregar al carrito');
+    }
+  }
+
+  formatearPrecio(precio: number): string {
+    return `S/. ${precio.toFixed(2)}`;
+  }
+
+  onImageLoad(pizzaId: number): void {
+    this.imagenesCargadas.add(pizzaId);
+    
+    // Obtener URL optimizada de la imagen y marcarla en caché
+    const pizza = this.pizzas.find(p => p.id === pizzaId);
+    if (pizza?.imageUrl) {
+      const optimizedUrl = this.imageOptimizer.optimizeImageUrl(pizza.imageUrl, 'medium');
+      this.imageCacheService.markAsLoaded(optimizedUrl);
+    }
+  }
+
+  onImageError(event: any): void {
+    // Cambiar a imagen por defecto cuando falla la carga
+    event.target.src = '/combo1.webp';
+    // Marcar como cargada para ocultar skeleton
+    const pizzaId = this.pizzas.find(p => p.imageUrl === event.target.src)?.id;
+    if (pizzaId) {
+      this.imagenesCargadas.add(pizzaId);
+    }
+  }
+
+  // ACCESIBILIDAD: Control de Foco (Focus Trap)
+  private elementoPrevioAlModal: HTMLElement | null = null;
+
+  private enfocarPrimerElementoModal(): void {
+    if (typeof document !== 'undefined') {
+      this.elementoPrevioAlModal = document.activeElement as HTMLElement;
+      setTimeout(() => {
+        const modales = document.querySelectorAll('.modal.show');
+        if (modales.length > 0) {
+          const modalActivo = modales[modales.length - 1] as HTMLElement;
+          // Enfocar el contenedor del modal en lugar del primer botón
+          // Esto evita que el lector lea todo de golpe y le da el control al usuario
+          modalActivo.focus();
+        }
+      }, 100);
+    }
+  }
+
+  private devolverFocoElementoAnterior(): void {
+    if (this.elementoPrevioAlModal && typeof document !== 'undefined') {
+      setTimeout(() => {
+        this.elementoPrevioAlModal?.focus();
+        this.elementoPrevioAlModal = null;
+      }, 100);
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  manejarTecladoModal(event: KeyboardEvent): void {
+    if (!this.mostrarModal && !this.mostrarModalRapido) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      this.cerrarModal();
+      this.cerrarModalRapido();
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      const modales = document.querySelectorAll('.modal.show');
+      if (modales.length === 0) return;
+      
+      const modalActivo = modales[modales.length - 1] as HTMLElement;
+      const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      const focusableElements = Array.from(modalActivo.querySelectorAll(focusableSelectors)) as HTMLElement[];
+      
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (!modalActivo.contains(document.activeElement)) {
+        firstElement.focus();
+        event.preventDefault();
+        return;
+      }
+
+      if (event.shiftKey) { // Shift + Tab
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          event.preventDefault();
+        }
+      } else { // Solo Tab
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          event.preventDefault();
+        }
+      }
+    }
+  }
+}
+
+

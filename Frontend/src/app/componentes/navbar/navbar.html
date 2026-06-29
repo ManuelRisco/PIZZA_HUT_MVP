@@ -1,0 +1,194 @@
+<nav class="navbar" aria-label="Navegación principal">
+  <!-- Fondo oscurecido cuando el menú móvil está abierto -->
+  <div class="mobile-overlay" [class.active]="isMobileMenuOpen" (click)="toggleMobileMenu()"></div>
+
+  <div class="navbar-header">
+    <div class="navbar-logo">
+      <a [routerLink]="['']" aria-label="Inicio - Pizza Hut">🍕 Pizza Hut</a>
+    </div>
+    
+    <!-- Botón Hamburguesa -->
+    <button class="hamburger-btn" (click)="toggleMobileMenu()" aria-label="Abrir menú" [class.open]="isMobileMenuOpen">
+      <i class="bi" [class.bi-list]="!isMobileMenuOpen" [class.bi-x-lg]="isMobileMenuOpen"></i>
+    </button>
+  </div>
+
+  <ul class="navbar-links" [class.mobile-open]="isMobileMenuOpen" aria-label="Menú de navegación">
+    <li>
+    <li>
+      <a (click)="navegarA('/menu')" aria-label="Ir a Menú (Alt+M)" style="cursor: pointer;" accesskey="m">Menú</a>
+    </li>
+    <li>
+      <a (click)="navegarA('/extras')" aria-label="Extras - Bebidas y postres" style="cursor: pointer;">Extras</a>
+    </li>
+    <li>
+      <a (click)="navegarA('/promociones')" aria-label="Promociones y ofertas" style="cursor: pointer;">Promociones</a>
+    </li>
+    <li class="cart-link">
+      <a (click)="navegarA('/cart')" aria-label="Carrito de compras (Alt+C) con {{ cartCount }} artículos" style="cursor: pointer;" accesskey="c">
+        <i class="bi bi-cart3" aria-hidden="true"></i>
+        <span>Carrito</span>
+        <span class="cart-badge" *ngIf="cartCount > 0" aria-label="Número de artículos: {{ cartCount }}">{{ cartCount }}</span>
+      </a>
+    </li>
+    <li>
+      <a (click)="navegarA('/ubicacion')" aria-label="Ubicación y Contacto" style="cursor: pointer;">
+        <i aria-hidden="true"></i> Ubicación
+      </a>
+    </li>
+
+    <!-- Selector de Idioma -->
+    <li class="language-menu-container">
+      <button
+        class="language-button"
+        (click)="toggleSelectorIdioma()"
+        [attr.aria-expanded]="mostrarSelectorIdioma"
+        aria-haspopup="listbox"
+        aria-label="Cambiar idioma">
+        <span class="lang-flag-btn">{{ getIdiomaActualFlag() }}</span>
+        <i class="bi bi-chevron-down lang-chevron" [class.rotated]="mostrarSelectorIdioma" aria-hidden="true"></i>
+      </button>
+
+      <!-- Dropdown de Idiomas -->
+      <div class="language-dropdown" *ngIf="mostrarSelectorIdioma" role="listbox" aria-label="Idiomas disponibles">
+        <button
+          *ngFor="let lang of idiomas"
+          class="language-option"
+          (click)="cambiarIdioma(lang.code)"
+          [class.active]="idiomaActual === lang.code"
+          role="option"
+          [attr.aria-selected]="idiomaActual === lang.code">
+          <span class="lang-flag">{{ lang.flag }}</span>
+          <span class="lang-name">{{ lang.name }}</span>
+          <i class="bi bi-check-lg lang-check" *ngIf="idiomaActual === lang.code" aria-hidden="true"></i>
+        </button>
+      </div>
+    </li>
+
+    <!-- Menú de Usuario -->
+    <li class="user-menu-container">
+      <button
+        class="user-menu-button"
+        (click)="toggleMenuUsuario()"
+        [attr.aria-expanded]="mostrarMenuUsuario"
+        aria-haspopup="true"
+        aria-label="Menú de usuario (Alt+P)"
+        accesskey="p">
+        <!-- Icono de usuario NO autenticado -->
+        <div class="user-icon" *ngIf="!usuarioActual">
+          <i class="bi bi-person-circle" aria-hidden="true"></i>
+        </div>
+        <!-- Avatar con iniciales para usuario autenticado -->
+        <div class="user-avatar" *ngIf="usuarioActual" [class.admin]="esAdmin" [attr.aria-label]="usuarioActual.name">
+          {{ getIniciales() }}
+        </div>
+        <span class="user-menu-text">
+          {{ usuarioActual ? usuarioActual.name : 'Cuenta' }}
+        </span>
+        <i class="bi bi-chevron-down arrow-icon" aria-hidden="true"></i>
+      </button>
+
+      <!-- Dropdown Menu -->
+      <div class="user-dropdown"
+        *ngIf="mostrarMenuUsuario"
+        role="menu"
+        aria-label="Opciones de usuario">
+        <div class="dropdown-content">
+          <!-- Usuario NO autenticado -->
+          <div *ngIf="!usuarioActual" class="dropdown-section" role="group">
+            <button class="dropdown-item primary" (click)="navegarA('/join')" role="menuitem">
+              <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+              <span>Identificarse</span>
+            </button>
+            <div class="dropdown-divider" role="separator" aria-hidden="true"></div>
+            <button class="dropdown-item" (click)="navegarA('/register')" role="menuitem">
+              <i class="bi bi-person-plus" aria-hidden="true"></i>
+              <span>Crear cuenta</span>
+            </button>
+          </div>
+
+          <!-- Usuario CLIENTE autenticado -->
+          <div *ngIf="usuarioActual && !esAdmin" class="dropdown-section" role="group">
+            <div class="user-info-dropdown" role="img" [attr.aria-label]="'Información de usuario: ' + usuarioActual.name">
+              <div class="avatar-circle">{{ getIniciales() }}</div>
+              <div>
+                <div class="user-name">{{ usuarioActual.name }}</div>
+                <div class="user-email">{{ usuarioActual.email }}</div>
+              </div>
+            </div>
+            <div class="dropdown-divider" role="separator" aria-hidden="true"></div>
+            <button class="dropdown-item" (click)="navegarA('/cliente/dashboard')" role="menuitem">
+              <i class="bi bi-speedometer2" aria-hidden="true"></i>
+              <span>Mi Dashboard</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/perfil')" role="menuitem">
+              <i class="bi bi-person-circle" aria-hidden="true"></i>
+              <span>Ver Perfil</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/pedidos')" role="menuitem">
+              <i class="bi bi-bag" aria-hidden="true"></i>
+              <span>Mis Pedidos</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/resenas')" role="menuitem">
+              <i class="bi bi-star" aria-hidden="true"></i>
+              <span>Mis Reseñas</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/favoritos')" role="menuitem">
+              <i class="bi bi-heart-fill" aria-hidden="true"></i>
+              <span>Favoritos</span>
+            </button>
+            <div class="dropdown-divider" role="separator" aria-hidden="true"></div>
+            <button class="dropdown-item danger" (click)="cerrarSesion()" role="menuitem">
+              <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
+
+          <!-- Usuario ADMINISTRADOR autenticado -->
+          <div *ngIf="usuarioActual && esAdmin" class="dropdown-section" role="group">
+            <div class="user-info-dropdown" role="img" [attr.aria-label]="'Información de administrador: ' + usuarioActual.name">
+              <div class="avatar-circle admin">{{ getIniciales() }}</div>
+              <div>
+                <div class="user-name">{{ usuarioActual.name }}</div>
+                <div class="user-role">
+                  <i class="bi bi-shield-check" aria-hidden="true"></i> Administrador
+                </div>
+              </div>
+            </div>
+            <div class="dropdown-divider" role="separator" aria-hidden="true"></div>
+            <button class="dropdown-item highlight" (click)="navegarA('/admin/dashboard')" role="menuitem">
+              <i class="bi bi-gear" aria-hidden="true"></i>
+              <span>Panel de Administración</span>
+            </button>
+            <div class="dropdown-divider" role="separator" aria-hidden="true"></div>
+            <button class="dropdown-item" (click)="navegarA('/cliente/dashboard')" role="menuitem">
+              <i class="bi bi-speedometer2" aria-hidden="true"></i>
+              <span>Mi Dashboard</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/perfil')" role="menuitem">
+              <i class="bi bi-person-circle" aria-hidden="true"></i>
+              <span>Ver Perfil</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/pedidos')" role="menuitem">
+              <i class="bi bi-bag" aria-hidden="true"></i>
+              <span>Mis Pedidos</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/resenas')" role="menuitem">
+              <i class="bi bi-star" aria-hidden="true"></i>
+              <span>Mis Reseñas</span>
+            </button>
+            <button class="dropdown-item" (click)="navegarA('/cliente/favoritos')" role="menuitem">
+              <i class="bi bi-heart-fill" aria-hidden="true"></i>
+              <span>Favoritos</span>
+            </button>
+            <div class="dropdown-divider" role="separator" aria-hidden="true"></div>
+            <button class="dropdown-item danger" (click)="cerrarSesion()" role="menuitem">
+              <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </li>
+  </ul>
+</nav>

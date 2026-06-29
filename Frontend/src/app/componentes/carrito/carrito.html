@@ -1,0 +1,520 @@
+<section class="cart-wrapper" role="main" aria-label="Carrito de compras">
+  <h1 id="cart-title">Tu carrito</h1>
+
+  @if (checkoutSuccess) {
+    <div class="alert alert-success" role="status" aria-live="assertive" aria-label="Confirmación de pago">{{ checkoutSuccess }}</div>
+  }
+
+  @if (checkoutError) {
+    <div class="alert alert-danger" role="alert" aria-live="assertive" aria-label="Error en el carrito">{{ checkoutError }}</div>
+  }
+
+  @if (items.length === 0) {
+    <div class="empty-state" role="status" aria-live="polite" aria-label="Carrito vacío">
+      <i class="bi bi-cart-x" aria-hidden="true"></i>
+      <h2>Tu carrito está vacío</h2>
+      <p>Agrega tus pizzas favoritas desde el menú.</p>
+      <a class="btn-primary" routerLink="/menu" aria-label="Ir al menú de pizzas">Ver menú</a>
+    </div>
+  } @else {
+    <div class="cart-grid">
+      <!-- Columna Principal -->
+      <div class="cart-column products-column">
+        
+        <div class="cart-items-container" role="listbox" aria-label="Items en el carrito">
+          <!-- Productos -->
+          <h2 class="section-title" style="margin-top: 0;">Tus Productos</h2>
+        @for (item of items; track item.id; let i = $index) {
+          <article class="cart-item" role="option" [attr.aria-label]="item.name + ', tamaño ' + (item.size | titlecase) + ', cantidad ' + item.quantity">
+            <img 
+              [src]="getOptimizedImageUrl(item.imageUrl)" 
+              [alt]="item.name + ' - ' + (item.size | titlecase)"
+              [loading]="i < 3 ? 'eager' : 'lazy'"
+              [attr.fetchpriority]="i === 0 ? 'high' : (i < 3 ? 'auto' : 'low')"
+              decoding="async"
+              class="item-image"
+            >
+            <div class="item-content">
+              <div class="item-header">
+                <h3 id="item-name-{{ item.id }}">{{ item.name }}</h3>
+                <span class="line-total" aria-label="Total para este item">S/. {{ (item.unitPrice * item.quantity) | number:'1.2-2' }}</span>
+              </div>
+              <p class="item-size" aria-label="Tamaño">Tamaño: {{ item.size | titlecase }} <span class="unit-price-text">(S/. {{ item.unitPrice | number:'1.2-2' }} c/u)</span></p>
+              @if (tieneExtras(item)) {
+                <p class="extras-info" aria-label="Ingredientes adicionales">
+                  <i class="bi bi-plus-circle-fill" aria-hidden="true"></i> {{ getExtrasNombres(item) }}
+                </p>
+              }
+              <div class="item-footer">
+                <div class="quantity-control" role="group" [attr.aria-label]="'Control de cantidad para ' + item.name">
+                  <button (click)="decrementar(item)" [disabled]="item.quantity <= 1" [attr.aria-label]="'Disminuir cantidad de ' + item.name">−</button>
+                  <span class="quantity-display" aria-label="Cantidad actual">{{ item.quantity }}</span>
+                  <button (click)="incrementar(item)" [attr.aria-label]="'Aumentar cantidad de ' + item.name">+</button>
+                </div>
+                <button class="remove-button" (click)="eliminar(item)" [attr.aria-label]="'Quitar ' + item.name + ' del carrito'">
+                  <i class="bi bi-trash" aria-hidden="true"></i> Quitar
+                </button>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+      </div>
+
+      <!-- Columna 2: Entrega y Pago -->
+      <div class="cart-column checkout-column">
+          
+          <!-- Sección de Entrega -->
+          <section class="checkout-section">
+            <h2 class="section-title"><i class="bi bi-geo-alt"></i> Entrega</h2>
+            
+        <!-- Tipo de entrega -->
+        <div class="summary-field">
+          <label id="delivery-type-label">Tipo de entrega</label>
+          <div class="delivery-type-options" role="group" aria-labelledby="delivery-type-label">
+            <label class="radio-option">
+              <input 
+                type="radio" 
+                name="deliveryType" 
+                value="PICKUP" 
+                [(ngModel)]="deliveryType"
+                (ngModelChange)="onDeliveryTypeChange()"
+                [ngModelOptions]="{ standalone: true }"
+                aria-label="Recojo en tienda"
+              >
+              <span aria-hidden="true">🏪 Recojo en tienda</span>
+            </label>
+            <label class="radio-option">
+              <input 
+                type="radio" 
+                name="deliveryType" 
+                value="DELIVERY" 
+                [(ngModel)]="deliveryType"
+                (ngModelChange)="onDeliveryTypeChange()"
+                [ngModelOptions]="{ standalone: true }"
+                aria-label="Delivery a domicilio"
+              >
+              <span aria-hidden="true">🛵 Delivery a domicilio</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Formulario de dirección (solo si es DELIVERY) -->
+        @if (deliveryType === 'DELIVERY') {
+          <fieldset class="address-form">
+            <legend id="address-legend">Dirección de entrega</legend>
+            
+            <div class="summary-field">
+              <label id="address-option-label">Opciones de dirección</label>
+              <div class="delivery-type-options" role="group" aria-labelledby="address-option-label">
+                <label class="radio-option">
+                  <input 
+                    type="radio" 
+                    name="addressOption" 
+                    value="saved" 
+                    [(ngModel)]="addressOption"
+                    (ngModelChange)="onDeliveryTypeChange()"
+                    [ngModelOptions]="{ standalone: true }"
+                    [disabled]="direcciones.length === 0"
+                    aria-label="Usar dirección guardada"
+                  >
+                  <span aria-hidden="true">📍 Direcciones guardadas</span>
+                </label>
+                <label class="radio-option">
+                  <input 
+                    type="radio" 
+                    name="addressOption" 
+                    value="new" 
+                    [(ngModel)]="addressOption"
+                    (ngModelChange)="onDeliveryTypeChange()"
+                    [ngModelOptions]="{ standalone: true }"
+                    aria-label="Agregar nueva dirección"
+                  >
+                  <span aria-hidden="true">➕ Agregar nueva dirección</span>
+                </label>
+              </div>
+            </div>
+
+            @if (addressOption === 'saved') {
+              <div class="summary-field">
+                <label for="addressSelect">Selecciona una dirección <span aria-label="requerido">*</span></label>
+                <select
+                  id="addressSelect"
+                  [(ngModel)]="selectedAddressId"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="onSavedAddressChange()"
+                  aria-required="true"
+                  aria-label="Seleccionar dirección guardada"
+                >
+                  <option [ngValue]="null">-- Selecciona ubicación --</option>
+                  @for (direccion of direcciones; track direccion.id) {
+                    <option [ngValue]="direccion.id">
+                      {{ direccion.line1 }}, {{ direccion.district }}, {{ direccion.city }}
+                    </option>
+                  }
+                </select>
+              </div>
+            }
+            
+            @if (addressOption === 'new') {
+              <div class="summary-field">
+                <label for="addressLine1">Dirección <span aria-label="requerido">*</span></label>
+                <input 
+                  id="addressLine1" 
+                  type="text" 
+                  [(ngModel)]="addressForm.line1" 
+                  [ngModelOptions]="{ standalone: true }" 
+                  placeholder="Calle, número, departamento" 
+                  required
+                  aria-required="true"
+                  aria-label="Línea de dirección"
+                  aria-describedby="addressLine1-help"
+                >
+                <small id="addressLine1-help" class="form-text text-muted">Ej: Av. Principal 123, Apto 4B</small>
+              </div>
+              <div class="summary-field">
+                <label for="addressCity">Ciudad <span aria-label="requerido">*</span></label>
+                <input 
+                  id="addressCity" 
+                  type="text" 
+                  [(ngModel)]="addressForm.city" 
+                  [ngModelOptions]="{ standalone: true }" 
+                  placeholder="Lima, Arequipa, etc." 
+                  required
+                  aria-required="true"
+                  aria-label="Ciudad"
+                >
+              </div>
+              <div class="summary-field">
+                <label for="addressDistrict">Distrito <span aria-label="requerido">*</span></label>
+                <input 
+                  id="addressDistrict" 
+                  type="text" 
+                  [(ngModel)]="addressForm.district" 
+                  [ngModelOptions]="{ standalone: true }" 
+                  placeholder="Miraflores, San Isidro, etc." 
+                  required
+                  aria-required="true"
+                  aria-label="Distrito"
+                >
+              </div>
+              <div class="summary-field">
+                <label for="addressReference">Referencia (opcional)</label>
+                <input 
+                  id="addressReference" 
+                  type="text" 
+                  [(ngModel)]="addressForm.reference" 
+                  [ngModelOptions]="{ standalone: true }" 
+                  placeholder="Cerca al parque, edificio azul, etc."
+                  aria-label="Referencia adicional"
+                >
+              </div>
+            }
+          </fieldset>
+        }
+        </section>
+
+        <!-- Sección de Pago -->
+        <section class="checkout-section">
+          <h2 class="section-title"><i class="bi bi-credit-card"></i> Pago</h2>
+          <div class="summary-field">
+            <label for="paymentMethod">Método de pago</label>
+          @if (!paymentMethodsLoaded) {
+            <div class="loading-placeholder" role="status" aria-label="Cargando opciones de pago">Cargando opciones...</div>
+          } @else if (paymentMethods.length === 0) {
+            <p class="helper-text" role="alert">No hay métodos de pago disponibles. Inténtalo más tarde.</p>
+          } @else {
+            <select
+              id="paymentMethod"
+              [(ngModel)]="selectedPaymentMethodId"
+              (ngModelChange)="onPaymentMethodChange($event)"
+              [ngModelOptions]="{ standalone: true }"
+              aria-label="Seleccionar método de pago"
+              aria-required="true"
+            >
+              @for (metodo of paymentMethods; track metodo.id) {
+                <option [ngValue]="metodo.id">{{ metodo.name }}</option>
+              }
+            </select>
+          }
+        </div>
+
+        @if (requiresCardDetails) {
+          <fieldset class="payment-card-form">
+            <legend class="visually-hidden">Detalles de tarjeta de crédito</legend>
+            <div class="summary-field">
+              <label for="cardHolder">Titular de la tarjeta</label>
+              <input 
+                id="cardHolder" 
+                type="text" 
+                [(ngModel)]="cardForm.holder" 
+                [ngModelOptions]="{ standalone: true }" 
+                placeholder="Nombre como figura en la tarjeta"
+                aria-label="Titular de la tarjeta"
+                aria-required="true"
+              >
+            </div>
+            <div class="summary-field">
+              <label for="cardNumber">Número de tarjeta</label>
+              <input 
+                id="cardNumber" 
+                type="text" 
+                maxlength="19" 
+                [(ngModel)]="cardForm.number" 
+                [ngModelOptions]="{ standalone: true }" 
+                placeholder="0000 0000 0000 0000"
+                aria-label="Número de tarjeta"
+                aria-describedby="cardNumber-help"
+                aria-required="true"
+              >
+              <small id="cardNumber-help" class="form-text text-muted">Formato: 16 dígitos</small>
+            </div>
+            <div class="card-inline-fields" role="group" aria-label="Fecha de expiración y CVV">
+              <div class="summary-field">
+                <label for="cardExpiry">Expiración</label>
+                <input 
+                  id="cardExpiry" 
+                  type="text" 
+                  maxlength="5" 
+                  [(ngModel)]="cardForm.expiry" 
+                  [ngModelOptions]="{ standalone: true }" 
+                  placeholder="MM/AA"
+                  aria-label="Fecha de expiración (MM/AA)"
+                  aria-required="true"
+                >
+              </div>
+              <div class="summary-field">
+                <label for="cardCvv">CVV</label>
+                <div style="position: relative;">
+                  <input 
+                    id="cardCvv" 
+                    [type]="showCvv ? 'text' : 'password'" 
+                    maxlength="4" 
+                    [(ngModel)]="cardForm.cvv" 
+                    [ngModelOptions]="{ standalone: true }" 
+                    placeholder="***"
+                    aria-label="CVV (código de seguridad)"
+                    aria-required="true"
+                    style="width: 100%; padding-right: 35px;"
+                  >
+                  <i class="bi" [ngClass]="showCvv ? 'bi-eye-slash' : 'bi-eye'" 
+                     (click)="showCvv = !showCvv" 
+                     style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888;"></i>
+                </div>
+              </div>
+            </div>
+            <div class="helper-text" aria-label="Información de seguridad">Simulación: los datos no se enviarán a un procesador real.</div>
+          </fieldset>
+        }
+
+        @if (requiresMobileDetails) {
+          <fieldset class="payment-mobile-form">
+            <legend class="visually-hidden">Detalles de pago móvil</legend>
+            <div class="summary-field">
+              <label for="mobilePhone">Número asociado</label>
+              <input 
+                id="mobilePhone" 
+                type="tel" 
+                maxlength="9" 
+                [(ngModel)]="mobileForm.phone" 
+                [ngModelOptions]="{ standalone: true }" 
+                placeholder="9XXXXXXXX"
+                aria-label="Número de teléfono asociado"
+                aria-required="true"
+              >
+            </div>
+            <div class="summary-field">
+              <label for="mobileReference">Código de transferencia</label>
+              <input 
+                id="mobileReference" 
+                type="text" 
+                [(ngModel)]="mobileForm.reference" 
+                [ngModelOptions]="{ standalone: true }" 
+                placeholder="Ingresa el código o referencia"
+                aria-label="Código de referencia de transferencia"
+                aria-required="true"
+              >
+            </div>
+            <div class="helper-text" aria-label="Instrucciones">Confirma el pago en tu app y regístralo con el código generado.</div>
+          </fieldset>
+        }
+
+        <div class="summary-field">
+          <label for="notes">Notas para el pedido (opcional)</label>
+          <textarea 
+            id="notes" 
+            rows="3" 
+            [(ngModel)]="notes" 
+            [ngModelOptions]="{ standalone: true }" 
+            placeholder="Ej. Sin cebolla, llamar al llegar..."
+            aria-label="Notas especiales para el pedido"
+            aria-describedby="notes-help"
+          ></textarea>
+        </div>
+        </section>
+      </div>
+
+      <!-- Columna 3: Resumen -->
+      <aside class="cart-column summary-column" role="complementary" aria-label="Resumen del pedido">
+        <div class="summary-card">
+          <h2 id="summary-title" class="summary-card-title">Resumen de tu pedido</h2>
+
+        <!-- Código promocional -->
+        <section class="promo-section" aria-label="Código promocional">
+          <h3 id="promo-title">¿Tienes un código promocional?</h3>
+          
+          @if (promoSuccess) {
+            <div class="alert alert-success promo-alert" role="status" aria-live="polite" aria-label="Código promocional aplicado">
+              <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+              {{ promoSuccess }}
+            </div>
+          }
+          
+          @if (promoError) {
+            <div class="alert alert-danger promo-alert" role="alert" aria-live="assertive" aria-label="Error en código promocional">
+              <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+              {{ promoError }}
+            </div>
+          }
+          
+          @if (!promoApplied) {
+            <div class="promo-input-group" role="group" aria-labelledby="promo-title">
+              <input 
+                type="text" 
+                [(ngModel)]="promoCode" 
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Ingresa tu código"
+                class="promo-input"
+                [disabled]="isValidatingPromo"
+                aria-label="Ingresa código promocional"
+                aria-describedby="promo-help"
+              >
+              <span id="promo-help" class="visually-hidden">Ingresa tu código promocional y haz clic en Aplicar</span>
+              <button 
+                class="btn-promo" 
+                (click)="aplicarPromocion()"
+                [disabled]="!promoCode.trim() || isValidatingPromo"
+                [attr.aria-label]="isValidatingPromo ? 'Validando código' : 'Aplicar código promocional'"
+              >
+                @if (isValidatingPromo) {
+                  <span>Validando...</span>
+                } @else {
+                  <span>Aplicar</span>
+                }
+              </button>
+            </div>
+          } @else {
+            <div class="promo-applied" role="region" aria-label="Código promocional aplicado">
+              <div class="promo-code-display">
+                <i class="bi bi-tag-fill" aria-hidden="true"></i>
+                <span aria-label="Código aplicado">{{ promoCode }}</span>
+              </div>
+              <button class="btn-remove-promo" (click)="quitarPromocion()" aria-label="Quitar código promocional">
+                <i class="bi bi-x-circle" aria-hidden="true"></i>
+                Quitar
+              </button>
+            </div>
+          }
+        </section>
+
+        <div class="summary-row" role="row" aria-label="Cantidad de productos">
+          <span role="rowheader">Productos</span>
+          <span role="cell">{{ totals.itemsCount }}</span>
+        </div>
+        <div class="summary-row" role="row" aria-label="Subtotal">
+          <span role="rowheader">Subtotal</span>
+          <span role="cell">S/. {{ totals.subtotal | number:'1.2-2' }}</span>
+        </div>
+        <div class="summary-row" role="row" aria-label="Costo de delivery">
+          <span role="rowheader">Delivery estimado</span>
+          <span role="cell">S/. {{ totals.deliveryFee | number:'1.2-2' }}</span>
+        </div>
+        @if (promoApplied && promoDiscount > 0) {
+          <div class="summary-row promo-discount" role="row" aria-label="Descuento aplicado">
+            <span role="rowheader">
+              <i class="bi bi-tag-fill me-1" aria-hidden="true"></i>
+              Descuento ({{ promoCode }})
+            </span>
+            <span role="cell" class="discount-value">-S/. {{ promoDiscount | number:'1.2-2' }}</span>
+          </div>
+        }
+        <hr style="margin: 0.5rem 0; border-color: rgba(0,0,0,0.1);">
+        <div class="summary-row total" role="row" aria-label="Total a pagar">
+          <span role="rowheader" id="total-label">Total a pagar</span>
+          <span role="cell" aria-labelledby="total-label">S/. {{ totals.total | number:'1.2-2' }}</span>
+        </div>
+
+        <button 
+          class="btn-primary" 
+          [disabled]="isCheckoutDisabled" 
+          (click)="checkout()"
+          [attr.aria-label]="isProcessing ? 'Procesando pedido' : 'Proceder con pedido por S/. ' + (totals.total | number:'1.2-2')"
+        >
+          @if (isProcessing) {
+            <span>Procesando...</span>
+          } @else {
+            <span>Proceder con mi pedido</span>
+          }
+        </button>
+          <a class="btn-link" routerLink="/menu" aria-label="Volver al menú para seguir comprando">Añadir más productos</a>
+          <button 
+            class="btn-secondary" 
+            (click)="vaciar()" 
+            [disabled]="items.length === 0 || isProcessing || isSuccess"
+            aria-label="Eliminar todos los items del carrito"
+          >
+            Vaciar carrito
+          </button>
+        </div>
+      </aside>
+    </div>
+  }
+
+  <!-- Modal de confirmación de eliminación -->
+  @if (showDeleteModal && itemToDelete) {
+    <div class="delete-modal-overlay" (click)="cerrarModalEliminar()">
+      <div class="delete-modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-icon">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <h3>¿Eliminar producto?</h3>
+        <p>¿Estás seguro que deseas quitar <strong>{{ itemToDelete.name }}</strong> de tu carrito?</p>
+        <div class="modal-actions">
+          <button class="btn-cancel" (click)="cerrarModalEliminar()">Cancelar</button>
+          <button class="btn-confirm-delete" (click)="confirmarEliminar()">Sí, eliminar</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Overlay de Procesamiento -->
+  @if (isProcessing && !isSuccess) {
+    <div class="processing-overlay">
+      <div class="processing-content">
+        <div class="pizza-loader"></div>
+        <h3>Procesando tu pedido...</h3>
+        <p>Por favor no cierres esta ventana</p>
+      </div>
+    </div>
+  }
+
+  <!-- Overlay de Éxito -->
+  @if (isSuccess) {
+    <div class="success-overlay">
+      <div class="success-content">
+        <div class="success-icon-container">
+          <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+        </div>
+        <h2>¡Pedido Confirmado!</h2>
+        <p>Tu deliciosa pizza está empezando a prepararse. Te enviaremos los detalles a tu correo.</p>
+        <button class="btn-primary" (click)="cerrarExito()">Aceptar</button>
+      </div>
+    </div>
+  }
+
+
+
+</section>

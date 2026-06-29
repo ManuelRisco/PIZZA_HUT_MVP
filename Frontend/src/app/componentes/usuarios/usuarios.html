@@ -1,0 +1,482 @@
+<div class="max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div class="flex items-center gap-3">
+      <h1 class="text-2xl font-black text-gray-800">Gestión de Usuarios</h1>
+    </div>
+    <div class="flex items-center gap-3" *ngIf="!showForm">
+      <button class="bg-gray-800 hover:bg-black text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+              (click)="abrirModalLogs()">
+        <i class="bi bi-shield-lock font-bold"></i> Logs del Sistema
+      </button>
+      <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition-colors shadow-sm" 
+              (click)="abrirFormulario()">
+        <i class="bi bi-plus-lg font-bold"></i> Nuevo Usuario
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex items-center gap-4 flex-wrap" *ngIf="!showForm">
+    <span class="font-bold text-gray-600 flex items-center gap-2">
+      <i class="bi bi-funnel"></i> Filtros:
+    </span>
+    <div class="flex flex-wrap gap-2">
+      <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
+        [ngClass]="filtroActivo === 'todos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
+        (click)="cambiarFiltro('todos')">Todos</button>
+      <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
+        [ngClass]="filtroActivo === 'admins' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
+        (click)="cambiarFiltro('admins')">Solo Administradores</button>
+      <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
+        [ngClass]="filtroActivo === 'activos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
+        (click)="cambiarFiltro('activos')">Solo Activos</button>
+      <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
+        [ngClass]="filtroActivo === 'admins-activos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
+        (click)="cambiarFiltro('admins-activos')">Admins Activos</button>
+    </div>
+  </div>
+
+  <!-- Mensajes de éxito y error -->
+  <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2" *ngIf="success">
+    <i class="bi bi-check-circle-fill"></i> {{ success }}
+  </div>
+  <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2" *ngIf="error">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+  </div>
+
+  <!-- Indicador de carga -->
+  <div class="flex justify-center items-center py-12 text-gray-400" *ngIf="loading">
+    <i class="bi bi-arrow-repeat animate-spin text-3xl mr-3 text-red-600"></i> <span class="text-lg font-medium">Cargando...</span>
+  </div>
+
+  <!-- Formulario de Usuario -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6" *ngIf="showForm">
+    <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+      <h2 class="text-xl font-bold text-gray-800">{{ editMode ? 'Editar Usuario' : 'Nuevo Usuario' }}</h2>
+      <button class="text-gray-400 hover:text-red-600 transition-colors" (click)="cancelar()">
+        <i class="bi bi-x-lg text-xl"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="usuarioForm" (ngSubmit)="guardarUsuario()" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="email" class="block text-sm font-bold text-gray-700 mb-1">Email *</label>
+          <input id="email" type="email" formControlName="email" 
+                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                 [ngClass]="usuarioForm.get('email')?.invalid && usuarioForm.get('email')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="usuarioForm.get('email')?.invalid && usuarioForm.get('email')?.touched">
+            <span *ngIf="usuarioForm.get('email')?.errors?.['required']">El email es requerido</span>
+            <span *ngIf="usuarioForm.get('email')?.errors?.['email']">El email debe ser válido</span>
+            <span *ngIf="usuarioForm.get('email')?.errors?.['duplicado']">Ya existe un usuario con este email</span>
+          </div>
+        </div>
+
+        <div>
+          <label for="name" class="block text-sm font-bold text-gray-700 mb-1">Nombre *</label>
+          <input id="name" type="text" formControlName="name" 
+                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                 [ngClass]="usuarioForm.get('name')?.invalid && usuarioForm.get('name')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="usuarioForm.get('name')?.invalid && usuarioForm.get('name')?.touched">
+            <span *ngIf="usuarioForm.get('name')?.errors?.['required']">El nombre es requerido</span>
+            <span *ngIf="usuarioForm.get('name')?.errors?.['minlength']">El nombre debe tener al menos 4 caracteres</span>
+            <span *ngIf="usuarioForm.get('name')?.errors?.['maxlength']">Máximo 50 caracteres</span>
+            <span *ngIf="usuarioForm.get('name')?.errors?.['pattern']">El nombre solo puede contener letras</span>
+            <span *ngIf="usuarioForm.get('name')?.errors?.['duplicado']">Ya existe un usuario con este nombre</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="phone" class="block text-sm font-bold text-gray-700 mb-1">Teléfono</label>
+          <input id="phone" type="tel" formControlName="phone" placeholder="Opcional"
+                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                 [ngClass]="usuarioForm.get('phone')?.invalid && usuarioForm.get('phone')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="usuarioForm.get('phone')?.invalid && usuarioForm.get('phone')?.touched">
+            <span *ngIf="usuarioForm.get('phone')?.errors?.['pattern']">El teléfono debe tener 9 dígitos numéricos</span>
+          </div>
+        </div>
+
+        <div>
+          <label for="role" class="block text-sm font-bold text-gray-700 mb-1">Rol *</label>
+          <select id="role" formControlName="role" 
+                  class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                  [ngClass]="{'border-red-500 bg-red-50': usuarioForm.get('role')?.invalid && usuarioForm.get('role')?.touched, 'bg-gray-100 cursor-not-allowed text-gray-500': usuarioForm.get('role')?.disabled, 'border-gray-200 bg-gray-50': !usuarioForm.get('role')?.disabled && !(usuarioForm.get('role')?.invalid && usuarioForm.get('role')?.touched)}">
+            <option value="CUSTOMER">Cliente</option>
+            <option value="ADMIN">Administrador</option>
+          </select>
+          <div class="text-blue-600 bg-blue-50 p-2 rounded text-xs mt-2 flex items-start gap-2" *ngIf="editMode && esUsuarioActualPorId(selectedUsuarioId)">
+            <i class="bi bi-shield-lock-fill mt-0.5"></i>
+            Por seguridad, no puedes cambiar tu propio rol ni eliminarte mientras estás logueado.
+          </div>
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="usuarioForm.get('role')?.invalid && usuarioForm.get('role')?.touched">
+            <span *ngIf="usuarioForm.get('role')?.errors?.['required']">El rol es requerido</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contraseñas -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6" *ngIf="!editMode">
+        <div>
+          <label for="password" class="block text-sm font-bold text-gray-700 mb-1">Contraseña *</label>
+          <div class="relative">
+            <input id="password" [type]="showPassword ? 'text' : 'password'" formControlName="password" 
+                   class="w-full px-4 py-2.5 pr-10 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                   [ngClass]="usuarioForm.get('password')?.invalid && usuarioForm.get('password')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
+            <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700" (click)="showPassword = !showPassword">
+              <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+            </button>
+          </div>
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="usuarioForm.get('password')?.invalid && usuarioForm.get('password')?.touched">
+            <span *ngIf="usuarioForm.get('password')?.errors?.['required']">La contraseña es requerida</span>
+            <span *ngIf="usuarioForm.get('password')?.errors?.['minlength']">Mínimo 6 caracteres</span>
+            <span *ngIf="usuarioForm.get('password')?.errors?.['maxlength']">Máximo 20 caracteres</span>
+            <span *ngIf="usuarioForm.get('password')?.errors?.['pattern']">Debe contener al menos una mayúscula y un número</span>
+          </div>
+        </div>
+
+        <div>
+          <label for="confirmPassword" class="block text-sm font-bold text-gray-700 mb-1">Confirmar Contraseña *</label>
+          <div class="relative">
+            <input id="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" 
+                   class="w-full px-4 py-2.5 pr-10 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                   [ngClass]="usuarioForm.get('confirmPassword')?.invalid && usuarioForm.get('confirmPassword')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
+            <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700" (click)="showConfirmPassword = !showConfirmPassword">
+              <i class="bi" [ngClass]="showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+            </button>
+          </div>
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="usuarioForm.get('confirmPassword')?.invalid && usuarioForm.get('confirmPassword')?.touched">
+            <span *ngIf="usuarioForm.get('confirmPassword')?.errors?.['required']">La confirmación es requerida</span>
+          </div>
+          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="usuarioForm.hasError('passwordMismatch') && usuarioForm.get('confirmPassword')?.touched">
+            Las contraseñas no coinciden
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
+        <button type="button" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg transition-colors" (click)="cancelar()">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="usuarioForm.invalid || loading">
+          <i class="bi bi-save"></i>
+          {{ editMode ? 'Actualizar' : 'Crear' }} Usuario
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabla de Usuarios -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" *ngIf="!showForm && !loading">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+      <h2 class="text-lg font-bold text-gray-800">Lista de Usuarios ({{ usuarios.length }})</h2>
+    </div>
+
+    <div class="overflow-x-auto" *ngIf="usuarios.length > 0; else noUsuarios">
+      <table class="w-full text-left border-collapse min-w-[1000px]">
+        <thead>
+          <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
+            <th class="py-4 px-6 font-semibold">Usuario</th>
+            <th class="py-4 px-6 font-semibold">Contacto</th>
+            <th class="py-4 px-6 font-semibold">Rol</th>
+            <th class="py-4 px-6 font-semibold">Estado</th>
+            <th class="py-4 px-6 font-semibold">Actividad</th>
+            <th class="py-4 px-6 text-center font-semibold">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm divide-y divide-gray-50">
+          <tr *ngFor="let usuario of usuariosPaginados" 
+              class="hover:bg-gray-50 transition-colors group"
+              [ngClass]="{'bg-green-50/30': esUsuarioActual(usuario.email), 'bg-red-50/30': esCuentaBloqueada(usuario)}">
+            
+            <td class="py-4 px-6">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shrink-0 shadow-sm"
+                     [ngClass]="usuario.role === 'ADMIN' ? 'bg-gradient-to-br from-red-500 to-red-700' : 'bg-gradient-to-br from-gray-600 to-gray-800'">
+                  {{ usuario.name.charAt(0).toUpperCase() }}
+                </div>
+                <div>
+                  <p class="font-bold text-gray-800 flex items-center gap-2">
+                    {{ usuario.name }}
+                    <span *ngIf="esUsuarioActual(usuario.email)" class="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider">Tú</span>
+                  </p>
+                  <p class="text-xs text-gray-500">ID: {{ usuario.id }}</p>
+                </div>
+              </div>
+            </td>
+            
+            <td class="py-4 px-6">
+              <div class="flex flex-col gap-1">
+                <span class="text-gray-600 flex items-center gap-2"><i class="bi bi-envelope text-gray-400"></i> {{ usuario.email }}</span>
+                <span class="text-gray-500 text-xs flex items-center gap-2" *ngIf="usuario.phone">
+                  <i class="bi bi-telephone text-gray-400"></i> {{ usuario.phone }}
+                </span>
+                <span class="text-gray-400 text-xs italic" *ngIf="!usuario.phone">Sin teléfono</span>
+              </div>
+            </td>
+            
+            <td class="py-4 px-6">
+              <span class="px-3 py-1 rounded-full text-xs font-bold tracking-wider inline-flex items-center gap-1.5"
+                    [ngClass]="usuario.role === 'ADMIN' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'">
+                <i class="bi" [ngClass]="usuario.role === 'ADMIN' ? 'bi-shield-check' : 'bi-person'"></i>
+                {{ obtenerRolTexto(usuario.role) }}
+              </span>
+            </td>
+            
+            <td class="py-4 px-6">
+              <span class="px-3 py-1 rounded-full text-xs font-bold tracking-wider inline-flex items-center gap-1.5"
+                    [ngClass]="esCuentaBloqueada(usuario) ? 'bg-red-100 text-red-700' : (estaActivo(usuario) ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700')">
+                <i class="bi" [ngClass]="esCuentaBloqueada(usuario) ? 'bi-lock-fill' : (estaActivo(usuario) ? 'bi-check-circle-fill' : 'bi-x-circle-fill')"></i>
+                {{ esCuentaBloqueada(usuario) ? 'BLOQUEADA' : (estaActivo(usuario) ? 'ACTIVO' : 'INACTIVO') }}
+              </span>
+            </td>
+            
+            <td class="py-4 px-6">
+              <div class="flex flex-col gap-1">
+                <span class="text-xs text-gray-600 flex items-center gap-1.5" *ngIf="usuario.lastLogin">
+                  <i class="bi bi-clock-history text-gray-400"></i> <span [title]="formatearFechaCompleta(usuario.lastLogin)">{{ formatearFechaRelativa(usuario.lastLogin) }}</span>
+                </span>
+                <span class="text-xs text-gray-400 italic" *ngIf="!usuario.lastLogin">Nunca ha ingresado</span>
+                
+                <div class="flex items-center gap-1 mt-1" [ngClass]="(usuario.loginAttempts || 0) >= 3 ? 'text-red-500 font-bold' : ((usuario.loginAttempts || 0) > 0 ? 'text-orange-500' : 'text-gray-400')">
+                  <i class="bi" [ngClass]="(usuario.loginAttempts || 0) >= 3 ? 'bi-exclamation-triangle-fill' : 'bi-shield'"></i>
+                  <span class="text-[10px] uppercase tracking-wider">Intentos: {{ usuario.loginAttempts || 0 }}/5</span>
+                </div>
+                <div *ngIf="esCuentaBloqueada(usuario)" class="text-[10px] text-red-500 font-bold uppercase mt-0.5">
+                  Hasta: {{ formatearFechaHora(usuario.lockedUntil) }}
+                </div>
+              </div>
+            </td>
+            
+            <td class="py-4 px-6 text-center">
+              <div class="flex items-center justify-center gap-2 transition-opacity">
+                <button class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors"
+                        (click)="editarUsuario(usuario)" title="Editar">
+                  <i class="bi bi-pencil-fill"></i>
+                </button>
+
+                <button *ngIf="estaActivo(usuario)"
+                        class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                        [ngClass]="esUsuarioActual(usuario.email) ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white'"
+                        (click)="inactivarUsuario(usuario.id!, usuario.email)"
+                        [title]="esUsuarioActual(usuario.email) ? 'No puedes inactivar tu cuenta' : 'Inactivar'"
+                        [disabled]="esUsuarioActual(usuario.email)">
+                  <i class="bi bi-pause-fill"></i>
+                </button>
+
+                <button *ngIf="!estaActivo(usuario)"
+                        class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-colors"
+                        (click)="reactivarUsuario(usuario.id!, usuario.email)" title="Reactivar">
+                  <i class="bi bi-play-fill"></i>
+                </button>
+
+                <button class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                        [ngClass]="esUsuarioActual(usuario.email) ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-50 text-red-600 hover:bg-red-600 hover:text-white'"
+                        (click)="eliminarUsuario(usuario.id!, usuario.email)"
+                        [title]="esUsuarioActual(usuario.email) ? 'No puedes eliminar tu cuenta' : 'Eliminar'"
+                        [disabled]="esUsuarioActual(usuario.email)">
+                  <i class="bi bi-trash-fill"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Paginación wrapper -->
+      <div class="p-4 border-t border-gray-100 bg-white">
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalItems]="usuarios.length"
+          [itemsPerPage]="itemsPerPage"
+          (pageChange)="onPageChange($event)"
+        ></app-pagination>
+      </div>
+    </div>
+    <ng-template #noUsuarios>
+      <div class="py-16 px-6 text-center flex flex-col items-center">
+        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
+          <i class="bi bi-people text-4xl"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-1">No hay usuarios</h3>
+        <p class="text-gray-500 text-sm mb-6 max-w-sm">Aún no hay usuarios registrados que coincidan con los filtros seleccionados.</p>
+        <button class="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-lg transition-colors" (click)="abrirFormulario()">
+          Crear Primer Usuario
+        </button>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Modal de Logs de Sistema -->
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-2 md:p-4" *ngIf="showLogsModal">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[95vh] md:h-[85vh] flex flex-col overflow-hidden animate-fade-in-up mt-14 md:mt-0">
+      <!-- Header Modal -->
+      <div class="px-4 md:px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
+        <h2 class="text-lg md:text-xl font-bold text-gray-800 flex items-center gap-2">
+          <i class="bi bi-shield-lock-fill text-red-600"></i>
+          Monitoreo de Sistema
+        </h2>
+        <button class="text-gray-400 hover:text-red-600 transition-colors bg-white hover:bg-red-50 w-8 h-8 rounded-lg flex items-center justify-center" (click)="cerrarModalLogs()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex border-b border-gray-200 bg-white overflow-x-auto hide-scrollbar shrink-0">
+        <button class="flex-1 py-3 px-4 font-bold transition-colors border-b-2 whitespace-nowrap text-sm md:text-base"
+                [ngClass]="activeLogTab === 'sesiones' ? 'border-red-600 text-red-600 bg-red-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
+                (click)="cambiarLogTab('sesiones')">
+          <i class="bi bi-people-fill mr-2"></i> Sesiones Activas
+        </button>
+        <button class="flex-1 py-3 px-4 font-bold transition-colors border-b-2 whitespace-nowrap text-sm md:text-base"
+                [ngClass]="activeLogTab === 'auditoria' ? 'border-red-600 text-red-600 bg-red-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
+                (click)="cambiarLogTab('auditoria')">
+          <i class="bi bi-journal-text mr-2"></i> Registro de Auditoría (24h)
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="flex-1 overflow-y-auto p-3 md:p-6 bg-gray-50/50 relative">
+        <!-- Indicador de Carga -->
+        <div class="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col justify-center items-center" *ngIf="loadingLogs">
+          <i class="bi bi-arrow-repeat animate-spin text-4xl text-red-600 mb-3"></i>
+          <span class="font-bold text-gray-600">Cargando datos del sistema...</span>
+        </div>
+
+        <!-- Tabla Sesiones -->
+        <div *ngIf="activeLogTab === 'sesiones'">
+          <div class="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden" *ngIf="sesionesActivas.length > 0; else noSesiones">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-sm min-w-[700px]">
+                <thead>
+                  <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
+                    <th class="py-3 px-4 font-bold">Usuario</th>
+                    <th class="py-3 px-4 font-bold">Inicio de Sesión</th>
+                    <th class="py-3 px-4 font-bold">Dispositivo / IP</th>
+                    <th class="py-3 px-4 text-center font-bold">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                  <tr *ngFor="let session of sesionesActivas" class="hover:bg-gray-50 transition-colors">
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center text-white font-bold shadow-sm shrink-0">
+                          {{ session.userName ? session.userName.charAt(0).toUpperCase() : '?' }}
+                        </div>
+                        <div>
+                          <div class="font-bold text-gray-800">{{ session.userName || 'Usuario' }}</div>
+                          <div class="text-[10px] text-gray-400 font-mono tracking-wider">ID: {{ session.userId }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-gray-600">
+                      <div class="font-medium">{{ session.loginTime | date:'MMM d, y, h:mm a' }}</div>
+                      <div class="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                        <i class="bi bi-activity"></i> Última act: {{ session.lastActivityTime | date:'shortTime' }}
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-gray-600">
+                      <div class="truncate max-w-[200px] text-xs font-medium" [title]="session.userAgent">
+                        <i class="bi bi-display text-gray-400 mr-1"></i> {{ session.userAgent || 'Desconocido' }}
+                      </div>
+                      <div class="text-xs font-mono text-gray-500 mt-1 bg-gray-100 inline-block px-1.5 py-0.5 rounded">
+                        <i class="bi bi-globe mr-1"></i>{{ session.ipAddress }}
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                      <button class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors w-full md:w-auto"
+                              (click)="forzarCierreSesion(session.sessionToken)">
+                        <i class="bi bi-power"></i> Desconectar
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <ng-template #noSesiones>
+            <div class="text-center py-16 flex flex-col items-center bg-white rounded-xl border border-gray-100 border-dashed">
+              <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
+                <i class="bi bi-people text-3xl"></i>
+              </div>
+              <h3 class="text-gray-800 font-bold mb-1">Sin sesiones activas</h3>
+              <p class="text-gray-500 text-sm">No hay usuarios conectados en este momento.</p>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Tabla Auditoria -->
+        <div *ngIf="activeLogTab === 'auditoria'">
+          <div class="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden" *ngIf="auditLogs.length > 0; else noAudit">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-sm min-w-[850px]">
+                <thead>
+                  <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
+                    <th class="py-3 px-4 font-bold">Fecha</th>
+                    <th class="py-3 px-4 font-bold">Usuario</th>
+                    <th class="py-3 px-4 font-bold">Acción</th>
+                    <th class="py-3 px-4 font-bold">Entidad</th>
+                    <th class="py-3 px-4 font-bold">Detalles</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                  <tr *ngFor="let log of auditLogs" class="hover:bg-gray-50 transition-colors">
+                    <td class="py-3 px-4 text-gray-600 whitespace-nowrap font-medium text-xs">
+                      {{ log.createdAt | date:'MMM d, y' }}<br>
+                      <span class="text-gray-400">{{ log.createdAt | date:'h:mm:ss a' }}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="font-bold text-gray-800 text-xs">{{ log.userName || 'Sistema / Desconocido' }}</div>
+                      <div class="text-[10px] text-gray-400 font-mono" *ngIf="log.userId">ID: {{ log.userId }}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border"
+                            [ngClass]="{
+                              'bg-blue-50 text-blue-700 border-blue-100': log.actionType.includes('LOGIN') && !log.actionType.includes('FAILED'),
+                              'bg-emerald-50 text-emerald-700 border-emerald-100': log.actionType.includes('CREATE'),
+                              'bg-orange-50 text-orange-700 border-orange-100': log.actionType.includes('UPDATE'),
+                              'bg-red-50 text-red-700 border-red-100': log.actionType.includes('DELETE') || log.actionType.includes('FAILED'),
+                              'bg-gray-50 text-gray-700 border-gray-200': !log.actionType.includes('LOGIN') && !log.actionType.includes('CREATE') && !log.actionType.includes('UPDATE') && !log.actionType.includes('DELETE') && !log.actionType.includes('FAILED')
+                            }">
+                        <i class="bi mr-1" [ngClass]="{
+                          'bi-box-arrow-in-right': log.actionType.includes('LOGIN') && !log.actionType.includes('FAILED'),
+                          'bi-plus-circle': log.actionType.includes('CREATE'),
+                          'bi-pencil-square': log.actionType.includes('UPDATE'),
+                          'bi-trash': log.actionType.includes('DELETE'),
+                          'bi-exclamation-triangle': log.actionType.includes('FAILED')
+                        }"></i>
+                        {{ log.actionType.replace('_', ' ') }}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4 text-gray-600 text-xs">
+                      <div *ngIf="log.entityType" class="font-medium bg-gray-100 inline-block px-2 py-1 rounded">
+                        {{ log.entityType }} <span class="text-gray-400 ml-1">#{{ log.entityId }}</span>
+                      </div>
+                      <span *ngIf="!log.entityType" class="text-gray-300 italic">N/A</span>
+                    </td>
+                    <td class="py-3 px-4 text-gray-600 text-xs">
+                      <div class="max-w-md truncate" [title]="log.description">
+                        {{ log.description || 'Sin detalles adicionales' }}
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <ng-template #noAudit>
+            <div class="text-center py-16 flex flex-col items-center bg-white rounded-xl border border-gray-100 border-dashed">
+              <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
+                <i class="bi bi-journal-x text-3xl"></i>
+              </div>
+              <h3 class="text-gray-800 font-bold mb-1">Sin actividad reciente</h3>
+              <p class="text-gray-500 text-sm">No se encontraron registros de auditoría en las últimas 24 horas.</p>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

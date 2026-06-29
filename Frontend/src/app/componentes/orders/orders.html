@@ -1,0 +1,388 @@
+<div class="max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div class="flex items-center gap-3">
+      <h2 class="text-2xl font-black text-gray-800">
+        <i class="bi bi-bag-fill text-red-600 mr-2"></i> Gestión de Pedidos
+      </h2>
+    </div>
+    
+    <div class="flex flex-col sm:flex-row gap-3">
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <i class="bi bi-shop text-gray-400"></i>
+        </div>
+        <select class="pl-9 pr-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block outline-none transition-colors shadow-sm font-bold" 
+                [(ngModel)]="filtroDeliveryType" (change)="aplicarFiltro()">
+          <option value="TODOS">Todos los tipos</option>
+          <option value="PICKUP">Recojo en tienda</option>
+          <option value="DELIVERY">Delivery</option>
+        </select>
+      </div>
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <i class="bi bi-funnel text-gray-400"></i>
+        </div>
+        <select class="pl-9 pr-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block outline-none transition-colors shadow-sm font-bold" 
+                [(ngModel)]="filtroEstado" (change)="aplicarFiltro()">
+          <option value="TODOS">Todos los estados</option>
+          <option value="PENDING">Pendiente</option>
+          <option value="CONFIRMED">Confirmado</option>
+          <option value="PREPARING">Preparando</option>
+          <option value="OUT_FOR_DELIVERY">En camino</option>
+          <option value="DELIVERED">Entregado</option>
+          <option value="CANCELLED">Cancelado</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensajes de éxito y error -->
+  <div class="mb-6" *ngIf="mensaje">
+    <div class="px-4 py-3 rounded-lg flex items-center justify-between" 
+         [ngClass]="error ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'">
+      <div class="flex items-center gap-2">
+        <i class="bi" [ngClass]="error ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
+        {{ mensaje }}
+      </div>
+      <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" (click)="mensaje = ''">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading) {
+    <div class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
+      <div class="animate-spin rounded-full h-12 w-12 border-4 border-red-200 border-t-red-600 mb-4"></div>
+      <p class="text-gray-500 font-medium">Cargando la lista de pedidos...</p>
+    </div>
+  }
+
+  <!-- Lista de pedidos -->
+  @if (!loading) {
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+      <h5 class="text-lg font-bold text-gray-800 m-0">Lista de Pedidos ({{ filteredOrders.length }})</h5>
+    </div>
+    
+    <div class="p-6">
+      <div class="grid grid-cols-1 gap-6">
+        <div class="bg-white border rounded-xl overflow-hidden transition-all hover:shadow-md border-gray-200" *ngFor="let order of ordersPaginados">
+          
+          <!-- Header del pedido -->
+          <div class="bg-gray-50 px-5 py-3 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+              <h5 class="font-black text-gray-800 text-lg m-0">#{{ order.id }}</h5>
+              <span class="px-2.5 py-1 rounded-md text-xs font-bold" 
+                    [ngClass]="{
+                      'bg-amber-100 text-amber-800': order.status === 'PENDING',
+                      'bg-blue-100 text-blue-800': order.status === 'CONFIRMED',
+                      'bg-purple-100 text-purple-800': order.status === 'PREPARING',
+                      'bg-indigo-100 text-indigo-800': order.status === 'OUT_FOR_DELIVERY',
+                      'bg-emerald-100 text-emerald-800': order.status === 'DELIVERED',
+                      'bg-red-100 text-red-800': order.status === 'CANCELLED'
+                    }">
+                {{ getEstadoTexto(order.status) }}
+              </span>
+              <span class="px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1" 
+                    [ngClass]="esPickup(order) ? 'bg-gray-200 text-gray-700' : 'bg-cyan-100 text-cyan-800'">
+                <i class="bi" [ngClass]="esPickup(order) ? 'bi-shop' : 'bi-bicycle'"></i>
+                {{ esPickup(order) ? 'PICKUP' : 'DELIVERY' }}
+              </span>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="text-emerald-600 font-black text-lg">S/ {{ order.total | number:'1.2-2' }}</div>
+              <div class="text-sm text-gray-500 font-medium"><i class="bi bi-clock mr-1"></i> {{ order.createdAt | date: 'short' }}</div>
+            </div>
+          </div>
+
+          <!-- Información del pedido -->
+          <div class="p-5">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              <!-- Cliente -->
+              <div>
+                <h6 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"><i class="bi bi-person-fill mr-1"></i> Cliente</h6>
+                <p class="font-bold text-gray-800 mb-1">{{ order.userName }}</p>
+                <p class="text-sm text-gray-500 mb-1">{{ order.userEmail }}</p>
+                <p class="text-sm text-gray-500 m-0" *ngIf="order.userPhone">
+                  <i class="bi bi-telephone-fill mr-1"></i> {{ order.userPhone }}
+                </p>
+              </div>
+
+              <!-- Dirección / Pickup -->
+              <div *ngIf="esDelivery(order) && order.addressLine1">
+                <h6 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"><i class="bi bi-geo-alt-fill mr-1"></i> Dirección</h6>
+                <p class="text-gray-800 mb-1">{{ order.addressLine1 }}</p>
+                <p class="text-sm text-gray-500 mb-1">{{ order.addressDistrict }}, {{ order.addressCity }}</p>
+                <p class="text-xs text-gray-400 m-0 italic" *ngIf="order.addressReference">
+                  Ref: {{ order.addressReference }}
+                </p>
+              </div>
+
+              <div *ngIf="esPickup(order)">
+                <h6 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"><i class="bi bi-shop mr-1"></i> Recojo en Tienda</h6>
+                <p class="text-gray-800 mb-2">El cliente recogerá su pedido en el local.</p>
+                <span class="bg-emerald-50 text-emerald-700 text-xs font-bold px-2 py-1 rounded border border-emerald-200">Sin costo de envío</span>
+              </div>
+
+              <!-- Resumen Financiero -->
+              <div>
+                <h6 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"><i class="bi bi-receipt mr-1"></i> Resumen</h6>
+                <div class="flex justify-between items-center mb-1 text-sm">
+                  <span class="text-gray-600">Subtotal:</span>
+                  <span class="font-bold text-gray-800">S/ {{ order.subtotal | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex justify-between items-center mb-1 text-sm">
+                  <span class="text-gray-600">Envío:</span>
+                  <span class="font-bold" [ngClass]="order.deliveryFee === 0 ? 'text-emerald-600' : 'text-gray-800'">
+                    S/ {{ order.deliveryFee | number:'1.2-2' }}
+                  </span>
+                </div>
+                <div class="flex justify-between items-center mb-2 text-sm" *ngIf="order.discount && order.discount > 0">
+                  <span class="text-gray-600 flex items-center gap-1">
+                    Descuento <span class="bg-blue-50 text-blue-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-blue-100" *ngIf="order.promoCode">{{ order.promoCode }}</span>
+                  </span>
+                  <span class="font-bold text-red-600">-S/ {{ order.discount | number:'1.2-2' }}</span>
+                </div>
+                <div class="pt-2 border-t border-gray-100 text-xs text-gray-500 font-medium">
+                  Pago: {{ order.paymentMethodName || 'No especificado' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="mt-5 pt-4 border-t border-gray-100 flex flex-wrap justify-between items-center gap-4">
+              <button class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2 px-4 rounded-lg text-sm transition-colors flex items-center gap-2" 
+                      (click)="verDetalles(order)" title="Ver detalles completos">
+                <i class="bi bi-eye-fill"></i>
+                Ver Detalles
+              </button>
+              
+              <div class="flex items-center gap-3 bg-gray-50 p-1.5 rounded-lg border border-gray-200">
+                <label class="text-xs font-bold text-gray-500 uppercase ml-2">Estado:</label>
+                <select class="bg-white border border-gray-200 text-gray-800 text-sm rounded-md focus:ring-red-500 focus:border-red-500 block p-1.5 outline-none transition-colors font-bold" 
+                        [(ngModel)]="order.status" (change)="cambiarEstado(order, order.status)">
+                  <option *ngFor="let estado of estados" [value]="estado">
+                    {{ getEstadoTexto(estado) }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estado vacío -->
+        <div class="col-span-full py-16 flex flex-col items-center justify-center text-center" *ngIf="filteredOrders.length === 0">
+          <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
+            <i class="bi bi-bag-x text-4xl"></i>
+          </div>
+          <h5 class="text-gray-800 font-bold text-xl mb-2">No hay pedidos para mostrar</h5>
+          <p class="text-gray-500 max-w-md">Los pedidos aparecerán aquí cuando los clientes realicen compras o ajusta los filtros actuales.</p>
+        </div>
+      </div>
+
+      <!-- Paginación -->
+      <div class="mt-8" *ngIf="filteredOrders.length > 0">
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalItems]="filteredOrders.length"
+          [itemsPerPage]="itemsPerPage"
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
+      </div>
+    </div>
+  </div>
+  }
+</div>
+
+<!-- Modal Detalles -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" *ngIf="showModal">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col my-8">
+    <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+      <h5 class="text-xl font-bold m-0 flex items-center gap-2">
+        <i class="bi bi-info-circle-fill"></i>
+        Detalles del Pedido #{{ selectedOrder?.id }}
+      </h5>
+      <button class="text-gray-400 hover:text-white transition-colors" (click)="cerrarModal()">
+        <i class="bi bi-x-lg text-xl"></i>
+      </button>
+    </div>
+    
+    <div class="p-6 overflow-y-auto" *ngIf="selectedOrder">
+      <!-- Secciones de información -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Info Cliente -->
+        <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+          <h6 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2"><i class="bi bi-person-fill text-red-600 mr-2"></i> Información del Cliente</h6>
+          <div class="space-y-3">
+            <div class="flex justify-between items-start">
+              <span class="text-gray-500 text-sm font-medium">Nombre:</span>
+              <span class="text-gray-800 font-bold text-right">{{ selectedOrder.userName }}</span>
+            </div>
+            <div class="flex justify-between items-start">
+              <span class="text-gray-500 text-sm font-medium">Email:</span>
+              <span class="text-gray-800 text-right">{{ selectedOrder.userEmail }}</span>
+            </div>
+            <div class="flex justify-between items-start">
+              <span class="text-gray-500 text-sm font-medium">Teléfono:</span>
+              <span class="text-gray-800 text-right">{{ selectedOrder.userPhone || 'No proporcionado' }}</span>
+            </div>
+            <div class="flex justify-between items-center pt-2">
+              <span class="text-gray-500 text-sm font-medium">Tipo:</span>
+              <span class="px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1" [ngClass]="esPickup(selectedOrder) ? 'bg-gray-100 text-gray-700' : 'bg-cyan-50 text-cyan-700 border border-cyan-100'">
+                <i class="bi" [ngClass]="esPickup(selectedOrder) ? 'bi-shop' : 'bi-bicycle'"></i>
+                {{ esPickup(selectedOrder) ? 'Recojo en tienda' : 'Delivery' }}
+              </span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500 text-sm font-medium">Estado:</span>
+              <span class="px-2.5 py-1 rounded-md text-xs font-bold" 
+                    [ngClass]="{
+                      'bg-amber-100 text-amber-800': selectedOrder.status === 'PENDING',
+                      'bg-blue-100 text-blue-800': selectedOrder.status === 'CONFIRMED',
+                      'bg-purple-100 text-purple-800': selectedOrder.status === 'PREPARING',
+                      'bg-indigo-100 text-indigo-800': selectedOrder.status === 'OUT_FOR_DELIVERY',
+                      'bg-emerald-100 text-emerald-800': selectedOrder.status === 'DELIVERED',
+                      'bg-red-100 text-red-800': selectedOrder.status === 'CANCELLED'
+                    }">
+                {{ getEstadoTexto(selectedOrder.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Dirección / Pickup -->
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 shadow-sm" *ngIf="esDelivery(selectedOrder) && selectedOrder.addressLine1">
+          <h6 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4 border-b border-gray-200 pb-2"><i class="bi bi-geo-alt-fill text-red-600 mr-2"></i> Dirección de Entrega</h6>
+          <div class="space-y-3">
+            <div>
+              <span class="block text-gray-500 text-xs font-medium mb-1">Dirección:</span>
+              <span class="block text-gray-800 font-bold">{{ selectedOrder.addressLine1 }}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <span class="block text-gray-500 text-xs font-medium mb-1">Distrito:</span>
+                <span class="block text-gray-800">{{ selectedOrder.addressDistrict }}</span>
+              </div>
+              <div>
+                <span class="block text-gray-500 text-xs font-medium mb-1">Ciudad:</span>
+                <span class="block text-gray-800">{{ selectedOrder.addressCity }}</span>
+              </div>
+            </div>
+            <div *ngIf="selectedOrder.addressReference">
+              <span class="block text-gray-500 text-xs font-medium mb-1">Referencia:</span>
+              <span class="block text-gray-800 italic text-sm">{{ selectedOrder.addressReference }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-5 shadow-sm" *ngIf="esPickup(selectedOrder)">
+          <h6 class="text-sm font-bold text-emerald-900 uppercase tracking-wider mb-4 border-b border-emerald-200 pb-2"><i class="bi bi-shop text-emerald-600 mr-2"></i> Recojo en Tienda</h6>
+          <p class="text-emerald-800 font-medium text-center py-4">El cliente recogerá este pedido directamente en la tienda.</p>
+        </div>
+      </div>
+      
+      <!-- Resumen Financiero -->
+      <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm mb-8">
+        <h6 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2"><i class="bi bi-receipt text-red-600 mr-2"></i> Resumen de Pago</h6>
+        <div class="flex flex-col md:flex-row justify-between gap-6">
+          <div class="flex-1">
+            <span class="block text-gray-500 text-xs font-medium mb-1">Método de Pago:</span>
+            <span class="inline-block bg-gray-100 text-gray-800 font-bold px-3 py-1.5 rounded-lg text-sm border border-gray-200">
+              <i class="bi bi-credit-card-fill mr-2 text-gray-500"></i>{{ selectedOrder.paymentMethodName || 'No especificado' }}
+            </span>
+          </div>
+          <div class="flex-1 w-full max-w-xs space-y-2">
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-gray-600">Subtotal:</span>
+              <span class="font-bold text-gray-800">S/ {{ selectedOrder.subtotal | number:'1.2-2' }}</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-gray-600">Envío:</span>
+              <span class="font-bold" [ngClass]="selectedOrder.deliveryFee === 0 ? 'text-emerald-600' : 'text-gray-800'">
+                S/ {{ selectedOrder.deliveryFee | number:'1.2-2' }}
+                <span *ngIf="selectedOrder.deliveryFee === 0" class="ml-1 text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded uppercase">Gratis</span>
+              </span>
+            </div>
+            <div class="flex justify-between items-center text-sm" *ngIf="selectedOrder.discount && selectedOrder.discount > 0">
+              <span class="text-gray-600 flex items-center gap-1">
+                Descuento <span class="bg-blue-50 text-blue-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-blue-100" *ngIf="selectedOrder.promoCode">{{ selectedOrder.promoCode }}</span>
+              </span>
+              <span class="font-bold text-red-600">-S/ {{ selectedOrder.discount | number:'1.2-2' }}</span>
+            </div>
+            <div class="pt-3 border-t border-gray-200 flex justify-between items-center mt-2">
+              <span class="text-gray-800 font-bold text-lg">Total:</span>
+              <span class="text-emerald-600 font-black text-2xl">S/ {{ selectedOrder.total | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Items -->
+      <h6 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4"><i class="bi bi-box-seam-fill text-red-600 mr-2"></i> Items del Pedido</h6>
+      <div class="border border-gray-200 rounded-xl overflow-hidden mb-6">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[1000px]">
+            <thead>
+              <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b border-gray-200">
+                <th class="px-4 py-3 font-bold">Tipo</th>
+                <th class="px-4 py-3 font-bold">Producto</th>
+                <th class="px-4 py-3 font-bold">Detalles</th>
+                <th class="px-4 py-3 font-bold text-center">Cant.</th>
+                <th class="px-4 py-3 font-bold text-right">P. Unit</th>
+                <th class="px-4 py-3 font-bold text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 text-gray-800 text-sm">
+              <tr class="hover:bg-gray-50 transition-colors" *ngFor="let item of selectedOrder.items">
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold" 
+                        [ngClass]="item.itemType === 'EXTRA' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-orange-50 text-orange-700 border border-orange-100'">
+                    <i class="bi" [ngClass]="item.itemType === 'EXTRA' ? 'bi-cup-straw' : 'bi-pie-chart-fill'"></i>
+                    {{ item.itemType === 'EXTRA' ? 'Extra' : 'Pizza' }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 font-bold">
+                  {{ item.pizzaName || 'Producto #' + (item.pizzaId || item.extraId) }}
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex flex-col gap-1">
+                    <span class="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded inline-block w-fit font-medium border border-gray-200" *ngIf="item.itemType !== 'EXTRA'">
+                      Tam: {{ item.sizeName || '#' + item.sizeId }}
+                    </span>
+                    <span class="text-xs text-gray-500" *ngIf="item.extras && item.extras.length > 0">
+                      <strong class="text-gray-700">+</strong> {{ item.extras.join(', ') }}
+                    </span>
+                    <span class="text-xs text-gray-400 italic" *ngIf="(!item.extras || item.extras.length === 0) && item.itemType !== 'EXTRA'">
+                      Sin extras
+                    </span>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <span class="bg-gray-200 text-gray-800 font-bold px-2 py-1 rounded">x{{ item.quantity }}</span>
+                </td>
+                <td class="px-4 py-3 text-right text-gray-600">S/ {{ item.unitPrice | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-right font-black text-emerald-600">S/ {{ item.lineTotal | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Notas -->
+      <div *ngIf="selectedOrder.notes" class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 text-sm">
+        <strong class="flex items-center gap-2 mb-1"><i class="bi bi-sticky-fill"></i> Notas del cliente:</strong> 
+        <p class="m-0 italic">"{{ selectedOrder.notes }}"</p>
+      </div>
+    </div>
+    
+    <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end">
+      <button type="button" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg transition-colors flex items-center gap-2" (click)="cerrarModal()">
+        <i class="bi bi-x-lg"></i>
+        Cerrar Detalles
+      </button>
+    </div>
+  </div>
+</div>

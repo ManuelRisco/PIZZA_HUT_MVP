@@ -1,0 +1,130 @@
+<!-- Overlay para cerrar el panel -->
+<div class="fab-overlay" [class.active]="isPanelOpen" (click)="closePanel()"></div>
+
+<div class="accessibility-fab-container">
+  <!-- Panel de Accesibilidad -->
+  <div class="accessibility-panel" [class.open]="isPanelOpen" role="dialog" aria-label="Panel de accesibilidad" aria-modal="true">
+    
+    <!-- Header del Panel -->
+    <div class="panel-header">
+      <div class="panel-title">
+        <img src="accessibility-icon.svg" alt="" class="panel-icon" aria-hidden="true">
+        <span>Accesibilidad</span>
+      </div>
+      <button class="panel-close" (click)="closePanel()" aria-label="Cerrar panel de accesibilidad">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="panel-body">
+      <!-- Sección: Alto Contraste -->
+      <div class="panel-section">
+        <button 
+          class="toggle-option"
+          (click)="toggleAltoContraste()"
+          [class.active]="contrasteAlto"
+          role="switch"
+          [attr.aria-checked]="contrasteAlto"
+          aria-label="Alto contraste">
+          <div class="option-info">
+            <i class="bi bi-circle-half" aria-hidden="true"></i>
+            <span>Alto Contraste</span>
+          </div>
+          <div class="toggle-switch" [class.on]="contrasteAlto">
+            <div class="toggle-knob"></div>
+          </div>
+        </button>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <!-- Sección: Filtros de Color (Daltonismo) -->
+      <div class="panel-section">
+        <div class="section-title">
+          <i class="bi bi-palette" aria-hidden="true"></i>
+          <span>Filtros de Color</span>
+        </div>
+        <div class="option-grid" role="radiogroup" aria-label="Filtros para daltonismo">
+          <button
+            *ngFor="let mode of ['none', 'protanopia', 'deuteranopia', 'tritanopia']"
+            class="chip-option"
+            (click)="setColorblindMode($any(mode))"
+            [class.active]="modoColorblind === mode"
+            role="radio"
+            [attr.aria-checked]="modoColorblind === mode">
+            {{ getColorblindLabel(mode) }}
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <!-- Sección: Tamaño de Fuente -->
+      <div class="panel-section">
+        <div class="section-title">
+          <i class="bi bi-fonts" aria-hidden="true"></i>
+          <span>Tamaño de Letra</span>
+        </div>
+        <div class="font-size-options" role="radiogroup" aria-label="Tamaño de fuente">
+          <button
+            *ngFor="let size of ['pequena', 'normal', 'grande', 'extra-grande']"
+            class="font-option"
+            (click)="setFontSize($any(size))"
+            [class.active]="tamanoFuente === size"
+            role="radio"
+            [attr.aria-checked]="tamanoFuente === size">
+            <span class="font-label">{{ getFontSizeLabel(size) }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <!-- Sección: Ajustes Adicionales -->
+      <div class="panel-section">
+        <button 
+          class="toggle-option"
+          (click)="toggleDyslexiaMode()"
+          [class.active]="modoDislexia"
+          role="switch"
+          [attr.aria-checked]="modoDislexia"
+          aria-label="Modo lectura fácil para dislexia">
+          <div class="option-info">
+            <i class="bi bi-book" aria-hidden="true"></i>
+            <span>Lectura Fácil</span>
+          </div>
+          <div class="toggle-switch" [class.on]="modoDislexia">
+            <div class="toggle-knob"></div>
+          </div>
+        </button>
+
+        <button 
+          class="toggle-option"
+          (click)="toggleReduceMotion()"
+          [class.active]="reducirMovimiento"
+          role="switch"
+          [attr.aria-checked]="reducirMovimiento"
+          aria-label="Reducir animaciones y movimiento">
+          <div class="option-info">
+            <i class="bi bi-stop-circle" aria-hidden="true"></i>
+            <span>Reducir Movimiento</span>
+          </div>
+          <div class="toggle-switch" [class.on]="reducirMovimiento">
+            <div class="toggle-knob"></div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botón FAB -->
+  <button 
+    class="fab-button"
+    (click)="togglePanel()"
+    [class.active]="isPanelOpen"
+    [attr.aria-expanded]="isPanelOpen"
+    aria-label="Abrir panel de accesibilidad"
+    title="Accesibilidad">
+    <img src="accessibility-icon.svg" alt="Accesibilidad" class="fab-icon">
+  </button>
+</div>

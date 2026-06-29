@@ -1,0 +1,153 @@
+<div class="register-form-section">
+  <div class="register-form-container">
+    <div class="register-header mb-4">
+      <h2 class="register-title">Crear tu Cuenta</h2>
+      <p class="register-subtitle">¡Regístrate y pide tu pizza ya!</p>
+    </div>
+
+    <div class="alert alert-success" *ngIf="success">
+      <i class="fas fa-check-circle me-2"></i>
+      {{ success }}
+    </div>
+    <div class="alert alert-error" *ngIf="error">
+      <i class="fas fa-exclamation-circle me-2"></i>
+      {{ error }}
+    </div>
+
+    <div class="loading" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i> Procesando registro...
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
+
+      <div class="form-group">
+        <label for="name">Nombre <span aria-hidden="true">*</span></label>
+        <div class="input-with-icon">
+          <i class="fas fa-user" aria-hidden="true"></i>
+          <input
+            type="text"
+            id="name"
+            formControlName="name"
+            placeholder="Ingresa tu nombre completo"
+            [class.error]="registerForm.get('name')?.invalid && registerForm.get('name')?.touched"
+            aria-required="true"
+            [attr.aria-invalid]="registerForm.get('name')?.invalid && registerForm.get('name')?.touched ? 'true' : 'false'"
+          />
+        </div>
+        <div class="error-message" *ngIf="registerForm.get('name')?.invalid && registerForm.get('name')?.touched">
+          <span *ngIf="registerForm.get('name')?.errors?.['required']">El nombre es obligatorio</span>
+          <span *ngIf="registerForm.get('name')?.errors?.['minlength']">El nombre debe tener al menos 4 caracteres</span>
+          <span *ngIf="registerForm.get('name')?.errors?.['maxlength']">El nombre no debe exceder los 50 caracteres</span>
+          <span *ngIf="registerForm.get('name')?.errors?.['pattern']">El nombre solo debe contener letras</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Teléfono <span aria-hidden="true">*</span></label>
+        <div class="input-with-icon">
+          <i class="fas fa-phone" aria-hidden="true"></i>
+          <input
+            type="text"
+            id="phone"
+            formControlName="phone"
+            placeholder="Ingresa tu teléfono de 9 dígitos"
+            [class.error]="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched"
+            aria-required="true"
+            [attr.aria-invalid]="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched ? 'true' : 'false'"
+          />
+        </div>
+        <div class="error-message" *ngIf="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched">
+          <span *ngIf="registerForm.get('phone')?.errors?.['required']">El teléfono es obligatorio</span>
+          <span *ngIf="registerForm.get('phone')?.errors?.['pattern']">El teléfono debe tener 9 dígitos y solo contener números</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Correo electrónico <span aria-hidden="true">*</span></label>
+        <div class="input-with-icon">
+          <i class="fas fa-envelope" aria-hidden="true"></i>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            placeholder="tucorreo@gmail.com"
+            [class.error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+            aria-required="true"
+            [attr.aria-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched ? 'true' : 'false'"
+          />
+        </div>
+        <div class="error-message" *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+          <span *ngIf="registerForm.get('email')?.errors?.['required']">El correo es obligatorio</span>
+          <span *ngIf="registerForm.get('email')?.errors?.['email']">Ingrese un correo electrónico válido</span>
+          <span *ngIf="registerForm.get('email')?.errors?.['duplicado']">El correo electrónico ya se encuentra registrado</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña <span aria-hidden="true">*</span></label>
+        <div class="input-with-icon">
+          <i class="fas fa-lock" aria-hidden="true"></i>
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            placeholder="Crea una contraseña (Ej: Admin123)"
+            [class.error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+            aria-required="true"
+            [attr.aria-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched ? 'true' : 'false'"
+          />
+          <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'" 
+             (click)="showPassword = !showPassword" 
+             style="position: absolute; right: -15px; top: 12px; cursor: pointer; color: #888; left: auto;"></i>
+        </div>
+        <div class="error-message" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+          <span *ngIf="registerForm.get('password')?.errors?.['required']">La contraseña es obligatoria</span>
+          <span *ngIf="registerForm.get('password')?.errors?.['minlength']">La contraseña debe tener al menos 6 caracteres</span>
+          <span *ngIf="registerForm.get('password')?.errors?.['maxlength']">La contraseña no debe exceder los 20 caracteres</span>
+          <span *ngIf="registerForm.get('password')?.errors?.['pattern']">La contraseña debe incluir al menos una letra mayúscula y un número</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Repetir Contraseña <span aria-hidden="true">*</span></label>
+        <div class="input-with-icon">
+          <i class="fas fa-lock" aria-hidden="true"></i>
+          <input
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            placeholder="Repite la contraseña"
+            [class.error]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched"
+            aria-required="true"
+            [attr.aria-invalid]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched ? 'true' : 'false'"
+          />
+          <i class="fas" [ngClass]="showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'" 
+             (click)="showConfirmPassword = !showConfirmPassword" 
+             style="position: absolute; right: -15px; top: 12px; cursor: pointer; color: #888; left: auto;"></i>
+        </div>
+        <div class="error-message" *ngIf="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched">
+          <span *ngIf="registerForm.get('confirmPassword')?.errors?.['required']">La confirmación es requerida</span>
+        </div>
+        <div class="error-message" *ngIf="registerForm.hasError('passwordMismatch') && registerForm.get('confirmPassword')?.touched">
+          Las contraseñas no coinciden
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        class="btn-register"
+        [disabled]="loading"
+      >
+        <i class="fas fa-user-plus" *ngIf="!loading"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+        {{ loading ? 'Creando cuenta...' : 'Crear Cuenta' }}
+      </button>
+
+      <div class="text-center mt-3">
+        <p>¿Ya tienes una cuenta?
+          <a routerLink="/join" class="login-link">Inicia sesión</a>
+        </p>
+      </div>
+    </form>
+  </div>
+</div>

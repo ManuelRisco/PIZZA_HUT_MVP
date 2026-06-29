@@ -1,0 +1,547 @@
+/* ========================================
+   FLOATING ACCESSIBILITY BUTTON (FAB)
+   ======================================== */
+
+/* Overlay oscuro detrás del panel */
+.fab-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.fab-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Contenedor principal */
+.accessibility-fab-container {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 9999;
+}
+
+/* ========== BOTÓN FAB ========== */
+.fab-button {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #c8102e 0%, #a50a23 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 
+    0 4px 12px rgba(200, 16, 46, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.fab-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2), transparent 60%);
+  pointer-events: none;
+}
+
+.fab-button:hover {
+  transform: scale(1.1);
+  box-shadow: 
+    0 6px 20px rgba(200, 16, 46, 0.5),
+    0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.fab-button:active {
+  transform: scale(0.95);
+}
+
+.fab-button.active {
+  background: linear-gradient(135deg, #222 0%, #333 100%);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.15);
+  transform: rotate(45deg);
+}
+
+.fab-icon {
+  width: 30px;
+  height: 30px;
+  filter: brightness(0) invert(1); /* Hace el SVG blanco */
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+
+/* Animación de pulso sutil para llamar la atención */
+@keyframes fabPulse {
+  0%, 100% { box-shadow: 0 4px 12px rgba(200, 16, 46, 0.4), 0 2px 4px rgba(0, 0, 0, 0.15); }
+  50% { box-shadow: 0 4px 20px rgba(200, 16, 46, 0.6), 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 0 8px rgba(200, 16, 46, 0.1); }
+}
+
+.fab-button:not(.active):not(:hover) {
+  animation: fabPulse 3s ease-in-out infinite;
+}
+
+/* ========== PANEL DE ACCESIBILIDAD ========== */
+.accessibility-panel {
+  position: absolute;
+  bottom: 72px;
+  left: 0;
+  width: 340px;
+  max-height: calc(100vh - 120px);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.15),
+    0 8px 24px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px) scale(0.95);
+  transform-origin: bottom left;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.accessibility-panel.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* Header del Panel */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #c8102e 0%, #a50a23 100%);
+  color: white;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.3px;
+}
+
+.panel-icon {
+  width: 24px;
+  height: 24px;
+  filter: brightness(0) invert(1);
+}
+
+.panel-close {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.panel-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+/* Body del Panel */
+.panel-body {
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+  padding: 8px 0;
+}
+
+.panel-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+
+/* Sección del panel */
+.panel-section {
+  padding: 12px 20px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+
+.section-title i {
+  font-size: 0.85rem;
+  color: #c8102e;
+}
+
+.panel-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(0,0,0,0.08), transparent);
+  margin: 0 20px;
+}
+
+/* ========== TOGGLE OPTION ========== */
+.toggle-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 4px;
+}
+
+.toggle-option:last-child {
+  margin-bottom: 0;
+}
+
+.toggle-option:hover {
+  background: rgba(200, 16, 46, 0.04);
+  border-color: rgba(200, 16, 46, 0.08);
+}
+
+.toggle-option.active {
+  background: rgba(200, 16, 46, 0.06);
+  border-color: rgba(200, 16, 46, 0.12);
+}
+
+.option-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.option-info i {
+  font-size: 1.1rem;
+  color: #666;
+  width: 22px;
+  text-align: center;
+}
+
+.toggle-option.active .option-info i {
+  color: #c8102e;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  width: 40px;
+  height: 22px;
+  background: #d1d5db;
+  border-radius: 11px;
+  position: relative;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.toggle-switch.on {
+  background: #c8102e;
+}
+
+.toggle-knob {
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch.on .toggle-knob {
+  left: 20px;
+}
+
+/* ========== CHIP OPTIONS (Daltonismo) ========== */
+.option-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip-option {
+  padding: 6px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  background: white;
+  color: #555;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.chip-option:hover {
+  border-color: #c8102e;
+  color: #c8102e;
+  background: rgba(200, 16, 46, 0.04);
+}
+
+.chip-option.active {
+  background: #c8102e;
+  color: white;
+  border-color: #c8102e;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(200, 16, 46, 0.25);
+}
+
+/* ========== FONT SIZE OPTIONS ========== */
+.font-size-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.font-option {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #555;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.font-option:hover {
+  background: rgba(200, 16, 46, 0.04);
+  border-color: rgba(200, 16, 46, 0.08);
+}
+
+.font-option.active {
+  background: rgba(200, 16, 46, 0.08);
+  border-color: #c8102e;
+  color: #c8102e;
+  font-weight: 600;
+}
+
+/* ========== LANGUAGE SELECTOR ========== */
+.language-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: #f8f9fa;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.language-selector-btn:hover {
+  border-color: #c8102e;
+  background: white;
+}
+
+.lang-flag {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.lang-name {
+  flex: 1;
+  text-align: left;
+}
+
+.lang-arrow {
+  font-size: 0.7rem;
+  color: #888;
+  transition: transform 0.3s ease;
+}
+
+.lang-arrow.rotated {
+  transform: rotate(180deg);
+}
+
+/* Language List */
+.language-list {
+  margin-top: 8px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.language-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.language-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+
+.language-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.88rem;
+  color: #444;
+  text-align: left;
+}
+
+.language-item:last-child {
+  border-bottom: none;
+}
+
+.language-item:hover {
+  background: rgba(200, 16, 46, 0.04);
+  color: #c8102e;
+}
+
+.language-item.active {
+  background: rgba(200, 16, 46, 0.06);
+  color: #c8102e;
+  font-weight: 600;
+}
+
+.check-icon {
+  margin-left: auto;
+  color: #c8102e;
+  font-size: 0.9rem;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 480px) {
+  .accessibility-fab-container {
+    bottom: 16px;
+    left: 16px;
+  }
+
+  .fab-button {
+    width: 50px;
+    height: 50px;
+  }
+
+  .fab-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .accessibility-panel {
+    width: calc(100vw - 32px);
+    max-width: 340px;
+    bottom: 68px;
+  }
+}
+
+@media (max-width: 360px) {
+  .accessibility-panel {
+    width: calc(100vw - 24px);
+    left: -8px;
+  }
+}
+
+/* ========== HIGH CONTRAST MODE ========== */
+:host-context(html[data-contraste="alto"]) .fab-button {
+  background: #000 !important;
+  border: 3px solid #ffff00 !important;
+  box-shadow: 0 0 0 3px #000, 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+:host-context(html[data-contraste="alto"]) .fab-icon {
+  filter: brightness(0) saturate(100%) invert(89%) sepia(86%) saturate(1000%) hue-rotate(359deg) brightness(103%) contrast(106%) !important;
+}
+
+:host-context(html[data-contraste="alto"]) .accessibility-panel {
+  background: #000 !important;
+  border: 2px solid #ffff00 !important;
+  color: #ffff00 !important;
+}
+
+:host-context(html[data-contraste="alto"]) .panel-header {
+  background: #000 !important;
+  border-bottom: 2px solid #ffff00 !important;
+}
+
+:host-context(html[data-contraste="alto"]) .option-info,
+:host-context(html[data-contraste="alto"]) .section-title,
+:host-context(html[data-contraste="alto"]) .chip-option,
+:host-context(html[data-contraste="alto"]) .font-option,
+:host-context(html[data-contraste="alto"]) .language-selector-btn,
+:host-context(html[data-contraste="alto"]) .language-item {
+  color: #ffff00 !important;
+}
+
+:host-context(html[data-contraste="alto"]) .toggle-switch {
+  border: 2px solid #ffff00 !important;
+}
+
+:host-context(html[data-contraste="alto"]) .chip-option,
+:host-context(html[data-contraste="alto"]) .font-option,
+:host-context(html[data-contraste="alto"]) .language-selector-btn,
+:host-context(html[data-contraste="alto"]) .language-item {
+  border-color: #ffff00 !important;
+  background: #000 !important;
+}
+
+:host-context(html[data-contraste="alto"]) .chip-option.active {
+  background: #ffff00 !important;
+  color: #000 !important;
+}
+
+/* Ocultar la barra de Google Translate */
+:host-context(body) {
+  /* El top banner de Google Translate se oculta globalmente */
+}
