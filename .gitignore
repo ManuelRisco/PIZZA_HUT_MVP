@@ -1,5 +1,55 @@
+# ==========================================
+# 1. Base de datos y Variables de Entorno
+# ==========================================
 .env
-node_modules/
-node_modules
 *.env
-BD/
+/BD/
+
+# ==========================================
+# 2. NodeJS y Angular (Frontend)
+# ==========================================
+node_modules/
+/.angular/cache/
+/dist/
+/tmp/
+/out-tsc/
+/bazel-out/
+
+# Archivos de logs de npm/yarn
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+/.pnpm-debug.log*
+
+# ==========================================
+# 3. Java y Gradle (Backend Spring Boot)
+# ==========================================
+# Caché y archivos locales de compilación de Gradle
+.gradle/
+/build/
+
+# Archivos de empaquetado final de Java
+*.class
+*.war
+*.ear
+*.jar
+
+# ==========================================
+# 4. Visual Studio Code e IDEs
+# ==========================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+.idea/
+*.suo
+*.sln
+*.sw?
+
+# ==========================================
+# 5. Archivos del Sistema Operativo
+# ==========================================
+.DS_Store
+Thumbs.db
