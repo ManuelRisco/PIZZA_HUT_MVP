@@ -10,9 +10,9 @@ import { AuthService } from './auth.service';
   providedIn: 'root'
 })
 export class SessionLogService {
-  private apiUrl = `${environment.apiUrl}/sessions`;
+  private readonly apiUrl= `${environment.apiUrl}/sessions`;
 
-  constructor(private http: HttpClient, private authService: AuthService) { }
+  constructor(private readonly http: HttpClient, private readonly authService: AuthService) { }
 
   private get httpOptions() {
     return {
@@ -41,3 +41,4 @@ export class SessionLogService {
     );
   }
 }
+

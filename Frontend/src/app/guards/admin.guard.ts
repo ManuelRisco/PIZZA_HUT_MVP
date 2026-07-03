@@ -7,7 +7,7 @@ import { AuthService } from '../services/auth.service';
 })
 export class AdminGuard implements CanActivate {
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private readonly authService: AuthService, private readonly router: Router) {}
 
   canActivate(): boolean {
     // Verificar login, rol admin, token no expirado y validar integridad
@@ -17,7 +17,7 @@ export class AdminGuard implements CanActivate {
         this.authService.validateUserIntegrity()) {
       return true;
     } else {
-      // Si alguna validación falla, hacer logout y redirigir
+      // Si alguna validaciÃ³n falla, hacer logout y redirigir
       this.authService.logout();
       this.router.navigate(['/join']);
       return false;

@@ -161,7 +161,7 @@
               </button>
               
               <div class="flex items-center gap-3 bg-gray-50 p-1.5 rounded-lg border border-gray-200">
-                <label class="text-xs font-bold text-gray-500 uppercase ml-2">Estado:</label>
+                <span class="text-xs font-bold text-gray-500 uppercase ml-2">Estado:</span>
                 <select class="bg-white border border-gray-200 text-gray-800 text-sm rounded-md focus:ring-red-500 focus:border-red-500 block p-1.5 outline-none transition-colors font-bold" 
                         [(ngModel)]="order.status" (change)="cambiarEstado(order, order.status)">
                   <option *ngFor="let estado of estados" [value]="estado">

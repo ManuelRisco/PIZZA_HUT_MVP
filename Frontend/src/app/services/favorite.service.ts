@@ -14,8 +14,8 @@ export interface FavoriteDTO {
   providedIn: 'root'
 })
 export class FavoriteService {
-  private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/favorites`;
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl= `${environment.apiUrl}/favorites`;
 
   listarFavoritos(): Observable<FavoriteDTO[]> {
     return this.http.get<any>(this.apiUrl).pipe(map(res => res.data !== undefined ? res.data : res));

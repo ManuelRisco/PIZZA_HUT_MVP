@@ -28,7 +28,7 @@ export class Orders implements OnInit {
 
   estados = ['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
 
-  constructor(private orderService: Order) {}
+  constructor(private readonly orderService: Order) {}
 
   ngOnInit(): void {
     this.cargarOrders();
@@ -38,7 +38,7 @@ export class Orders implements OnInit {
     this.loading = true;
     this.orderService.obtenerTodosCompletos().subscribe({
       next: (data) => {
-        this.orders = data.sort((a, b) => 
+        this.orders = data.toSorted((a, b) => 
           new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
         );
         this.aplicarFiltro();
@@ -149,3 +149,4 @@ export class Orders implements OnInit {
     setTimeout(() => this.mensaje = '', 3000);
   }
 }
+

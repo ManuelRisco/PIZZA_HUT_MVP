@@ -20,78 +20,90 @@ public class GlobalAuditFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-            FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Continuar con la petici\u00f3n normal
         filterChain.doFilter(request, response);
 
-        // SOLO logear si la petici\u00f3n fue exitosa (200-299)
-        int status = response.getStatus();
-        if (status < 200 || status >= 300) {
+        if (!isSuccessfulResponse(response.getStatus())) {
             return;
         }
 
         String uri = request.getRequestURI();
         String method = request.getMethod();
 
-        // Ignorar GET y metodos seguros
-        if (method.equals("GET") || method.equals("OPTIONS") || method.equals("HEAD")) {
+        if (isSafeMethod(method) || shouldIgnoreUri(uri)) {
             return;
         }
 
-        // Ignorar m\u00f3dulos que ya tienen su propia auditor\u00eda o no requieren auditor\u00eda de
-        // negocio
-        if (uri.startsWith("/api/usuarios") ||
-                uri.startsWith("/api/sessions") ||
-                uri.startsWith("/api/audit-logs") ||
-                uri.startsWith("/v3/api-docs") ||
-                uri.startsWith("/swagger-ui")) {
-            return;
-        }
-
-        // Extraer el M\u00f3dulo (Entidad) de la URL (ej. /api/pizzas/5 -> pizzas)
-        String entityType = "Desconocido";
-        String[] parts = uri.split("/");
-        if (parts.length > 2 && parts[1].equals("api")) {
-            entityType = parts[2]; // Ej: "pizzas"
-            // Capitalizar primera letra
-            entityType = entityType.substring(0, 1).toUpperCase() + entityType.substring(1);
-        }
-
+        String entityType = extractEntityType(uri);
         Integer userId = getCurrentUserId();
 
-        if (method.equals("POST")) {
-            auditLogService.registrarCreacion(userId, entityType, null, "Creaci\u00f3n exitosa en m\u00f3dulo " + entityType);
-        } else if (method.equals("PUT") || method.equals("PATCH")) {
-            auditLogService.registrarActualizacion(userId, entityType, null, "{}", "{}",
-                    "Actualizaci\u00f3n exitosa en m\u00f3dulo " + entityType);
-        } else if (method.equals("DELETE")) {
-            // Intentar extraer ID si la ruta termina en n\u00famero
-            Integer entityId = null;
-            try {
-                if (parts.length > 3) {
-                    entityId = Integer.parseInt(parts[parts.length - 1]);
-                }
-            } catch (NumberFormatException ignored) {
-            }
-            auditLogService.registrarEliminacion(userId, entityType, entityId,
-                    "Eliminaci\u00f3n exitosa en m\u00f3dulo " + entityType);
+        logAuditAction(method, userId, entityType, uri);
+    }
+
+    private boolean isSuccessfulResponse(int status) {
+        return status >= 200 && status < 300;
+    }
+
+    private boolean isSafeMethod(String method) {
+        return method.equals("GET") || method.equals("OPTIONS") || method.equals("HEAD");
+    }
+
+    private boolean shouldIgnoreUri(String uri) {
+        return uri.startsWith("/api/usuarios") ||
+               uri.startsWith("/api/sessions") ||
+               uri.startsWith("/api/audit-logs") ||
+               uri.startsWith("/v3/api-docs") ||
+               uri.startsWith("/swagger-ui");
+    }
+
+    private String extractEntityType(String uri) {
+        String[] parts = uri.split("/");
+        if (parts.length > 2 && "api".equals(parts[1])) {
+            String entityType = parts[2];
+            return entityType.substring(0, 1).toUpperCase() + entityType.substring(1);
         }
+        return "Desconocido";
+    }
+
+    private void logAuditAction(String method, Integer userId, String entityType, String uri) {
+        if ("POST".equals(method)) {
+            auditLogService.registrarCreacion(userId, entityType, null, "Creación exitosa en módulo " + entityType);
+        } else if ("PUT".equals(method) || "PATCH".equals(method)) {
+            auditLogService.registrarActualizacion(userId, entityType, null, "{}", "{}", "Actualización exitosa en módulo " + entityType);
+        } else if ("DELETE".equals(method)) {
+            Integer entityId = extractEntityId(uri);
+            auditLogService.registrarEliminacion(userId, entityType, entityId, "Eliminación exitosa en módulo " + entityType);
+        }
+    }
+
+    private Integer extractEntityId(String uri) {
+        String[] parts = uri.split("/");
+        if (parts.length > 3) {
+            try {
+                return Integer.parseInt(parts[parts.length - 1]);
+            } catch (NumberFormatException ignored) {
+                // Not a valid ID in the URI, ignore
+            }
+        }
+        return null;
     }
 
     private Integer getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getDetails() != null) {
-            if (auth.getDetails() instanceof Integer) {
-                return (Integer) auth.getDetails();
-            } else if (auth.getDetails() instanceof Long) {
-                return ((Long) auth.getDetails()).intValue();
-            } else if (auth.getDetails() instanceof String) {
+            Object details = auth.getDetails();
+            if (details instanceof Integer) {
+                return (Integer) details;
+            } else if (details instanceof Long) {
+                return ((Long) details).intValue();
+            } else if (details instanceof String) {
                 try {
-                    return Integer.parseInt((String) auth.getDetails());
-                } catch (NumberFormatException ignored) {}
+                    return Integer.parseInt((String) details);
+                } catch (NumberFormatException ignored) {
+                    // Not a valid user ID string, ignore
+                }
             }
         }
         return null;

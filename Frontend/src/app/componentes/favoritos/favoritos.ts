@@ -22,17 +22,17 @@ export class FavoritosComponent implements OnInit {
   mensaje = '';
   esError = false;
   imagenesCargadas = new Set<number>();
-  private imageCache = new Set<string>();
+  private readonly imageCache= new Set<string>();
 
   // Paginación
   currentPage = 1;
   itemsPerPage = 10;
 
-  private favoriteService = inject(FavoriteService);
-  private authService = inject(AuthService);
-  private pizzaService = inject(PizzaService);
-  private cartService = inject(CartService);
-  private router = inject(Router);
+  private readonly favoriteService = inject(FavoriteService);
+  private readonly authService = inject(AuthService);
+  private readonly pizzaService = inject(PizzaService);
+  private readonly cartService = inject(CartService);
+  private readonly router = inject(Router);
 
   ngOnInit(): void {
     this.cargarFavoritos();

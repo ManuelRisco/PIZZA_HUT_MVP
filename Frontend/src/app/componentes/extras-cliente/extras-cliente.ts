@@ -30,11 +30,11 @@ export class ExtrasClienteComponent implements OnInit {
     { value: 'COMPLEMENTO', label: 'Complementos', icon: 'bi-basket' }
   ];
 
-  private extraService = inject(ExtraService);
-  private cartService = inject(CartService);
-  private authService = inject(AuthService);
-  private accessibility = inject(AccessibilityService);
-  private toastService = inject(ToastService);
+  private readonly extraService = inject(ExtraService);
+  private readonly cartService = inject(CartService);
+  private readonly authService = inject(AuthService);
+  private readonly accessibility = inject(AccessibilityService);
+  private readonly toastService = inject(ToastService);
 
   ngOnInit(): void {
     this.cargarExtras();
@@ -46,7 +46,7 @@ export class ExtrasClienteComponent implements OnInit {
 
     this.extraService.listarDisponibles().subscribe({
       next: (data) => {
-        this.extras = data.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+        this.extras = data.toSorted((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
         this.aplicarFiltros();
         this.loading = false;
       },
@@ -76,7 +76,7 @@ export class ExtrasClienteComponent implements OnInit {
       const term = this.searchTerm.toLowerCase();
       resultado = resultado.filter(e => 
         e.name.toLowerCase().includes(term) ||
-        (e.description && e.description.toLowerCase().includes(term))
+        (e.description?.toLowerCase().includes(term))
       );
     }
 

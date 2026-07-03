@@ -11,12 +11,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/sizes")
 @CrossOrigin(origins = "http://localhost:4200")
 public class SizeController {
+
+    private static final String MSG_KEY = "message";
 
     private final SizeService sizeService;
 
@@ -29,24 +30,24 @@ public class SizeController {
         List<Size> sizes = sizeService.listarSizes();
         List<SizeDTO> sizesDTO = sizes.stream()
             .map(SizeDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(sizesDTO));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerSizePorId(@PathVariable("id") Integer id) {
+    public ResponseEntity<Object> obtenerSizePorId(@PathVariable("id") Integer id) {
         Optional<Size> sizeOpt = sizeService.obtenerPorId(id);
         if (sizeOpt.isPresent()) {
             SizeDTO sizeDTO = new SizeDTO(sizeOpt.get());
             return ResponseEntity.ok(ApiResponse.success(sizeDTO));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", "Size no encontrado"));
+                .body(Map.of(MSG_KEY, "Size no encontrado"));
         }
     }
 
     @PostMapping
-    public ResponseEntity<?> crearSize(@RequestBody SizeDTO sizeDTO) {
+    public ResponseEntity<Object> crearSize(@RequestBody SizeDTO sizeDTO) {
         try {
             Size size = new Size();
             size.setName(sizeDTO.getName());
@@ -58,12 +59,12 @@ public class SizeController {
             return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(new SizeDTO(sizeCreado), "Creado exitosamente"));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarSize(@PathVariable("id") Integer id, @RequestBody SizeDTO sizeDTO) {
+    public ResponseEntity<Object> actualizarSize(@PathVariable("id") Integer id, @RequestBody SizeDTO sizeDTO) {
         try {
             Size size = new Size();
             size.setName(sizeDTO.getName());
@@ -75,18 +76,19 @@ public class SizeController {
             return ResponseEntity.ok(ApiResponse.success(new SizeDTO(sizeActualizado)));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarSize(@PathVariable("id") Integer id) {
+    public ResponseEntity<Object> eliminarSize(@PathVariable("id") Integer id) {
         try {
             sizeService.eliminarSize(id);
-            return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Size eliminado correctamente")));
+            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Size eliminado correctamente")));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
 }
+

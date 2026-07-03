@@ -44,12 +44,12 @@ class IngredientServiceTest {
     void testListarIngredients() {
         List<Ingredient> list = new ArrayList<>();
         list.add(ingredient);
-        when(ingredientRepository.findAll()).thenReturn(list);
+        when(ingredientRepository.findByDeletedAtIsNull()).thenReturn(list);
 
         List<Ingredient> resultado = ingredientService.listarIngredientes();
 
         assertEquals(1, resultado.size());
-        verify(ingredientRepository, times(1)).findAll();
+        verify(ingredientRepository, times(1)).findByDeletedAtIsNull();
     }
 
     @Test

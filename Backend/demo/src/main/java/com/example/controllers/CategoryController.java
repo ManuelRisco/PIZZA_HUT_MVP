@@ -20,6 +20,8 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:4200")
 public class CategoryController {
 
+    private static final String MSG_NOT_FOUND_PREFIX = "Categoría no encontrada con id: ";
+
     private final CategoryService categoryService;
     private final CategoryMapper categoryMapper;
 
@@ -37,7 +39,7 @@ public class CategoryController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<CategoryDTO>> getCategoryById(@PathVariable("id") Integer id) {
         Category category = categoryService.obtenerPorId(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Categor\u00eda no encontrada con id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(MSG_NOT_FOUND_PREFIX + id));
         return ResponseEntity.ok(ApiResponse.success(categoryMapper.toDto(category)));
     }
 
@@ -45,32 +47,32 @@ public class CategoryController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<CategoryDTO>> createCategory(@RequestBody CategoryDTO categoryDTO) {
         if (categoryService.existsByName(categoryDTO.getName())) {
-            throw new BadRequestException("El nombre de la categor\u00eda ya existe");
+            throw new BadRequestException("El nombre de la categoría ya existe");
         }
         
         Category category = categoryMapper.toEntity(categoryDTO);
         Category nuevaCategoria = categoryService.crearCategoria(category);
-        return new ResponseEntity<>(ApiResponse.success(categoryMapper.toDto(nuevaCategoria), "Categor\u00eda creada con \u00e9xito"), HttpStatus.CREATED);
+        return new ResponseEntity<>(ApiResponse.success(categoryMapper.toDto(nuevaCategoria), "Categoría creada con éxito"), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<CategoryDTO>> updateCategory(@PathVariable("id") Integer id, @RequestBody CategoryDTO categoryDTO) {
         Category categoryExistente = categoryService.obtenerPorId(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Categor\u00eda no encontrada con id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(MSG_NOT_FOUND_PREFIX + id));
             
         categoryMapper.updateEntityFromDto(categoryDTO, categoryExistente);
         Category categoryActualizada = categoryService.actualizarCategoria(id, categoryExistente);
         
-        return ResponseEntity.ok(ApiResponse.success(categoryMapper.toDto(categoryActualizada), "Categor\u00eda actualizada con \u00e9xito"));
+        return ResponseEntity.ok(ApiResponse.success(categoryMapper.toDto(categoryActualizada), "Categoría actualizada con éxito"));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable("id") Integer id) {
         if (!categoryService.eliminarCategoria(id)) {
-            throw new ResourceNotFoundException("Categor\u00eda no encontrada con id: " + id);
+            throw new ResourceNotFoundException(MSG_NOT_FOUND_PREFIX + id);
         }
-        return ResponseEntity.ok(ApiResponse.success(null, "Categor\u00eda eliminada correctamente"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Categoría eliminada correctamente"));
     }
 }

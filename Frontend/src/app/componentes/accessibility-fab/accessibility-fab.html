@@ -3,7 +3,7 @@
 
 <div class="accessibility-fab-container">
   <!-- Panel de Accesibilidad -->
-  <div class="accessibility-panel" [class.open]="isPanelOpen" role="dialog" aria-label="Panel de accesibilidad" aria-modal="true">
+  <div class="accessibility-panel" [class.open]="isPanelOpen" aria-label="Panel de accesibilidad" aria-modal="true">
     
     <!-- Header del Panel -->
     <div class="panel-header">
@@ -50,7 +50,6 @@
             class="chip-option"
             (click)="setColorblindMode($any(mode))"
             [class.active]="modoColorblind === mode"
-            role="radio"
             [attr.aria-checked]="modoColorblind === mode">
             {{ getColorblindLabel(mode) }}
           </button>
@@ -71,7 +70,6 @@
             class="font-option"
             (click)="setFontSize($any(size))"
             [class.active]="tamanoFuente === size"
-            role="radio"
             [attr.aria-checked]="tamanoFuente === size">
             <span class="font-label">{{ getFontSizeLabel(size) }}</span>
           </button>

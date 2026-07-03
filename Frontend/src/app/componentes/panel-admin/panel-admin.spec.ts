@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PanelAdmin } from './panel-admin';
@@ -8,6 +10,7 @@ describe('PanelAdmin', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideRouter([])],
       imports: [PanelAdmin]
     })
     .compileComponents();
@@ -21,3 +24,5 @@ describe('PanelAdmin', () => {
     expect(component).toBeTruthy();
   });
 });
+
+

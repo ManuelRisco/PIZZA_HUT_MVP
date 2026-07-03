@@ -9,14 +9,14 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class IngredientService {
-  private apiUrl = environment.apiUrl;
-  private httpOptions = {
+  private readonly apiUrl= environment.apiUrl;
+  private readonly httpOptions= {
     headers: new HttpHeaders({
       'Content-Type': 'application/json'
     })
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   obtenerTodos(): Observable<IngredientDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/ingredients`).pipe(map(res => res.data !== undefined ? res.data : res));
@@ -46,3 +46,4 @@ export class IngredientService {
     return this.http.patch<any>(`${this.apiUrl}/ingredients/${id}/availability?available=${disponible}`, {}, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 }
+

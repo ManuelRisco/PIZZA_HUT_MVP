@@ -221,12 +221,12 @@
 
 .remove-button:hover {
   background: #fff5f5;
-  color: #e53e3e;
+  color: #c0392b;
 }
 
 .remove-button:hover i {
   transform: rotate(-15deg) scale(1.15);
-  color: #e53e3e;
+  color: #c0392b;
 }
 
 /* Nuevas clases Layout 3 Columnas */
@@ -478,7 +478,7 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.5rem 1rem;
-  background: #e74c3c;
+  background: #c0392b;
   color: white;
   border: none;
   border-radius: 6px;
@@ -494,16 +494,16 @@
 }
 
 .summary-row.promo-discount {
-  color: #dc3545;
+  color: #6b0f15;
   font-weight: 600;
-  background-color: rgba(220, 53, 69, 0.05);
+  background-color: #fce8ea;
   padding: 0.5rem;
   border-radius: 4px;
   margin: 0.25rem 0;
 }
 
 .summary-row.promo-discount .discount-value {
-  color: #dc3545;
+  color: #6b0f15;
   font-weight: 700;
 }
 
@@ -653,7 +653,7 @@
   width: 60px;
   height: 60px;
   background: #fff5f5;
-  color: #e53e3e;
+  color: #c0392b;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -700,7 +700,7 @@
   padding: 0.75rem;
   border-radius: 8px;
   border: none;
-  background: #e53e3e;
+  background: #c0392b;
   color: white;
   font-weight: 600;
   cursor: pointer;
@@ -708,7 +708,7 @@
 }
 
 .btn-confirm-delete:hover {
-  background: #c53030;
+  background: #922b21;
 }
 
 @keyframes fadeIn {
@@ -890,7 +890,7 @@
 :host-context(html[data-contraste="alto"]) .payment-mobile-form,
 :host-context(html[data-contraste="alto"]) .address-form {
   background: #000;
-  border: 2px solid #ffff00;
+  border: 2px solid #000000;
   box-shadow: none;
 }
 
@@ -905,7 +905,7 @@
 :host-context(html[data-contraste="alto"]) .empty-state h2,
 :host-context(html[data-contraste="alto"]) .empty-state p,
 :host-context(html[data-contraste="alto"]) .helper-text {
-  color: #ffff00 !important;
+  color: #000000 !important;
 }
 
 :host-context(html[data-contraste="alto"]) .quantity-control,
@@ -917,28 +917,28 @@
 :host-context(html[data-contraste="alto"]) .payment-mobile-form input,
 :host-context(html[data-contraste="alto"]) .promo-input {
   background: #000;
-  border-color: #ffff00;
-  color: #ffff00;
+  border-color: #ffffff;
+  color: #ffffff;
 }
 
 :host-context(html[data-contraste="alto"]) .quantity-control button:hover:not(:disabled),
 :host-context(html[data-contraste="alto"]) .radio-option:hover {
-  background-color: #ffff00;
-  color: #000 !important;
+  background-color: #000000;
+  color: #ffffff !important;
 }
 
 :host-context(html[data-contraste="alto"]) .radio-option input[type="radio"] {
-  accent-color: #ffff00;
+  accent-color: #000000;
 }
 
 :host-context(html[data-contraste="alto"]) .promo-section {
-  border-color: #ffff00;
+  border-color: #000000;
 }
 
 :host-context(html[data-contraste="alto"]) .promo-alert {
   background: #000;
-  border: 1px solid #ffff00;
-  color: #ffff00;
+  border: 1px solid #ffffff;
+  color: #ffffff;
 }
 
 :host-context(html[data-contraste="alto"]) .btn-primary,
@@ -947,8 +947,8 @@
 :host-context(html[data-contraste="alto"]) .remove-button,
 :host-context(html[data-contraste="alto"]) .btn-remove-promo {
   background: #000;
-  color: #ffff00;
-  border: 2px solid #ffff00;
+  color: #ffffff;
+  border: 2px solid #ffffff;
 }
 
 :host-context(html[data-contraste="alto"]) .btn-primary:hover:not(:disabled),
@@ -956,12 +956,12 @@
 :host-context(html[data-contraste="alto"]) .btn-promo:hover:not(:disabled),
 :host-context(html[data-contraste="alto"]) .remove-button:hover,
 :host-context(html[data-contraste="alto"]) .btn-remove-promo:hover {
-  background: #ffff00;
-  color: #000 !important;
+  background: #000000;
+  color: #ffffff !important;
 }
 
 :host-context(html[data-contraste="alto"]) .remove-button:hover i {
-  color: #000;
+  color: #ffffff;
 }
 
 :host-context(html[data-contraste="alto"]) .summary-row,
@@ -969,7 +969,7 @@
 :host-context(html[data-contraste="alto"]) .summary-row.promo-discount,
 :host-context(html[data-contraste="alto"]) .summary-row.promo-discount 
 .discount-value {
-  color: #ffff00 !important;
+  color: #000000 !important;
 }
 
 /* =========================================================================

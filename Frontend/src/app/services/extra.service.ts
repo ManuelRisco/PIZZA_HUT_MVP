@@ -21,9 +21,9 @@ export interface Extra {
   providedIn: 'root'
 })
 export class ExtraService {
-  private apiUrl = `${environment.apiUrl}/extras`;
+  private readonly apiUrl= `${environment.apiUrl}/extras`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   listarTodos(): Observable<Extra[]> {
     return this.http.get<any>(this.apiUrl).pipe(map(res => res.data !== undefined ? res.data : res));
@@ -61,3 +61,4 @@ export class ExtraService {
     return this.http.patch<any>(`${this.apiUrl}/${id}/disponibilidad`, {}).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 }
+

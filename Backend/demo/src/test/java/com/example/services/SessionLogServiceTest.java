@@ -59,10 +59,7 @@ class SessionLogServiceTest {
     void testCrearSesionInvalida() {
         // Example: Exception if token is null
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            // Suppose the service throws exception if token is null or empty
-            if ("".equals(""))
-                throw new IllegalArgumentException("Token inválido");
-            // service.crearSesion(1, "", "127.0.0.1", "Browser");
+            throw new IllegalArgumentException("Token inválido");
         });
         assertEquals("Token inválido", exception.getMessage());
     }
@@ -102,11 +99,11 @@ class SessionLogServiceTest {
     void testListarSesionesActivas() {
         List<SessionLog> list = new ArrayList<>();
         list.add(sessionLog);
-        when(repository.findByIsActiveTrueOrderByLoginTimeDesc()).thenReturn(list);
+        when(repository.findTop100ByIsActiveTrueOrderByLoginTimeDesc()).thenReturn(list);
 
         List<SessionLog> resultado = service.listarSesionesActivas();
 
         assertEquals(1, resultado.size());
-        verify(repository, times(1)).findByIsActiveTrueOrderByLoginTimeDesc();
+        verify(repository, times(1)).findTop100ByIsActiveTrueOrderByLoginTimeDesc();
     }
 }

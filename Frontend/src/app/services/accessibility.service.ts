@@ -11,7 +11,7 @@ export interface AccessibilityAnnouncement {
   providedIn: 'root'
 })
 export class AccessibilityService {
-  private announceSubject = new Subject<AccessibilityAnnouncement>();
+  private readonly announceSubject= new Subject<AccessibilityAnnouncement>();
   public announce$ = this.announceSubject.asObservable();
 
   private liveRegionElement: HTMLDivElement | null = null;
@@ -162,11 +162,11 @@ export class AccessibilityService {
       const html = document.documentElement;
 
       // Remover atributo anterior
-      html.removeAttribute('data-colorblind');
+      delete html.dataset['colorblind'];
 
       // Establecer nuevo modo si no es 'none'
       if (mode !== 'none') {
-        html.setAttribute('data-colorblind', mode);
+        html.dataset['colorblind'] = mode;
       }
 
       // Guardar preferencia
@@ -189,7 +189,7 @@ export class AccessibilityService {
    */
   public getColorblindMode(): string {
     if (typeof document !== 'undefined') {
-      const mode = document.documentElement.getAttribute('data-colorblind') || 'none';
+      const mode = document.documentElement.dataset['colorblind'] || 'none';
       return mode;
     }
     return 'none';
@@ -204,11 +204,11 @@ export class AccessibilityService {
       const html = document.documentElement;
 
       // Remover tamaño anterior
-      html.removeAttribute('data-font-size');
+      delete html.dataset['fontSize'];
 
       // Establecer nuevo tamaño si no es 'normal'
       if (size !== 'normal') {
-        html.setAttribute('data-font-size', size);
+        html.dataset['fontSize'] = size;
       }
 
       // Guardar preferencia
@@ -231,7 +231,7 @@ export class AccessibilityService {
    */
   public getFontSize(): string {
     if (typeof document !== 'undefined') {
-      const size = document.documentElement.getAttribute('data-font-size') || 'normal';
+      const size = document.documentElement.dataset['fontSize'] || 'normal';
       return size;
     }
     return 'normal';
@@ -244,9 +244,9 @@ export class AccessibilityService {
     if (typeof document !== 'undefined') {
       const html = document.documentElement;
       if (active) {
-        html.setAttribute('data-dyslexia', 'true');
+        html.dataset['dyslexia'] = 'true';
       } else {
-        html.removeAttribute('data-dyslexia');
+        delete html.dataset['dyslexia'];
       }
       localStorage.setItem('dyslexia-mode', active ? 'true' : 'false');
       this.announce(active ? 'Modo lectura fácil activado' : 'Modo lectura fácil desactivado', 'polite');
@@ -260,9 +260,9 @@ export class AccessibilityService {
     if (typeof document !== 'undefined') {
       const html = document.documentElement;
       if (active) {
-        html.setAttribute('data-reduce-motion', 'true');
+        html.dataset['reduceMotion'] = 'true';
       } else {
-        html.removeAttribute('data-reduce-motion');
+        delete html.dataset['reduceMotion'];
       }
       localStorage.setItem('reduce-motion', active ? 'true' : 'false');
       this.announce(active ? 'Reducción de movimiento activada' : 'Reducción de movimiento desactivada', 'polite');

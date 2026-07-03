@@ -50,13 +50,13 @@ class CategoryServiceTest {
     void testListarCategorias() {
         List<Category> categorias = new ArrayList<>();
         categorias.add(categoryTest);
-        when(categoryRepository.findAll()).thenReturn(categorias);
+        when(categoryRepository.findByDeletedAtIsNull()).thenReturn(categorias);
 
         List<Category> resultado = categoryService.listarCategorias();
 
         assertEquals(1, resultado.size());
         assertEquals("Pizzas Clásicas", resultado.get(0).getName());
-        verify(categoryRepository, times(1)).findAll();
+        verify(categoryRepository, times(1)).findByDeletedAtIsNull();
     }
 
     @Test

@@ -20,9 +20,9 @@ export class ClientePerfilComponent implements OnInit {
   loading = true;
 
   constructor(
-    private authService: AuthService,
-    private usuarioService: UsuarioService,
-    private router: Router
+    private readonly authService: AuthService,
+    private readonly usuarioService: UsuarioService,
+    private readonly router: Router
   ) {}
 
   ngOnInit() {
@@ -32,15 +32,15 @@ export class ClientePerfilComponent implements OnInit {
       return;
     }
 
-    // Obtener información completa del usuario desde el backend
+    // Obtener informaciÃ³n completa del usuario desde el backend
     this.usuarioService.obtenerUsuarioActual().subscribe({
       next: (usuario) => {
         this.usuario = usuario;
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error al cargar información del usuario:', error);
-        // Fallback: usar datos del token si falla la petición
+        console.error('Error al cargar informaciÃ³n del usuario:', error);
+        // Fallback: usar datos del token si falla la peticiÃ³n
         this.usuario = {
           ...currentUser,
           active: true,
@@ -53,7 +53,7 @@ export class ClientePerfilComponent implements OnInit {
 
   toggleEdicion() {
     this.editando = !this.editando;
-    // Si cancela la edición, recargar los datos originales
+    // Si cancela la ediciÃ³n, recargar los datos originales
     if (!this.editando) {
       this.cargarDatosUsuario();
     }
@@ -67,7 +67,7 @@ export class ClientePerfilComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error al cargar información del usuario:', error);
+        console.error('Error al cargar informaciÃ³n del usuario:', error);
         const currentUser = this.authService.getCurrentUser();
         this.usuario = {
           ...currentUser,
@@ -80,7 +80,7 @@ export class ClientePerfilComponent implements OnInit {
   }
 
   guardarCambios() {
-    if (!this.usuario || !this.usuario.id) {
+    if (!this.usuario?.id) {
       this.mensajeError = 'Error: No se pudo identificar el usuario';
       setTimeout(() => this.mensajeError = '', 3000);
       return;
@@ -124,9 +124,9 @@ export class ClientePerfilComponent implements OnInit {
         this.loading = false;
         
         if (error.status === 400) {
-          this.mensajeError = error.error?.message || 'Datos inválidos';
+          this.mensajeError = error.error?.message || 'Datos invÃ¡lidos';
         } else if (error.status === 409) {
-          this.mensajeError = 'El email ya está en uso';
+          this.mensajeError = 'El email ya estÃ¡ en uso';
         } else {
           this.mensajeError = 'Error al actualizar el perfil';
         }
@@ -142,11 +142,11 @@ export class ClientePerfilComponent implements OnInit {
     // Obtener solo el primer nombre
     const primerNombre = this.usuario.name.trim().split(' ')[0];
     
-    // Retornar las primeras 2 letras del primer nombre en mayúsculas
+    // Retornar las primeras 2 letras del primer nombre en mayÃºsculas
     return primerNombre.substring(0, 2).toUpperCase();
   }
 
-  // --- Sección de Configuración de Seguridad ---
+  // --- SecciÃ³n de ConfiguraciÃ³n de Seguridad ---
   editandoPassword = false;
   passwordActual: string = '';
   nuevaPassword: string = '';
@@ -174,7 +174,7 @@ export class ClientePerfilComponent implements OnInit {
   }
 
   cambiarPassword() {
-    if (!this.usuario || !this.usuario.id) return;
+    if (!this.usuario?.id) return;
 
     if (!this.passwordActual || !this.nuevaPassword || !this.confirmarPassword) {
       this.mensajeSeguridadError = 'Todos los campos son obligatorios';
@@ -183,13 +183,13 @@ export class ClientePerfilComponent implements OnInit {
     }
 
     if (this.nuevaPassword !== this.confirmarPassword) {
-      this.mensajeSeguridadError = 'Las contraseñas nuevas no coinciden';
+      this.mensajeSeguridadError = 'Las contraseÃ±as nuevas no coinciden';
       setTimeout(() => this.mensajeSeguridadError = '', 3000);
       return;
     }
 
     if (this.nuevaPassword.length < 6) {
-      this.mensajeSeguridadError = 'La nueva contraseña debe tener al menos 6 caracteres';
+      this.mensajeSeguridadError = 'La nueva contraseÃ±a debe tener al menos 6 caracteres';
       setTimeout(() => this.mensajeSeguridadError = '', 3000);
       return;
     }
@@ -197,19 +197,19 @@ export class ClientePerfilComponent implements OnInit {
     this.loading = true;
     this.usuarioService.cambiarPassword(this.usuario.id, { password: this.nuevaPassword }).subscribe({
       next: () => {
-        this.mensajeExito = 'Contraseña actualizada correctamente. Por seguridad, vuelve a iniciar sesión.';
+        this.mensajeExito = 'ContraseÃ±a actualizada correctamente. Por seguridad, vuelve a iniciar sesiÃ³n.';
         this.loading = false;
         this.editandoPassword = false;
         
-        // El backend ha invalidado el token actual, así que debemos cerrar sesión
+        // El backend ha invalidado el token actual, asÃ­ que debemos cerrar sesiÃ³n
         setTimeout(() => {
           this.authService.logout();
         }, 2000);
       },
       error: (error) => {
-        console.error('Error al cambiar contraseña:', error);
+        console.error('Error al cambiar contraseÃ±a:', error);
         this.loading = false;
-        this.mensajeSeguridadError = 'Error al actualizar la contraseña';
+        this.mensajeSeguridadError = 'Error al actualizar la contraseÃ±a';
         setTimeout(() => this.mensajeSeguridadError = '', 5000);
       }
     });
@@ -219,3 +219,4 @@ export class ClientePerfilComponent implements OnInit {
     this.router.navigate(['/cliente/dashboard']);
   }
 }
+

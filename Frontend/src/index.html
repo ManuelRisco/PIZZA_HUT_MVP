@@ -35,29 +35,29 @@
   <script>
     // Cargar preferencias de accesibilidad antes de renderizar
     if (localStorage.getItem('alta-contraste') === 'true') {
-      document.documentElement.setAttribute('data-contraste', 'alto');
+      document.documentElement.dataset.contraste = 'alto';
     }
 
     // Cargar modo de daltonismo
     const colorblindMode = localStorage.getItem('colorblind-mode') || 'none';
     if (colorblindMode !== 'none') {
-      document.documentElement.setAttribute('data-colorblind', colorblindMode);
+      document.documentElement.dataset.colorblind = colorblindMode;
     }
 
     // Cargar tamaño de fuente
     const fontSize = localStorage.getItem('font-size') || 'normal';
     if (fontSize !== 'normal') {
-      document.documentElement.setAttribute('data-font-size', fontSize);
+      document.documentElement.dataset.fontSize = fontSize;
     }
 
     // Cargar modo dislexia
     if (localStorage.getItem('dyslexia-mode') === 'true') {
-      document.documentElement.setAttribute('data-dyslexia', 'true');
+      document.documentElement.dataset.dyslexia = 'true';
     }
 
     // Cargar reducción de movimiento
     if (localStorage.getItem('reduce-motion') === 'true') {
-      document.documentElement.setAttribute('data-reduce-motion', 'true');
+      document.documentElement.dataset.reduceMotion = 'true';
     }
   </script>
 </head>
@@ -66,85 +66,85 @@
   <script>
     window.toggleAltoContraste = function() {
       const html = document.documentElement;
-      const esActivo = html.getAttribute('data-contraste') === 'alto';
+      const esActivo = html.dataset.contraste === 'alto';
 
       if (esActivo) {
-        html.removeAttribute('data-contraste');
+        delete html.dataset.contraste;
         localStorage.setItem('alta-contraste', 'false');
       } else {
-        html.setAttribute('data-contraste', 'alto');
+        html.dataset.contraste = 'alto';
         localStorage.setItem('alta-contraste', 'true');
       }
     };
 
     window.getEstadoContraste = function() {
-      return document.documentElement.getAttribute('data-contraste') === 'alto';
+      return document.documentElement.dataset.contraste === 'alto';
     };
 
     // Funciones para daltonismo
     window.setColorblindMode = function(mode) {
       const html = document.documentElement;
-      html.removeAttribute('data-colorblind');
+      delete html.dataset.colorblind;
 
       if (mode !== 'none') {
-        html.setAttribute('data-colorblind', mode);
+        html.dataset.colorblind = mode;
       }
 
       localStorage.setItem('colorblind-mode', mode);
     };
 
     window.getColorblindMode = function() {
-      return document.documentElement.getAttribute('data-colorblind') || 'none';
+      return document.documentElement.dataset.colorblind || 'none';
     };
 
     // Funciones para tamaño de fuente
     window.setFontSize = function(size) {
       const html = document.documentElement;
-      html.removeAttribute('data-font-size');
+      delete html.dataset.fontSize;
 
       if (size !== 'normal') {
-        html.setAttribute('data-font-size', size);
+        html.dataset.fontSize = size;
       }
 
       localStorage.setItem('font-size', size);
     };
 
     window.getFontSize = function() {
-      return document.documentElement.getAttribute('data-font-size') || 'normal';
+      return document.documentElement.dataset.fontSize || 'normal';
     };
 
     // Funciones para modo dislexia
     window.toggleDyslexiaMode = function() {
       const html = document.documentElement;
-      const isActive = html.getAttribute('data-dyslexia') === 'true';
+      const isActive = html.dataset.dyslexia === 'true';
       if (isActive) {
-        html.removeAttribute('data-dyslexia');
+        delete html.dataset.dyslexia;
         localStorage.setItem('dyslexia-mode', 'false');
       } else {
-        html.setAttribute('data-dyslexia', 'true');
+        html.dataset.dyslexia = 'true';
         localStorage.setItem('dyslexia-mode', 'true');
       }
     };
 
     window.getDyslexiaMode = function() {
-      return document.documentElement.getAttribute('data-dyslexia') === 'true';
+      return document.documentElement.dataset.dyslexia === 'true';
     };
 
     // Funciones para reducción de movimiento
     window.toggleReduceMotion = function() {
       const html = document.documentElement;
-      const isActive = html.getAttribute('data-reduce-motion') === 'true';
+      const isActive = html.dataset.reduceMotion === 'true';
       if (isActive) {
-        html.removeAttribute('data-reduce-motion');
+        delete html.dataset.reduceMotion;
         localStorage.setItem('reduce-motion', 'false');
       } else {
-        html.setAttribute('data-reduce-motion', 'true');
+        html.dataset.reduceMotion = 'true';
         localStorage.setItem('reduce-motion', 'true');
       }
     };
 
     window.getReduceMotion = function() {
-      return document.documentElement.getAttribute('data-reduce-motion') === 'true';
+      return document.documentElement.dataset.reduceMotion === 'true';
     };
   </script>
 </body>

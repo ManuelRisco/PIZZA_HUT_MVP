@@ -9,24 +9,24 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class Order {
-  private apiUrl = environment.apiUrl;
-  private httpOptions = {
+  private readonly apiUrl= environment.apiUrl;
+  private readonly httpOptions= {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   // Operaciones CRUD para Pedidos
   obtenerTodos(): Observable<OrderDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/orders`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
   
-  // Obtener pedidos completos con toda la información
+  // Obtener pedidos completos con toda la informaciÃ³n
   obtenerTodosCompletos(): Observable<OrderCompleteDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/orders/complete`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
   
-  // Obtener items de un pedido con información completa
+  // Obtener items de un pedido con informaciÃ³n completa
   obtenerItemsCompletos(orderId: number): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/orders/${orderId}/items`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
@@ -86,3 +86,4 @@ export class Order {
     return this.http.delete<any>(`${this.apiUrl}/order-items/${id}`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 }
+

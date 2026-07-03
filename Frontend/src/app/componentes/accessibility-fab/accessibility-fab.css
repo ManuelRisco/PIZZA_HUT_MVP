@@ -148,7 +148,7 @@
 }
 
 .panel-close {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.35);
   border: none;
   color: white;
   width: 32px;
@@ -316,9 +316,9 @@
 }
 
 .chip-option:hover {
-  border-color: #c8102e;
-  color: #c8102e;
-  background: rgba(200, 16, 46, 0.04);
+  border-color: #7c0011;
+  color: #7c0011;
+  background: #fce8ea;
 }
 
 .chip-option.active {
@@ -356,9 +356,9 @@
 }
 
 .font-option.active {
-  background: rgba(200, 16, 46, 0.08);
-  border-color: #c8102e;
-  color: #c8102e;
+  background: #fce8ea;
+  border-color: #7c0011;
+  color: #7c0011;
   font-weight: 600;
 }
 
@@ -446,19 +446,19 @@
 }
 
 .language-item:hover {
-  background: rgba(200, 16, 46, 0.04);
-  color: #c8102e;
+  background: #fce8ea;
+  color: #7c0011;
 }
 
 .language-item.active {
-  background: rgba(200, 16, 46, 0.06);
-  color: #c8102e;
+  background: #fce8ea;
+  color: #7c0011;
   font-weight: 600;
 }
 
 .check-icon {
   margin-left: auto;
-  color: #c8102e;
+  color: #a00d24;
   font-size: 0.9rem;
 }
 
@@ -496,7 +496,7 @@
 /* ========== HIGH CONTRAST MODE ========== */
 :host-context(html[data-contraste="alto"]) .fab-button {
   background: #000 !important;
-  border: 3px solid #ffff00 !important;
+  border: 3px solid #000000 !important;
   box-shadow: 0 0 0 3px #000, 0 4px 12px rgba(0, 0, 0, 0.5) !important;
 }
 
@@ -506,13 +506,13 @@
 
 :host-context(html[data-contraste="alto"]) .accessibility-panel {
   background: #000 !important;
-  border: 2px solid #ffff00 !important;
-  color: #ffff00 !important;
+  border: 2px solid #ffffff !important;
+  color: #ffffff !important;
 }
 
 :host-context(html[data-contraste="alto"]) .panel-header {
   background: #000 !important;
-  border-bottom: 2px solid #ffff00 !important;
+  border-bottom: 2px solid #000000 !important;
 }
 
 :host-context(html[data-contraste="alto"]) .option-info,
@@ -521,27 +521,24 @@
 :host-context(html[data-contraste="alto"]) .font-option,
 :host-context(html[data-contraste="alto"]) .language-selector-btn,
 :host-context(html[data-contraste="alto"]) .language-item {
-  color: #ffff00 !important;
+  color: #000000 !important;
 }
 
 :host-context(html[data-contraste="alto"]) .toggle-switch {
-  border: 2px solid #ffff00 !important;
+  border: 2px solid #000000 !important;
 }
 
 :host-context(html[data-contraste="alto"]) .chip-option,
 :host-context(html[data-contraste="alto"]) .font-option,
 :host-context(html[data-contraste="alto"]) .language-selector-btn,
 :host-context(html[data-contraste="alto"]) .language-item {
-  border-color: #ffff00 !important;
+  border-color: #000000 !important;
   background: #000 !important;
 }
 
 :host-context(html[data-contraste="alto"]) .chip-option.active {
-  background: #ffff00 !important;
-  color: #000 !important;
+  background: #000000 !important;
+  color: #ffffff !important;
 }
 
-/* Ocultar la barra de Google Translate */
-:host-context(body) {
-  /* El top banner de Google Translate se oculta globalmente */
-}
+/* Ocultar la barra de Google Translate globalmente si es necesario */

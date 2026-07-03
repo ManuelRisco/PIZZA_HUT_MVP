@@ -19,13 +19,13 @@ export class Reviews implements OnInit {
   cargando = true;
   isAdmin = false;
 
-  // Paginación
+  // PaginaciÃ³n
   currentPage = 1;
   itemsPerPage = 10;
 
   constructor(
-    private reviewService: Review,
-    private authService: AuthService
+    private readonly reviewService: Review,
+    private readonly authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -37,32 +37,32 @@ export class Reviews implements OnInit {
     this.cargando = true;
     
     if (this.isAdmin) {
-      // Admin ve todas las reseñas
+      // Admin ve todas las reseÃ±as
       this.reviewService.obtenerTodos().subscribe({
         next: (data) => {
-          this.reviews = data.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+          this.reviews = data.toSorted((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
           this.cargando = false;
           this.aplicarPaginacion();
         },
         error: (err) => {
-          console.error('Error al cargar reseñas:', err);
-          this.mostrarMensaje('Error al cargar reseñas. Verifica que el servidor esté corriendo.', true);
+          console.error('Error al cargar reseÃ±as:', err);
+          this.mostrarMensaje('Error al cargar reseÃ±as. Verifica que el servidor estÃ© corriendo.', true);
           this.cargando = false;
         }
       });
     } else {
-      // Cliente ve solo sus reseñas
+      // Cliente ve solo sus reseÃ±as
       const currentUser = this.authService.getCurrentUser();
-      if (currentUser && currentUser.id) {
+      if (currentUser?.id) {
         this.reviewService.obtenerPorUsuario(currentUser.id).subscribe({
           next: (data) => {
-            this.reviews = data.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+            this.reviews = data.toSorted((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
             this.cargando = false;
             this.aplicarPaginacion();
           },
           error: (err) => {
-            console.error('Error al cargar reseñas:', err);
-            this.mostrarMensaje('Error al cargar tus reseñas.', true);
+            console.error('Error al cargar reseÃ±as:', err);
+            this.mostrarMensaje('Error al cargar tus reseÃ±as.', true);
             this.cargando = false;
           }
         });
@@ -91,45 +91,45 @@ export class Reviews implements OnInit {
   }
 
   eliminarReview(id: number): void {
-    if (confirm('¿Está seguro de eliminar esta reseña?')) {
+    if (confirm('Â¿EstÃ¡ seguro de eliminar esta reseÃ±a?')) {
       this.reviewService.eliminar(id).subscribe({
         next: () => {
-          this.mostrarMensaje('Reseña eliminada correctamente');
+          this.mostrarMensaje('ReseÃ±a eliminada correctamente');
           this.cargarReviews();
         },
         error: (err) => {
           console.error('Error al eliminar:', err);
-          this.mostrarMensaje('Error al eliminar reseña', true);
+          this.mostrarMensaje('Error al eliminar reseÃ±a', true);
         }
       });
     }
   }
 
   desactivarReview(id: number): void {
-    if (confirm('¿Está seguro de desactivar esta reseña?')) {
+    if (confirm('Â¿EstÃ¡ seguro de desactivar esta reseÃ±a?')) {
       this.reviewService.desactivar(id).subscribe({
         next: () => {
-          this.mostrarMensaje('Reseña desactivada correctamente');
+          this.mostrarMensaje('ReseÃ±a desactivada correctamente');
           this.cargarReviews();
         },
         error: (err) => {
           console.error('Error al desactivar:', err);
-          this.mostrarMensaje('Error al desactivar reseña', true);
+          this.mostrarMensaje('Error al desactivar reseÃ±a', true);
         }
       });
     }
   }
 
   activarReview(id: number): void {
-    if (confirm('¿Está seguro de activar esta reseña?')) {
+    if (confirm('Â¿EstÃ¡ seguro de activar esta reseÃ±a?')) {
       this.reviewService.activar(id).subscribe({
         next: () => {
-          this.mostrarMensaje('Reseña activada correctamente');
+          this.mostrarMensaje('ReseÃ±a activada correctamente');
           this.cargarReviews();
         },
         error: (err) => {
           console.error('Error al activar:', err);
-          this.mostrarMensaje('Error al activar reseña', true);
+          this.mostrarMensaje('Error al activar reseÃ±a', true);
         }
       });
     }
@@ -159,3 +159,4 @@ export class Reviews implements OnInit {
     setTimeout(() => this.mensaje = '', 3000);
   }
 }
+

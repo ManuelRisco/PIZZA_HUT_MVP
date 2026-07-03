@@ -11,7 +11,7 @@ export class SobreNosotros implements OnInit, OnDestroy {
   isSwapped = false;
   private intervalId: any;
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+  constructor(@Inject(PLATFORM_ID) private readonly platformId: Object) {}
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
@@ -27,3 +27,4 @@ export class SobreNosotros implements OnInit, OnDestroy {
     }
   }
 }
+

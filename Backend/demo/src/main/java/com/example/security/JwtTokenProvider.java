@@ -11,6 +11,15 @@ import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
+
+    private static final String CLAIM_ROLE = "role";
+    private static final String CLAIM_NAME = "name";
+    private static final String CLAIM_EMAIL = "email";
+    private static final String CLAIM_ID = "id";
+    private static final String CLAIM_TOKEN_VERSION = "tokenVersion";
+    private static final String CLAIM_TYPE = "type";
+    private static final String CLAIM_TYPE_REFRESH = "refresh";
+
     private final SecretKey jwtSecret;
 
     public JwtTokenProvider(@Value("${app.jwtSecret}") String jwtSecretString) {
@@ -29,9 +38,9 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(email)
-                .claim("role", role)
-                .claim("name", name)
-                .claim("email", email)
+                .claim(CLAIM_ROLE, role)
+                .claim(CLAIM_NAME, name)
+                .claim(CLAIM_EMAIL, email)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(jwtSecret)
@@ -44,28 +53,28 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(email)
-                .claim("id", id)
-                .claim("role", role)
-                .claim("name", name)
-                .claim("email", email)
+                .claim(CLAIM_ID, id)
+                .claim(CLAIM_ROLE, role)
+                .claim(CLAIM_NAME, name)
+                .claim(CLAIM_EMAIL, email)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(jwtSecret)
                 .compact();
     }
     
-    // M\u00e9todo sobrecargado con tokenVersion
+    // Método sobrecargado con tokenVersion
     public String generateToken(String email, String role, String name, Long id, Integer tokenVersion) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
                 .subject(email)
-                .claim("id", id)
-                .claim("role", role)
-                .claim("name", name)
-                .claim("email", email)
-                .claim("tokenVersion", tokenVersion) // Agregar versi\u00f3n del token
+                .claim(CLAIM_ID, id)
+                .claim(CLAIM_ROLE, role)
+                .claim(CLAIM_NAME, name)
+                .claim(CLAIM_EMAIL, email)
+                .claim(CLAIM_TOKEN_VERSION, tokenVersion) // Agregar versión del token
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(jwtSecret)
@@ -89,7 +98,7 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        return claims.get("role", String.class);
+        return claims.get(CLAIM_ROLE, String.class);
     }
 
     public String getNameFromToken(String token) {
@@ -99,7 +108,7 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        return claims.get("name", String.class);
+        return claims.get(CLAIM_NAME, String.class);
     }
 
     public Long getIdFromToken(String token) {
@@ -109,7 +118,7 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        Object idClaim = claims.get("id");
+        Object idClaim = claims.get(CLAIM_ID);
         if (idClaim instanceof Integer) {
             return ((Integer) idClaim).longValue();
         } else if (idClaim instanceof Long) {
@@ -125,11 +134,11 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        Object versionClaim = claims.get("tokenVersion");
+        Object versionClaim = claims.get(CLAIM_TOKEN_VERSION);
         if (versionClaim instanceof Integer) {
             return (Integer) versionClaim;
         }
-        return null; // Tokens antiguos sin versi\u00f3n
+        return null; // Tokens antiguos sin versión
     }
 
     public Claims getAllClaimsFromToken(String token) {
@@ -146,11 +155,11 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(email)
-                .claim("id", id)
-                .claim("role", role)
-                .claim("name", name)
-                .claim("email", email)
-                .claim("type", "refresh")
+                .claim(CLAIM_ID, id)
+                .claim(CLAIM_ROLE, role)
+                .claim(CLAIM_NAME, name)
+                .claim(CLAIM_EMAIL, email)
+                .claim(CLAIM_TYPE, CLAIM_TYPE_REFRESH)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(jwtSecret)
@@ -160,7 +169,7 @@ public class JwtTokenProvider {
     public boolean isRefreshToken(String token) {
         try {
             Claims claims = getAllClaimsFromToken(token);
-            return "refresh".equals(claims.get("type", String.class));
+            return CLAIM_TYPE_REFRESH.equals(claims.get(CLAIM_TYPE, String.class));
         } catch (Exception e) {
             return false;
         }

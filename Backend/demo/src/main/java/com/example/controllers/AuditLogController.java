@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/audit-logs")
@@ -32,12 +31,12 @@ public class AuditLogController {
             return new java.util.ArrayList<>();
         }
 
-        // Obtener todos los IDs de usuario únicos
+        // Obtener todos los IDs de usuario Ãºnicos
         List<Long> userIds = logs.stream()
                 .filter(l -> l.getUserId() != null)
                 .map(l -> l.getUserId().longValue())
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
 
         // Buscar todos los usuarios en una sola consulta
         java.util.Map<Long, com.example.models.Usuario> usersMap = new java.util.HashMap<>();
@@ -57,7 +56,7 @@ public class AuditLogController {
                 }
             }
             return dto;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     @GetMapping
@@ -138,3 +137,4 @@ public class AuditLogController {
         return ResponseEntity.notFound().build();
     }
 }
+

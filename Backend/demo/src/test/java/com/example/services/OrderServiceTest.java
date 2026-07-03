@@ -53,12 +53,12 @@ class OrderServiceTest {
     void testListarTodasLasOrdenes() {
         List<Order> ordenes = new ArrayList<>();
         ordenes.add(orderTest);
-        when(orderRepository.findAll()).thenReturn(ordenes);
+        when(orderRepository.findTop100ByOrderByCreatedAtDesc()).thenReturn(ordenes);
 
         List<Order> ordenesEncontradas = orderService.listarOrders();
 
         assertEquals(1, ordenesEncontradas.size());
-        verify(orderRepository, times(1)).findAll();
+        verify(orderRepository, times(1)).findTop100ByOrderByCreatedAtDesc();
     }
 
     @Test
@@ -92,12 +92,12 @@ class OrderServiceTest {
     @Test
     @DisplayName("CU16 - A1: Error/Validación si no existen pedidos en el sistema")
     void testListarOrdenesSinResultados() {
-        when(orderRepository.findAll()).thenReturn(new ArrayList<>());
+        when(orderRepository.findTop100ByOrderByCreatedAtDesc()).thenReturn(new ArrayList<>());
 
         List<Order> ordenesEncontradas = orderService.listarOrders();
 
         assertTrue(ordenesEncontradas.isEmpty());
-        verify(orderRepository, times(1)).findAll();
+        verify(orderRepository, times(1)).findTop100ByOrderByCreatedAtDesc();
     }
 
     @Test

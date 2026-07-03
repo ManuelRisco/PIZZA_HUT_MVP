@@ -35,12 +35,12 @@ export class Promociones implements OnInit {
     { value: 'ALL', label: 'Todo' },
     { value: 'PIZZAS', label: 'Solo Pizzas' },
     { value: 'EXTRAS', label: 'Solo Extras' },
-    { value: 'SPECIFIC_PRODUCTS', label: 'Productos Específicos' }
+    { value: 'SPECIFIC_PRODUCTS', label: 'Productos EspecÃ­ficos' }
   ];
 
   constructor(
-    private promocionService: PromocionService,
-    private formBuilder: FormBuilder
+    private readonly promocionService: PromocionService,
+    private readonly formBuilder: FormBuilder
   ) {
     const today = new Date().toISOString().split('T')[0];
     this.promocionForm = this.formBuilder.group({
@@ -158,32 +158,32 @@ export class Promociones implements OnInit {
 
     observable.subscribe({
       next: () => {
-        this.success = this.editMode ? 'Promoción actualizada correctamente' : 'Promoción creada correctamente';
+        this.success = this.editMode ? 'PromociÃ³n actualizada correctamente' : 'PromociÃ³n creada correctamente';
         this.cargarPromociones();
         this.cancelar();
         this.loading = false;
         setTimeout(() => this.success = '', 3000);
       },
       error: (err) => {
-        this.error = err.error?.message || 'Error al guardar promoción';
+        this.error = err.error?.message || 'Error al guardar promociÃ³n';
         this.loading = false;
       }
     });
   }
 
   eliminarPromocion(id: number): void {
-    if (!confirm('¿Está seguro de eliminar esta promoción?')) return;
+    if (!confirm('Â¿EstÃ¡ seguro de eliminar esta promociÃ³n?')) return;
 
     this.loading = true;
     this.promocionService.eliminar(id).subscribe({
       next: () => {
-        this.success = 'Promoción eliminada correctamente';
+        this.success = 'PromociÃ³n eliminada correctamente';
         this.cargarPromociones();
         this.loading = false;
         setTimeout(() => this.success = '', 3000);
       },
       error: (err) => {
-        this.error = 'Error al eliminar promoción';
+        this.error = 'Error al eliminar promociÃ³n';
         this.loading = false;
       }
     });
@@ -197,7 +197,7 @@ export class Promociones implements OnInit {
 
     observable.subscribe({
       next: () => {
-        this.success = promocion.isActive ? 'Promoción desactivada' : 'Promoción activada';
+        this.success = promocion.isActive ? 'PromociÃ³n desactivada' : 'PromociÃ³n activada';
         this.cargarPromociones();
         setTimeout(() => this.success = '', 2000);
       },
@@ -225,3 +225,4 @@ export class Promociones implements OnInit {
     return ahora >= inicio && ahora <= fin && promocion.isActive;
   }
 }
+

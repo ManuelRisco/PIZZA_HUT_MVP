@@ -19,7 +19,7 @@ export interface AddressDTO {
 export class AddressService {
   private readonly apiUrl = `${environment.apiUrl}/addresses`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   listarTodos(): Observable<AddressDTO[]> {
     return this.http.get<any>(this.apiUrl).pipe(map(res => res.data !== undefined ? res.data : res));
@@ -45,3 +45,4 @@ export class AddressService {
     return this.http.delete<any>(`${this.apiUrl}/${id}`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 }
+

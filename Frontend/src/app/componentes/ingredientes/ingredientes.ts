@@ -22,11 +22,11 @@ export class Ingredientes implements OnInit {
   filtroDisponibilidad: string = 'TODOS';
   loading: boolean = true;
 
-  // Paginación
+  // PaginaciÃ³n
   currentPage = 1;
   itemsPerPage = 10;
 
-  constructor(private ingredientService: IngredientService) {}
+  constructor(private readonly ingredientService: IngredientService) {}
 
   ngOnInit(): void {
     this.cargarIngredientes();
@@ -125,7 +125,7 @@ export class Ingredientes implements OnInit {
   }
 
   eliminar(id: number): void {
-    if (confirm('¿Está seguro de eliminar este ingrediente?')) {
+    if (confirm('Â¿EstÃ¡ seguro de eliminar este ingrediente?')) {
       this.ingredientService.eliminar(id).subscribe({
         next: () => {
           alert('Ingrediente eliminado exitosamente');
@@ -183,3 +183,4 @@ export class Ingredientes implements OnInit {
     return this.ingredientes.filter(i => !i.isAvailable).length;
   }
 }
+

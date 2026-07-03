@@ -7,6 +7,11 @@ import com.example.models.Usuario;
  */
 public class UsuarioFactory {
 
+    private UsuarioFactory() {
+        throw new IllegalStateException("Utility class");
+    }
+
+
     /**
      * Crea un usuario cliente con configuraci\u00f3n por defecto
      */

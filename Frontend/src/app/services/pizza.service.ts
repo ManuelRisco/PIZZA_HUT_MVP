@@ -9,12 +9,12 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class PizzaService {
-  private apiUrl = environment.apiUrl;
-  private httpOptions = {
+  private readonly apiUrl= environment.apiUrl;
+  private readonly httpOptions= {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
   };
 
-  constructor(private http: HttpClient) { }
+  constructor(private readonly http: HttpClient) { }
 
   // Operaciones CRUD para Pizzas
   listarPizzas(): Observable<PizzaDTO[]> {
@@ -47,7 +47,7 @@ export class PizzaService {
     );
   }
 
-  // Operaciones para Categorías
+  // Operaciones para CategorÃ­as
   listarCategorias(): Observable<CategoryDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/categories`).pipe(
       map(res => res.data ? res.data : res)

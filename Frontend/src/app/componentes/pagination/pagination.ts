@@ -29,28 +29,26 @@ export class PaginationComponent {
       for (let i = 1; i <= this.totalPages; i++) {
         pages.push(i);
       }
-    } else {
-      if (this.currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push(-1); // Ellipsis
-        pages.push(this.totalPages);
-      } else if (this.currentPage >= this.totalPages - 2) {
-        pages.push(1);
-        pages.push(-1); // Ellipsis
-        for (let i = this.totalPages - 3; i <= this.totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push(1);
-        pages.push(-1); // Ellipsis
-        pages.push(this.currentPage - 1);
-        pages.push(this.currentPage);
-        pages.push(this.currentPage + 1);
-        pages.push(-1); // Ellipsis
-        pages.push(this.totalPages);
+    } else if (this.currentPage <= 3) {
+      for (let i = 1; i <= 4; i++) {
+        pages.push(i);
       }
+      pages.push(-1); // Ellipsis
+      pages.push(this.totalPages);
+    } else if (this.currentPage >= this.totalPages - 2) {
+      pages.push(1);
+      pages.push(-1); // Ellipsis
+      for (let i = this.totalPages - 3; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+      pages.push(-1); // Ellipsis
+      pages.push(this.currentPage - 1);
+      pages.push(this.currentPage);
+      pages.push(this.currentPage + 1);
+      pages.push(-1); // Ellipsis
+      pages.push(this.totalPages);
     }
     
     return pages;

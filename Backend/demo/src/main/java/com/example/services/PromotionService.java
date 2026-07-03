@@ -15,8 +15,17 @@ import java.util.Optional;
 @Service
 public class PromotionService {
 
-    private final PromotionRepository promotionRepository;
+    private static final String MSG_PROMO_NOT_FOUND = "Promoción no encontrada";
+    private static final String MSG_INVALID_CODE = "Código de promoción no válido";
+    private static final String MSG_PROMO_NOT_AVAILABLE = "Esta promoción no está disponible actualmente";
+    private static final String MSG_NEW_CUSTOMERS_ONLY = "Esta promoción es solo para nuevos clientes en su primera compra";
+    private static final String MSG_MIN_PURCHASE = "Compra mínima requerida: S/ %.2f. Tu subtotal actual: S/ %.2f";
+    private static final String KEYWORD_FIRST_PURCHASE = "primera compra";
+    private static final String KEYWORD_FIRST_ORDER = "primer pedido";
+    private static final String KEY_VALID = "valid";
+    private static final String KEY_MESSAGE = "message";
 
+    private final PromotionRepository promotionRepository;
     private final OrderRepository orderRepository;
 
     public PromotionService(PromotionRepository promotionRepository, OrderRepository orderRepository) {
@@ -84,7 +93,7 @@ public class PromotionService {
     public Promotion actualizarPromocion(Integer id, Promotion promocionActualizada) {
         Optional<Promotion> promocionOpt = obtenerPorId(id);
         if (promocionOpt.isEmpty()) {
-            throw new IllegalArgumentException("Promoción no encontrada");
+            throw new IllegalArgumentException(MSG_PROMO_NOT_FOUND);
         }
 
         Promotion promotion = promocionOpt.get();
@@ -115,7 +124,7 @@ public class PromotionService {
     public void eliminarPromocion(Integer id) {
         Optional<Promotion> promocionOpt = obtenerPorId(id);
         if (promocionOpt.isEmpty()) {
-            throw new IllegalArgumentException("Promoci\u00f3n no encontrada");
+            throw new IllegalArgumentException(MSG_PROMO_NOT_FOUND);
         }
 
         Promotion promotion = promocionOpt.get();
@@ -126,7 +135,7 @@ public class PromotionService {
     public Promotion activarPromocion(Integer id) {
         Optional<Promotion> promocionOpt = obtenerPorId(id);
         if (promocionOpt.isEmpty()) {
-            throw new IllegalArgumentException("Promoci\u00f3n no encontrada");
+            throw new IllegalArgumentException(MSG_PROMO_NOT_FOUND);
         }
 
         Promotion promotion = promocionOpt.get();
@@ -137,7 +146,7 @@ public class PromotionService {
     public Promotion desactivarPromocion(Integer id) {
         Optional<Promotion> promocionOpt = obtenerPorId(id);
         if (promocionOpt.isEmpty()) {
-            throw new IllegalArgumentException("Promoci\u00f3n no encontrada");
+            throw new IllegalArgumentException(MSG_PROMO_NOT_FOUND);
         }
 
         Promotion promotion = promocionOpt.get();
@@ -149,7 +158,7 @@ public class PromotionService {
         Optional<Promotion> promocionOpt = obtenerPorCodigo(code);
 
         if (promocionOpt.isEmpty()) {
-            throw new IllegalArgumentException("C\u00f3digo de promoci\u00f3n no v\u00e1lido");
+            throw new IllegalArgumentException(MSG_INVALID_CODE);
         }
 
         return calcularDescuento(promocionOpt.get(), orderTotal);
@@ -157,13 +166,13 @@ public class PromotionService {
 
     public BigDecimal calcularDescuento(Promotion promotion, BigDecimal orderTotal) {
         if (!promotion.canBeUsed()) {
-            throw new IllegalArgumentException("Esta promoci\u00f3n no est\u00e1 disponible actualmente");
+            throw new IllegalArgumentException(MSG_PROMO_NOT_AVAILABLE);
         }
 
-        // Validar compra m\u00ednima
+        // Validar compra mínima
         if (promotion.getMinPurchase() != null && orderTotal.compareTo(promotion.getMinPurchase()) < 0) {
             throw new IllegalArgumentException(
-                    String.format("Compra m\u00ednima requerida: S/ %.2f. Tu subtotal actual: S/ %.2f",
+                    String.format(MSG_MIN_PURCHASE,
                             promotion.getMinPurchase(), orderTotal));
         }
 
@@ -179,11 +188,10 @@ public class PromotionService {
             return;
 
         String promoName = promotion.getName().toLowerCase();
-        if (promoName.contains("primera compra") || promoName.contains("primer pedido")) {
+        if (promoName.contains(KEYWORD_FIRST_PURCHASE) || promoName.contains(KEYWORD_FIRST_ORDER)) {
             long orderCount = orderRepository.countByUserId(userId);
             if (orderCount > 0) {
-                throw new IllegalArgumentException(
-                        "Esta promoci\u00f3n es solo para nuevos clientes en su primera compra");
+                throw new IllegalArgumentException(MSG_NEW_CUSTOMERS_ONLY);
             }
         }
     }
@@ -198,38 +206,38 @@ public class PromotionService {
         Optional<Promotion> promocionOpt = obtenerPorCodigo(code);
 
         if (promocionOpt.isEmpty()) {
-            result.put("valid", false);
-            result.put("message", "C\u00f3digo de promoci\u00f3n no v\u00e1lido");
+            result.put(KEY_VALID, false);
+            result.put(KEY_MESSAGE, MSG_INVALID_CODE);
             return result;
         }
 
         Promotion promotion = promocionOpt.get();
 
-        // Validar que la promoci\u00f3n est\u00e9 activa
+        // Validar que la promoción esté activa
         if (!promotion.canBeUsed()) {
-            result.put("valid", false);
-            result.put("message", "Esta promoci\u00f3n no est\u00e1 disponible actualmente");
+            result.put(KEY_VALID, false);
+            result.put(KEY_MESSAGE, MSG_PROMO_NOT_AVAILABLE);
             return result;
         }
 
-        // Validar compra m\u00ednima
+        // Validar compra mínima
         if (promotion.getMinPurchase() != null && orderTotal.compareTo(promotion.getMinPurchase()) < 0) {
-            result.put("valid", false);
-            result.put("message", String.format(
-                    "Compra m\u00ednima requerida: S/ %.2f. Tu subtotal actual: S/ %.2f",
+            result.put(KEY_VALID, false);
+            result.put(KEY_MESSAGE, String.format(
+                    MSG_MIN_PURCHASE,
                     promotion.getMinPurchase(), orderTotal));
             result.put("minPurchase", promotion.getMinPurchase());
             result.put("currentTotal", orderTotal);
             return result;
         }
 
-        // Validar si es promoci\u00f3n de primera compra
+        // Validar si es promoción de primera compra
         String promoName = promotion.getName().toLowerCase();
-        if (promoName.contains("primera compra") || promoName.contains("primer pedido")) {
+        if (promoName.contains(KEYWORD_FIRST_PURCHASE) || promoName.contains(KEYWORD_FIRST_ORDER)) {
             long orderCount = orderRepository.countByUserId(userId);
             if (orderCount > 0) {
-                result.put("valid", false);
-                result.put("message", "Esta promoci\u00f3n es solo para nuevos clientes en su primera compra");
+                result.put(KEY_VALID, false);
+                result.put(KEY_MESSAGE, MSG_NEW_CUSTOMERS_ONLY);
                 return result;
             }
         }
@@ -237,16 +245,16 @@ public class PromotionService {
         BigDecimal discount = promotion.calculateDiscount(orderTotal);
         BigDecimal finalTotal = orderTotal.subtract(discount);
 
-        result.put("valid", true);
+        result.put(KEY_VALID, true);
         result.put("discount", discount);
         result.put("finalTotal", finalTotal);
-        result.put("message", String.format("Promoci\u00f3n aplicada: -S/ %.2f", discount));
+        result.put(KEY_MESSAGE, String.format("Promoción aplicada: -S/ %.2f", discount));
 
         return result;
     }
 
     /**
-     * Valida una promoci\u00f3n considerando los items del carrito
+     * Valida una promoción considerando los items del carrito
      * Calcula el descuento solo sobre los items aplicables
      */
     public Map<String, Object> validarPromocionConItems(
@@ -260,38 +268,38 @@ public class PromotionService {
         Optional<Promotion> promocionOpt = obtenerPorCodigo(code);
 
         if (promocionOpt.isEmpty()) {
-            result.put("valid", false);
-            result.put("message", "C\u00f3digo de promoci\u00f3n no v\u00e1lido");
+            result.put(KEY_VALID, false);
+            result.put(KEY_MESSAGE, MSG_INVALID_CODE);
             return result;
         }
 
         Promotion promotion = promocionOpt.get();
 
-        // Validar que la promoci\u00f3n est\u00e9 activa
+        // Validar que la promoción esté activa
         if (!promotion.canBeUsed()) {
-            result.put("valid", false);
-            result.put("message", "Esta promoci\u00f3n no est\u00e1 disponible actualmente");
+            result.put(KEY_VALID, false);
+            result.put(KEY_MESSAGE, MSG_PROMO_NOT_AVAILABLE);
             return result;
         }
 
-        // Validar compra m\u00ednima
+        // Validar compra mínima
         if (promotion.getMinPurchase() != null && orderTotal.compareTo(promotion.getMinPurchase()) < 0) {
-            result.put("valid", false);
-            result.put("message", String.format(
-                    "Compra m\u00ednima requerida: S/ %.2f. Tu subtotal actual: S/ %.2f",
+            result.put(KEY_VALID, false);
+            result.put(KEY_MESSAGE, String.format(
+                    MSG_MIN_PURCHASE,
                     promotion.getMinPurchase(), orderTotal));
             result.put("minPurchase", promotion.getMinPurchase());
             result.put("currentTotal", orderTotal);
             return result;
         }
 
-        // Validar si es promoci\u00f3n de primera compra
+        // Validar si es promoción de primera compra
         String promoName = promotion.getName().toLowerCase();
-        if (promoName.contains("primera compra") || promoName.contains("primer pedido")) {
+        if (promoName.contains(KEYWORD_FIRST_PURCHASE) || promoName.contains(KEYWORD_FIRST_ORDER)) {
             long orderCount = orderRepository.countByUserId(userId);
             if (orderCount > 0) {
-                result.put("valid", false);
-                result.put("message", "Esta promoci\u00f3n es solo para nuevos clientes en su primera compra");
+                result.put(KEY_VALID, false);
+                result.put(KEY_MESSAGE, MSG_NEW_CUSTOMERS_ONLY);
                 return result;
             }
         }
@@ -310,25 +318,25 @@ public class PromotionService {
                     applicableToText = "extras (bebidas, postres, etc.)";
                     break;
                 case SPECIFIC:
-                    applicableToText = "productos espec\u00edficos";
+                    applicableToText = "productos específicos";
                     break;
                 default:
                     applicableToText = "productos";
             }
 
-            result.put("valid", false);
-            result.put("message", String.format(
-                    "Esta promoci\u00f3n solo aplica a %s. Agrega productos v\u00e1lidos para usar este c\u00f3digo.",
+            result.put(KEY_VALID, false);
+            result.put(KEY_MESSAGE, String.format(
+                    "Esta promoción solo aplica a %s. Agrega productos válidos para usar este código.",
                     applicableToText));
             return result;
         }
 
         BigDecimal finalTotal = orderTotal.subtract(discount);
 
-        result.put("valid", true);
+        result.put(KEY_VALID, true);
         result.put("discount", discount);
         result.put("finalTotal", finalTotal);
-        result.put("message", String.format("Promoci\u00f3n aplicada: -S/ %.2f", discount));
+        result.put(KEY_MESSAGE, String.format("Promoción aplicada: -S/ %.2f", discount));
         result.put("applicableTo", promotion.getApplicableTo().toString());
 
         return result;
@@ -350,11 +358,7 @@ public class PromotionService {
         }
     }
 
-    @org.springframework.transaction.annotation.Transactional
-    public void incrementarUsoPromocion(Promotion promotion) {
-        // Redirigir al método seguro con lock
-        incrementarUsoPromocion(promotion.getCode());
-    }
+
 
     public List<Promotion> obtenerPromocionesProximasAVencer(int dias) {
         LocalDateTime now = LocalDateTime.now();

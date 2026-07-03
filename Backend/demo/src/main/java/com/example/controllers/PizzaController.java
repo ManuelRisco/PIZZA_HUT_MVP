@@ -23,6 +23,8 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:4200")
 public class PizzaController {
 
+    private static final String MSG_NOT_FOUND_PREFIX = "Pizza no encontrada con id: ";
+
     private final PizzaService pizzaService;
     private final CategoryService categoryService;
     private final PizzaMapper pizzaMapper;
@@ -42,7 +44,7 @@ public class PizzaController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<PizzaDTO>> getPizzaById(@PathVariable("id") Integer id) {
         Pizza pizza = pizzaService.obtenerPorId(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Pizza no encontrada con id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(MSG_NOT_FOUND_PREFIX + id));
         return ResponseEntity.ok(ApiResponse.success(pizzaMapper.toDto(pizza)));
     }
 
@@ -54,38 +56,38 @@ public class PizzaController {
         }
         
         Category category = categoryService.obtenerPorId(pizzaDTO.getCategoryId())
-            .orElseThrow(() -> new BadRequestException("Categor\u00eda no encontrada"));
+            .orElseThrow(() -> new BadRequestException("Categoría no encontrada"));
             
         Pizza pizza = pizzaMapper.toEntity(pizzaDTO);
         pizza.setCategory(category);
         
         Pizza nuevaPizza = pizzaService.crearPizza(pizza);
-        return new ResponseEntity<>(ApiResponse.success(pizzaMapper.toDto(nuevaPizza), "Pizza creada con \u00e9xito"), HttpStatus.CREATED);
+        return new ResponseEntity<>(ApiResponse.success(pizzaMapper.toDto(nuevaPizza), "Pizza creada con éxito"), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PizzaDTO>> updatePizza(@PathVariable("id") Integer id, @RequestBody PizzaCreateDTO pizzaDTO) {
         Pizza pizzaExistente = pizzaService.obtenerPorId(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Pizza no encontrada con id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(MSG_NOT_FOUND_PREFIX + id));
             
         if (pizzaDTO.getCategoryId() != null) {
             Category category = categoryService.obtenerPorId(pizzaDTO.getCategoryId())
-                .orElseThrow(() -> new BadRequestException("Categor\u00eda no encontrada"));
+                .orElseThrow(() -> new BadRequestException("Categoría no encontrada"));
             pizzaExistente.setCategory(category);
         }
         
         pizzaMapper.updateEntityFromDto(pizzaDTO, pizzaExistente);
         Pizza pizzaActualizada = pizzaService.actualizarPizza(id, pizzaExistente);
         
-        return ResponseEntity.ok(ApiResponse.success(pizzaMapper.toDto(pizzaActualizada), "Pizza actualizada con \u00e9xito"));
+        return ResponseEntity.ok(ApiResponse.success(pizzaMapper.toDto(pizzaActualizada), "Pizza actualizada con éxito"));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deletePizza(@PathVariable("id") Integer id) {
         if (!pizzaService.eliminarPizza(id)) {
-            throw new ResourceNotFoundException("Pizza no encontrada con id: " + id);
+            throw new ResourceNotFoundException(MSG_NOT_FOUND_PREFIX + id);
         }
         return ResponseEntity.ok(ApiResponse.success(null, "Pizza eliminada correctamente"));
     }

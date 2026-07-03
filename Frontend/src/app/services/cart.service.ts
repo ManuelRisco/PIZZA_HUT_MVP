@@ -6,7 +6,7 @@ const STORAGE_KEY = 'pizza-hut-cart';
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
-  private itemsSubject = new BehaviorSubject<CartItem[]>(this.loadItemsFromStorage());
+  private readonly itemsSubject= new BehaviorSubject<CartItem[]>(this.loadItemsFromStorage());
   readonly items$ = this.itemsSubject.asObservable();
 
   getItemsSnapshot(): CartItem[] {
@@ -149,7 +149,7 @@ export class CartService {
   ): string {
     const baseId = pizza.id != null ? pizza.id.toString() : pizza.name.trim().toLowerCase().replace(/\s+/g, '-');
     const sizeKey = size.toLowerCase();
-    const extrasKey = extras && extras.length > 0 ? extras.sort().join(',') : 'none';
+    const extrasKey = (extras && extras.length > 0) ? extras.toSorted((a, b) => a.localeCompare(b)).join(',') : 'none';
     return `${baseId}-${sizeKey}-${extrasKey}`;
   }
 

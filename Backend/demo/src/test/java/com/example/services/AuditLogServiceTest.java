@@ -42,12 +42,12 @@ class AuditLogServiceTest {
     void testListarLogs() {
         List<AuditLog> list = new ArrayList<>();
         list.add(log);
-        when(auditLogRepository.findAll()).thenReturn(list);
+        when(auditLogRepository.findTop100ByOrderByCreatedAtDesc()).thenReturn(list);
 
         List<AuditLog> resultado = auditLogService.listarTodos();
 
         assertEquals(1, resultado.size());
-        verify(auditLogRepository, times(1)).findAll();
+        verify(auditLogRepository, times(1)).findTop100ByOrderByCreatedAtDesc();
     }
 
     @Test

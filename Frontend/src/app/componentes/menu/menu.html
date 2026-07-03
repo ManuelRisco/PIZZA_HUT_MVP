@@ -1,4 +1,4 @@
-<div class="container mx-auto px-4 md:px-8 py-8" role="main" aria-label="Menú de Pizzas">
+<main class="container mx-auto px-4 md:px-8 py-8" aria-label="Menú de Pizzas">
   <!-- Título -->
   <div class="mb-8">
     <div class="relative">
@@ -39,9 +39,9 @@
   }
 
   <!-- Grid de Pizzas -->
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8" role="listbox" aria-label="Lista de pizzas disponibles">
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8" aria-label="Lista de pizzas disponibles">
     @for (pizza of pizzasFiltradas; track pizza.id; let i = $index) {
-      <div class="animate-on-scroll opacity-0 translate-y-12 transition-all duration-1000 hover:duration-300 ease-out bg-white border border-gray-200 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col h-full relative font-sans group cursor-pointer" [id]="'pizza-' + pizza.id" role="option" tabindex="0">
+      <div class="animate-on-scroll opacity-0 translate-y-12 transition-all duration-1000 hover:duration-300 ease-out bg-white border border-gray-200 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col h-full relative font-sans group cursor-pointer" [id]="'pizza-' + pizza.id">
         
         <!-- Popular Badge (simulado para los 2 primeros si no hay búsqueda) -->
         @if (i < 2 && !searchTerm) {
@@ -101,11 +101,11 @@
       <p>Intenta con otra búsqueda o vuelve más tarde.</p>
     </div>
   }
-</div>
+</main>
 
 <!-- Modal de Agregar Rápido (Solo Tamaño) -->
 @if (mostrarModalRapido && pizzaSeleccionada) {
-  <div class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn" style="z-index: 9999;" role="dialog" aria-modal="true" aria-labelledby="modal-rapido-title" (click)="cerrarModalRapido()">
+  <div class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn" style="z-index: 9999;" aria-modal="true" aria-labelledby="modal-rapido-title" (click)="cerrarModalRapido()">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md my-auto relative animate-modalPop" (click)="$event.stopPropagation()">
       
       <!-- Header -->
@@ -128,15 +128,13 @@
         <h6 class="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-4" id="sizes-label">
           Selecciona el Tamaño <span class="text-red-500">*</span>
         </h6>
-        <div class="grid grid-cols-2 gap-3" role="group" aria-labelledby="sizes-label">
+        <div class="grid grid-cols-2 gap-3" aria-labelledby="sizes-label">
           @for (tamano of tamanosDisponibles; track tamano.id) {
             <div 
               class="relative border-2 rounded-xl p-4 cursor-pointer transition-all duration-200 flex flex-col items-center justify-center text-center group"
               [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'border-red-600 bg-red-50/50' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50'"
               (click)="seleccionarTamano(tamano)"
-              role="button"
               [attr.aria-pressed]="tamanoSeleccionado?.id === tamano.id"
-              tabindex="0"
             >
               @if (tamanoSeleccionado?.id === tamano.id) {
                 <div class="absolute top-2 right-2 text-red-600">
@@ -172,7 +170,7 @@
 
 <!-- Modal de Personalización -->
 @if (mostrarModal && pizzaSeleccionada) {
-  <div class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn" style="z-index: 9999;" role="dialog" aria-modal="true" aria-labelledby="modal-personalizacion-title" (click)="cerrarModal()">
+  <div class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn" style="z-index: 9999;" aria-modal="true" aria-labelledby="modal-personalizacion-title" (click)="cerrarModal()" (keydown.enter)="cerrarModal()" tabindex="0">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-auto relative animate-modalPop max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()">
       
       <!-- Header -->
@@ -197,15 +195,13 @@
           <h6 class="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-4" id="sizes-label-personalizacion">
             Selecciona el Tamaño <span class="text-red-500">*</span>
           </h6>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="group" aria-labelledby="sizes-label-personalizacion">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" aria-labelledby="sizes-label-personalizacion">
             @for (tamano of tamanosDisponibles; track tamano.id) {
               <div 
                 class="relative border-2 rounded-xl p-4 cursor-pointer transition-all duration-200 flex flex-col items-center justify-center text-center group"
                 [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'border-red-600 bg-red-50/50 shadow-md' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50'"
                 (click)="seleccionarTamano(tamano)"
-                role="button"
                 [attr.aria-pressed]="tamanoSeleccionado?.id === tamano.id"
-                tabindex="0"
               >
                 @if (tamanoSeleccionado?.id === tamano.id) {
                   <div class="absolute top-2 right-2 text-red-600">
@@ -229,7 +225,7 @@
           @if (ingredientesDisponibles.length === 0) {
             <p class="text-gray-500 italic bg-gray-50 p-4 rounded-xl text-center">No hay ingredientes adicionales disponibles</p>
           } @else {
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-labelledby="ingredientes-label">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-labelledby="ingredientes-label">
               @for (ingrediente of ingredientesDisponibles; track ingrediente.id) {
                 <label 
                   class="flex items-center p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 group"

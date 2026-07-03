@@ -9,12 +9,12 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class Payment {
-  private apiUrl = environment.apiUrl;
-  private httpOptions = {
+  private readonly apiUrl= environment.apiUrl;
+  private readonly httpOptions= {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   // Operaciones CRUD para Pagos
   obtenerTodos(): Observable<PaymentDTO[]> {
@@ -45,3 +45,4 @@ export class Payment {
     return this.http.post<any>(`${this.apiUrl}/payments/create-token`, { amount }, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 }
+

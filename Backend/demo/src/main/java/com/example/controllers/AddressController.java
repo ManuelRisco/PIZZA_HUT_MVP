@@ -13,12 +13,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/addresses")
 @CrossOrigin(origins = "http://localhost:4200")
 public class AddressController {
+
+    private static final String MSG_KEY = "message";
+    private static final String MSG_NOT_FOUND = "Address no encontrado";
 
     private final AddressService addressService;
     private final SecurityUtils securityUtils;
@@ -43,12 +45,12 @@ public class AddressController {
         
         List<AddressDTO> addressesDTO = addresses.stream()
             .map(AddressDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(addressesDTO));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerAddressPorId(@PathVariable("id") Integer id) {
+    public ResponseEntity<Object> obtenerAddressPorId(@PathVariable("id") Integer id) {
         Optional<Address> addressOpt = addressService.obtenerPorId(id);
         if (addressOpt.isPresent()) {
             Address address = addressOpt.get();
@@ -56,41 +58,41 @@ public class AddressController {
                 Integer currentUserId = securityUtils.getCurrentUserId();
                 if (currentUserId == null || !address.getUserId().equals(currentUserId)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "No tienes permiso para ver esta dirección"));
+                        .body(Map.of(MSG_KEY, "No tienes permiso para ver esta direcciÃ³n"));
                 }
             }
             AddressDTO addressDTO = new AddressDTO(address);
             return ResponseEntity.ok(ApiResponse.success(addressDTO));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", "Address no encontrado"));
+                .body(Map.of(MSG_KEY, MSG_NOT_FOUND));
         }
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<?> obtenerAddressesPorUserId(@PathVariable("userId") Integer userId) {
+    public ResponseEntity<Object> obtenerAddressesPorUserId(@PathVariable("userId") Integer userId) {
         if (!securityUtils.isAdmin()) {
             Integer currentUserId = securityUtils.getCurrentUserId();
             if (currentUserId == null || !userId.equals(currentUserId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "No tienes permiso para ver las direcciones de este usuario"));
+                    .body(Map.of(MSG_KEY, "No tienes permiso para ver las direcciones de este usuario"));
             }
         }
         List<Address> addresses = addressService.obtenerPorUserId(userId);
         List<AddressDTO> addressesDTO = addresses.stream()
             .map(AddressDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(addressesDTO));
     }
 
     @PostMapping
-    public ResponseEntity<?> crearAddress(@Valid @RequestBody AddressDTO addressDTO) {
+    public ResponseEntity<Object> crearAddress(@Valid @RequestBody AddressDTO addressDTO) {
         try {
             if (!securityUtils.isAdmin()) {
                 Integer currentUserId = securityUtils.getCurrentUserId();
                 if (currentUserId == null || !addressDTO.getUserId().equals(currentUserId)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "No tienes permiso para crear una dirección para otro usuario"));
+                        .body(Map.of(MSG_KEY, "No tienes permiso para crear una direcciÃ³n para otro usuario"));
                 }
             }
             Address address = new Address();
@@ -105,23 +107,23 @@ public class AddressController {
             return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(new AddressDTO(addressCreado), "Creado exitosamente"));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarAddress(@PathVariable("id") Integer id, @Valid @RequestBody AddressDTO addressDTO) {
+    public ResponseEntity<Object> actualizarAddress(@PathVariable("id") Integer id, @Valid @RequestBody AddressDTO addressDTO) {
         try {
             Optional<Address> existingOpt = addressService.obtenerPorId(id);
             if (existingOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Address no encontrado"));
+                    .body(Map.of(MSG_KEY, MSG_NOT_FOUND));
             }
             if (!securityUtils.isAdmin()) {
                 Integer currentUserId = securityUtils.getCurrentUserId();
                 if (currentUserId == null || !existingOpt.get().getUserId().equals(currentUserId)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "No tienes permiso para modificar esta dirección"));
+                        .body(Map.of(MSG_KEY, "No tienes permiso para modificar esta direcciÃ³n"));
                 }
             }
             Address address = new Address();
@@ -136,30 +138,31 @@ public class AddressController {
             return ResponseEntity.ok(ApiResponse.success(new AddressDTO(addressActualizado)));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarAddress(@PathVariable("id") Integer id) {
+    public ResponseEntity<Object> eliminarAddress(@PathVariable("id") Integer id) {
         try {
             Optional<Address> existingOpt = addressService.obtenerPorId(id);
             if (existingOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Address no encontrado"));
+                    .body(Map.of(MSG_KEY, MSG_NOT_FOUND));
             }
             if (!securityUtils.isAdmin()) {
                 Integer currentUserId = securityUtils.getCurrentUserId();
                 if (currentUserId == null || !existingOpt.get().getUserId().equals(currentUserId)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "No tienes permiso para eliminar esta dirección"));
+                        .body(Map.of(MSG_KEY, "No tienes permiso para eliminar esta direcciÃ³n"));
                 }
             }
             addressService.eliminarAddress(id);
-            return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Address eliminado correctamente")));
+            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Address eliminado correctamente")));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
 }
+

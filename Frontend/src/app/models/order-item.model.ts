@@ -1,44 +1,28 @@
 export class OrderItem {
   id?: number;
-  orderId: number;
-  pizzaId: number;
+  orderId!: number;
+  pizzaId!: number;
   sizeId?: number;
-  quantity: number;
-  unitPrice: number;
-  sizeExtra: number;
-  lineTotal: number;
+  quantity!: number;
+  unitPrice!: number;
+  sizeExtra!: number;
+  lineTotal!: number;
 
-  constructor(
-    orderId: number,
-    pizzaId: number,
-    quantity: number,
-    unitPrice: number,
-    sizeExtra: number,
-    lineTotal: number,
-    sizeId?: number,
-    id?: number
-  ) {
-    this.id = id;
-    this.orderId = orderId;
-    this.pizzaId = pizzaId;
-    this.sizeId = sizeId;
-    this.quantity = quantity;
-    this.unitPrice = unitPrice;
-    this.sizeExtra = sizeExtra;
-    this.lineTotal = lineTotal;
+  constructor(data: Partial<OrderItem>) {
+    Object.assign(this, data);
   }
 
   static fromDTO(dto: any): OrderItem {
-    return new OrderItem(
-      dto.orderId,
-      dto.pizzaId,
-      dto.quantity,
-      dto.unitPrice,
-      dto.sizeExtra,
-      dto.lineTotal,
-      dto.sizeId,
-      dto.id
-    );
+    return new OrderItem({
+      orderId: dto.orderId,
+      pizzaId: dto.pizzaId,
+      quantity: dto.quantity,
+      unitPrice: dto.unitPrice,
+      sizeExtra: dto.sizeExtra,
+      lineTotal: dto.lineTotal,
+      sizeId: dto.sizeId,
+      id: dto.id
+    });
   }
 
   toDTO(): any {

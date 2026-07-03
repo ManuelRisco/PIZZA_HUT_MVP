@@ -39,6 +39,12 @@ public class CheckoutServiceTest {
     private OrderItemExtraService orderItemExtraService;
     @Mock
     private IngredientService ingredientService;
+    @Mock
+    private PizzaService pizzaService;
+    @Mock
+    private ExtraService extraService;
+    @Mock
+    private SizeService sizeService;
 
     @InjectMocks
     private CheckoutService checkoutService;
@@ -96,11 +102,24 @@ public class CheckoutServiceTest {
         Order savedOrder = new Order();
         savedOrder.setId(100);
         savedOrder.setTotal(new BigDecimal("55.00"));
+        savedOrder.setDeliveryFee(new BigDecimal("5.00"));
         when(orderService.crearOrder(any(Order.class))).thenReturn(savedOrder);
 
         OrderItem savedItem = new OrderItem();
         savedItem.setId(1000);
         when(orderItemService.crearOrderItem(any(OrderItem.class))).thenReturn(savedItem);
+
+        com.example.models.Pizza mockPizza = new com.example.models.Pizza();
+        mockPizza.setId(1);
+        mockPizza.setPrice(new BigDecimal("20.00"));
+        when(pizzaService.obtenerPorId(1)).thenReturn(java.util.Optional.of(mockPizza));
+
+        com.example.models.Size mockSize = new com.example.models.Size();
+        mockSize.setId(2);
+        mockSize.setExtraCost(new BigDecimal("5.00"));
+        when(sizeService.obtenerPorId(2)).thenReturn(java.util.Optional.of(mockSize));
+
+        when(orderService.actualizarOrder(eq(100), any(Order.class))).thenReturn(savedOrder);
 
         // Act
         Order result = checkoutService.checkout(request);

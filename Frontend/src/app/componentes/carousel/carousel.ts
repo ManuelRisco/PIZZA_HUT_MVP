@@ -22,7 +22,7 @@ export class Carousel implements OnInit, OnDestroy {
   prevIndex = signal(0);
   private intervalId: any;
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(private readonly cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.startAutoPlay();
@@ -68,3 +68,4 @@ export class Carousel implements OnInit, OnDestroy {
     }
   }
 }
+

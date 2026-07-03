@@ -24,7 +24,7 @@ export class MetodosPagoComponent implements OnInit {
   mensajeAdvertenciaNombre: string = '';
   loading: boolean = false;
 
-  // Paginación
+  // PaginaciÃ³n
   currentPage = 1;
   itemsPerPage = 10;
 
@@ -36,7 +36,7 @@ export class MetodosPagoComponent implements OnInit {
     displayOrder: 0
   };
 
-  constructor(private paymentMethodService: PaymentMethodService) { }
+  constructor(private readonly paymentMethodService: PaymentMethodService) { }
 
   ngOnInit(): void {
     this.cargarMetodosPago();
@@ -46,12 +46,12 @@ export class MetodosPagoComponent implements OnInit {
     this.loading = true;
     this.paymentMethodService.listarMetodosPago().subscribe({
       next: (data) => {
-        this.metodosPago = data.sort((a, b) => a.displayOrder - b.displayOrder);
+        this.metodosPago = data.toSorted((a, b) => a.displayOrder - b.displayOrder);
         this.aplicarPaginacion();
         this.loading = false;
       },
       error: (error) => {
-        this.mostrarError('Error al cargar los métodos de pago');
+        this.mostrarError('Error al cargar los mÃ©todos de pago');
         console.error(error);
         this.loading = false;
       }
@@ -109,12 +109,12 @@ export class MetodosPagoComponent implements OnInit {
     }
 
     if (this.mensajeAdvertenciaOrden) {
-      this.mostrarError('El orden de visualización ya está en uso');
+      this.mostrarError('El orden de visualizaciÃ³n ya estÃ¡ en uso');
       return;
     }
 
     if (this.mensajeAdvertenciaNombre) {
-      this.mostrarError('El nombre ya está en uso');
+      this.mostrarError('El nombre ya estÃ¡ en uso');
       return;
     }
 
@@ -122,12 +122,12 @@ export class MetodosPagoComponent implements OnInit {
       // Actualizar
       this.paymentMethodService.actualizarMetodoPago(this.metodoSeleccionado.id, this.formulario).subscribe({
         next: () => {
-          this.mostrarExito('Método de pago actualizado correctamente');
+          this.mostrarExito('MÃ©todo de pago actualizado correctamente');
           this.cargarMetodosPago();
           this.cerrarFormulario();
         },
         error: (error) => {
-          const mensaje = error.error?.message || 'Error al actualizar el método de pago';
+          const mensaje = error.error?.message || 'Error al actualizar el mÃ©todo de pago';
           this.mostrarError(mensaje);
           console.error(error);
         }
@@ -136,12 +136,12 @@ export class MetodosPagoComponent implements OnInit {
       // Crear
       this.paymentMethodService.crearMetodoPago(this.formulario).subscribe({
         next: () => {
-          this.mostrarExito('Método de pago creado correctamente');
+          this.mostrarExito('MÃ©todo de pago creado correctamente');
           this.cargarMetodosPago();
           this.cerrarFormulario();
         },
         error: (error) => {
-          const mensaje = error.error?.message || 'Error al crear el método de pago';
+          const mensaje = error.error?.message || 'Error al crear el mÃ©todo de pago';
           this.mostrarError(mensaje);
           console.error(error);
         }
@@ -155,7 +155,7 @@ export class MetodosPagoComponent implements OnInit {
     const nuevoEstado = !metodo.isActive;
     this.paymentMethodService.cambiarEstado(metodo.id, nuevoEstado).subscribe({
       next: () => {
-        this.mostrarExito(`Método de pago ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`);
+        this.mostrarExito(`MÃ©todo de pago ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`);
         this.cargarMetodosPago();
       },
       error: (error) => {
@@ -168,18 +168,18 @@ export class MetodosPagoComponent implements OnInit {
   eliminarMetodoPago(metodo: PaymentMethodDTO): void {
     if (!metodo.id) return;
     if (metodo.inUse) {
-      this.mostrarError('Este método de pago no se puede eliminar porque ya está en uso');
+      this.mostrarError('Este mÃ©todo de pago no se puede eliminar porque ya estÃ¡ en uso');
       return;
     }
 
-    if (confirm(`¿Está seguro de eliminar el método de pago "${metodo.name}"?`)) {
+    if (confirm(`Â¿EstÃ¡ seguro de eliminar el mÃ©todo de pago "${metodo.name}"?`)) {
       this.paymentMethodService.eliminarMetodoPago(metodo.id).subscribe({
         next: () => {
-          this.mostrarExito('Método de pago eliminado correctamente');
+          this.mostrarExito('MÃ©todo de pago eliminado correctamente');
           this.cargarMetodosPago();
         },
         error: (error) => {
-          this.mostrarError('Error al eliminar el método de pago. Puede estar en uso.');
+          this.mostrarError('Error al eliminar el mÃ©todo de pago. Puede estar en uso.');
           console.error(error);
         }
       });
@@ -213,7 +213,7 @@ export class MetodosPagoComponent implements OnInit {
     );
     
     if (ordenExiste) {
-      this.mensajeAdvertenciaOrden = '⚠️ Este orden ya está en uso por otro método de pago';
+      this.mensajeAdvertenciaOrden = 'âš ï¸ Este orden ya estÃ¡ en uso por otro mÃ©todo de pago';
     }
   }
 
@@ -227,7 +227,7 @@ export class MetodosPagoComponent implements OnInit {
       );
       
       if (nombreExiste) {
-        this.mensajeAdvertenciaNombre = '⚠️ Este nombre ya está en uso';
+        this.mensajeAdvertenciaNombre = 'âš ï¸ Este nombre ya estÃ¡ en uso';
       }
     }
   }
@@ -238,3 +238,4 @@ export class MetodosPagoComponent implements OnInit {
            this.formulario.name.trim() !== '';
   }
 }
+

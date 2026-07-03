@@ -7,12 +7,12 @@ import { AuthService } from '../services/auth.service';
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
 
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.authService.getToken();
 
-    // Solo enviar token si existe Y no está expirado
+    // Solo enviar token si existe Y no estÃ¡ expirado
     if (token && !this.authService.isTokenExpired()) {
       const authReq = req.clone({
         headers: req.headers.set('Authorization', `Bearer ${token}`)
@@ -20,7 +20,7 @@ export class AuthInterceptor implements HttpInterceptor {
       
       return next.handle(authReq).pipe(
         catchError((error: HttpErrorResponse) => {
-          // Si el backend rechaza el token (401), cerrar sesión
+          // Si el backend rechaza el token (401), cerrar sesiÃ³n
           if (error.status === 401) {
             this.authService.logout();
           }
@@ -29,13 +29,14 @@ export class AuthInterceptor implements HttpInterceptor {
       );
     }
 
-    // Si hay token pero está expirado, limpiar sin redirigir
+    // Si hay token pero estÃ¡ expirado, limpiar sin redirigir
     if (token && this.authService.isTokenExpired()) {
       this.authService.clearSessionSilently();
     }
 
-    // Sin token: continuar con la petición
-    // El backend permitirá acceso público
+    // Sin token: continuar con la peticiÃ³n
+    // El backend permitirÃ¡ acceso pÃºblico
     return next.handle(req);
   }
 }
+

@@ -7,13 +7,13 @@ import { Router } from '@angular/router';
   providedIn: 'root',
 })
 export class IdleTimeoutService {
-  private authService = inject(AuthService);
-  private toastService = inject(ToastService);
-  private router = inject(Router);
-  private ngZone = inject(NgZone);
+  private readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
+  private readonly router = inject(Router);
+  private readonly ngZone = inject(NgZone);
 
-  private timeoutSeconds = 300; // 5 minutos (300 segundos) para cierre total
-  private warningSeconds = 180; // 3 minutos (180 segundos) para mostrar el modal
+  private readonly timeoutSeconds= 300; // 5 minutos (300 segundos) para cierre total
+  private readonly warningSeconds= 180; // 3 minutos (180 segundos) para mostrar el modal
 
   private idleTimer: any;
   private warningTimer: any;
@@ -23,7 +23,7 @@ export class IdleTimeoutService {
   
   private isTracking = false;
 
-  private userActivityEvents = [
+  private readonly userActivityEvents= [
     'mousemove',
     'keydown',
     'wheel',
@@ -35,7 +35,7 @@ export class IdleTimeoutService {
     'scroll',
   ];
 
-  private resetTimerBound = this.resetTimer.bind(this);
+  private readonly resetTimerBound= this.resetTimer.bind(this);
 
   constructor() {
     this.authService.currentUser$.subscribe((user) => {

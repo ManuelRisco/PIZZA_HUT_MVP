@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ViewChild, ElementRef, HostListener, AfterViewInit } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -55,22 +55,22 @@ export class MenuComponent implements OnInit, AfterViewInit {
   // Variable para highlight
   pizzaHighlightId: number | null = null;
 
-  private pizzaService = inject(PizzaService);
-  private cartService = inject(CartService);
-  private sizeService = inject(Size);
-  private ingredientService = inject(IngredientService);
-  private pizzaPatronesService = inject(PizzaPatronesService);
-  private imageCacheService = inject(ImageCacheService);
-  private imageOptimizer = inject(ImageOptimizerService);
-  private favoriteService = inject(FavoriteService);
-  private authService = inject(AuthService);
-  private accessibility = inject(AccessibilityService);
-  private toastService = inject(ToastService);
-  private translateService = inject(TranslateService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
+  private readonly pizzaService = inject(PizzaService);
+  private readonly cartService = inject(CartService);
+  private readonly sizeService = inject(Size);
+  private readonly ingredientService = inject(IngredientService);
+  private readonly pizzaPatronesService = inject(PizzaPatronesService);
+  private readonly imageCacheService = inject(ImageCacheService);
+  private readonly imageOptimizer = inject(ImageOptimizerService);
+  private readonly favoriteService = inject(FavoriteService);
+  private readonly authService = inject(AuthService);
+  private readonly accessibility = inject(AccessibilityService);
+  private readonly toastService = inject(ToastService);
+  private readonly translateService = inject(TranslateService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   
-  private el = inject(ElementRef);
+  private readonly el = inject(ElementRef);
   private scrollObserver?: IntersectionObserver;
   
   @ViewChild('searchInput', { static: false }) searchInput?: ElementRef;
@@ -206,7 +206,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
         this.pizzasFiltradas = [...this.pizzas]; // Inicializar pizzas filtradas
         
         // Tamaños
-        this.tamanosDisponibles = response.sizes.sort((a, b) => 
+        this.tamanosDisponibles = response.sizes.toSorted((a, b) => 
           (a.displayOrder || 0) - (b.displayOrder || 0)
         );
         
@@ -243,7 +243,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
   private precargarImagenes(): void {
     const imageUrls = this.pizzas
       .map(p => p.imageUrl)
-      .filter(url => url && url.trim() !== '') as string[];
+      .filter(url => url?.trim() !== '') as string[];
     
     // Optimizar las URLs antes de pre-cargar
     const optimizedUrls = imageUrls.map(url => 
@@ -278,7 +278,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
     } else {
       pizzasFiltradas = this.pizzas.filter(pizza => 
         pizza.name.toLowerCase().includes(termino) ||
-        (pizza.description && pizza.description.toLowerCase().includes(termino))
+        (pizza.description?.toLowerCase().includes(termino))
       );
     }
 
@@ -305,7 +305,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
    * Ordena las pizzas poniendo los favoritos primero
    */
   private ordenarPorFavoritos(pizzas: PizzaDTO[]): PizzaDTO[] {
-    return pizzas.sort((a, b) => {
+    return pizzas.toSorted((a, b) => {
       const aEsFavorito = this.esFavorito(a.id || 0);
       const bEsFavorito = this.esFavorito(b.id || 0);
       
@@ -403,7 +403,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
   cargarTamanos(): void {
     this.sizeService.obtenerTodos().subscribe({
       next: (sizes) => {
-        this.tamanosDisponibles = sizes.sort((a, b) => 
+        this.tamanosDisponibles = sizes.toSorted((a, b) => 
           (a.displayOrder || 0) - (b.displayOrder || 0)
         );
       },
@@ -604,50 +604,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
     }
   }
 
-  @HostListener('document:keydown', ['$event'])
-  manejarTecladoModal(event: KeyboardEvent): void {
-    if (!this.mostrarModal && !this.mostrarModalRapido) {
-      return;
-    }
 
-    if (event.key === 'Escape') {
-      this.cerrarModal();
-      this.cerrarModalRapido();
-      return;
-    }
-
-    if (event.key === 'Tab') {
-      const modales = document.querySelectorAll('.modal.show');
-      if (modales.length === 0) return;
-      
-      const modalActivo = modales[modales.length - 1] as HTMLElement;
-      const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-      const focusableElements = Array.from(modalActivo.querySelectorAll(focusableSelectors)) as HTMLElement[];
-      
-      if (focusableElements.length === 0) return;
-
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-
-      if (!modalActivo.contains(document.activeElement)) {
-        firstElement.focus();
-        event.preventDefault();
-        return;
-      }
-
-      if (event.shiftKey) { // Shift + Tab
-        if (document.activeElement === firstElement) {
-          lastElement.focus();
-          event.preventDefault();
-        }
-      } else { // Solo Tab
-        if (document.activeElement === lastElement) {
-          firstElement.focus();
-          event.preventDefault();
-        }
-      }
-    }
-  }
 }
 
 

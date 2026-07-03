@@ -34,7 +34,7 @@ export class ClientePedidosComponent implements OnInit {
   
   estados = ['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
 
-  // Para el modal de reseña
+  // Para el modal de reseÃ±a
   nuevaReview: ReviewDTO = {
     orderId: 0,
     userId: 0,
@@ -47,9 +47,9 @@ export class ClientePedidosComponent implements OnInit {
   editandoReview: boolean = false;
 
   constructor(
-    private orderService: Order,
-    private authService: AuthService,
-    private reviewService: Review
+    private readonly orderService: Order,
+    private readonly authService: AuthService,
+    private readonly reviewService: Review
   ) {}
 
   ngOnInit(): void {
@@ -59,16 +59,16 @@ export class ClientePedidosComponent implements OnInit {
 
   cargarReviewsDelUsuario(): void {
     const currentUser = this.authService.getCurrentUser();
-    if (currentUser && currentUser.id) {
+    if (currentUser?.id) {
       this.reviewService.obtenerPorUsuario(currentUser.id).subscribe({
         next: (reviews) => {
-          // Guardar los IDs de pedidos que ya tienen reseña
+          // Guardar los IDs de pedidos que ya tienen reseÃ±a
           this.pedidosConReview = new Set(reviews.map(r => r.orderId));
-          // Guardar las reseñas completas en un mapa
+          // Guardar las reseÃ±as completas en un mapa
           this.reviewsDelUsuario = new Map(reviews.map(r => [r.orderId, r]));
         },
         error: (err) => {
-          console.error('Error al cargar reseñas:', err);
+          console.error('Error al cargar reseÃ±as:', err);
         }
       });
     }
@@ -78,7 +78,7 @@ export class ClientePedidosComponent implements OnInit {
     this.loading = true;
     const currentUser = this.authService.getCurrentUser();
     
-    if (!currentUser || !currentUser.id) {
+    if (!currentUser?.id) {
       this.mostrarMensaje('Error: Usuario no autenticado', true);
       this.loading = false;
       return;
@@ -90,7 +90,7 @@ export class ClientePedidosComponent implements OnInit {
         // Filtrar solo los pedidos del usuario actual
         this.orders = data
           .filter(order => order.userId === currentUser.id)
-          .sort((a, b) => {
+          .toSorted((a, b) => {
             return new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime();
           });
         this.aplicarFiltro();
@@ -172,7 +172,7 @@ export class ClientePedidosComponent implements OnInit {
 
   // Los clientes NO pueden cambiar el estado de sus pedidos
   cambiarEstado(order: OrderCompleteDTO, nuevoEstado: string): void {
-    // Este método está aquí para compatibilidad con el template pero no hace nada
+    // Este mÃ©todo estÃ¡ aquÃ­ para compatibilidad con el template pero no hace nada
     // Solo los administradores pueden cambiar estados
   }
 
@@ -217,7 +217,7 @@ export class ClientePedidosComponent implements OnInit {
   }
 
   getDeliveryTypeLabel(type: string): string {
-    return type === 'PICKUP' ? '🏪 Recojo en tienda' : '🛵 Delivery';
+    return type === 'PICKUP' ? 'ðŸª Recojo en tienda' : 'ðŸ›µ Delivery';
   }
 
   getDeliveryTypeBadge(type: string): string {
@@ -242,10 +242,10 @@ export class ClientePedidosComponent implements OnInit {
     });
   }
 
-  // Métodos para reseñas
+  // MÃ©todos para reseÃ±as
   abrirModalReview(order: OrderCompleteDTO): void {
     const currentUser = this.authService.getCurrentUser();
-    if (!currentUser || !currentUser.id) {
+    if (!currentUser?.id) {
       this.mostrarMensaje('Error: Usuario no autenticado', true);
       return;
     }
@@ -264,14 +264,14 @@ export class ClientePedidosComponent implements OnInit {
 
   abrirModalEditarReview(order: OrderCompleteDTO): void {
     const currentUser = this.authService.getCurrentUser();
-    if (!currentUser || !currentUser.id) {
+    if (!currentUser?.id) {
       this.mostrarMensaje('Error: Usuario no autenticado', true);
       return;
     }
 
     const reviewExistente = this.reviewsDelUsuario.get(order.id || 0);
     if (!reviewExistente) {
-      this.mostrarMensaje('No se encontró la reseña', true);
+      this.mostrarMensaje('No se encontrÃ³ la reseÃ±a', true);
       return;
     }
 
@@ -308,34 +308,39 @@ export class ClientePedidosComponent implements OnInit {
     }
 
     if (this.editandoReview && this.nuevaReview.id) {
-      // Actualizar reseña existente
-      this.reviewService.actualizar(this.nuevaReview.id, this.nuevaReview).subscribe({
-        next: () => {
-          this.mostrarMensaje('¡Reseña actualizada exitosamente!');
-          // Actualizar en el mapa
-          this.reviewsDelUsuario.set(this.nuevaReview.orderId, this.nuevaReview);
-          this.cerrarModalReview();
-        },
-        error: (err) => {
-          console.error('Error al actualizar reseña:', err);
-          this.mostrarMensaje('Error al actualizar la reseña', true);
-        }
-      });
+      this.actualizarReview();
     } else {
-      // Crear nueva reseña
-      this.reviewService.crear(this.nuevaReview).subscribe({
-        next: (reviewCreada) => {
-          this.mostrarMensaje('¡Reseña enviada exitosamente!');
-          this.pedidosConReview.add(this.nuevaReview.orderId);
-          this.reviewsDelUsuario.set(this.nuevaReview.orderId, reviewCreada);
-          this.cerrarModalReview();
-        },
-        error: (err) => {
-          console.error('Error al guardar reseña:', err);
-          this.mostrarMensaje('Error al enviar la reseña', true);
-        }
-      });
+      this.crearNuevaReview();
     }
+  }
+
+  private actualizarReview(): void {
+    this.reviewService.actualizar(this.nuevaReview.id as number, this.nuevaReview).subscribe({
+      next: () => {
+        this.mostrarMensaje('Â¡ReseÃ±a actualizada exitosamente!');
+        this.reviewsDelUsuario.set(this.nuevaReview.orderId, this.nuevaReview);
+        this.cerrarModalReview();
+      },
+      error: (err) => {
+        console.error('Error al actualizar reseÃ±a:', err);
+        this.mostrarMensaje('Error al actualizar la reseÃ±a', true);
+      }
+    });
+  }
+
+  private crearNuevaReview(): void {
+    this.reviewService.crear(this.nuevaReview).subscribe({
+      next: (reviewCreada) => {
+        this.mostrarMensaje('Â¡ReseÃ±a enviada exitosamente!');
+        this.pedidosConReview.add(this.nuevaReview.orderId);
+        this.reviewsDelUsuario.set(this.nuevaReview.orderId, reviewCreada);
+        this.cerrarModalReview();
+      },
+      error: (err) => {
+        console.error('Error al guardar reseÃ±a:', err);
+        this.mostrarMensaje('Error al enviar la reseÃ±a', true);
+      }
+    });
   }
 
   puedeDejarReview(order: OrderCompleteDTO): boolean {
@@ -348,21 +353,21 @@ export class ClientePedidosComponent implements OnInit {
 
   eliminarReview(order: OrderCompleteDTO): void {
     const reviewExistente = this.reviewsDelUsuario.get(order.id || 0);
-    if (!reviewExistente || !reviewExistente.id) {
-      this.mostrarMensaje('No se encontró la reseña', true);
+    if (!reviewExistente?.id) {
+      this.mostrarMensaje('No se encontrÃ³ la reseÃ±a', true);
       return;
     }
 
-    if (confirm('¿Estás seguro de que deseas eliminar esta reseña?')) {
+    if (confirm('Â¿EstÃ¡s seguro de que deseas eliminar esta reseÃ±a?')) {
       this.reviewService.eliminar(reviewExistente.id).subscribe({
         next: () => {
-          this.mostrarMensaje('Reseña eliminada exitosamente');
+          this.mostrarMensaje('ReseÃ±a eliminada exitosamente');
           this.pedidosConReview.delete(order.id || 0);
           this.reviewsDelUsuario.delete(order.id || 0);
         },
         error: (err) => {
-          console.error('Error al eliminar reseña:', err);
-          this.mostrarMensaje('Error al eliminar la reseña', true);
+          console.error('Error al eliminar reseÃ±a:', err);
+          this.mostrarMensaje('Error al eliminar la reseÃ±a', true);
         }
       });
     }
@@ -406,36 +411,39 @@ export class ClientePedidosComponent implements OnInit {
     }
 
     if (event.key === 'Tab') {
-      const modales = document.querySelectorAll('.modal.show');
-      if (modales.length === 0) return;
-      
-      const modalActivo = modales[modales.length - 1] as HTMLElement;
-      const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-      const focusableElements = Array.from(modalActivo.querySelectorAll(focusableSelectors)) as HTMLElement[];
-      
-      if (focusableElements.length === 0) return;
+      this.manejarTabModal(event);
+    }
+  }
 
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
+  private manejarTabModal(event: KeyboardEvent): void {
+    const modales = document.querySelectorAll('.modal.show');
+    if (modales.length === 0) return;
+    
+    const modalActivo = modales[modales.length - 1] as HTMLElement;
+    const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const focusableElements = Array.from(modalActivo.querySelectorAll(focusableSelectors)) as HTMLElement[];
+    
+    if (focusableElements.length === 0) return;
 
-      if (!modalActivo.contains(document.activeElement)) {
-        firstElement.focus();
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (!modalActivo.contains(document.activeElement)) {
+      firstElement.focus();
+      event.preventDefault();
+      return;
+    }
+
+    if (event.shiftKey) { // Shift + Tab
+      if (document.activeElement === firstElement) {
+        lastElement.focus();
         event.preventDefault();
-        return;
       }
-
-      if (event.shiftKey) { // Shift + Tab
-        if (document.activeElement === firstElement) {
-          lastElement.focus();
-          event.preventDefault();
-        }
-      } else { // Solo Tab
-        if (document.activeElement === lastElement) {
-          firstElement.focus();
-          event.preventDefault();
-        }
-      }
+    } else if (document.activeElement === lastElement) { // Solo Tab
+      firstElement.focus();
+      event.preventDefault();
     }
   }
 }
+
 

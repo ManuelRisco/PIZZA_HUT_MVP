@@ -135,7 +135,7 @@ export class TranslateService {
     document.querySelectorAll('iframe.goog-te-menu-frame, iframe.goog-te-banner-frame').forEach(f => f.remove());
     
     // 4. Limpiar objetos globales
-    if ((window as any).google && (window as any).google.translate) {
+    if ((window as any).google?.translate) {
       delete (window as any).google.translate;
     }
     

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -28,7 +28,7 @@ declare var KR: any;
   templateUrl: './carrito.html',
   styleUrl: './carrito.css',
 })
-export class CarritoComponent implements OnInit, OnDestroy {
+export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
   onSavedAddressChange(): void {
     if (this.addressOption === 'saved' && this.selectedAddressId) {
       const dir = this.direcciones.find((d) => d.id === this.selectedAddressId);
@@ -93,11 +93,11 @@ export class CarritoComponent implements OnInit, OnDestroy {
         this.newAddressError = '';
       },
       error: () => {
-        this.newAddressError = 'No se pudo guardar la dirección.';
+        this.newAddressError = 'No se pudo guardar la direcciÃ³n.';
       },
     });
   }
-  ngOnChanges(): void {
+  ngOnChanges(changes: SimpleChanges): void {
     this.actualizarAddressForm();
   }
 
@@ -139,11 +139,11 @@ export class CarritoComponent implements OnInit, OnDestroy {
 
   isProcessing = false;
   isSuccess = false;
-  private subs: Subscription[] = [];
+  private readonly subs: Subscription[] = [];
   direcciones: AddressDTO[] = [];
   selectedAddressId: number | null = null;
 
-  // Modal de eliminación
+  // Modal de eliminaciÃ³n
   showDeleteModal = false;
   itemToDelete: CartItem | null = null;
 
@@ -171,28 +171,28 @@ export class CarritoComponent implements OnInit, OnDestroy {
   isValidatingPromo = false;
 
   constructor(
-    private cartService: CartService,
-    private checkoutService: CheckoutService,
-    private paymentMethodService: PaymentMethodService,
-    private ingredientService: IngredientService,
-    private imageOptimizer: ImageOptimizerService,
-    private addressService: AddressService,
-    private authService: AuthService,
-    private promocionService: PromocionService,
-    private accessibility: AccessibilityService,
-    private toastService: ToastService,
-    private paymentService: Payment,
-    private router: Router,
+    private readonly cartService: CartService,
+    private readonly checkoutService: CheckoutService,
+    private readonly paymentMethodService: PaymentMethodService,
+    private readonly ingredientService: IngredientService,
+    private readonly imageOptimizer: ImageOptimizerService,
+    private readonly addressService: AddressService,
+    private readonly authService: AuthService,
+    private readonly promocionService: PromocionService,
+    private readonly accessibility: AccessibilityService,
+    private readonly toastService: ToastService,
+    private readonly paymentService: Payment,
+    private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
     this.subs.push(
       this.cartService.items$.subscribe((items) => {
         this.items = items;
-        this.recalcularTotales(); // Recalcular según el tipo de delivery
+        this.recalcularTotales(); // Recalcular segÃºn el tipo de delivery
         // Announce cart update
         if (items.length === 0) {
-          this.accessibility.announce('Carrito vacío');
+          this.accessibility.announce('Carrito vacÃ­o');
         } else {
           this.accessibility.announceCartTotal(this.totals.total);
         }
@@ -201,14 +201,14 @@ export class CarritoComponent implements OnInit, OnDestroy {
 
     this.loadPaymentMethods();
     this.loadIngredientes();
-    this.cargarPromocionGuardada(); // Cargar código promocional guardado
+    this.cargarPromocionGuardada(); // Cargar cÃ³digo promocional guardado
 
     // Cargar direcciones del usuario autenticado
     const userId = this.authService.obtenerUsuarioId();
     if (userId) {
       this.addressService.obtenerPorUserId(userId).subscribe({
         next: (direcciones) => {
-          // Filtrar direcciones únicas por line1, city, district
+          // Filtrar direcciones Ãºnicas por line1, city, district
           this.direcciones = direcciones.filter(
             (dir, idx, arr) =>
               arr.findIndex(
@@ -277,10 +277,10 @@ export class CarritoComponent implements OnInit, OnDestroy {
     if (this.items.length === 0) {
       return;
     }
-    if (confirm('¿Deseas vaciar el carrito?')) {
+    if (confirm('Â¿Deseas vaciar el carrito?')) {
       this.cartService.clearCart();
-      this.mostrarMensaje('Carrito vacío');
-      this.accessibility.announce('Carrito vacío');
+      this.mostrarMensaje('Carrito vacÃ­o');
+      this.accessibility.announce('Carrito vacÃ­o');
     }
   }
 
@@ -292,8 +292,8 @@ export class CarritoComponent implements OnInit, OnDestroy {
     if (!this.selectedPaymentMethodId) {
       this.checkoutError =
         this.paymentMethods.length === 0
-          ? 'No hay métodos de pago disponibles en este momento.'
-          : 'Selecciona un método de pago para continuar.';
+          ? 'No hay mÃ©todos de pago disponibles en este momento.'
+          : 'Selecciona un mÃ©todo de pago para continuar.';
       return;
     }
 
@@ -303,7 +303,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Si opción es 'saved', copiar datos al formulario antes de validar
+    // Si opciÃ³n es 'saved', copiar datos al formulario antes de validar
     if (
       this.deliveryType === 'DELIVERY' &&
       this.addressOption === 'saved' &&
@@ -317,7 +317,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
         this.addressForm.reference = dir.reference || '';
       }
     }
-    // Validar dirección si es DELIVERY
+    // Validar direcciÃ³n si es DELIVERY
     const addressError = this.validateAddressForm();
     if (addressError) {
       this.checkoutError = addressError;
@@ -336,13 +336,13 @@ export class CarritoComponent implements OnInit, OnDestroy {
       deliveryType: this.deliveryType, // Agregar tipo de delivery
     };
 
-    // Agregar código promocional y descuento si está aplicado
+    // Agregar cÃ³digo promocional y descuento si estÃ¡ aplicado
     if (this.promoApplied && this.promoCode.trim()) {
       payload.promoCode = this.promoCode.trim();
       payload.discount = this.promoDiscount;
     }
 
-    // Agregar dirección si es DELIVERY
+    // Agregar direcciÃ³n si es DELIVERY
     if (this.deliveryType === 'DELIVERY') {
       payload.address = {
         line1: this.addressForm.line1.trim(),
@@ -352,7 +352,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
       };
     }
 
-    // Simular que el pago fue exitoso automáticamente
+    // Simular que el pago fue exitoso automÃ¡ticamente
     payload.payment = {
       paymentMethodId: this.selectedPaymentMethodId,
       amount: this.totals.total,
@@ -373,7 +373,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
       next: (result) => {
         this.isProcessing = false;
         this.isSuccess = true;
-        this.accessibility.announceSuccess('Pedido confirmado con éxito.');
+        this.accessibility.announceSuccess('Pedido confirmado con Ã©xito.');
         this.resetPaymentForms();
         this.limpiarPromocionDeStorage();
       },
@@ -491,7 +491,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
   }
 
   get paymentMethodsSorted(): PaymentMethodDTO[] {
-    return [...this.paymentMethods].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+    return [...this.paymentMethods].toSorted((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
   }
 
   get requiresCardDetails(): boolean {
@@ -506,7 +506,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
 
   private validatePaymentDetails(): string | null {
     if (!this.selectedPaymentMethodId) {
-      return 'Selecciona un método de pago para continuar.';
+      return 'Selecciona un mÃ©todo de pago para continuar.';
     }
 
     if (this.requiresCardDetails) {
@@ -515,23 +515,23 @@ export class CarritoComponent implements OnInit, OnDestroy {
         return 'Ingresa el nombre del titular de la tarjeta.';
       }
       if (!/^\d{16}$/.test(number.replace(/\s+/g, ''))) {
-        return 'Ingresa un número de tarjeta válido de 16 dígitos.';
+        return 'Ingresa un nÃºmero de tarjeta vÃ¡lido de 16 dÃ­gitos.';
       }
       if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry.trim())) {
-        return 'Ingresa la fecha de expiración en formato MM/AA.';
+        return 'Ingresa la fecha de expiraciÃ³n en formato MM/AA.';
       }
       if (!/^\d{3,4}$/.test(cvv.trim())) {
-        return 'Ingresa el CVV válido (3 o 4 dígitos).';
+        return 'Ingresa el CVV vÃ¡lido (3 o 4 dÃ­gitos).';
       }
     }
 
     if (this.requiresMobileDetails) {
       const { phone, reference } = this.mobileForm;
       if (!/^9\d{8}$/.test(phone.trim())) {
-        return 'Ingresa el número de celular Yape (9 dígitos).';
+        return 'Ingresa el nÃºmero de celular Yape (9 dÃ­gitos).';
       }
       if (!reference.trim()) {
-        return 'Ingresa el código o referencia de la transferencia.';
+        return 'Ingresa el cÃ³digo o referencia de la transferencia.';
       }
     }
 
@@ -549,7 +549,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
 
     if (this.requiresMobileDetails) {
       details.push(
-        `Pago móvil ${this.mobileForm.phone.trim()} referencia ${this.mobileForm.reference.trim()}`,
+        `Pago mÃ³vil ${this.mobileForm.phone.trim()} referencia ${this.mobileForm.reference.trim()}`,
       );
     }
 
@@ -610,7 +610,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
   onDeliveryTypeChange(): void {
     this.recalcularTotales();
 
-    // Limpiar el formulario de dirección si se selecciona PICKUP
+    // Limpiar el formulario de direcciÃ³n si se selecciona PICKUP
     if (this.deliveryType === 'PICKUP') {
       this.addressForm = {
         line1: '',
@@ -620,10 +620,10 @@ export class CarritoComponent implements OnInit, OnDestroy {
       };
     }
 
-    // Si cambia la opción de dirección, limpiar el formulario
+    // Si cambia la opciÃ³n de direcciÃ³n, limpiar el formulario
     if (this.deliveryType === 'DELIVERY') {
       if (this.addressOption === 'saved') {
-        // Si hay una dirección seleccionada, cargar sus datos
+        // Si hay una direcciÃ³n seleccionada, cargar sus datos
         if (this.selectedAddressId) {
           this.onSavedAddressChange();
         } else {
@@ -635,7 +635,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
           };
         }
       } else if (this.addressOption === 'new') {
-        // Limpiar formulario para nueva dirección
+        // Limpiar formulario para nueva direcciÃ³n
         this.addressForm = {
           line1: '',
           city: '',
@@ -648,7 +648,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Recalcula los totales según el tipo de delivery
+   * Recalcula los totales segÃºn el tipo de delivery
    */
   private recalcularTotales(): void {
     const baseTotals = this.cartService.getTotals();
@@ -669,15 +669,15 @@ export class CarritoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Valida los datos de dirección para delivery
+   * Valida los datos de direcciÃ³n para delivery
    */
   private validateAddressForm(): string | null {
     if (this.deliveryType === 'PICKUP') {
-      return null; // No se requiere dirección para pickup
+      return null; // No se requiere direcciÃ³n para pickup
     }
 
     if (!this.addressForm.line1.trim()) {
-      return 'La dirección es requerida para entregas a domicilio.';
+      return 'La direcciÃ³n es requerida para entregas a domicilio.';
     }
 
     if (!this.addressForm.city.trim()) {
@@ -699,11 +699,11 @@ export class CarritoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Aplica un código promocional al carrito
+   * Aplica un cÃ³digo promocional al carrito
    */
   aplicarPromocion(): void {
     if (!this.promoCode.trim()) {
-      this.promoError = 'Ingresa un código promocional';
+      this.promoError = 'Ingresa un cÃ³digo promocional';
       return;
     }
 
@@ -718,7 +718,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
     // Calcular subtotal antes del delivery
     const subtotal = this.cartService.getTotals().subtotal;
 
-    // Obtener userId para validación completa
+    // Obtener userId para validaciÃ³n completa
     const userId = this.authService.obtenerUsuarioId();
 
     // Obtener items del carrito para calcular descuento solo sobre items aplicables
@@ -732,18 +732,18 @@ export class CarritoComponent implements OnInit, OnDestroy {
             this.promoApplied = true;
             this.promoDiscount = response.discount;
             this.promoSuccess =
-              response.message || `Código aplicado: -S/. ${response.discount.toFixed(2)}`;
+              response.message || `CÃ³digo aplicado: -S/. ${response.discount.toFixed(2)}`;
             this.guardarPromocionEnStorage(); // Guardar en localStorage
             this.recalcularTotales();
           } else {
-            this.promoError = response.message || 'Código promocional inválido';
+            this.promoError = response.message || 'CÃ³digo promocional invÃ¡lido';
             this.promoApplied = false;
             this.promoDiscount = 0;
           }
           this.isValidatingPromo = false;
         },
         error: (err) => {
-          this.promoError = err?.error?.message || 'No se pudo validar el código';
+          this.promoError = err?.error?.message || 'No se pudo validar el cÃ³digo';
           this.promoApplied = false;
           this.promoDiscount = 0;
           this.isValidatingPromo = false;
@@ -752,7 +752,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Quita el código promocional aplicado
+   * Quita el cÃ³digo promocional aplicado
    */
   quitarPromocion(): void {
     this.promoCode = '';
@@ -765,7 +765,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Guarda el código promocional en localStorage
+   * Guarda el cÃ³digo promocional en localStorage
    */
   private guardarPromocionEnStorage(): void {
     const promoData = {
@@ -777,7 +777,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga el código promocional desde localStorage
+   * Carga el cÃ³digo promocional desde localStorage
    */
   private cargarPromocionGuardada(): void {
     const promoData = localStorage.getItem('cart_promo');
@@ -788,7 +788,7 @@ export class CarritoComponent implements OnInit, OnDestroy {
         this.promoApplied = promo.applied || false;
         this.promoDiscount = promo.discount || 0;
 
-        // Revalidar la promoción para asegurar que sigue siendo válida
+        // Revalidar la promociÃ³n para asegurar que sigue siendo vÃ¡lida
         if (this.promoCode && this.promoApplied) {
           setTimeout(() => {
             this.aplicarPromocion();
@@ -801,9 +801,10 @@ export class CarritoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Limpia el código promocional de localStorage
+   * Limpia el cÃ³digo promocional de localStorage
    */
   private limpiarPromocionDeStorage(): void {
     localStorage.removeItem('cart_promo');
   }
 }
+

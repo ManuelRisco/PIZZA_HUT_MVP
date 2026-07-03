@@ -68,29 +68,29 @@ export class PanelAdmin implements OnInit, OnDestroy {
   ventasSemanaTotal: number = 0;
   cambioSemanal: number = 0; // Porcentaje de cambio vs semana anterior
 
-  // Propiedad para el modal de pedidos del día
+  // Propiedad para el modal de pedidos del dÃ­a
   diaSeleccionado: any = null;
 
   constructor(
-    private authService: AuthService, 
-    private router: Router,
-    private route: ActivatedRoute,
-    private usuarioService: UsuarioService,
-    private orderService: Order,
-    private paymentService: Payment,
-    private reviewService: Review,
-    private pizzaService: PizzaService
+    private readonly authService: AuthService, 
+    private readonly router: Router,
+    private readonly route: ActivatedRoute,
+    private readonly usuarioService: UsuarioService,
+    private readonly orderService: Order,
+    private readonly paymentService: Payment,
+    private readonly reviewService: Review,
+    private readonly pizzaService: PizzaService
   ) {}
 
   ngOnInit() {
-    // Leer el parámetro de vista desde la ruta
+    // Leer el parÃ¡metro de vista desde la ruta
     const vistaFromRoute = this.route.snapshot.data['vista'];
     if (vistaFromRoute) {
       this.vistaActual = vistaFromRoute;
       // Guardar la vista en sessionStorage
       sessionStorage.setItem('adminVistaActual', vistaFromRoute);
     } else {
-      // Si no hay parámetro de vista, intentar restaurar desde sessionStorage
+      // Si no hay parÃ¡metro de vista, intentar restaurar desde sessionStorage
       const vistaGuardada = sessionStorage.getItem('adminVistaActual');
       if (vistaGuardada) {
         this.vistaActual = vistaGuardada;
@@ -116,12 +116,12 @@ export class PanelAdmin implements OnInit, OnDestroy {
   }
 
   cargarEstadisticas(): void {
-    // Cargar pedidos recientes, ventas semanales y más vendidos
+    // Cargar pedidos recientes, ventas semanales y mÃ¡s vendidos
     this.orderService.obtenerTodosCompletos().subscribe({
       next: (pedidos) => {
         this.todosLosPedidos = pedidos;
-        // Pedidos Recientes - últimos 5 ordenados por fecha descendente
-        const pedidosOrdenados = [...pedidos].sort((a, b) => {
+        // Pedidos Recientes - Ãºltimos 5 ordenados por fecha descendente
+        const pedidosOrdenados = [...pedidos].toSorted((a, b) => {
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return dateB - dateA;
@@ -134,7 +134,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
         // Ventas Semanales
         this.calcularVentasSemanales(pedidos);
 
-        // Más Vendidos (Top 5)
+        // MÃ¡s Vendidos (Top 5)
         this.calcularMasVendidos(pedidos);
       },
       error: (err) => console.error('Error al cargar pedidos completos:', err)
@@ -159,7 +159,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
           this.ratingPromedio = 0;
         }
       },
-      error: (err) => console.error('Error al cargar reseñas:', err)
+      error: (err) => console.error('Error al cargar reseÃ±as:', err)
     });
   }
 
@@ -189,7 +189,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
 
   calcularVentasSemanales(pedidos: OrderCompleteDTO[]): void {
     const hoy = new Date();
-    hoy.setHours(23, 59, 59, 999); // Final del día actual
+    hoy.setHours(23, 59, 59, 999); // Final del dÃ­a actual
     
     interface VentaDiaria {
       dia: string;
@@ -201,7 +201,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
     const ventas: VentaDiaria[] = [];
     const dias = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
     
-    // Inicializar los últimos 7 días
+    // Inicializar los Ãºltimos 7 dÃ­as
     for (let i = 6; i >= 0; i--) {
       const fecha = new Date(hoy);
       fecha.setDate(hoy.getDate() - i);
@@ -214,16 +214,16 @@ export class PanelAdmin implements OnInit, OnDestroy {
       });
     }
 
-    // Sumar totales por día (sólo pedidos entregados)
+    // Sumar totales por dÃ­a (sÃ³lo pedidos entregados)
     pedidos.forEach(pedido => {
       if (pedido.createdAt && pedido.status === 'DELIVERED') {
         const fechaPedido = new Date(pedido.createdAt);
-        // Verificar si pertenece a los últimos 7 días
+        // Verificar si pertenece a los Ãºltimos 7 dÃ­as
         const diffTime = Math.abs(hoy.getTime() - fechaPedido.getTime());
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         
         if (diffDays < 7) {
-          // Encontrar el día correcto en nuestro arreglo
+          // Encontrar el dÃ­a correcto en nuestro arreglo
           const fechaStr = fechaPedido.toDateString();
           const diaEncontrado = ventas.find(v => v.fecha === fechaStr);
           if (diaEncontrado) {
@@ -261,7 +261,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
     // Calcular porcentajes para la altura de las barras CSS
     const maxTotal = Math.max(...ventas.map(v => v.total));
     ventas.forEach(v => {
-      // Usar 5% mínimo para que la barra se vea si es 0
+      // Usar 5% mÃ­nimo para que la barra se vea si es 0
       v.porcentaje = maxTotal > 0 ? Math.max((v.total / maxTotal) * 100, 5) : 5;
     });
 
@@ -289,12 +289,12 @@ export class PanelAdmin implements OnInit, OnDestroy {
       }
     });
 
-    // Convertir objeto a array y ordenar de mayor a menor — Top 5
+    // Convertir objeto a array y ordenar de mayor a menor â€” Top 5
     const masVendidosArr = Object.values(conteoProductos)
-      .sort((a, b) => b.cantidad - a.cantidad)
+      .toSorted((a, b) => b.cantidad - a.cantidad)
       .slice(0, 5);
 
-    // Calcular porcentaje relativo al más vendido para barras visuales
+    // Calcular porcentaje relativo al mÃ¡s vendido para barras visuales
     const maxCantidad = masVendidosArr.length > 0 ? masVendidosArr[0].cantidad : 1;
     masVendidosArr.forEach(p => {
       (p as any).porcentaje = (p.cantidad / maxCantidad) * 100;
@@ -312,7 +312,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Reporte de Ventas');
 
-    // 1. Título Principal
+    // 1. TÃ­tulo Principal
     worksheet.mergeCells('A1', 'F1');
     const titleCell = worksheet.getCell('A1');
     titleCell.value = 'REPORTE GENERAL DE VENTAS - PIZZA HUT';
@@ -321,7 +321,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
     worksheet.getRow(1).height = 30;
 
-    // 2. Subtítulo con fecha
+    // 2. SubtÃ­tulo con fecha
     worksheet.mergeCells('A2', 'F2');
     const subtitleCell = worksheet.getCell('A2');
     subtitleCell.value = `Generado el: ${new Date().toLocaleString()}`;
@@ -355,7 +355,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
     this.todosLosPedidos.forEach(p => {
       const row = worksheet.addRow({
         id: `PH-${p.id?.toString().padStart(4, '0')}`,
-        cliente: p.userName || 'Usuario Anónimo',
+        cliente: p.userName || 'Usuario AnÃ³nimo',
         correo: p.userEmail || 'No registrado',
         estado: p.status,
         total: p.total,
@@ -373,7 +373,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
         // Todo centrado
         cell.alignment = { vertical: 'middle', horizontal: 'center' };
 
-        // Formato específico para la columna Total
+        // Formato especÃ­fico para la columna Total
         if (colNumber === 5) {
           cell.numFmt = '"S/" #,##0.00';
           cell.font = { bold: true, color: { argb: 'FF008000' } }; // Verde
@@ -394,7 +394,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
   }
 
   verPedidosDelDia(dia: any): void {
-    if (dia.pedidos && dia.pedidos.length > 0) {
+    if (dia.pedidos?.length > 0) {
       this.diaSeleccionado = dia;
     }
   }
@@ -408,7 +408,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
   }
 
   cerrarSesion(): void {
-    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+    if (confirm('Â¿EstÃ¡s seguro de que deseas cerrar sesiÃ³n?')) {
       // Limpiar la vista guardada
       sessionStorage.removeItem('adminVistaActual');
       this.authService.logout();
@@ -420,3 +420,4 @@ export class PanelAdmin implements OnInit, OnDestroy {
     return this.authService.getCurrentUser();
   }
 }
+

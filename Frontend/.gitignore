@@ -45,3 +45,6 @@ Thumbs.db
 # Base de datos y Variables de entorno
 /BD/
 .env
+
+# SonarQube
+.scannerwork/

@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Join } from './join';
@@ -8,6 +10,7 @@ describe('Join', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideRouter([])],
       imports: [Join]
     })
     .compileComponents();
@@ -21,3 +24,5 @@ describe('Join', () => {
     expect(component).toBeTruthy();
   });
 });
+
+

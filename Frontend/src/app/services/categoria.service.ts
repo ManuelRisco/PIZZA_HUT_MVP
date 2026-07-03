@@ -9,12 +9,12 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class CategoriaService {
-  private apiUrl = `${environment.apiUrl}/categories`;
-  private httpOptions = {
+  private readonly apiUrl= `${environment.apiUrl}/categories`;
+  private readonly httpOptions= {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   listarCategorias(): Observable<CategoryDTO[]> {
     return this.http.get<any>(this.apiUrl).pipe(map(res => res.data !== undefined ? res.data : res));
@@ -36,3 +36,4 @@ export class CategoriaService {
     return this.http.delete<any>(`${this.apiUrl}/${id}`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 }
+

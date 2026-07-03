@@ -5,7 +5,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import jakarta.servlet.http.HttpServletRequest;
 
 @Component
 public class SecurityUtils {
@@ -16,9 +15,6 @@ public class SecurityUtils {
         this.tokenProvider = tokenProvider;
     }
 
-    /**
-     * Obtiene el email del usuario autenticado
-     */
     public String getCurrentUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof String) {
@@ -27,9 +23,6 @@ public class SecurityUtils {
         return null;
     }
 
-    /**
-     * Obtiene el ID del usuario desde el contexto de autenticación
-     */
     public Integer getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getDetails() != null) {
@@ -41,31 +34,27 @@ public class SecurityUtils {
             }
         }
 
-        // Fallback: extraer desde el token en la petición HTTP actual
+        return extractUserIdFromRequestContext();
+    }
+
+    private Integer extractUserIdFromRequestContext() {
         try {
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder
                     .getRequestAttributes();
             if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                String authHeader = request.getHeader("Authorization");
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    String token = authHeader.substring(7);
-                    if (tokenProvider.validateToken(token)) {
-                        Long id = tokenProvider.getIdFromToken(token);
-                        return id != null ? id.intValue() : null;
-                    }
+                String authHeader = attributes.getRequest().getHeader("Authorization");
+                String token = extractTokenFromHeader(authHeader);
+                if (token != null && tokenProvider.validateToken(token)) {
+                    Long id = tokenProvider.getIdFromToken(token);
+                    return id != null ? id.intValue() : null;
                 }
             }
         } catch (Exception e) {
             // Ignorar y retornar null
         }
-
         return null;
     }
 
-    /**
-     * Obtiene el ID del usuario desde el token JWT (alternativa)
-     */
     public Integer getUserIdFromToken(String token) {
         if (token != null && tokenProvider.validateToken(token)) {
             Long id = tokenProvider.getIdFromToken(token);
@@ -74,51 +63,34 @@ public class SecurityUtils {
         return null;
     }
 
-    /**
-     * Verifica si el usuario actual es ADMIN
-     */
     public boolean isAdmin() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getAuthorities() != null) {
+        if (authentication != null) {
             return authentication.getAuthorities().stream()
-                    .map(a -> a.getAuthority())
-                    .anyMatch(role -> role.equals("ROLE_ADMIN"));
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         }
         return false;
     }
 
-    /**
-     * Verifica si el usuario actual es CUSTOMER
-     */
     public boolean isCustomer() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getAuthorities() != null) {
+        if (authentication != null) {
             return authentication.getAuthorities().stream()
-                    .map(a -> a.getAuthority())
-                    .anyMatch(role -> role.equals("ROLE_CUSTOMER"));
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"));
         }
         return false;
     }
 
-    /**
-     * Verifica si el usuario puede acceder al recurso
-     * Los ADMIN pueden acceder a todo, los CUSTOMER solo a sus propios recursos
-     */
     public boolean canAccessResource(Integer resourceUserId, Integer currentUserId) {
         if (isAdmin()) {
-            return true; // Admin puede acceder a todo
+            return true;
         }
-
         if (currentUserId == null || resourceUserId == null) {
             return false;
         }
-
-        return resourceUserId.equals(currentUserId); // Solo puede acceder si es su propio recurso
+        return resourceUserId.equals(currentUserId);
     }
 
-    /**
-     * Extrae el token del header Authorization
-     */
     public String extractTokenFromHeader(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);

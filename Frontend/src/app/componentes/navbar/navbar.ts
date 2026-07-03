@@ -27,15 +27,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
   mostrarSelectorIdioma: boolean = false;
   idiomas: { code: string; name: string; flag: string }[] = [];
 
-  // Estado para Menú Móvil
+  // Estado para MenÃº MÃ³vil
   isMobileMenuOpen: boolean = false;
 
   constructor(
-    private authService: AuthService,
-    private cartService: CartService,
-    private router: Router,
-    private accessibilityService: AccessibilityService,
-    private translateService: TranslateService
+    private readonly authService: AuthService,
+    private readonly cartService: CartService,
+    private readonly router: Router,
+    private readonly accessibilityService: AccessibilityService,
+    private readonly translateService: TranslateService
   ) {}
 
   ngOnInit() {
@@ -49,21 +49,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.cartCount = this.cartService.getItemCount();
     });
 
-    // Anunciar cuando el componente está listo
-    this.accessibilityService.announce('Barra de navegación cargada. Use Alt+M para Menú, Alt+C para Carrito, Alt+P para Perfil', 'polite');
+    // Anunciar cuando el componente estÃ¡ listo
+    this.accessibilityService.announce('Barra de navegaciÃ³n cargada. Use Alt+M para MenÃº, Alt+C para Carrito, Alt+P para Perfil', 'polite');
 
     // Cargar idiomas
     this.idiomas = this.translateService.getAvailableLanguages();
     this.idiomaActual = this.translateService.getCurrentLang();
 
-    // Pre-cargar Google Translate si ya se seleccionó un idioma diferente
+    // Pre-cargar Google Translate si ya se seleccionÃ³ un idioma diferente
     if (this.idiomaActual !== 'es') {
       this.translateService.loadGoogleTranslate();
     }
   }
 
   ngOnDestroy() {
-    // Limpiar la suscripción cuando se destruya el componente
+    // Limpiar la suscripciÃ³n cuando se destruya el componente
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
     }
@@ -74,7 +74,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   toggleMobileMenu() {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
-    // Cerrar otros menús si se abre el móvil
+    // Cerrar otros menÃºs si se abre el mÃ³vil
     if (this.isMobileMenuOpen) {
       this.mostrarMenuUsuario = false;
       this.mostrarSelectorIdioma = false;
@@ -84,7 +84,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   toggleMenuUsuario() {
     this.mostrarMenuUsuario = !this.mostrarMenuUsuario;
     const estado = this.mostrarMenuUsuario ? 'abierto' : 'cerrado';
-    this.accessibilityService.announce(`Menú de usuario ${estado}`, 'polite');
+    this.accessibilityService.announce(`MenÃº de usuario ${estado}`, 'polite');
   }
 
   @HostListener('document:click', ['$event'])
@@ -96,7 +96,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (!target.closest('.language-menu-container')) {
       this.mostrarSelectorIdioma = false;
     }
-    // Cerrar menú móvil al hacer click fuera
+    // Cerrar menÃº mÃ³vil al hacer click fuera
     if (!target.closest('.navbar-links') && !target.closest('.hamburger-btn') && this.isMobileMenuOpen) {
       this.isMobileMenuOpen = false;
     }
@@ -111,7 +111,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       case 'M':
         event.preventDefault();
         this.router.navigate(['/menu']);
-        this.accessibilityService.announceNavigation('Menú');
+        this.accessibilityService.announceNavigation('MenÃº');
         break;
       case 'C':
         event.preventDefault();
@@ -136,13 +136,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   cerrarSesion() {
-    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+    if (confirm('Â¿EstÃ¡s seguro de que deseas cerrar sesiÃ³n?')) {
       this.authService.logout();
       this.usuarioActual = null;
       this.esAdmin = false;
       this.mostrarMenuUsuario = false;
       this.router.navigate(['/']);
-      this.accessibilityService.announceSuccess('Sesión cerrada correctamente');
+      this.accessibilityService.announceSuccess('SesiÃ³n cerrada correctamente');
     }
   }
 
@@ -153,7 +153,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     // Si es la ruta de perfil del admin, navegar al panel y cambiar vista
     if (ruta === '/admin/perfil') {
       this.router.navigate(['/admin/dashboard']).then(() => {
-        // Emitir evento o llamar método del panel admin para cambiar a vista 'mi-perfil'
+        // Emitir evento o llamar mÃ©todo del panel admin para cambiar a vista 'mi-perfil'
         // Por ahora navegamos al dashboard y el admin puede hacer clic en "Mi Perfil" en el sidebar
       });
     } else {
@@ -167,7 +167,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     // Obtener solo el primer nombre
     const primerNombre = this.usuarioActual.name.trim().split(' ')[0];
 
-    // Retornar las primeras 2 letras del primer nombre en mayúsculas
+    // Retornar las primeras 2 letras del primer nombre en mayÃºsculas
     return primerNombre.substring(0, 2).toUpperCase();
   }
 
@@ -189,6 +189,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   getIdiomaActualFlag(): string {
     const idioma = this.idiomas.find(i => i.code === this.idiomaActual);
-    return idioma ? idioma.flag : '🇪🇸';
+    return idioma ? idioma.flag : 'ðŸ‡ªðŸ‡¸';
   }
 }
+

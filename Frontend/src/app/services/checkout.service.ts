@@ -9,9 +9,9 @@ import { AuthService } from './auth.service';
 @Injectable({ providedIn: 'root' })
 export class CheckoutService {
   constructor(
-    private cartService: CartService,
-    private orderService: Order,
-    private authService: AuthService
+    private readonly cartService: CartService,
+    private readonly orderService: Order,
+    private readonly authService: AuthService
   ) {}
 
   checkout(payload: CheckoutPayload = {}): Observable<CheckoutResult> {
@@ -65,7 +65,7 @@ export class CheckoutService {
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           lineTotal: Number((item.unitPrice * item.quantity).toFixed(2)),
-          extraIngredientIds: item.extras ? item.extras.map(e => parseInt(e, 10)).filter(e => !isNaN(e)) : []
+          extraIngredientIds: item.extras ? item.extras.map(e => Number.parseInt(e, 10)).filter(e => !Number.isNaN(e)) : []
         };
       }),
       payment: (payload.payment?.paymentMethodId || payload.paymentMethodId) ? {
@@ -104,3 +104,4 @@ export class CheckoutService {
     return new Error(message);
   }
 }
+

@@ -43,14 +43,14 @@ export class Pizzas implements OnInit {
   tamanosDisponibles: SizeDTO[] = [];
   tamanoSeleccionado?: SizeDTO;
 
-  private pizzaService = inject(PizzaService);
-  private pizzaPatronesService = inject(PizzaPatronesService);
-  private ingredientService = inject(IngredientService);
-  private sizeService = inject(Size);
-  private formBuilder = inject(FormBuilder);
-  private cdr = inject(ChangeDetectorRef);
-  private router = inject(Router);
-  private imageOptimizer = inject(ImageOptimizerService);
+  private readonly pizzaService = inject(PizzaService);
+  private readonly pizzaPatronesService = inject(PizzaPatronesService);
+  private readonly ingredientService = inject(IngredientService);
+  private readonly sizeService = inject(Size);
+  private readonly formBuilder = inject(FormBuilder);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
+  private readonly imageOptimizer = inject(ImageOptimizerService);
 
   constructor() {
     this.pizzaForm = this.formBuilder.group({
@@ -97,7 +97,7 @@ export class Pizzas implements OnInit {
 
     this.pizzaService.listarPizzas().subscribe({
       next: (pizzas) => {
-        let pizzasFiltradas = pizzas;
+        let pizzasFiltradas: typeof pizzas;
         
         switch(filtro) {
           case 'disponibles':
@@ -159,7 +159,7 @@ export class Pizzas implements OnInit {
   private aplicarFiltroSinLoading(): void {
     this.pizzaService.listarPizzas().subscribe({
       next: (pizzas) => {
-        let pizzasFiltradas = pizzas;
+        let pizzasFiltradas: typeof pizzas;
         
         switch(this.filtroActivo) {
           case 'disponibles':
@@ -231,7 +231,7 @@ export class Pizzas implements OnInit {
   cargarTamanosDisponibles(): void {
     this.sizeService.obtenerTodos().subscribe({
       next: (tamanos) => {
-        this.tamanosDisponibles = tamanos.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+        this.tamanosDisponibles = tamanos.toSorted((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
       },
       error: (error) => {
         console.error('❌ Error al cargar tamaños:', error);
@@ -271,7 +271,7 @@ export class Pizzas implements OnInit {
    * DECORATOR PATTERN - Calcular precio total con extras
    */
   calcularPrecioConExtras(): void {
-    if (!this.pizzaSeleccionadaExtras || !this.pizzaSeleccionadaExtras.id) return;
+    if (!this.pizzaSeleccionadaExtras?.id) return;
     
     if (this.extrasSeleccionados.length > 0) {
       this.pizzaPatronesService.calcularPrecioConExtras(
@@ -378,10 +378,10 @@ export class Pizzas implements OnInit {
         name: formValue.name,
         description: formValue.description,
         imageUrl: formValue.imageUrl,
-        price: parseFloat(formValue.price),
+        price: Number.parseFloat(formValue.price),
         isAvailable: formValue.isAvailable,
         isPopular: formValue.isPopular,
-        categoryId: parseInt(formValue.categoryId)
+        categoryId: Number.parseInt(formValue.categoryId)
       };
 
       if (this.editMode && this.selectedPizzaId) {
@@ -444,7 +444,6 @@ export class Pizzas implements OnInit {
           this.loading = false;
         }
       });
-    } else {
     }
   }
 
@@ -476,7 +475,7 @@ export class Pizzas implements OnInit {
   }
 
   formatearPrecio(precio: number | undefined | null): string {
-    if (precio === undefined || precio === null || isNaN(precio)) {
+    if (precio === undefined || precio === null || Number.isNaN(precio)) {
       return 'S/ 0.00';
     }
     return `S/ ${Number(precio).toFixed(2)}`;

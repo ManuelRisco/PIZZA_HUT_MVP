@@ -13,12 +13,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/sessions")
 @CrossOrigin(origins = "http://localhost:4200")
 public class SessionLogController {
+
+    private static final String MSG_KEY = "message";
 
     private final SessionLogService sessionLogService;
     private final UsuarioRepository usuarioRepository;
@@ -33,12 +34,12 @@ public class SessionLogController {
             return new java.util.ArrayList<>();
         }
 
-        // Obtener todos los IDs de usuario únicos
+        // Obtener todos los IDs de usuario Ãºnicos
         List<Long> userIds = sessions.stream()
                 .filter(s -> s.getUserId() != null)
                 .map(s -> s.getUserId().longValue())
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
 
         // Buscar todos los usuarios en una sola consulta (Evitar N+1)
         java.util.Map<Long, com.example.models.Usuario> usersMap = new java.util.HashMap<>();
@@ -58,7 +59,7 @@ public class SessionLogController {
                 }
             }
             return dto;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     @GetMapping("/activas")
@@ -145,7 +146,7 @@ public class SessionLogController {
     }
 
     @PostMapping("/cerrar/{sessionToken}")
-    public ResponseEntity<?> cerrarSesion(
+    public ResponseEntity<Object> cerrarSesion(
             @PathVariable String sessionToken,
             @RequestParam(required = false) String reason) {
         
@@ -163,20 +164,18 @@ public class SessionLogController {
         }
         
         sessionLogService.cerrarSesion(sessionToken, logoutReason);
-        return ResponseEntity.ok().body(Map.of("message", "Sesi\u00f3n cerrada correctamente"));
+        return ResponseEntity.ok().body(Map.of(MSG_KEY, "SesiÃ³n cerrada correctamente"));
     }
 
     @PostMapping("/cerrar-usuario/{userId}")
-    public ResponseEntity<?> cerrarSesionesPorUsuario(
+    public ResponseEntity<Object> cerrarSesionesPorUsuario(
             @PathVariable Integer userId,
             @RequestParam(required = false) String reason) {
         
         SessionLog.LogoutReason logoutReason = SessionLog.LogoutReason.FORCED;
         if (reason != null) {
             try {
-                if (reason.equals("CLOSED_BY_ADMIN")) {
-                    logoutReason = SessionLog.LogoutReason.FORCED;
-                } else {
+                if (!reason.equals("CLOSED_BY_ADMIN")) {
                     logoutReason = SessionLog.LogoutReason.valueOf(reason.toUpperCase());
                 }
             } catch (IllegalArgumentException e) {
@@ -185,13 +184,13 @@ public class SessionLogController {
         }
         
         sessionLogService.cerrarSesionesPorUsuario(userId, logoutReason);
-        return ResponseEntity.ok().body(Map.of("message", "Sesiones cerradas correctamente"));
+        return ResponseEntity.ok().body(Map.of(MSG_KEY, "Sesiones cerradas correctamente"));
     }
 
     @PostMapping("/limpiar-inactivas")
-    public ResponseEntity<?> limpiarSesionesInactivas(@RequestParam(defaultValue = "24") int horas) {
+    public ResponseEntity<Object> limpiarSesionesInactivas(@RequestParam(defaultValue = "24") int horas) {
         sessionLogService.cerrarSesionesInactivas(horas);
-        return ResponseEntity.ok().body(Map.of("message", "Sesiones inactivas cerradas correctamente"));
+        return ResponseEntity.ok().body(Map.of(MSG_KEY, "Sesiones inactivas cerradas correctamente"));
     }
 }
 

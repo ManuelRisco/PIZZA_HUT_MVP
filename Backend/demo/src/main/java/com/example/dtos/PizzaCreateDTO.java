@@ -17,7 +17,9 @@ public class PizzaCreateDTO {
     private boolean isPopular;
 
     // Constructor vac\u00edo
-    public PizzaCreateDTO() {}
+    public PizzaCreateDTO() {
+        // Constructor vacío para serialización
+    }
 
     // Getters y setters
     public Integer getCategoryId() { return categoryId; }

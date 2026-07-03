@@ -9,14 +9,14 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class Review {
-  private apiUrl = environment.apiUrl;
-  private httpOptions = {
+  private readonly apiUrl= environment.apiUrl;
+  private readonly httpOptions= {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
-  // Operaciones CRUD para Reseñas
+  // Operaciones CRUD para ReseÃ±as
   obtenerTodos(): Observable<ReviewDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/reviews`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
@@ -53,3 +53,4 @@ export class Review {
     return this.http.patch<any>(`${this.apiUrl}/reviews/${id}/activar`, {}, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 }
+

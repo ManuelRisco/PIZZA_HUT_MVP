@@ -1,31 +1,31 @@
-<section class="cart-wrapper" role="main" aria-label="Carrito de compras">
+<main class="cart-wrapper" aria-label="Carrito de compras">
   <h1 id="cart-title">Tu carrito</h1>
 
   @if (checkoutSuccess) {
-    <div class="alert alert-success" role="status" aria-live="assertive" aria-label="Confirmación de pago">{{ checkoutSuccess }}</div>
+    <output class="alert alert-success" aria-live="assertive" aria-label="Confirmación de pago">{{ checkoutSuccess }}</output>
   }
 
   @if (checkoutError) {
-    <div class="alert alert-danger" role="alert" aria-live="assertive" aria-label="Error en el carrito">{{ checkoutError }}</div>
+    <div class="alert alert-danger" role="alert" aria-live="assertive">{{ checkoutError }}</div>
   }
 
   @if (items.length === 0) {
-    <div class="empty-state" role="status" aria-live="polite" aria-label="Carrito vacío">
+    <output class="empty-state" aria-live="polite" aria-label="Carrito vacío">
       <i class="bi bi-cart-x" aria-hidden="true"></i>
       <h2>Tu carrito está vacío</h2>
       <p>Agrega tus pizzas favoritas desde el menú.</p>
-      <a class="btn-primary" routerLink="/menu" aria-label="Ir al menú de pizzas">Ver menú</a>
-    </div>
+      <a class="btn-primary" routerLink="/menu" aria-label="Ver menú">Ver menú</a>
+    </output>
   } @else {
     <div class="cart-grid">
       <!-- Columna Principal -->
       <div class="cart-column products-column">
         
-        <div class="cart-items-container" role="listbox" aria-label="Items en el carrito">
+        <div class="cart-items-container" aria-label="Items en el carrito">
           <!-- Productos -->
           <h2 class="section-title" style="margin-top: 0;">Tus Productos</h2>
         @for (item of items; track item.id; let i = $index) {
-          <article class="cart-item" role="option" [attr.aria-label]="item.name + ', tamaño ' + (item.size | titlecase) + ', cantidad ' + item.quantity">
+          <article class="cart-item" [attr.aria-label]="item.name + ', tamaño ' + (item.size | titlecase) + ', cantidad ' + item.quantity">
             <img 
               [src]="getOptimizedImageUrl(item.imageUrl)" 
               [alt]="item.name + ' - ' + (item.size | titlecase)"
@@ -46,11 +46,12 @@
                 </p>
               }
               <div class="item-footer">
-                <div class="quantity-control" role="group" [attr.aria-label]="'Control de cantidad para ' + item.name">
+                <fieldset class="quantity-control" style="border:none;padding:0;margin:0;">
+                  <legend class="visually-hidden">{{ 'Control de cantidad para ' + item.name }}</legend>
                   <button (click)="decrementar(item)" [disabled]="item.quantity <= 1" [attr.aria-label]="'Disminuir cantidad de ' + item.name">−</button>
                   <span class="quantity-display" aria-label="Cantidad actual">{{ item.quantity }}</span>
                   <button (click)="incrementar(item)" [attr.aria-label]="'Aumentar cantidad de ' + item.name">+</button>
-                </div>
+                </fieldset>
                 <button class="remove-button" (click)="eliminar(item)" [attr.aria-label]="'Quitar ' + item.name + ' del carrito'">
                   <i class="bi bi-trash" aria-hidden="true"></i> Quitar
                 </button>
@@ -70,8 +71,9 @@
             
         <!-- Tipo de entrega -->
         <div class="summary-field">
-          <label id="delivery-type-label">Tipo de entrega</label>
-          <div class="delivery-type-options" role="group" aria-labelledby="delivery-type-label">
+          <span id="delivery-type-label">Tipo de entrega</span>
+          <fieldset class="delivery-type-options" style="border:none;padding:0;margin:0;">
+            <legend class="visually-hidden">Tipo de entrega</legend>
             <label class="radio-option">
               <input 
                 type="radio" 
@@ -96,7 +98,7 @@
               >
               <span aria-hidden="true">🛵 Delivery a domicilio</span>
             </label>
-          </div>
+          </fieldset>
         </div>
 
         <!-- Formulario de dirección (solo si es DELIVERY) -->
@@ -105,8 +107,9 @@
             <legend id="address-legend">Dirección de entrega</legend>
             
             <div class="summary-field">
-              <label id="address-option-label">Opciones de dirección</label>
-              <div class="delivery-type-options" role="group" aria-labelledby="address-option-label">
+              <span id="address-option-label">Opciones de dirección</span>
+              <fieldset class="delivery-type-options" style="border:none;padding:0;margin:0;">
+                <legend class="visually-hidden">Opciones de dirección</legend>
                 <label class="radio-option">
                   <input 
                     type="radio" 
@@ -132,7 +135,7 @@
                   >
                   <span aria-hidden="true">➕ Agregar nueva dirección</span>
                 </label>
-              </div>
+              </fieldset>
             </div>
 
             @if (addressOption === 'saved') {
@@ -144,7 +147,7 @@
                   [ngModelOptions]="{ standalone: true }"
                   (ngModelChange)="onSavedAddressChange()"
                   aria-required="true"
-                  aria-label="Seleccionar dirección guardada"
+                  
                 >
                   <option [ngValue]="null">-- Selecciona ubicación --</option>
                   @for (direccion of direcciones; track direccion.id) {
@@ -220,7 +223,7 @@
           <div class="summary-field">
             <label for="paymentMethod">Método de pago</label>
           @if (!paymentMethodsLoaded) {
-            <div class="loading-placeholder" role="status" aria-label="Cargando opciones de pago">Cargando opciones...</div>
+            <output class="loading-placeholder" aria-label="Cargando opciones de pago">Cargando opciones...</output>
           } @else if (paymentMethods.length === 0) {
             <p class="helper-text" role="alert">No hay métodos de pago disponibles. Inténtalo más tarde.</p>
           } @else {
@@ -229,7 +232,7 @@
               [(ngModel)]="selectedPaymentMethodId"
               (ngModelChange)="onPaymentMethodChange($event)"
               [ngModelOptions]="{ standalone: true }"
-              aria-label="Seleccionar método de pago"
+              
               aria-required="true"
             >
               @for (metodo of paymentMethods; track metodo.id) {
@@ -269,7 +272,7 @@
               >
               <small id="cardNumber-help" class="form-text text-muted">Formato: 16 dígitos</small>
             </div>
-            <div class="card-inline-fields" role="group" aria-label="Fecha de expiración y CVV">
+            <fieldset class="card-inline-fields"><legend class="visually-hidden">Fecha de expiración y CVV</legend>
               <div class="summary-field">
                 <label for="cardExpiry">Expiración</label>
                 <input 
@@ -302,7 +305,7 @@
                      style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888;"></i>
                 </div>
               </div>
-            </div>
+            </fieldset>
             <div class="helper-text" aria-label="Información de seguridad">Simulación: los datos no se enviarán a un procesador real.</div>
           </fieldset>
         }
@@ -355,7 +358,7 @@
       </div>
 
       <!-- Columna 3: Resumen -->
-      <aside class="cart-column summary-column" role="complementary" aria-label="Resumen del pedido">
+      <aside class="cart-column summary-column" aria-label="Resumen del pedido">
         <div class="summary-card">
           <h2 id="summary-title" class="summary-card-title">Resumen de tu pedido</h2>
 
@@ -364,10 +367,10 @@
           <h3 id="promo-title">¿Tienes un código promocional?</h3>
           
           @if (promoSuccess) {
-            <div class="alert alert-success promo-alert" role="status" aria-live="polite" aria-label="Código promocional aplicado">
+            <output class="alert alert-success promo-alert" aria-live="polite" aria-label="Código promocional aplicado">
               <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
               {{ promoSuccess }}
-            </div>
+            </output>
           }
           
           @if (promoError) {
@@ -378,7 +381,8 @@
           }
           
           @if (!promoApplied) {
-            <div class="promo-input-group" role="group" aria-labelledby="promo-title">
+            <fieldset class="promo-input-group" style="border:none;padding:0;margin:0;">
+              <legend class="visually-hidden">Código promocional</legend>
               <input 
                 type="text" 
                 [(ngModel)]="promoCode" 
@@ -402,9 +406,9 @@
                   <span>Aplicar</span>
                 }
               </button>
-            </div>
+            </fieldset>
           } @else {
-            <div class="promo-applied" role="region" aria-label="Código promocional aplicado">
+            <section class="promo-applied" aria-label="Código promocional aplicado">
               <div class="promo-code-display">
                 <i class="bi bi-tag-fill" aria-hidden="true"></i>
                 <span aria-label="Código aplicado">{{ promoCode }}</span>
@@ -413,36 +417,42 @@
                 <i class="bi bi-x-circle" aria-hidden="true"></i>
                 Quitar
               </button>
-            </div>
+            </section>
           }
         </section>
 
-        <div class="summary-row" role="row" aria-label="Cantidad de productos">
-          <span role="rowheader">Productos</span>
-          <span role="cell">{{ totals.itemsCount }}</span>
-        </div>
-        <div class="summary-row" role="row" aria-label="Subtotal">
-          <span role="rowheader">Subtotal</span>
-          <span role="cell">S/. {{ totals.subtotal | number:'1.2-2' }}</span>
-        </div>
-        <div class="summary-row" role="row" aria-label="Costo de delivery">
-          <span role="rowheader">Delivery estimado</span>
-          <span role="cell">S/. {{ totals.deliveryFee | number:'1.2-2' }}</span>
-        </div>
-        @if (promoApplied && promoDiscount > 0) {
-          <div class="summary-row promo-discount" role="row" aria-label="Descuento aplicado">
-            <span role="rowheader">
-              <i class="bi bi-tag-fill me-1" aria-hidden="true"></i>
-              Descuento ({{ promoCode }})
-            </span>
-            <span role="cell" class="discount-value">-S/. {{ promoDiscount | number:'1.2-2' }}</span>
-          </div>
-        }
-        <hr style="margin: 0.5rem 0; border-color: rgba(0,0,0,0.1);">
-        <div class="summary-row total" role="row" aria-label="Total a pagar">
-          <span role="rowheader" id="total-label">Total a pagar</span>
-          <span role="cell" aria-labelledby="total-label">S/. {{ totals.total | number:'1.2-2' }}</span>
-        </div>
+        <table class="summary-table" aria-label="Resumen de precios">
+          <tbody>
+            <tr class="summary-row">
+              <th scope="row">Productos</th>
+              <td>{{ totals.itemsCount }}</td>
+            </tr>
+            <tr class="summary-row">
+              <th scope="row">Subtotal</th>
+              <td>S/. {{ totals.subtotal | number:'1.2-2' }}</td>
+            </tr>
+            <tr class="summary-row">
+              <th scope="row">Delivery estimado</th>
+              <td>S/. {{ totals.deliveryFee | number:'1.2-2' }}</td>
+            </tr>
+            @if (promoApplied && promoDiscount > 0) {
+              <tr class="summary-row promo-discount">
+                <th scope="row">
+                  <i class="bi bi-tag-fill me-1" aria-hidden="true"></i>
+                  Descuento ({{ promoCode }})
+                </th>
+                <td class="discount-value">-S/. {{ promoDiscount | number:'1.2-2' }}</td>
+              </tr>
+            }
+            <tr>
+              <td colspan="2"><hr style="margin: 0.5rem 0; border-color: rgba(0,0,0,0.1);"></td>
+            </tr>
+            <tr class="summary-row total">
+              <th scope="row" id="total-label">Total a pagar</th>
+              <td aria-labelledby="total-label">S/. {{ totals.total | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
 
         <button 
           class="btn-primary" 
@@ -456,12 +466,12 @@
             <span>Proceder con mi pedido</span>
           }
         </button>
-          <a class="btn-link" routerLink="/menu" aria-label="Volver al menú para seguir comprando">Añadir más productos</a>
+          <a class="btn-link" routerLink="/menu" aria-label="Añadir más productos">Añadir más productos</a>
           <button 
             class="btn-secondary" 
             (click)="vaciar()" 
             [disabled]="items.length === 0 || isProcessing || isSuccess"
-            aria-label="Eliminar todos los items del carrito"
+            aria-label="Vaciar carrito"
           >
             Vaciar carrito
           </button>
@@ -517,4 +527,4 @@
 
 
 
-</section>
+</main>

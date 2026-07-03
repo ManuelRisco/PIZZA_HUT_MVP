@@ -11,12 +11,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/extras")
 @CrossOrigin(origins = "http://localhost:4200")
 public class ExtraController {
+
+    private static final String MSG_ERROR_KEY = "error";
 
     private final ExtraService extraService;
 
@@ -29,7 +30,7 @@ public class ExtraController {
         List<Extra> extras = extraService.listarExtras();
         List<ExtraDTO> dtos = extras.stream()
             .map(ExtraDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
@@ -38,7 +39,7 @@ public class ExtraController {
         List<Extra> extras = extraService.listarExtrasDisponibles();
         List<ExtraDTO> dtos = extras.stream()
             .map(ExtraDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
@@ -47,7 +48,7 @@ public class ExtraController {
         List<Extra> extras = extraService.listarExtrasPorCategoria(categoria);
         List<ExtraDTO> dtos = extras.stream()
             .map(ExtraDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
@@ -63,51 +64,66 @@ public class ExtraController {
         List<Extra> extras = extraService.buscarPorNombre(nombre);
         List<ExtraDTO> dtos = extras.stream()
             .map(ExtraDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
     @PostMapping
-    public ResponseEntity<?> crear(@RequestBody Extra extra) {
+    public ResponseEntity<Object> crear(@RequestBody ExtraDTO extraDTO) {
         try {
+            Extra extra = new Extra();
+            extra.setName(extraDTO.getName());
+            extra.setPrice(extraDTO.getPrice());
+            if (extraDTO.getCategory() != null) {
+                extra.setCategory(Extra.ExtraCategory.valueOf(extraDTO.getCategory()));
+            }
+            extra.setIsAvailable(extraDTO.getIsAvailable());
             Extra nuevoExtra = extraService.crearExtra(extra);
             return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(new ExtraDTO(nuevoExtra), "Creado exitosamente"));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(MSG_ERROR_KEY, e.getMessage()));
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizar(@PathVariable Integer id, @RequestBody Extra extra) {
+    public ResponseEntity<Object> actualizar(@PathVariable Integer id, @RequestBody ExtraDTO extraDTO) {
         try {
+            Extra extra = new Extra();
+            extra.setName(extraDTO.getName());
+            extra.setPrice(extraDTO.getPrice());
+            if (extraDTO.getCategory() != null) {
+                extra.setCategory(Extra.ExtraCategory.valueOf(extraDTO.getCategory()));
+            }
+            extra.setIsAvailable(extraDTO.getIsAvailable());
             Extra extraActualizado = extraService.actualizarExtra(id, extra);
             return ResponseEntity.ok(ApiResponse.success(new ExtraDTO(extraActualizado)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(MSG_ERROR_KEY, e.getMessage()));
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminar(@PathVariable Integer id) {
+    public ResponseEntity<Object> eliminar(@PathVariable Integer id) {
         try {
             extraService.eliminarExtra(id);
             return ResponseEntity.ok().body(Map.of("message", "Extra eliminado correctamente", "id", id));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) { throw e; } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(MSG_ERROR_KEY, e.getMessage()));
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Error al eliminar extra: " + e.getMessage()));
+                .body(Map.of(MSG_ERROR_KEY, "Error al eliminar extra: " + e.getMessage()));
         }
     }
 
     @PatchMapping("/{id}/disponibilidad")
-    public ResponseEntity<?> cambiarDisponibilidad(@PathVariable Integer id) {
+    public ResponseEntity<Object> cambiarDisponibilidad(@PathVariable Integer id) {
         try {
             Extra extraActualizado = extraService.cambiarDisponibilidad(id);
             return ResponseEntity.ok(ApiResponse.success(new ExtraDTO(extraActualizado)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(MSG_ERROR_KEY, e.getMessage()));
         }
     }
 }
-

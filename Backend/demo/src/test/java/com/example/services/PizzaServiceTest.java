@@ -60,22 +60,22 @@ class PizzaServiceTest {
         List<Pizza> pizzas = new ArrayList<>();
         pizzas.add(pizzaTest);
 
-        when(pizzaRepository.findAll()).thenReturn(pizzas);
+        when(pizzaRepository.findByDeletedAtIsNull()).thenReturn(pizzas);
         List<Pizza> pizzasObtenidas = pizzaService.listarPizzas();
 
         assertEquals(1, pizzasObtenidas.size());
         assertEquals("Margherita", pizzasObtenidas.get(0).getName());
-        verify(pizzaRepository, times(1)).findAll();
+        verify(pizzaRepository, times(1)).findByDeletedAtIsNull();
     }
 
     @Test
     @DisplayName("CU05 - A2: Búsqueda sin resultados (lista vacía)")
     void testBuscarPizzasSinResultados() {
-        when(pizzaRepository.findAll()).thenReturn(new ArrayList<>());
+        when(pizzaRepository.findByDeletedAtIsNull()).thenReturn(new ArrayList<>());
         List<Pizza> pizzasObtenidas = pizzaService.listarPizzas();
 
         assertTrue(pizzasObtenidas.isEmpty());
-        verify(pizzaRepository, times(1)).findAll();
+        verify(pizzaRepository, times(1)).findByDeletedAtIsNull();
     }
 
     // ==========================================
@@ -135,8 +135,9 @@ class PizzaServiceTest {
     @Test
     @DisplayName("CU12 - A1: Error al guardar con datos incompletos")
     void testCrearPizzaDatosIncompletos() {
+        Pizza emptyPizza = new Pizza();
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            pizzaService.crearPizza(new Pizza());
+            pizzaService.crearPizza(emptyPizza);
         });
 
         assertTrue(exception.getMessage().contains("requeridos"));

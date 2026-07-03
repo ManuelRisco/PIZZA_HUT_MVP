@@ -45,7 +45,9 @@ public class OrderCompleteDTO {
     private List<OrderItemCompleteDTO> items;
     
     // Constructor vac\u00edo
-    public OrderCompleteDTO() {}
+    public OrderCompleteDTO() {
+        // Constructor vacío para serialización por frameworks como Jackson
+    }
     
     // Getters y Setters
     public Integer getId() { return id; }
@@ -132,7 +134,9 @@ public class OrderCompleteDTO {
         private BigDecimal lineTotal;
         private List<String> extras; // Ingredientes extras (solo para pizzas)
         
-        public OrderItemCompleteDTO() {}
+        public OrderItemCompleteDTO() {
+            // Constructor vacío para serialización
+        }
         
         public Integer getId() { return id; }
         public void setId(Integer id) { this.id = id; }

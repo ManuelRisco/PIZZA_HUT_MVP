@@ -7,8 +7,8 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class ImageCacheService {
-  private imageCache = new Map<string, boolean>();
-  private preloadedImages = new Map<string, HTMLImageElement>();
+  private imageCache= new Map<string, boolean>();
+  private readonly preloadedImages= new Map<string, HTMLImageElement>();
 
   constructor() {
     // Recuperar estado del caché de sessionStorage al iniciar
@@ -66,7 +66,7 @@ export class ImageCacheService {
    */
   preloadImages(imageUrls: string[]): Promise<void[]> {
     const promises = imageUrls
-      .filter(url => url && url.trim() !== '')
+      .filter(url => url?.trim() !== '')
       .map(url => this.preloadImage(url).catch(() => {})); // Ignorar errores individuales
     
     return Promise.all(promises);

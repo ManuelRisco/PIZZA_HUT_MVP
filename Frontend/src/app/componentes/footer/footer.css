@@ -200,12 +200,12 @@ footer .foo-row .foo-col ul li a:hover {
    ========================================================================= */
 :host-context(html[data-contraste="alto"]) footer {
   background: #000;
-  border-top: 2px solid #ffff00;
+  border-top: 2px solid #000000;
 }
 
 :host-context(html[data-contraste="alto"]) .foo-copy {
   background: #000;
-  border-top: 1px solid #ffff00;
+  border-top: 1px solid #000000;
 }
 
 :host-context(html[data-contraste="alto"]) footer .foo-row .foo-col h2,
@@ -214,7 +214,7 @@ footer .foo-row .foo-col ul li a:hover {
 :host-context(html[data-contraste="alto"]) .foo-copy span,
 :host-context(html[data-contraste="alto"]) .foo-copy a,
 :host-context(html[data-contraste="alto"]) footer form .f-input input {
-  color: #ffff00 !important;
+  color: #000000 !important;
 }
 
 :host-context(html[data-contraste="alto"]) footer a {
@@ -223,28 +223,28 @@ footer .foo-row .foo-col ul li a:hover {
 
 :host-context(html[data-contraste="alto"]) footer form .f-input input {
   background: #000;
-  border: 2px solid #ffff00;
+  border: 2px solid #000000;
 }
 
 :host-context(html[data-contraste="alto"]) footer form .f-input .hm-btn-round {
   background: #000;
-  color: #ffff00;
-  border: 2px solid #ffff00;
+  color: #ffffff;
+  border: 2px solid #ffffff;
 }
 
 :host-context(html[data-contraste="alto"]) footer form .f-input .hm-btn-round:hover {
-  background: #ffff00;
-  color: #000 !important;
+  background: #000000;
+  color: #ffffff !important;
 }
 
 :host-context(html[data-contraste="alto"]) .foo-col ul li a i {
-  color: #ffff00 !important;
+  color: #ffffff !important;
   filter: none !important;
 }
 
 :host-context(html[data-contraste="alto"]) footer .foo-row .foo-col ul li a:hover {
-  background: #ffff00;
-  color: #000 !important;
+  background: #000000;
+  color: #ffffff !important;
   text-decoration: none;
 }
 

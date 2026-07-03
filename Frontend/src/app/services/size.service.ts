@@ -9,14 +9,14 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class Size {
-  private apiUrl = environment.apiUrl;
-  private httpOptions = {
+  private readonly apiUrl= environment.apiUrl;
+  private readonly httpOptions= {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
-  // Operaciones CRUD para Tamaños
+  // Operaciones CRUD para TamaÃ±os
   obtenerTodos(): Observable<SizeDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/sizes`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
@@ -37,3 +37,4 @@ export class Size {
     return this.http.delete<any>(`${this.apiUrl}/sizes/${id}`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 }
+

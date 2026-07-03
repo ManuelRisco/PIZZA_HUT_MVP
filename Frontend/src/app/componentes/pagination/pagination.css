@@ -24,7 +24,7 @@
 
 .pagination-btn:hover:not(:disabled) {
   background-color: #e9ecef;
-  border-color: #adb5bd;
+  border-color: #495057;
   transform: translateY(-1px);
 }
 
@@ -41,7 +41,7 @@
 
 .pagination-info {
   text-align: center;
-  color: #6c757d;
+  color: #545b62;
   font-size: 0.9rem;
   margin-top: 0.5rem;
 }

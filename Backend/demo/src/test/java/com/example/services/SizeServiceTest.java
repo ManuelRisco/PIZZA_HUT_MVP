@@ -10,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,8 +43,7 @@ class SizeServiceTest {
     @Test
     @DisplayName("CU15 - Flujo Principal: Listar tamaños [RF27]")
     void testListar() {
-        List<Size> list = new ArrayList<>();
-        list.add(size);
+
         when(repository.findByDeletedAtIsNull()).thenReturn(List.of(size));
 
         List<Size> result = service.listarSizes();

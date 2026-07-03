@@ -261,9 +261,9 @@
 
         <!-- Selección de Tamaño -->
         <div class="mb-8">
-          <label class="block font-black text-gray-800 mb-3 text-lg flex items-center gap-2">
+          <span class="block font-black text-gray-800 mb-3 text-lg flex items-center gap-2">
             <i class="bi bi-rulers text-red-500"></i> Selecciona el tamaño
-          </label>
+          </span>
           <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
             <div *ngFor="let tamano of tamanosDisponibles"
                  class="bg-white border-2 rounded-xl p-4 cursor-pointer transition-all text-center group"
@@ -283,9 +283,9 @@
         
         <!-- Selección de Extras -->
         <div class="mb-4">
-          <label class="block font-black text-gray-800 mb-3 text-lg flex items-center gap-2">
+          <span class="block font-black text-gray-800 mb-3 text-lg flex items-center gap-2">
             <i class="bi bi-plus-circle text-red-500"></i> Adicionales (Ingredientes)
-          </label>
+          </span>
           
           <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
             <div *ngIf="ingredientesDisponibles.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

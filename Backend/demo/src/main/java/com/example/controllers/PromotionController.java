@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.example.security.SecurityUtils;
 import org.springframework.security.access.AccessDeniedException;
@@ -21,6 +20,8 @@ import org.springframework.security.access.AccessDeniedException;
 @RequestMapping("/api/promociones")
 @CrossOrigin(origins = "http://localhost:4200")
 public class PromotionController {
+
+    private static final String MSG_KEY = "message";
 
     private final PromotionService promotionService;
     private final SecurityUtils securityUtils;
@@ -35,7 +36,7 @@ public class PromotionController {
         List<Promotion> promotions = promotionService.listarPromociones();
         List<PromotionDTO> dtos = promotions.stream()
             .map(PromotionDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
@@ -44,7 +45,7 @@ public class PromotionController {
         List<Promotion> promotions = promotionService.listarPromocionesActivas();
         List<PromotionDTO> dtos = promotions.stream()
             .map(PromotionDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
@@ -53,7 +54,7 @@ public class PromotionController {
         List<Promotion> promotions = promotionService.listarPromocionesActivasPorTipo(tipo);
         List<PromotionDTO> dtos = promotions.stream()
             .map(PromotionDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
@@ -72,7 +73,7 @@ public class PromotionController {
     }
 
     @PostMapping("/validar")
-    public ResponseEntity<?> validarPromocion(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<Object> validarPromocion(@RequestBody Map<String, Object> request) {
         try {
             String code = (String) request.get("code");
             BigDecimal orderTotal = new BigDecimal(request.get("orderTotal").toString());
@@ -80,7 +81,7 @@ public class PromotionController {
             Integer userId = request.containsKey("userId") ? 
                 Integer.parseInt(request.get("userId").toString()) : null;
             
-            // PREVENCIÓN DE IDOR: Forzar que el usuario solo pueda validar para sí mismo
+            // PREVENCIÃ“N DE IDOR: Forzar que el usuario solo pueda validar para sÃ­ mismo
             if (!securityUtils.isAdmin()) {
                 Integer currentUserId = securityUtils.getCurrentUserId();
                 if (currentUserId == null) {
@@ -89,23 +90,23 @@ public class PromotionController {
                 userId = currentUserId; // Forzar el ID del token
             }
             
-            // Obtener items si están disponibles
+            // Obtener items si estÃ¡n disponibles
             @SuppressWarnings("unchecked")
             java.util.List<java.util.Map<String, Object>> items = 
                 (java.util.List<java.util.Map<String, Object>>) request.get("items");
             
             if (items != null && !items.isEmpty()) {
-                // Validaci\u00f3n con items del carrito (calcula descuento solo sobre items aplicables)
+                // ValidaciÃ³n con items del carrito (calcula descuento solo sobre items aplicables)
                 Map<String, Object> result = promotionService.validarPromocionConItems(
                     code, orderTotal, userId, items
                 );
                 return ResponseEntity.ok(ApiResponse.success(result));
             } else if (userId != null) {
-                // Validaci\u00f3n completa con verificaci\u00f3n de primera compra
+                // ValidaciÃ³n completa con verificaciÃ³n de primera compra
                 Map<String, Object> result = promotionService.validarPromocionParaUsuario(code, orderTotal, userId);
                 return ResponseEntity.ok(ApiResponse.success(result));
             } else {
-                // Validaci\u00f3n b\u00e1sica sin userId (para preview)
+                // ValidaciÃ³n bÃ¡sica sin userId (para preview)
                 BigDecimal discount = promotionService.calcularDescuento(code, orderTotal);
                 return ResponseEntity.ok(ApiResponse.success(Map.of(
                     "valid", true,
@@ -116,14 +117,33 @@ public class PromotionController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "valid", false,
-                "message", e.getMessage()
+                MSG_KEY, e.getMessage()
             ));
         }
     }
 
     @PostMapping
-    public ResponseEntity<?> crear(@RequestBody Promotion promotion) {
+    public ResponseEntity<Object> crear(@RequestBody PromotionDTO promotionDTO) {
         try {
+            Promotion promotion = new Promotion();
+            promotion.setCode(promotionDTO.getCode());
+            promotion.setName(promotionDTO.getName());
+            promotion.setDescription(promotionDTO.getDescription());
+            if (promotionDTO.getDiscountType() != null) {
+                promotion.setDiscountType(Promotion.DiscountType.valueOf(promotionDTO.getDiscountType()));
+            }
+            promotion.setDiscountValue(promotionDTO.getDiscountValue());
+            promotion.setFinalPrice(promotionDTO.getFinalPrice());
+            promotion.setMinPurchase(promotionDTO.getMinPurchase());
+            promotion.setMaxDiscount(promotionDTO.getMaxDiscount());
+            if (promotionDTO.getIsActive() != null) promotion.setIsActive(promotionDTO.getIsActive());
+            promotion.setStartDate(promotionDTO.getStartDate());
+            promotion.setEndDate(promotionDTO.getEndDate());
+            promotion.setUsageLimit(promotionDTO.getUsageLimit());
+            if (promotionDTO.getApplicableTo() != null) {
+                promotion.setApplicableTo(Promotion.ApplicableTo.valueOf(promotionDTO.getApplicableTo()));
+            }
+
             Promotion nuevaPromocion = promotionService.crearPromocion(promotion);
             return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(new PromotionDTO(nuevaPromocion), "Creado exitosamente"));
         } catch (IllegalArgumentException e) {
@@ -132,8 +152,27 @@ public class PromotionController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizar(@PathVariable Integer id, @RequestBody Promotion promotion) {
+    public ResponseEntity<Object> actualizar(@PathVariable Integer id, @RequestBody PromotionDTO promotionDTO) {
         try {
+            Promotion promotion = new Promotion();
+            promotion.setCode(promotionDTO.getCode());
+            promotion.setName(promotionDTO.getName());
+            promotion.setDescription(promotionDTO.getDescription());
+            if (promotionDTO.getDiscountType() != null) {
+                promotion.setDiscountType(Promotion.DiscountType.valueOf(promotionDTO.getDiscountType()));
+            }
+            promotion.setDiscountValue(promotionDTO.getDiscountValue());
+            promotion.setFinalPrice(promotionDTO.getFinalPrice());
+            promotion.setMinPurchase(promotionDTO.getMinPurchase());
+            promotion.setMaxDiscount(promotionDTO.getMaxDiscount());
+            if (promotionDTO.getIsActive() != null) promotion.setIsActive(promotionDTO.getIsActive());
+            promotion.setStartDate(promotionDTO.getStartDate());
+            promotion.setEndDate(promotionDTO.getEndDate());
+            promotion.setUsageLimit(promotionDTO.getUsageLimit());
+            if (promotionDTO.getApplicableTo() != null) {
+                promotion.setApplicableTo(Promotion.ApplicableTo.valueOf(promotionDTO.getApplicableTo()));
+            }
+
             Promotion promocionActualizada = promotionService.actualizarPromocion(id, promotion);
             return ResponseEntity.ok(ApiResponse.success(new PromotionDTO(promocionActualizada)));
         } catch (IllegalArgumentException e) {
@@ -142,20 +181,20 @@ public class PromotionController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminar(@PathVariable Integer id) {
+    public ResponseEntity<Object> eliminar(@PathVariable Integer id) {
         try {
             promotionService.eliminarPromocion(id);
-            return ResponseEntity.ok().body(Map.of("message", "Promoci\u00f3n eliminada correctamente", "id", id));
+            return ResponseEntity.ok().body(Map.of(MSG_KEY, "PromociÃ³n eliminada correctamente", "id", id));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Error al eliminar promoci\u00f3n: " + e.getMessage()));
+                .body(Map.of("error", "Error al eliminar promociÃ³n: " + e.getMessage()));
         }
     }
 
     @PatchMapping("/{id}/activar")
-    public ResponseEntity<?> activar(@PathVariable Integer id) {
+    public ResponseEntity<Object> activar(@PathVariable Integer id) {
         try {
             Promotion promocionActualizada = promotionService.activarPromocion(id);
             return ResponseEntity.ok(ApiResponse.success(new PromotionDTO(promocionActualizada)));
@@ -165,7 +204,7 @@ public class PromotionController {
     }
 
     @PatchMapping("/{id}/desactivar")
-    public ResponseEntity<?> desactivar(@PathVariable Integer id) {
+    public ResponseEntity<Object> desactivar(@PathVariable Integer id) {
         try {
             Promotion promocionActualizada = promotionService.desactivarPromocion(id);
             return ResponseEntity.ok(ApiResponse.success(new PromotionDTO(promocionActualizada)));
@@ -179,7 +218,7 @@ public class PromotionController {
         List<Promotion> promotions = promotionService.obtenerPromocionesProximasAVencer(dias);
         List<PromotionDTO> dtos = promotions.stream()
             .map(PromotionDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 }

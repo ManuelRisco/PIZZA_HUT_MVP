@@ -15,12 +15,13 @@ import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/order-tracking")
 @CrossOrigin(origins = "http://localhost:4200")
 public class OrderTrackingController {
+
+    private static final String MSG_KEY = "message";
 
     private final OrderTrackingService orderTrackingService;
     private final OrderService orderService;
@@ -59,12 +60,12 @@ public class OrderTrackingController {
         List<OrderTracking> orderTrackings = orderTrackingService.listarOrderTrackings();
         List<OrderTrackingDTO> orderTrackingsDTO = orderTrackings.stream()
             .map(OrderTrackingDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(orderTrackingsDTO));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerOrderTrackingPorId(@PathVariable("id") Integer id) {
+    public ResponseEntity<Object> obtenerOrderTrackingPorId(@PathVariable("id") Integer id) {
         Optional<OrderTracking> orderTrackingOpt = orderTrackingService.obtenerPorId(id);
         if (orderTrackingOpt.isPresent()) {
             OrderTracking orderTracking = orderTrackingOpt.get();
@@ -72,35 +73,35 @@ public class OrderTrackingController {
                 validarAccesoAOrder(orderTracking.getOrderId());
             } catch (AccessDeniedException e) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", e.getMessage()));
+                    .body(Map.of(MSG_KEY, e.getMessage()));
             }
             
             OrderTrackingDTO orderTrackingDTO = new OrderTrackingDTO(orderTracking);
             return ResponseEntity.ok(ApiResponse.success(orderTrackingDTO));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", "OrderTracking no encontrado"));
+                .body(Map.of(MSG_KEY, "OrderTracking no encontrado"));
         }
     }
 
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<?> obtenerOrderTrackingsPorOrderId(@PathVariable("orderId") Integer orderId) {
+    public ResponseEntity<Object> obtenerOrderTrackingsPorOrderId(@PathVariable("orderId") Integer orderId) {
         try {
             validarAccesoAOrder(orderId);
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
         
         List<OrderTracking> orderTrackings = orderTrackingService.obtenerPorOrderId(orderId);
         List<OrderTrackingDTO> orderTrackingsDTO = orderTrackings.stream()
             .map(OrderTrackingDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(orderTrackingsDTO));
     }
 
     @PostMapping
-    public ResponseEntity<?> crearOrderTracking(@RequestBody OrderTrackingDTO orderTrackingDTO) {
+    public ResponseEntity<Object> crearOrderTracking(@RequestBody OrderTrackingDTO orderTrackingDTO) {
         try {
             OrderTracking orderTracking = new OrderTracking();
             orderTracking.setOrderId(orderTrackingDTO.getOrderId());
@@ -111,18 +112,19 @@ public class OrderTrackingController {
             return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(new OrderTrackingDTO(orderTrackingCreado), "Creado exitosamente"));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarOrderTracking(@PathVariable("id") Integer id) {
+    public ResponseEntity<Object> eliminarOrderTracking(@PathVariable("id") Integer id) {
         try {
             orderTrackingService.eliminarOrderTracking(id);
-            return ResponseEntity.ok(ApiResponse.success(Map.of("message", "OrderTracking eliminado correctamente")));
+            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "OrderTracking eliminado correctamente")));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
 }
+

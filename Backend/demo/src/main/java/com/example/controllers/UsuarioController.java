@@ -28,6 +28,11 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:4200")
 public class UsuarioController {
 
+    private static final String MSG_USUARIO_NO_ENCONTRADO = "Usuario no encontrado";
+    private static final String REFRESH_TOKEN_KEY = "refreshToken";
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final String ENTITY_USUARIO = "Usuario";
+
     private final UsuarioService usuarioService;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuditLogService auditLogService;
@@ -59,10 +64,11 @@ public class UsuarioController {
         String mensaje = usuarioService.registrarUsuario(usuario);
         if (mensaje.contains("\u00e9xito")) {
             // Log de creaci\u00f3n si se cre\u00f3 exitosamente
-            Usuario guardado = usuarioService.obtenerPorEmail(usuario.getEmail()).get();
+            Usuario guardado = usuarioService.obtenerPorEmail(usuario.getEmail())
+                    .orElseThrow(() -> new IllegalStateException("Usuario no encontrado tras registro"));
             auditLogService.registrarCreacion(
                     getCurrentUserId(),
-                    "Usuario",
+                    ENTITY_USUARIO,
                     guardado.getId().intValue(),
                     "Se registr\u00f3 un nuevo usuario: " + guardado.getEmail());
             return ResponseEntity.ok(ApiResponse.success(null, mensaje));
@@ -75,7 +81,7 @@ public class UsuarioController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginUsuario(@Valid @RequestBody LoginDTO loginDTO,
             HttpServletRequest request) {
         Usuario user = usuarioService.obtenerPorEmail(loginDTO.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO));
 
         if (user.getDeletedAt() != null) {
             throw new BadRequestException("Usuario inactivo. Contacte al administrador.");
@@ -104,7 +110,7 @@ public class UsuarioController {
                     obtenerUserAgent(request));
 
             return ResponseEntity.ok(ApiResponse.success(
-                    Map.of("token", token, "refreshToken", refreshToken, "usuario", usuarioMapper.toDto(user)),
+                    Map.of("token", token, REFRESH_TOKEN_KEY, refreshToken, "usuario", usuarioMapper.toDto(user)),
                     "Login exitoso. Bienvenido " + user.getName()));
         } else {
             user.incrementLoginAttempts();
@@ -124,7 +130,7 @@ public class UsuarioController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse<Map<String, Object>>> refreshToken(@RequestBody Map<String, String> request) {
-        String refreshToken = request.get("refreshToken");
+        String refreshToken = request.get(REFRESH_TOKEN_KEY);
         if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)
                 || !jwtTokenProvider.isRefreshToken(refreshToken)) {
             throw new BadRequestException("Refresh token inv\u00e1lido o expirado");
@@ -132,7 +138,7 @@ public class UsuarioController {
 
         Long userId = jwtTokenProvider.getIdFromToken(refreshToken);
         Usuario user = usuarioService.obtenerPorId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO));
 
         if (user.getDeletedAt() != null || !user.isRefreshTokenValid()
                 || !refreshToken.equals(user.getRefreshToken())) {
@@ -150,20 +156,20 @@ public class UsuarioController {
         usuarioService.actualizarUsuario(user.getId(), user);
 
         return ResponseEntity.ok(ApiResponse.success(
-                Map.of("token", newToken, "refreshToken", newRefreshToken, "usuario", usuarioMapper.toDto(user))));
+                Map.of("token", newToken, REFRESH_TOKEN_KEY, newRefreshToken, "usuario", usuarioMapper.toDto(user))));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(@RequestHeader("Authorization") String authHeader,
             HttpServletRequest request) {
-        String token = authHeader.replace("Bearer ", "");
+        String token = authHeader.replace(BEARER_PREFIX, "");
         if (!jwtTokenProvider.validateToken(token)) {
             throw new BadRequestException("Token inv\u00e1lido");
         }
 
         Long userId = jwtTokenProvider.getIdFromToken(token);
         Usuario user = usuarioService.obtenerPorId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO));
 
         user.setRefreshToken(null);
         user.setRefreshTokenExpiry(null);
@@ -178,7 +184,7 @@ public class UsuarioController {
     @GetMapping("/verificar-estado-usuario")
     public ResponseEntity<ApiResponse<Boolean>> verificarEstadoUsuario(
             @RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.replace("Bearer ", "");
+        String token = authHeader.replace(BEARER_PREFIX, "");
         Long userId = jwtTokenProvider.getIdFromToken(token);
         if (userId == null)
             throw new BadRequestException("Token inv\u00e1lido");
@@ -197,13 +203,13 @@ public class UsuarioController {
     @GetMapping("/usuarios/me")
     public ResponseEntity<ApiResponse<UsuarioDTO>> obtenerUsuarioActual(
             @RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.replace("Bearer ", "");
+        String token = authHeader.replace(BEARER_PREFIX, "");
         Long userId = jwtTokenProvider.getIdFromToken(token);
         if (userId == null)
             throw new BadRequestException("Token inv\u00e1lido");
 
         Usuario user = usuarioService.obtenerPorId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO));
         return ResponseEntity.ok(ApiResponse.success(usuarioMapper.toDto(user)));
     }
 
@@ -211,13 +217,13 @@ public class UsuarioController {
     public ResponseEntity<ApiResponse<UsuarioDTO>> actualizarPerfilUsuario(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody Map<String, Object> updates) {
-        String token = authHeader.replace("Bearer ", "");
+        String token = authHeader.replace(BEARER_PREFIX, "");
         Long userId = jwtTokenProvider.getIdFromToken(token);
         if (userId == null)
             throw new BadRequestException("Token inv\u00e1lido");
 
         Usuario usuario = usuarioService.obtenerPorId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO));
 
         String newName = updates.containsKey("name") ? ((String) updates.get("name")).trim() : usuario.getName();
         String newEmail = updates.containsKey("email") ? ((String) updates.get("email")).trim() : usuario.getEmail();
@@ -237,7 +243,7 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UsuarioDTO>> obtenerUsuarioPorId(@PathVariable("id") Long id) {
         Usuario user = usuarioService.obtenerPorId(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO));
         return ResponseEntity.ok(ApiResponse.success(usuarioMapper.toDto(user)));
     }
 
@@ -253,7 +259,7 @@ public class UsuarioController {
         Usuario usuario = usuarioService.actualizarUsuario(id, usuarioActualizado);
         auditLogService.registrarActualizacion(
                 getCurrentUserId(),
-                "Usuario",
+                ENTITY_USUARIO,
                 id.intValue(),
                 "{}", "{}",
                 "Usuario actualizado por el administrador");
@@ -264,11 +270,11 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> eliminarUsuario(@PathVariable("id") Long id) {
         if (!usuarioService.eliminarUsuario(id))
-            throw new ResourceNotFoundException("Usuario no encontrado");
+            throw new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO);
 
         auditLogService.registrarEliminacion(
                 getCurrentUserId(),
-                "Usuario",
+                ENTITY_USUARIO,
                 id.intValue(),
                 "Usuario eliminado de forma permanente");
         return ResponseEntity.ok(ApiResponse.success(null, "Usuario eliminado correctamente"));
@@ -278,11 +284,11 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> inactivarUsuario(@PathVariable("id") Long id) {
         if (!usuarioService.inactivarUsuario(id))
-            throw new ResourceNotFoundException("Usuario no encontrado");
+            throw new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO);
 
         auditLogService.registrarActualizacion(
                 getCurrentUserId(),
-                "Usuario",
+                ENTITY_USUARIO,
                 id.intValue(),
                 "{\"status\": \"Activo\"}", "{\"status\": \"Inactivo\"}",
                 "Usuario fue inactivado (Soft Delete)");
@@ -293,11 +299,11 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> reactivarUsuario(@PathVariable("id") Long id) {
         if (!usuarioService.reactivarUsuario(id))
-            throw new ResourceNotFoundException("Usuario no encontrado");
+            throw new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO);
 
         auditLogService.registrarActualizacion(
                 getCurrentUserId(),
-                "Usuario",
+                ENTITY_USUARIO,
                 id.intValue(),
                 "{\"status\": \"Inactivo\"}", "{\"status\": \"Activo\"}",
                 "Usuario fue reactivado");
@@ -316,7 +322,7 @@ public class UsuarioController {
             @PathVariable("id") Long id,
             @RequestBody Map<String, String> body) {
 
-        String token = authHeader.replace("Bearer ", "");
+        String token = authHeader.replace(BEARER_PREFIX, "");
         Long tokenUserId = jwtTokenProvider.getIdFromToken(token);
         String role = jwtTokenProvider.getRoleFromToken(token);
 
@@ -330,7 +336,7 @@ public class UsuarioController {
 
         boolean actualizado = usuarioService.cambiarPassword(id, nuevaPassword);
         if (!actualizado) {
-            throw new ResourceNotFoundException("Usuario no encontrado");
+            throw new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO);
         }
 
         return ResponseEntity.ok(ApiResponse.success(true, "Contraseña cambiada correctamente"));
@@ -352,8 +358,11 @@ public class UsuarioController {
 
     private Integer getCurrentUserId() {
         var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getDetails() instanceof Long) {
-            return ((Long) auth.getDetails()).intValue();
+        if (auth != null) {
+            Object details = auth.getDetails();
+            if (details instanceof Long) {
+                return ((Long) details).intValue();
+            }
         }
         return null;
     }

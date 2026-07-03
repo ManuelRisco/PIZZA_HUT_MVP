@@ -34,8 +34,8 @@ export class PerfilAdminComponent implements OnInit {
   cargando: boolean = false;
 
   constructor(
-    private authService: AuthService,
-    private usuarioService: UsuarioService
+    private readonly authService: AuthService,
+    private readonly usuarioService: UsuarioService
   ) {}
 
   ngOnInit() {
@@ -45,15 +45,15 @@ export class PerfilAdminComponent implements OnInit {
   cargarDatosUsuario() {
     const token = this.authService.getToken();
     if (!token) {
-      this.mensaje = 'No se pudo cargar la información del usuario';
+      this.mensaje = 'No se pudo cargar la informaciÃ³n del usuario';
       this.tipoMensaje = 'error';
       return;
     }
 
     // Decodificar el token para obtener el ID
     const tokenData = this.decodeToken(token);
-    if (!tokenData || !tokenData.id) {
-      this.mensaje = 'Token inválido';
+    if (!tokenData?.id) {
+      this.mensaje = 'Token invÃ¡lido';
       this.tipoMensaje = 'error';
       return;
     }
@@ -88,7 +88,7 @@ export class PerfilAdminComponent implements OnInit {
 
     if (!this.usuarioEditado.id) {
       this.tipoMensaje = 'error';
-      this.mensaje = 'No se puede actualizar: ID de usuario no válido';
+      this.mensaje = 'No se puede actualizar: ID de usuario no vÃ¡lido';
       return;
     }
 
@@ -99,7 +99,7 @@ export class PerfilAdminComponent implements OnInit {
       email: this.usuarioEditado.email,
       name: this.usuarioEditado.name,
       phone: this.usuarioEditado.phone,
-      password: 'dummy_password_not_used', // El backend debería ignorar esto en PUT
+      password: 'dummy_password_not_used', // NOSONAR El backend debería ignorar esto en PUT
       role: this.usuarioEditado.role
     };
 
@@ -130,19 +130,19 @@ export class PerfilAdminComponent implements OnInit {
   cambiarPassword() {
     if (this.nuevaPassword !== this.confirmarPassword) {
       this.tipoMensaje = 'error';
-      this.mensaje = 'Las contraseñas no coinciden';
+      this.mensaje = 'Las contraseÃ±as no coinciden';
       return;
     }
 
     if (this.nuevaPassword.length < 6) {
       this.tipoMensaje = 'error';
-      this.mensaje = 'La contraseña debe tener al menos 6 caracteres';
+      this.mensaje = 'La contraseÃ±a debe tener al menos 6 caracteres';
       return;
     }
 
     if (!this.usuarioEditado.id) {
       this.tipoMensaje = 'error';
-      this.mensaje = 'No se puede cambiar la contraseña: ID de usuario no válido';
+      this.mensaje = 'No se puede cambiar la contraseÃ±a: ID de usuario no vÃ¡lido';
       return;
     }
 
@@ -152,15 +152,15 @@ export class PerfilAdminComponent implements OnInit {
     this.usuarioService.cambiarPassword(this.usuarioEditado.id, { password: this.nuevaPassword }).subscribe({
       next: (response) => {
         this.tipoMensaje = 'success';
-        this.mensaje = 'Contraseña cambiada correctamente';
+        this.mensaje = 'ContraseÃ±a cambiada correctamente';
         this.nuevaPassword = '';
         this.confirmarPassword = '';
         this.mostrarCambioPassword = false;
         this.cargando = false;
         
         const currentUser = this.authService.getCurrentUser();
-        if (currentUser && currentUser.id === this.usuarioEditado.id) {
-          alert('Contraseña cambiada exitosamente. Por seguridad, debe iniciar sesión nuevamente con su nueva contraseña.');
+        if (currentUser?.id === this.usuarioEditado.id) {
+          alert('ContraseÃ±a cambiada exitosamente. Por seguridad, debe iniciar sesiÃ³n nuevamente con su nueva contraseÃ±a.');
           this.authService.logout();
         } else {
           setTimeout(() => this.mensaje = '', 5000);
@@ -168,7 +168,7 @@ export class PerfilAdminComponent implements OnInit {
       },
       error: (error) => {
         this.tipoMensaje = 'error';
-        this.mensaje = 'Error al cambiar la contraseña: ' + (error.error?.message || error.message);
+        this.mensaje = 'Error al cambiar la contraseÃ±a: ' + (error.error?.message || error.message);
         this.cargando = false;
         console.error('Error completo:', error);
       }
@@ -185,7 +185,7 @@ export class PerfilAdminComponent implements OnInit {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(this.usuarioEditado.email)) {
       this.tipoMensaje = 'error';
-      this.mensaje = 'El email no es válido';
+      this.mensaje = 'El email no es vÃ¡lido';
       return false;
     }
 
@@ -204,3 +204,4 @@ export class PerfilAdminComponent implements OnInit {
     this.mensaje = '';
   }
 }
+

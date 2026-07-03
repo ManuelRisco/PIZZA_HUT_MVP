@@ -19,7 +19,9 @@ public class UsuarioCreateDTO {
     private Usuario.Role role;
 
     // Constructor vacío
-    public UsuarioCreateDTO() {}
+    public UsuarioCreateDTO() {
+        // Constructor vacío para serialización
+    }
 
     // Getters y setters
     public String getEmail() { return email; }

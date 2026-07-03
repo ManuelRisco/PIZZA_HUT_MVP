@@ -8,19 +8,19 @@ import { IngredientService } from './ingredient.service';
 import { environment } from '../../environments/environment';
 
 /**
- * Servicio que simulaba los patrones de diseño del backend para pizzas.
- * Ahora utiliza los endpoints estándar y filtra en el cliente para mantener la interfaz.
+ * Servicio que simulaba los patrones de diseÃ±o del backend para pizzas.
+ * Ahora utiliza los endpoints estÃ¡ndar y filtra en el cliente para mantener la interfaz.
  */
 @Injectable({
   providedIn: 'root'
 })
 export class PizzaPatronesService {
-  private apiUrl = `${environment.apiUrl}/pizzas`;
+  private readonly apiUrl= `${environment.apiUrl}/pizzas`;
 
   constructor(
-    private http: HttpClient,
-    private pizzaService: PizzaService,
-    private ingredientService: IngredientService
+    private readonly http: HttpClient,
+    private readonly pizzaService: PizzaService,
+    private readonly ingredientService: IngredientService
   ) { }
 
   /**
@@ -42,7 +42,7 @@ export class PizzaPatronesService {
   }
 
   /**
-   * SPECIFICATION PATTERN - Filtrar pizzas por categoría (Simulado)
+   * SPECIFICATION PATTERN - Filtrar pizzas por categorÃ­a (Simulado)
    */
   listarPizzasPorCategoria(categoryId: number): Observable<PizzaDTO[]> {
     return this.pizzaService.listarPizzas().pipe(
@@ -66,29 +66,31 @@ export class PizzaPatronesService {
     return this.pizzaService.obtenerPizzaPorId(pizzaId).pipe(
       switchMap((pizza: PizzaDTO) => {
         return this.ingredientService.obtenerDisponibles().pipe(
-          map(ingredientes => {
-            let totalExtras = 0;
-            let detalles: any[] = [];
-            extras.forEach(extraName => {
-              // Buscar ingrediente por nombre, ya que extras a veces es un array de nombres o IDs
-              // Aquí intentamos manejar ambos casos para mayor seguridad
-              let ing = ingredientes.find(i => i.name === extraName || i.id?.toString() === extraName);
-              if (ing) {
-                totalExtras += ing.extraCost || 0;
-                detalles.push({ nombre: ing.name, costo: ing.extraCost });
-              }
-            });
-            return {
-              precioBase: pizza.price,
-              costoExtras: totalExtras,
-              precioTotal: pizza.price + totalExtras,
-              extrasAplicados: detalles,
-              descripcion: `Pizza ${pizza.name} con ${detalles.length} extras`
-            };
-          })
+          map(ingredientes => this.calcularDetallesPrecio(pizza, ingredientes, extras))
         );
       })
     );
+  }
+
+  private calcularDetallesPrecio(pizza: PizzaDTO, ingredientes: any[], extras: string[]): any {
+    let totalExtras = 0;
+    const detalles: any[] = [];
+    
+    extras.forEach(extraName => {
+      const ing = ingredientes.find(i => i.name === extraName || i.id?.toString() === extraName);
+      if (ing) {
+        totalExtras += ing.extraCost || 0;
+        detalles.push({ nombre: ing.name, costo: ing.extraCost });
+      }
+    });
+    
+    return {
+      precioBase: pizza.price,
+      costoExtras: totalExtras,
+      precioTotal: pizza.price + totalExtras,
+      extrasAplicados: detalles,
+      descripcion: `Pizza ${pizza.name} con ${detalles.length} extras`
+    };
   }
 
   /**
@@ -98,4 +100,5 @@ export class PizzaPatronesService {
     return this.pizzaService.crearPizza(pizzaData);
   }
 }
+
 

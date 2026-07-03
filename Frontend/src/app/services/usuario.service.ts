@@ -9,12 +9,12 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class UsuarioService {
-  private apiUrl = environment.apiUrl;
-  private httpOptions = {
+  private readonly apiUrl= environment.apiUrl;
+  private readonly httpOptions= {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
   };
 
-  constructor(private http: HttpClient) { }
+  constructor(private readonly http: HttpClient) { }
 
   // Operaciones CRUD para Usuarios
   listarUsuarios(): Observable<UsuarioDTO[]> {
@@ -25,7 +25,7 @@ export class UsuarioService {
     return this.http.get<any>(`${this.apiUrl}/usuarios/${id}`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Obtener información del usuario autenticado actual
+  // Obtener informaciÃ³n del usuario autenticado actual
   obtenerUsuarioActual(): Observable<UsuarioDTO> {
     return this.http.get<any>(`${this.apiUrl}/usuarios/me`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
@@ -60,17 +60,17 @@ export class UsuarioService {
     return this.http.put<any>(`${this.apiUrl}/usuarios/me`, datos, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Cambiar contraseña del usuario actual
+  // Cambiar contraseÃ±a del usuario actual
   cambiarPassword(id: number, passwordData: { password: string }): Observable<any> {
     return this.http.patch<any>(`${this.apiUrl}/usuarios/${id}/cambiar-password`, passwordData, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Operaciones de autenticación
+  // Operaciones de autenticaciÃ³n
   login(loginData: LoginDTO): Observable<AuthResponseDTO> {
     return this.http.post<any>(`${this.apiUrl}/ingresar`, loginData, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Endpoints públicos para validación de duplicados
+  // Endpoints pÃºblicos para validaciÃ³n de duplicados
   verificarEmail(email: string): Observable<{existe: boolean}> {
     return this.http.get<any>(`${this.apiUrl}/verificar-email?email=${encodeURIComponent(email)}`).pipe(map(res => typeof res.data === 'boolean' ? {existe: res.data} : res));
   }

@@ -41,11 +41,11 @@ export class Usuarios implements OnInit, OnDestroy {
   success = '';
   filtroActivo: 'todos' | 'admins' | 'activos' | 'admins-activos' = 'todos';
   
-  // Variables para mostrar/ocultar contraseñas
+  // Variables para mostrar/ocultar contraseÃ±as
   showPassword = false;
   showConfirmPassword = false;
 
-  // Variables para la modal de creación/edición
+  // Variables para la modal de creaciÃ³n/ediciÃ³n
   mostrarModal: boolean = false;
   
   // Variables para Logs del Sistema
@@ -58,14 +58,14 @@ export class Usuarios implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
 
   constructor(
-    private usuarioService: UsuarioService,
-    private usuarioPatronesService: UsuarioPatronesService,
-    private formBuilder: FormBuilder,
-    private cdr: ChangeDetectorRef,
-    private router: Router,
-    private authService: AuthService,
-    private sessionLogService: SessionLogService,
-    private auditLogService: AuditLogService
+    private readonly usuarioService: UsuarioService,
+    private readonly usuarioPatronesService: UsuarioPatronesService,
+    private readonly formBuilder: FormBuilder,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly router: Router,
+    private readonly authService: AuthService,
+    private readonly sessionLogService: SessionLogService,
+    private readonly auditLogService: AuditLogService
   ) {
     this.usuarioForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
@@ -106,14 +106,14 @@ export class Usuarios implements OnInit, OnDestroy {
     
     // Validar nombre en tiempo real
     const nameSub = this.usuarioForm.get('name')?.valueChanges.subscribe(value => {
-      if (value && value.trim()) {
+      if (value?.trim()) {
         setTimeout(() => {
           if (this.verificarNombreDuplicado()) {
             this.usuarioForm.get('name')?.setErrors({ 'duplicado': true });
           } else {
             // Limpiar error de duplicado si ya no existe
             const currentErrors = this.usuarioForm.get('name')?.errors;
-            if (currentErrors && currentErrors['duplicado']) {
+            if (currentErrors?.['duplicado']) {
               delete currentErrors['duplicado'];
               const hasOtherErrors = Object.keys(currentErrors).length > 0;
               this.usuarioForm.get('name')?.setErrors(hasOtherErrors ? currentErrors : null);
@@ -126,14 +126,14 @@ export class Usuarios implements OnInit, OnDestroy {
 
     // Validar email en tiempo real
     const emailSub = this.usuarioForm.get('email')?.valueChanges.subscribe(value => {
-      if (value && value.trim()) {
+      if (value?.trim()) {
         setTimeout(() => {
           if (this.verificarEmailDuplicado()) {
             this.usuarioForm.get('email')?.setErrors({ 'duplicado': true });
           } else {
             // Limpiar error de duplicado si ya no existe
             const currentErrors = this.usuarioForm.get('email')?.errors;
-            if (currentErrors && currentErrors['duplicado']) {
+            if (currentErrors?.['duplicado']) {
               delete currentErrors['duplicado'];
               const hasOtherErrors = Object.keys(currentErrors).length > 0;
               this.usuarioForm.get('email')?.setErrors(hasOtherErrors ? currentErrors : null);
@@ -145,7 +145,7 @@ export class Usuarios implements OnInit, OnDestroy {
     if (emailSub) this.subscriptions.push(emailSub);
   }
 
-  // Validador personalizado para comparar contraseñas
+  // Validador personalizado para comparar contraseÃ±as
   passwordsMatchValidator: ValidatorFn = (form: AbstractControl) => {
     const password = form.get('password')?.value;
     const confirm = form.get('confirmPassword')?.value;
@@ -158,7 +158,7 @@ export class Usuarios implements OnInit, OnDestroy {
     this.loading = true;
     this.limpiarMensajes();
     
-    // Aplicar filtro según el seleccionado (Specification Pattern)
+    // Aplicar filtro segÃºn el seleccionado (Specification Pattern)
     this.aplicarFiltro();
   }
 
@@ -272,7 +272,7 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   /**
-   * Aplica paginación a los usuarios
+   * Aplica paginaciÃ³n a los usuarios
    */
   aplicarPaginacion(): void {
     const totalPages = Math.ceil(this.usuarios.length / this.itemsPerPage);
@@ -288,7 +288,7 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   /**
-   * Cambia de página
+   * Cambia de pÃ¡gina
    */
   onPageChange(page: number): void {
     this.currentPage = page;
@@ -422,7 +422,7 @@ export class Usuarios implements OnInit, OnDestroy {
     this.usuarioForm.patchValue({ role: 'CUSTOMER' });
     this.selectedUsuarioId = undefined;
     
-    // Asegurar que todos los campos estén habilitados
+    // Asegurar que todos los campos estÃ©n habilitados
     this.usuarioForm.get('email')?.enable();
     this.usuarioForm.get('name')?.enable();
     this.usuarioForm.get('phone')?.enable();
@@ -445,7 +445,7 @@ export class Usuarios implements OnInit, OnDestroy {
       role: usuario.role
     });
     
-    // Asegurar que todos los campos estén habilitados para edición
+    // Asegurar que todos los campos estÃ©n habilitados para ediciÃ³n
     this.usuarioForm.get('email')?.enable();
     this.usuarioForm.get('name')?.enable();
     this.usuarioForm.get('phone')?.enable();
@@ -482,10 +482,8 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   guardarUsuario(): void {
-    // Validar formulario según el modo
     const isValidForCreation = !this.editMode && this.usuarioForm.valid;
     
-    // Para edición: validar campos específicos, excluyendo el rol si está deshabilitado
     let isValidForEdit = false;
     if (this.editMode) {
       const emailValid = this.usuarioForm.get('email')?.valid ?? false;
@@ -496,121 +494,115 @@ export class Usuarios implements OnInit, OnDestroy {
       isValidForEdit = emailValid && nameValid && (roleDisabled || roleValid);
     }
 
-    if (isValidForCreation || isValidForEdit) {
-      // Verificar que el nombre no esté duplicado
-      if (this.verificarNombreDuplicado()) {
-        this.mostrarMensajeError('Ya existe un usuario con ese nombre');
-        return;
-      }
-
-      // Verificar que el email no esté duplicado
-      if (this.verificarEmailDuplicado()) {
-        this.mostrarMensajeError('Ya existe un usuario con ese email');
-        return;
-      }
-
-      // Validación adicional de seguridad para usuario actual
-      if (this.editMode && this.selectedUsuarioId && this.esUsuarioActualPorId(this.selectedUsuarioId)) {
-        const formValue = this.usuarioForm.getRawValue();
-        const usuarioOriginal = this.usuarios.find(u => u.id === this.selectedUsuarioId);
-        
-        // Verificar si intenta cambiar su propio rol
-        if (usuarioOriginal && formValue.role !== usuarioOriginal.role) {
-          this.mostrarMensajeError('🚫 Por seguridad, no puedes cambiar tu propio rol mientras estás logueado');
-          return;
-        }
-      }
-
-      this.loading = true;
-      this.limpiarMensajes();
-      
-      // Obtener valores del formulario, incluyendo campos deshabilitados
-      const formValue = this.usuarioForm.getRawValue();
-
-      if (this.editMode && this.selectedUsuarioId) {
-        // Actualizar usuario existente
-        const usuarioOriginal = this.usuarios.find(u => u.id === this.selectedUsuarioId);
-        
-        const usuarioActualizar: UsuarioCreateDTO = {
-          email: formValue.email.trim(),
-          name: formValue.name.trim(),
-          phone: formValue.phone ? formValue.phone.trim() : '',
-          password: formValue.password || '', // Incluir password si se cambió
-          // Si el campo de rol está deshabilitado (usuario actual), mantener el rol original
-          role: this.usuarioForm.get('role')?.disabled ? 
-                (usuarioOriginal?.role || 'CUSTOMER') : 
-                formValue.role
-        };
-        
-        this.usuarioService.actualizarUsuario(this.selectedUsuarioId, usuarioActualizar).subscribe({
-          next: (usuarioActualizado) => {
-            this.mostrarMensajeExito('Usuario actualizado correctamente');
-            this.cancelar();
-            
-            // Si el admin editó su propio usuario, actualizar los datos locales para que se reflejen en la app
-            const currentUserId = this.authService.obtenerUsuarioId();
-            if (currentUserId && currentUserId === this.selectedUsuarioId) {
-              this.authService.updateCurrentUser(usuarioActualizado);
-            }
-            
-            // Recargar la lista desde el servidor para mantener sincronización
-            this.recargarListaSinLoading();
-          },
-          error: (error) => {
-            console.error('Error al actualizar usuario:', error);
-            console.error('Datos enviados:', usuarioActualizar);
-            console.error('Error completo:', error.error);
-            this.mostrarMensajeError(error.error?.message || 'Error al actualizar el usuario');
-            this.loading = false;
-          },
-          complete: () => {
-            this.loading = false;
-          }
-        });
-      } else {
-        // Crear nuevo usuario
-        const usuarioCrear: UsuarioCreateDTO = {
-          email: formValue.email,
-          name: formValue.name,
-          phone: formValue.phone || '',
-          role: formValue.role,
-          password: formValue.password
-        };
-        
-        this.usuarioService.crearUsuario(usuarioCrear).subscribe({
-          next: (response) => {
-            this.mostrarMensajeExito('Usuario creado correctamente');
-            this.cancelar();
-            
-            // Recargar la lista desde el servidor para mantener sincronización
-            this.recargarListaSinLoading();
-          },
-          error: (error) => {
-            console.error('Error al crear usuario:', error);
-            this.mostrarMensajeError(error.error?.message || 'Error al crear el usuario');
-            this.loading = false;
-          },
-          complete: () => {
-            // Asegurar que siempre se termine el loading
-            this.loading = false;
-          }
-        });
-      }
-    } else {
+    if (!(isValidForCreation || isValidForEdit)) {
       this.mostrarMensajeError('Por favor, complete todos los campos requeridos correctamente');
       this.usuarioForm.markAllAsTouched();
+      return;
     }
+    
+    if (this.verificarNombreDuplicado()) {
+      this.mostrarMensajeError('Ya existe un usuario con ese nombre');
+      return;
+    }
+
+    if (this.verificarEmailDuplicado()) {
+      this.mostrarMensajeError('Ya existe un usuario con ese email');
+      return;
+    }
+
+    if (this.editMode && this.selectedUsuarioId && this.esUsuarioActualPorId(this.selectedUsuarioId)) {
+      const formValue = this.usuarioForm.getRawValue();
+      const usuarioOriginal = this.usuarios.find(u => u.id === this.selectedUsuarioId);
+      
+      if (usuarioOriginal && formValue.role !== usuarioOriginal.role) {
+        this.mostrarMensajeError('ðŸš« Por seguridad, no puedes cambiar tu propio rol mientras estÃ¡s logueado');
+        return;
+      }
+    }
+
+    this.loading = true;
+    this.limpiarMensajes();
+
+    if (this.editMode && this.selectedUsuarioId) {
+      this.actualizarUsuarioExistente();
+    } else {
+      this.crearNuevoUsuario();
+    }
+  }
+
+  private actualizarUsuarioExistente(): void {
+    const formValue = this.usuarioForm.getRawValue();
+    const usuarioOriginal = this.usuarios.find(u => u.id === this.selectedUsuarioId);
+    
+    const usuarioActualizar: UsuarioCreateDTO = {
+      email: formValue.email.trim(),
+      name: formValue.name.trim(),
+      phone: formValue.phone ? formValue.phone.trim() : '',
+      password: formValue.password || '',
+      role: this.usuarioForm.get('role')?.disabled ? 
+            (usuarioOriginal?.role || 'CUSTOMER') : 
+            formValue.role
+    };
+    
+    this.usuarioService.actualizarUsuario(this.selectedUsuarioId as number, usuarioActualizar).subscribe({
+      next: (usuarioActualizado) => {
+        this.mostrarMensajeExito('Usuario actualizado correctamente');
+        this.cancelar();
+        
+        const currentUserId = this.authService.obtenerUsuarioId();
+        if (currentUserId && currentUserId === this.selectedUsuarioId) {
+          this.authService.updateCurrentUser(usuarioActualizado);
+        }
+        
+        this.recargarListaSinLoading();
+      },
+      error: (error) => {
+        console.error('Error al actualizar usuario:', error);
+        this.mostrarMensajeError(error.error?.message || 'Error al actualizar el usuario');
+        this.loading = false;
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    });
+  }
+
+  private crearNuevoUsuario(): void {
+    const formValue = this.usuarioForm.getRawValue();
+    const usuarioCrear: UsuarioCreateDTO = {
+      email: formValue.email,
+      name: formValue.name,
+      phone: formValue.phone || '',
+      role: formValue.role,
+      password: formValue.password
+    };
+    
+    this.usuarioService.crearUsuario(usuarioCrear).subscribe({
+      next: (response) => {
+        this.mostrarMensajeExito('Usuario creado correctamente');
+        this.cancelar();
+        this.recargarListaSinLoading();
+      },
+      error: (error) => {
+        console.error('Error al crear usuario:', error);
+        this.mostrarMensajeError(error.error?.message || 'Error al crear el usuario');
+        this.loading = false;
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    });
   }
 
   eliminarUsuario(id: number, email: string): void {
     // Verificar si es el usuario actual usando el token
     const userInfo = this.authService.getUserInfo();
-    if (userInfo && email === userInfo.email) {
-      this.mostrarMensajeError('🚫 Por seguridad, no puedes eliminar tu propio usuario mientras estás logueado como administrador');
+    if (userInfo?.email === email) {
+      this.mostrarMensajeError('ðŸš« Por seguridad, no puedes eliminar tu propio usuario mientras estÃ¡s logueado como administrador');
       return;
     }
 
-    if (confirm(`¿Está seguro de que desea eliminar el usuario "${email}"?`)) {
+    if (confirm(`Â¿EstÃ¡ seguro de que desea eliminar el usuario "${email}"?`)) {
       this.loading = true;
       this.limpiarMensajes();
       
@@ -618,7 +610,7 @@ export class Usuarios implements OnInit, OnDestroy {
         next: (response) => {
           this.mostrarMensajeExito('Usuario eliminado correctamente');
           
-          // Recargar la lista desde el servidor para mantener sincronización
+          // Recargar la lista desde el servidor para mantener sincronizaciÃ³n
           this.recargarListaSinLoading();
         },
         error: (error) => {
@@ -639,18 +631,18 @@ export class Usuarios implements OnInit, OnDestroy {
    */
   inactivarUsuario(id: number, email: string): void {
     const userInfo = this.authService.getUserInfo();
-    if (userInfo && email === userInfo.email) {
-      this.mostrarMensajeError('🚫 No puedes inactivar tu propio usuario');
+    if (userInfo?.email === email) {
+      this.mostrarMensajeError('ðŸš« No puedes inactivar tu propio usuario');
       return;
     }
 
-    if (confirm(`¿Desea inactivar el usuario "${email}"?\n\nEl usuario no será eliminado, solo marcado como inactivo.`)) {
+    if (confirm(`Â¿Desea inactivar el usuario "${email}"?\n\nEl usuario no serÃ¡ eliminado, solo marcado como inactivo.`)) {
       this.loading = true;
       this.limpiarMensajes();
       
       this.usuarioService.inactivarUsuario(id).subscribe({
         next: (response) => {
-          this.mostrarMensajeExito('✅ Usuario inactivado correctamente');
+          this.mostrarMensajeExito('âœ… Usuario inactivado correctamente');
           this.recargarListaSinLoading();
         },
         error: (error) => {
@@ -666,13 +658,13 @@ export class Usuarios implements OnInit, OnDestroy {
    * Reactiva un usuario previamente inactivado
    */
   reactivarUsuario(id: number, email: string): void {
-    if (confirm(`¿Desea reactivar el usuario "${email}"?`)) {
+    if (confirm(`Â¿Desea reactivar el usuario "${email}"?`)) {
       this.loading = true;
       this.limpiarMensajes();
       
       this.usuarioService.reactivarUsuario(id).subscribe({
         next: (response) => {
-          this.mostrarMensajeExito('✅ Usuario reactivado correctamente');
+          this.mostrarMensajeExito('âœ… Usuario reactivado correctamente');
           this.recargarListaSinLoading();
         },
         error: (error) => {
@@ -685,14 +677,14 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   /**
-   * Verifica si un usuario está activo
+   * Verifica si un usuario estÃ¡ activo
    */
   estaActivo(usuario: UsuarioDTO): boolean {
     return usuario.deletedAt === null || usuario.deletedAt === undefined;
   }
 
   private setupFormValidators(): void {
-    // Para crear nuevo usuario, contraseña es requerida con patrón
+    // Para crear nuevo usuario, contraseÃ±a es requerida con patrÃ³n
     this.usuarioForm.get('password')?.setValidators([
       Validators.required, 
       Validators.minLength(6),
@@ -705,12 +697,12 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   private setupFormValidatorsForEdit(): void {
-    // Para editar usuario, contraseña es opcional
+    // Para editar usuario, contraseÃ±a es opcional
     this.usuarioForm.get('password')?.clearValidators();
     this.usuarioForm.get('confirmPassword')?.clearValidators();
     this.usuarioForm.clearValidators();
     
-    // Mantener validaciones básicas
+    // Mantener validaciones bÃ¡sicas
     this.usuarioForm.get('email')?.setValidators([Validators.required, Validators.email]);
     this.usuarioForm.get('name')?.setValidators([
       Validators.required, 
@@ -735,7 +727,7 @@ export class Usuarios implements OnInit, OnDestroy {
     this.success = mensaje;
     this.error = '';
     
-    // Limpiar el mensaje después de 3 segundos
+    // Limpiar el mensaje despuÃ©s de 3 segundos
     setTimeout(() => {
       this.success = '';
     }, 3000);
@@ -771,9 +763,9 @@ export class Usuarios implements OnInit, OnDestroy {
       return false; // Si no hay nombre, no hay duplicado
     }
 
-    // Filtrar usuarios con el mismo nombre (ignorando mayúsculas/minúsculas)
+    // Filtrar usuarios con el mismo nombre (ignorando mayÃºsculas/minÃºsculas)
     const usuariosConMismoNombre = this.usuarios.filter(usuario => {
-      // En modo edición, ignorar el usuario actual
+      // En modo ediciÃ³n, ignorar el usuario actual
       if (this.editMode && usuario.id === this.selectedUsuarioId) {
         return false;
       }
@@ -791,9 +783,9 @@ export class Usuarios implements OnInit, OnDestroy {
       return false; // Si no hay email, no hay duplicado
     }
 
-    // Filtrar usuarios con el mismo email (ignorando mayúsculas/minúsculas)
+    // Filtrar usuarios con el mismo email (ignorando mayÃºsculas/minÃºsculas)
     const usuariosConMismoEmail = this.usuarios.filter(usuario => {
-      // En modo edición, ignorar el usuario actual
+      // En modo ediciÃ³n, ignorar el usuario actual
       if (this.editMode && usuario.id === this.selectedUsuarioId) {
         return false;
       }
@@ -805,9 +797,9 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   esCampoProtegido(campo: string): boolean {
-    // Verificar si el campo debería estar protegido para el usuario actual
+    // Verificar si el campo deberÃ­a estar protegido para el usuario actual
     if (this.editMode && this.selectedUsuarioId && this.esUsuarioActualPorId(this.selectedUsuarioId)) {
-      return campo === 'role'; // Solo el rol está protegido para el usuario actual
+      return campo === 'role'; // Solo el rol estÃ¡ protegido para el usuario actual
     }
     return false;
   }
@@ -818,13 +810,13 @@ export class Usuarios implements OnInit, OnDestroy {
         case 'role':
           return 'Por seguridad, no puedes cambiar tu propio rol';
         default:
-          return 'Este campo está protegido para tu seguridad';
+          return 'Este campo estÃ¡ protegido para tu seguridad';
       }
     }
     return '';
   }
 
-  // Métodos para formateo de fechas
+  // MÃ©todos para formateo de fechas
   formatearFechaRelativa(fecha: string | null | undefined): string {
     if (!fecha) return '-';
     
@@ -838,7 +830,7 @@ export class Usuarios implements OnInit, OnDestroy {
     if (diffMins < 1) return 'Hace unos segundos';
     if (diffMins < 60) return `Hace ${diffMins} min`;
     if (diffHoras < 24) return `Hace ${diffHoras}h`;
-    if (diffDias < 7) return `Hace ${diffDias} día${diffDias > 1 ? 's' : ''}`;
+    if (diffDias < 7) return `Hace ${diffDias} dÃ­a${diffDias > 1 ? 's' : ''}`;
     
     return fechaDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
   }
@@ -878,7 +870,7 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   // ==========================================
-  // LÓGICA DE LOGS DE SISTEMA
+  // LÃ“GICA DE LOGS DE SISTEMA
   // ==========================================
 
   abrirModalLogs(): void {
@@ -921,7 +913,7 @@ export class Usuarios implements OnInit, OnDestroy {
             this.cdr.detectChanges();
           },
           error: (error) => {
-            this.mostrarMensajeError('Error al cargar registro de auditoría');
+            this.mostrarMensajeError('Error al cargar registro de auditorÃ­a');
             this.loadingLogs = false;
             this.cdr.detectChanges();
           }
@@ -932,24 +924,25 @@ export class Usuarios implements OnInit, OnDestroy {
 
   forzarCierreSesion(token: string | undefined): void {
     if (!token) return;
-    if (confirm('¿Está seguro de forzar el cierre de esta sesión? El usuario será desconectado inmediatamente.')) {
+    if (confirm('Â¿EstÃ¡ seguro de forzar el cierre de esta sesiÃ³n? El usuario serÃ¡ desconectado inmediatamente.')) {
       this.subscriptions.push(
         this.sessionLogService.cerrarSesionExterna(token).subscribe({
           next: () => {
-            this.mostrarMensajeExito('Sesión cerrada remotamente.');
+            this.mostrarMensajeExito('SesiÃ³n cerrada remotamente.');
             this.cargarLogs();
             
-            // Si el admin cierra su propia sesión actual, desconectarlo inmediatamente
+            // Si el admin cierra su propia sesiÃ³n actual, desconectarlo inmediatamente
             const currentToken = this.authService.getToken();
             if (token === currentToken) {
               this.authService.logout();
             }
           },
           error: (error) => {
-            this.mostrarMensajeError('Error al cerrar sesión remotamente.');
+            this.mostrarMensajeError('Error al cerrar sesiÃ³n remotamente.');
           }
         })
       );
     }
   }
 }
+

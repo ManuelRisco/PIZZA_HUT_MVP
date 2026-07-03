@@ -14,12 +14,13 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/favorites")
 @CrossOrigin(origins = "http://localhost:4200")
 public class FavoriteController {
+
+    private static final String MSG_KEY = "message";
 
     private final FavoriteService favoriteService;
     
@@ -31,7 +32,7 @@ public class FavoriteController {
     }
 
     @GetMapping
-    public ResponseEntity<?> listarFavorites() {
+    public ResponseEntity<Object> listarFavorites() {
         // Los CUSTOMER solo pueden ver sus propios favoritos
         if (!securityUtils.isAdmin()) {
             Integer currentUserId = securityUtils.getCurrentUserId();
@@ -42,7 +43,7 @@ public class FavoriteController {
             List<Favorite> favorites = favoriteService.obtenerPorUserId(currentUserId);
             List<FavoriteDTO> favoritesDTO = favorites.stream()
                 .map(FavoriteDTO::new)
-                .collect(Collectors.toList());
+                .toList();
             return ResponseEntity.ok(ApiResponse.success(favoritesDTO));
         }
         
@@ -50,12 +51,12 @@ public class FavoriteController {
         List<Favorite> favorites = favoriteService.listarFavorites();
         List<FavoriteDTO> favoritesDTO = favorites.stream()
             .map(FavoriteDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(favoritesDTO));
     }
 
     @GetMapping("/{userId}/{pizzaId}")
-    public ResponseEntity<?> obtenerFavoritePorId(
+    public ResponseEntity<Object> obtenerFavoritePorId(
             @PathVariable("userId") Integer userId, 
             @PathVariable("pizzaId") Integer pizzaId) {
         
@@ -64,7 +65,7 @@ public class FavoriteController {
             Integer currentUserId = securityUtils.getCurrentUserId();
             if (currentUserId == null || !userId.equals(currentUserId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "No tienes permiso para ver este favorito"));
+                    .body(Map.of(MSG_KEY, "No tienes permiso para ver este favorito"));
             }
         }
         
@@ -75,47 +76,47 @@ public class FavoriteController {
             return ResponseEntity.ok(ApiResponse.success(favoriteDTO));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", "Favorite no encontrado"));
+                .body(Map.of(MSG_KEY, "Favorite no encontrado"));
         }
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<?> obtenerFavoritesPorUserId(@PathVariable("userId") Integer userId) {
+    public ResponseEntity<Object> obtenerFavoritesPorUserId(@PathVariable("userId") Integer userId) {
         // Validar que el cliente solo pueda ver sus propios favoritos
         if (!securityUtils.isAdmin()) {
             Integer currentUserId = securityUtils.getCurrentUserId();
             if (currentUserId == null || !userId.equals(currentUserId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "No tienes permiso para ver estos favoritos"));
+                    .body(Map.of(MSG_KEY, "No tienes permiso para ver estos favoritos"));
             }
         }
         
         List<Favorite> favorites = favoriteService.obtenerPorUserId(userId);
         List<FavoriteDTO> favoritesDTO = favorites.stream()
             .map(FavoriteDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(favoritesDTO));
     }
 
     @GetMapping("/pizza/{pizzaId}")
     public ResponseEntity<ApiResponse<List<FavoriteDTO>>> obtenerFavoritesPorPizzaId(@PathVariable("pizzaId") Integer pizzaId) {
-        // Solo ADMIN deber\u00eda ver qu\u00e9 usuarios tienen como favorita una pizza (por privacidad)
-        // Si necesitas que los usuarios lo vean, quita la l\u00f3gica de seguridad aqu\u00ed
+        // Solo ADMIN deberÃ­a ver quÃ© usuarios tienen como favorita una pizza (por privacidad)
+        // Si necesitas que los usuarios lo vean, quita la lÃ³gica de seguridad aquÃ­
         List<Favorite> favorites = favoriteService.obtenerPorPizzaId(pizzaId);
         List<FavoriteDTO> favoritesDTO = favorites.stream()
             .map(FavoriteDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(favoritesDTO));
     }
 
     @PostMapping
-    public ResponseEntity<?> crearFavorite(@Valid @RequestBody FavoriteDTO favoriteDTO) {
+    public ResponseEntity<Object> crearFavorite(@Valid @RequestBody FavoriteDTO favoriteDTO) {
         try {
             if (!securityUtils.isAdmin()) {
                 Integer currentUserId = securityUtils.getCurrentUserId();
                 if (currentUserId == null || !currentUserId.equals(favoriteDTO.getUserId())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "No puedes agregar favoritos para otros usuarios"));
+                        .body(Map.of(MSG_KEY, "No puedes agregar favoritos para otros usuarios"));
                 }
             }
 
@@ -124,7 +125,7 @@ public class FavoriteController {
             // Verificar si ya existe
             if (favoriteService.obtenerPorId(id).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", "La pizza ya está en tus favoritos"));
+                    .body(Map.of(MSG_KEY, "La pizza ya estÃ¡ en tus favoritos"));
             }
             
             Favorite favorite = new Favorite();
@@ -134,12 +135,12 @@ public class FavoriteController {
             return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(new FavoriteDTO(favoriteCreado), "Favorito creado exitosamente"));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "Error al crear el favorito"));
+                .body(Map.of(MSG_KEY, "Error al crear el favorito"));
         }
     }
 
     @DeleteMapping("/{userId}/{pizzaId}")
-    public ResponseEntity<?> eliminarFavorite(
+    public ResponseEntity<Object> eliminarFavorite(
             @PathVariable("userId") Integer userId, 
             @PathVariable("pizzaId") Integer pizzaId) {
         try {
@@ -148,16 +149,17 @@ public class FavoriteController {
                 Integer currentUserId = securityUtils.getCurrentUserId();
                 if (currentUserId == null || !userId.equals(currentUserId)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "No tienes permiso para eliminar este favorito"));
+                        .body(Map.of(MSG_KEY, "No tienes permiso para eliminar este favorito"));
                 }
             }
             
             FavoriteId id = new FavoriteId(userId, pizzaId);
             favoriteService.eliminarFavorite(id);
-            return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Favorite eliminado correctamente")));
+            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Favorite eliminado correctamente")));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
 }
+

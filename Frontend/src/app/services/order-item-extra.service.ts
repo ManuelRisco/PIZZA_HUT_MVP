@@ -16,12 +16,12 @@ export interface OrderItemExtraDTO {
   providedIn: 'root'
 })
 export class OrderItemExtraService {
-  private apiUrl = `${environment.apiUrl}/order-item-extras`;
-  private httpOptions = {
+  private readonly apiUrl= `${environment.apiUrl}/order-item-extras`;
+  private readonly httpOptions= {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   listarTodos(): Observable<OrderItemExtraDTO[]> {
     return this.http.get<any>(this.apiUrl).pipe(map(res => res.data !== undefined ? res.data : res));
@@ -43,3 +43,4 @@ export class OrderItemExtraService {
     return this.http.delete<any>(`${this.apiUrl}/${id}`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 }
+

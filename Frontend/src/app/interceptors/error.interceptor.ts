@@ -19,6 +19,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.error instanceof ErrorEvent) {
         // Error del lado del cliente
         errorMsg = `Error: ${error.error.message}`;
+        toastService.showError(errorMsg);
       } else {
         // Error del lado del servidor
         switch (error.status) {

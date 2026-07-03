@@ -31,9 +31,9 @@ export interface Promotion {
   providedIn: 'root'
 })
 export class PromocionService {
-  private apiUrl = `${environment.apiUrl}/promociones`;
+  private readonly apiUrl= `${environment.apiUrl}/promociones`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   listarTodas(): Observable<Promotion[]> {
     return this.http.get<any>(this.apiUrl).pipe(map(res => res.data !== undefined ? res.data : res));
@@ -90,3 +90,4 @@ export class PromocionService {
     return this.http.get<any>(`${this.apiUrl}/proximas-vencer?dias=${dias}`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 }
+

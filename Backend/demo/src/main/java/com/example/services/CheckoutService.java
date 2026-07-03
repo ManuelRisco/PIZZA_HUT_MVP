@@ -4,6 +4,8 @@ import com.example.dtos.CheckoutRequestDTO;
 import com.example.models.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,6 +13,8 @@ import java.time.LocalDateTime;
 @Service
 @Transactional
 public class CheckoutService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CheckoutService.class);
 
     private final OrderService orderService;
     private final OrderItemService orderItemService;
@@ -40,7 +44,27 @@ public class CheckoutService {
     }
 
     public Order checkout(CheckoutRequestDTO req) {
-        // 1. Process Address
+        Integer addressId = processAddress(req);
+        
+        String promoCode = req.getOrder().getPromoCode();
+        Promotion promotionAUsar = getValidPromotion(promoCode);
+        BigDecimal discount = promotionAUsar != null ? 
+            promotionService.calcularDescuento(promotionAUsar, req.getOrder().getSubtotal()) : BigDecimal.ZERO;
+        
+        Order savedOrder = initializeOrder(req, addressId, discount, promotionAUsar);
+        
+        BigDecimal realSubtotal = processItems(req, savedOrder.getId());
+        
+        savedOrder = finalizeOrderTotals(savedOrder, req, realSubtotal, promotionAUsar);
+        
+        processPayment(req, savedOrder);
+        
+        incrementPromotionUsage(promotionAUsar);
+
+        return savedOrder;
+    }
+
+    private Integer processAddress(CheckoutRequestDTO req) {
         Integer addressId = req.getOrder().getAddressId();
         if (req.getAddress() != null && "DELIVERY".equalsIgnoreCase(req.getOrder().getDeliveryType())) {
             Address address = new Address();
@@ -51,25 +75,19 @@ public class CheckoutService {
             address.setReference(req.getAddress().getReference());
             address.setIsDefault(req.getAddress().getIsDefault() != null ? req.getAddress().getIsDefault() : false);
             Address savedAddress = addressService.crearAddress(address);
-            addressId = savedAddress.getId();
+            return savedAddress.getId();
         }
+        return addressId;
+    }
 
-        // 2. Process Promotion
-        BigDecimal discount = BigDecimal.ZERO;
-        String promoCode = req.getOrder().getPromoCode();
-        Integer promotionId = null;
-        Promotion promotionAUsar = null;
-
+    private Promotion getValidPromotion(String promoCode) {
         if (promoCode != null && !promoCode.trim().isEmpty()) {
-            var promotionOpt = promotionService.obtenerPorCodigo(promoCode);
-            if (promotionOpt.isPresent()) {
-                promotionAUsar = promotionOpt.get();
-                discount = promotionService.calcularDescuento(promotionAUsar, req.getOrder().getSubtotal());
-                promotionId = promotionAUsar.getId();
-            }
+            return promotionService.obtenerPorCodigo(promoCode).orElse(null);
         }
+        return null;
+    }
 
-        // 3. Process Order
+    private Order initializeOrder(CheckoutRequestDTO req, Integer addressId, BigDecimal discount, Promotion promotionAUsar) {
         Order order = new Order();
         order.setUserId(req.getOrder().getUserId());
         order.setAddressId(addressId);
@@ -80,109 +98,124 @@ public class CheckoutService {
         order.setDeliveryFee(req.getOrder().getDeliveryFee() != null ? req.getOrder().getDeliveryFee() : BigDecimal.ZERO);
         order.setDiscount(discount);
         order.setTotal(req.getOrder().getSubtotal().add(order.getDeliveryFee()).subtract(discount));
-        order.setPromoCode(promoCode);
-        order.setPromotionId(promotionId);
+        order.setPromoCode(req.getOrder().getPromoCode());
+        order.setPromotionId(promotionAUsar != null ? promotionAUsar.getId() : null);
         order.setNotes(req.getOrder().getNotes());
         order.setEstimatedDelivery(req.getOrder().getEstimatedDelivery() != null ? 
             req.getOrder().getEstimatedDelivery() : LocalDateTime.now().plusMinutes(45));
 
-        Order savedOrder = orderService.crearOrder(order);
+        return orderService.crearOrder(order);
+    }
 
-        // 4. Process Items and Calculate Subtotal
+    private BigDecimal processItems(CheckoutRequestDTO req, Integer orderId) {
         BigDecimal realSubtotal = BigDecimal.ZERO;
         
-        if (req.getItems() != null) {
-            for (CheckoutRequestDTO.CheckoutItemDTO itemDTO : req.getItems()) {
-                if (itemDTO.getQuantity() != null && itemDTO.getQuantity() <= 0) {
-                    throw new IllegalArgumentException("Cantidad inválida. Debe ser mayor a cero.");
-                }
-                
-                BigDecimal unitPrice = BigDecimal.ZERO;
-                BigDecimal sizeExtra = BigDecimal.ZERO;
-                BigDecimal extraIngredientsCost = BigDecimal.ZERO;
-                
-                if ("PIZZA".equalsIgnoreCase(itemDTO.getItemType())) {
-                    Pizza pizza = pizzaService.obtenerPorId(itemDTO.getPizzaId())
-                            .orElseThrow(() -> new IllegalArgumentException("Pizza no encontrada"));
-                    unitPrice = pizza.getPrice();
-                    
-                    if (itemDTO.getSizeId() != null) {
-                        Size size = sizeService.obtenerPorId(itemDTO.getSizeId())
-                                .orElseThrow(() -> new IllegalArgumentException("Tamaño no encontrado"));
-                        sizeExtra = size.getExtraCost(); // Asumiendo que es un extra fijo, o multiplicar. En este MVP parece sumarse
-                    }
-                } else if ("EXTRA".equalsIgnoreCase(itemDTO.getItemType())) {
-                    Extra extra = extraService.obtenerPorId(itemDTO.getExtraId())
-                            .orElseThrow(() -> new IllegalArgumentException("Extra no encontrado"));
-                    unitPrice = extra.getPrice();
-                }
+        if (req.getItems() == null) return realSubtotal;
 
-                // Calcular costo de ingredientes extra
-                if (itemDTO.getExtraIngredientIds() != null && !itemDTO.getExtraIngredientIds().isEmpty()) {
-                    for (Integer ingId : itemDTO.getExtraIngredientIds()) {
-                        Ingredient ingredient = ingredientService.obtenerPorId(ingId).orElse(null);
-                        if (ingredient != null && ingredient.getExtraCost() != null) {
-                            extraIngredientsCost = extraIngredientsCost.add(ingredient.getExtraCost());
-                        }
-                    }
-                }
+        for (CheckoutRequestDTO.CheckoutItemDTO itemDTO : req.getItems()) {
+            if (itemDTO.getQuantity() != null && itemDTO.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Cantidad inválida. Debe ser mayor a cero.");
+            }
+            
+            BigDecimal[] costs = calculateItemCosts(itemDTO);
+            BigDecimal unitPrice = costs[0];
+            BigDecimal sizeExtra = costs[1];
+            BigDecimal extraIngredientsCost = costs[2];
 
-                // El precio total por unidad es (precioBase + extraPorTamaño + costoIngredientesExtra)
-                BigDecimal totalUnitPrice = unitPrice.add(sizeExtra).add(extraIngredientsCost);
-                BigDecimal lineTotal = totalUnitPrice.multiply(new BigDecimal(itemDTO.getQuantity()));
-                
-                realSubtotal = realSubtotal.add(lineTotal);
-                
-                OrderItem item = new OrderItem();
-                item.setOrderId(savedOrder.getId());
-                item.setItemType(itemDTO.getItemType().toUpperCase());
-                item.setQuantity(itemDTO.getQuantity());
-                item.setUnitPrice(totalUnitPrice);
-                item.setSizeExtra(sizeExtra);
-                item.setLineTotal(lineTotal);
+            BigDecimal totalUnitPrice = unitPrice.add(sizeExtra).add(extraIngredientsCost);
+            BigDecimal lineTotal = totalUnitPrice.multiply(new BigDecimal(itemDTO.getQuantity()));
+            
+            realSubtotal = realSubtotal.add(lineTotal);
+            
+            OrderItem savedItem = createOrderItem(orderId, itemDTO, totalUnitPrice, sizeExtra, lineTotal);
+            
+            processItemExtras(itemDTO, savedItem.getId());
+        }
+        return realSubtotal;
+    }
 
-                if ("PIZZA".equalsIgnoreCase(itemDTO.getItemType())) {
-                    item.setPizzaId(itemDTO.getPizzaId());
-                    item.setSizeId(itemDTO.getSizeId());
-                } else if ("EXTRA".equalsIgnoreCase(itemDTO.getItemType())) {
-                    item.setExtraId(itemDTO.getExtraId());
-                }
+    private BigDecimal[] calculateItemCosts(CheckoutRequestDTO.CheckoutItemDTO itemDTO) {
+        BigDecimal unitPrice = BigDecimal.ZERO;
+        BigDecimal sizeExtra = BigDecimal.ZERO;
+        BigDecimal extraIngredientsCost = BigDecimal.ZERO;
+        
+        if ("PIZZA".equalsIgnoreCase(itemDTO.getItemType())) {
+            Pizza pizza = pizzaService.obtenerPorId(itemDTO.getPizzaId())
+                    .orElseThrow(() -> new IllegalArgumentException("Pizza no encontrada"));
+            unitPrice = pizza.getPrice();
+            
+            if (itemDTO.getSizeId() != null) {
+                Size size = sizeService.obtenerPorId(itemDTO.getSizeId())
+                        .orElseThrow(() -> new IllegalArgumentException("Tamaño no encontrado"));
+                sizeExtra = size.getExtraCost(); 
+            }
+        } else if ("EXTRA".equalsIgnoreCase(itemDTO.getItemType())) {
+            Extra extra = extraService.obtenerPorId(itemDTO.getExtraId())
+                    .orElseThrow(() -> new IllegalArgumentException("Extra no encontrado"));
+            unitPrice = extra.getPrice();
+        }
 
-                OrderItem savedItem = orderItemService.crearOrderItem(item);
-
-                // Process Extras for Pizza
-                if (itemDTO.getExtraIngredientIds() != null && !itemDTO.getExtraIngredientIds().isEmpty()) {
-                    for (Integer ingId : itemDTO.getExtraIngredientIds()) {
-                        ingredientService.obtenerPorId(ingId).ifPresent(ingredient -> {
-                            OrderItemExtra orderItemExtra = new OrderItemExtra();
-                            orderItemExtra.setOrderItemId(savedItem.getId());
-                            orderItemExtra.setIngredientId(ingredient.getId());
-                            orderItemExtra.setIngredientName(ingredient.getName());
-                            orderItemExtra.setExtraCost(ingredient.getExtraCost() != null ? ingredient.getExtraCost() : BigDecimal.ZERO);
-                            orderItemExtraService.crearOrderItemExtra(orderItemExtra);
-                        });
-                    }
+        if (itemDTO.getExtraIngredientIds() != null && !itemDTO.getExtraIngredientIds().isEmpty()) {
+            for (Integer ingId : itemDTO.getExtraIngredientIds()) {
+                Ingredient ingredient = ingredientService.obtenerPorId(ingId).orElse(null);
+                if (ingredient != null && ingredient.getExtraCost() != null) {
+                    extraIngredientsCost = extraIngredientsCost.add(ingredient.getExtraCost());
                 }
             }
         }
-        
-        // 5. Re-calculate Promos and Order Totals with REAL subtotal
-        if (promoCode != null && !promoCode.trim().isEmpty()) {
-            if (promotionAUsar != null) {
-                // Validación estricta de negocio: ¿Este usuario tiene derecho a usar este cupón?
-                promotionService.verificarReglasDeUsuario(promotionAUsar, req.getOrder().getUserId());
-                
-                discount = promotionService.calcularDescuento(promotionAUsar, realSubtotal);
+        return new BigDecimal[]{unitPrice, sizeExtra, extraIngredientsCost};
+    }
+
+    private OrderItem createOrderItem(Integer orderId, CheckoutRequestDTO.CheckoutItemDTO itemDTO, BigDecimal totalUnitPrice, BigDecimal sizeExtra, BigDecimal lineTotal) {
+        OrderItem item = new OrderItem();
+        item.setOrderId(orderId);
+        item.setItemType(itemDTO.getItemType().toUpperCase());
+        item.setQuantity(itemDTO.getQuantity());
+        item.setUnitPrice(totalUnitPrice);
+        item.setSizeExtra(sizeExtra);
+        item.setLineTotal(lineTotal);
+
+        if ("PIZZA".equalsIgnoreCase(itemDTO.getItemType())) {
+            item.setPizzaId(itemDTO.getPizzaId());
+            item.setSizeId(itemDTO.getSizeId());
+        } else if ("EXTRA".equalsIgnoreCase(itemDTO.getItemType())) {
+            item.setExtraId(itemDTO.getExtraId());
+        }
+
+        return orderItemService.crearOrderItem(item);
+    }
+
+    private void processItemExtras(CheckoutRequestDTO.CheckoutItemDTO itemDTO, Integer savedItemId) {
+        if (itemDTO.getExtraIngredientIds() != null && !itemDTO.getExtraIngredientIds().isEmpty()) {
+            for (Integer ingId : itemDTO.getExtraIngredientIds()) {
+                ingredientService.obtenerPorId(ingId).ifPresent(ingredient -> {
+                    OrderItemExtra orderItemExtra = new OrderItemExtra();
+                    orderItemExtra.setOrderItemId(savedItemId);
+                    orderItemExtra.setIngredientId(ingredient.getId());
+                    orderItemExtra.setIngredientName(ingredient.getName());
+                    orderItemExtra.setExtraCost(ingredient.getExtraCost() != null ? ingredient.getExtraCost() : BigDecimal.ZERO);
+                    orderItemExtraService.crearOrderItemExtra(orderItemExtra);
+                });
             }
+        }
+    }
+
+    private Order finalizeOrderTotals(Order savedOrder, CheckoutRequestDTO req, BigDecimal realSubtotal, Promotion promotionAUsar) {
+        BigDecimal discount = BigDecimal.ZERO;
+        String promoCode = req.getOrder().getPromoCode();
+        if (promoCode != null && !promoCode.trim().isEmpty() && promotionAUsar != null) {
+            promotionService.verificarReglasDeUsuario(promotionAUsar, req.getOrder().getUserId());
+            discount = promotionService.calcularDescuento(promotionAUsar, realSubtotal);
         }
         
         savedOrder.setSubtotal(realSubtotal);
         savedOrder.setDiscount(discount);
         BigDecimal calculatedTotal = realSubtotal.add(savedOrder.getDeliveryFee()).subtract(discount);
         savedOrder.setTotal(calculatedTotal.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : calculatedTotal);
-        orderService.actualizarOrder(savedOrder.getId(), savedOrder);
+        return orderService.actualizarOrder(savedOrder.getId(), savedOrder);
+    }
 
-        // 5. Process Payment
+    private void processPayment(CheckoutRequestDTO req, Order savedOrder) {
         if (req.getPayment() != null && req.getPayment().getPaymentMethodId() != null) {
             Payment payment = new Payment();
             payment.setOrderId(savedOrder.getId());
@@ -192,16 +225,15 @@ public class CheckoutService {
             payment.setTransactionId(req.getPayment().getTransactionId());
             paymentService.crearPayment(payment);
         }
+    }
 
-        // 6. Increment Promotion Usage
+    private void incrementPromotionUsage(Promotion promotionAUsar) {
         if (promotionAUsar != null) {
             try {
-                promotionService.incrementarUsoPromocion(promotionAUsar);
+                promotionService.incrementarUsoPromocion(promotionAUsar.getCode());
             } catch (Exception e) {
-                System.err.println("Error al incrementar uso de promoción: " + e.getMessage());
+                logger.error("Error al incrementar uso de promoción", e);
             }
         }
-
-        return savedOrder;
     }
 }

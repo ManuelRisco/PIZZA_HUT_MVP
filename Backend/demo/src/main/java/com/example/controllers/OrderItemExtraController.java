@@ -17,7 +17,6 @@ import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/order-item-extras")
@@ -47,13 +46,13 @@ public class OrderItemExtraController {
             }
             
             OrderItem orderItem = orderItemService.obtenerPorId(orderItemId)
-                .orElseThrow(() -> new IllegalArgumentException("El ítem de pedido no existe"));
+                .orElseThrow(() -> new IllegalArgumentException("El Ã­tem de pedido no existe"));
                 
             Order order = orderService.obtenerPorId(orderItem.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("El pedido no existe"));
                 
             if (!order.getUserId().equals(currentUserId)) {
-                throw new AccessDeniedException("No tienes permiso para acceder a este ítem");
+                throw new AccessDeniedException("No tienes permiso para acceder a este Ã­tem");
             }
         }
     }
@@ -67,12 +66,12 @@ public class OrderItemExtraController {
         List<OrderItemExtra> extras = orderItemExtraService.listarTodos();
         List<OrderItemExtraDTO> extrasDTO = extras.stream()
             .map(OrderItemExtraDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(extrasDTO));
     }
 
     @GetMapping("/order-item/{orderItemId}")
-    public ResponseEntity<?> obtenerPorOrderItemId(@PathVariable("orderItemId") Integer orderItemId) {
+    public ResponseEntity<Object> obtenerPorOrderItemId(@PathVariable("orderItemId") Integer orderItemId) {
         try {
             validarAccesoAOrderItem(orderItemId);
         } catch (AccessDeniedException e) {
@@ -84,12 +83,12 @@ public class OrderItemExtraController {
         List<OrderItemExtra> extras = orderItemExtraService.obtenerPorOrderItemId(orderItemId);
         List<OrderItemExtraDTO> extrasDTO = extras.stream()
             .map(OrderItemExtraDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(extrasDTO));
     }
 
     @PostMapping
-    public ResponseEntity<?> crear(@Valid @RequestBody OrderItemExtraDTO orderItemExtraDTO) {
+    public ResponseEntity<Object> crear(@Valid @RequestBody OrderItemExtraDTO orderItemExtraDTO) {
         try {
             validarAccesoAOrderItem(orderItemExtraDTO.getOrderItemId());
             
@@ -111,7 +110,7 @@ public class OrderItemExtraController {
     }
 
     @DeleteMapping("/order-item/{orderItemId}")
-    public ResponseEntity<?> eliminarPorOrderItemId(@PathVariable("orderItemId") Integer orderItemId) {
+    public ResponseEntity<Object> eliminarPorOrderItemId(@PathVariable("orderItemId") Integer orderItemId) {
         try {
             validarAccesoAOrderItem(orderItemId);
             
@@ -127,7 +126,7 @@ public class OrderItemExtraController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminar(@PathVariable("id") Integer id) {
+    public ResponseEntity<Object> eliminar(@PathVariable("id") Integer id) {
         try {
             Optional<OrderItemExtra> extraOpt = orderItemExtraService.obtenerPorId(id);
             if (extraOpt.isEmpty()) {
@@ -146,3 +145,4 @@ public class OrderItemExtraController {
         }
     }
 }
+

@@ -32,10 +32,10 @@ export class PromocionesClienteComponent implements OnInit {
     { value: 'BUNDLE', label: 'Combos', icon: 'bi-basket3' }
   ];
 
-  private promocionService = inject(PromocionService);
-  private cartService = inject(CartService);
-  private authService = inject(AuthService);
-  private accessibility = inject(AccessibilityService);
+  private readonly promocionService = inject(PromocionService);
+  private readonly cartService = inject(CartService);
+  private readonly authService = inject(AuthService);
+  private readonly accessibility = inject(AccessibilityService);
 
   ngOnInit(): void {
     this.cargarPromociones();
@@ -86,7 +86,7 @@ export class PromocionesClienteComponent implements OnInit {
       resultado = resultado.filter(p =>
         p.name.toLowerCase().includes(term) ||
         p.code.toLowerCase().includes(term) ||
-        (p.description && p.description.toLowerCase().includes(term))
+        (p.description?.toLowerCase().includes(term))
       );
     }
 
@@ -141,7 +141,7 @@ export class PromocionesClienteComponent implements OnInit {
       const fin = new Date(promo.endDate);
 
       // Validar que las fechas sean válidas
-      if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
+      if (Number.isNaN(inicio.getTime()) || Number.isNaN(fin.getTime())) {
         return false;
       }
 

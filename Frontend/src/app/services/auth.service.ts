@@ -14,13 +14,13 @@ export interface User extends UsuarioDTO {}
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = environment.apiUrl;
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  private readonly apiUrl= environment.apiUrl;
+  private readonly currentUserSubject= new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   private refreshTokenSubscription?: Subscription;
   private userCheckSubscription?: Subscription;
 
-  constructor(private http: HttpClient, private router: Router, private ngZone: NgZone) {
+  constructor(private readonly http: HttpClient, private readonly router: Router, private readonly ngZone: NgZone) {
     // Verificar si hay un token almacenado al inicializar
     this.loadUserFromToken();
     this.startTokenRefresh();
@@ -28,10 +28,10 @@ export class AuthService {
     this.listenToStorageEvents();
   }
 
-  // Sincronizar login y logout entre pestañas
+  // Sincronizar login y logout entre pestaÃ±as
   private listenToStorageEvents(): void {
     window.addEventListener('storage', (event) => {
-      // Si el token se eliminó en otra pestaña (por ej. al hacer logout o cambiar contraseña)
+      // Si el token se eliminÃ³ en otra pestaÃ±a (por ej. al hacer logout o cambiar contraseÃ±a)
       if (event.key === 'token' && !event.newValue) {
         this.ngZone.run(() => {
           this.currentUserSubject.next(null);
@@ -41,13 +41,13 @@ export class AuthService {
         });
       }
       
-      // Si el token se AÑADIÓ en otra pestaña (por ej. al hacer login)
+      // Si el token se AÃ‘ADIÃ“ en otra pestaÃ±a (por ej. al hacer login)
       if (event.key === 'token' && event.newValue) {
         this.ngZone.run(() => {
           // Recargar el usuario desde el nuevo token
           this.loadUserFromToken();
           
-          // Si estamos en la página de login (/join), redirigir al panel correspondiente
+          // Si estamos en la pÃ¡gina de login (/join), redirigir al panel correspondiente
           if (this.router.url.includes('/join') || this.router.url === '/') {
              const currentUser = this.currentUserSubject.value;
              if (currentUser) {
@@ -64,7 +64,7 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<any> {
-    // Limpiar cualquier sesión anterior antes de iniciar sesión
+    // Limpiar cualquier sesiÃ³n anterior antes de iniciar sesiÃ³n
     this.clearSession();
 
     const loginData: LoginDTO = { email, password };
@@ -84,7 +84,7 @@ export class AuthService {
     localStorage.setItem('token', authResponse.token);
     localStorage.setItem('refreshToken', authResponse.refreshToken);
 
-    // Extraer información del token para validar
+    // Extraer informaciÃ³n del token para validar
     const tokenData = this.getTokenData();
 
     // Verificar que los datos del token coincidan con la respuesta
@@ -109,7 +109,7 @@ export class AuthService {
   }
 
   logout(): void {
-    // Limpiar TODAS las claves relacionadas con autenticación
+    // Limpiar TODAS las claves relacionadas con autenticaciÃ³n
     const keysToRemove = ['token', 'refreshToken', 'currentUser', 'userRole', 'userId', 'userEmail', 'userName'];
     keysToRemove.forEach(key => {
       localStorage.removeItem(key);
@@ -127,7 +127,7 @@ export class AuthService {
     // Limpiar estado del usuario
     this.currentUserSubject.next(null);
 
-    // Detener procesos de refresh y verificación
+    // Detener procesos de refresh y verificaciÃ³n
     this.stopTokenRefresh();
     this.stopUserStatusCheck();
 
@@ -135,16 +135,16 @@ export class AuthService {
     this.router.navigate(['/join']);
   }
 
-  // Método privado para limpiar sesión sin redirigir (usado en login)
+  // MÃ©todo privado para limpiar sesiÃ³n sin redirigir (usado en login)
   private clearSession(): void {
-    // Limpiar TODAS las claves relacionadas con autenticación
+    // Limpiar TODAS las claves relacionadas con autenticaciÃ³n
     const keysToRemove = ['token', 'refreshToken', 'currentUser', 'userRole', 'userId', 'userEmail', 'userName'];
     keysToRemove.forEach(key => {
       localStorage.removeItem(key);
       sessionStorage.removeItem(key);
     });
 
-    // También limpiar cualquier clave que empiece con 'auth' o 'user'
+    // TambiÃ©n limpiar cualquier clave que empiece con 'auth' o 'user'
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && (key.startsWith('auth') || key.startsWith('user') || key.startsWith('token'))) {
@@ -157,7 +157,7 @@ export class AuthService {
     this.stopUserStatusCheck();
   }
 
-  // Método público para limpiar sesión sin redirigir (usado por interceptor)
+  // MÃ©todo pÃºblico para limpiar sesiÃ³n sin redirigir (usado por interceptor)
   clearSessionSilently(): void {
     this.clearSession();
   }
@@ -198,7 +198,7 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
-  // Método para actualizar la información del usuario actual
+  // MÃ©todo para actualizar la informaciÃ³n del usuario actual
   updateCurrentUser(usuario: UsuarioDTO): void {
     const currentUser = this.getCurrentUser();
     if (currentUser && usuario.id === currentUser.id) {
@@ -212,7 +212,7 @@ export class AuthService {
     }
   }
 
-  // Método para obtener información completa del usuario desde el token
+  // MÃ©todo para obtener informaciÃ³n completa del usuario desde el token
   getUserInfo(): { email: string, name: string, role: string } | null {
     const tokenData = this.getTokenData();
     if (!tokenData) return null;
@@ -224,7 +224,7 @@ export class AuthService {
     };
   }
 
-  // Método para verificar si el usuario actual es el mismo que está en el token
+  // MÃ©todo para verificar si el usuario actual es el mismo que estÃ¡ en el token
   validateUserIntegrity(): boolean {
     const currentUser = this.getCurrentUser();
     const tokenData = this.getTokenData();
@@ -236,7 +236,7 @@ export class AuthService {
            currentUser.role === tokenData.role;
   }
 
-  // Método para obtener datos del token de manera segura
+  // MÃ©todo para obtener datos del token de manera segura
   private getTokenData(): any {
     const token = this.getToken();
     if (!token) return null;
@@ -250,14 +250,14 @@ export class AuthService {
       return;
     }
 
-    // Si el token está expirado, limpiar la sesión inmediatamente
+    // Si el token estÃ¡ expirado, limpiar la sesiÃ³n inmediatamente
     if (this.isTokenExpired()) {
       this.clearSession();
       return;
     }
 
     const tokenData = this.getTokenData();
-    if (tokenData && tokenData.email && tokenData.name && tokenData.role) {
+    if (tokenData?.email && tokenData.name && tokenData.role) {
       this.currentUserSubject.next({
         id: tokenData.id,
         email: tokenData.email,
@@ -270,7 +270,7 @@ export class AuthService {
     }
   }
 
-  // Método para decodificar JWT (básico, sin validación de firma)
+  // MÃ©todo para decodificar JWT (bÃ¡sico, sin validaciÃ³n de firma)
   private decodeToken(token: string): any {
     try {
       const payload = token.split('.')[1];
@@ -286,14 +286,14 @@ export class AuthService {
     if (!token) return true;
 
     const decoded = this.decodeToken(token);
-    if (!decoded || !decoded.exp) return true;
+    if (!decoded?.exp) return true;
 
     const currentTime = Math.floor(Date.now() / 1000);
     return decoded.exp < currentTime;
   }
 
-  // Método para debugging - mostrar contenido del token (solo en desarrollo)
-  // NOTA: Solo usar en desarrollo, no en producción
+  // MÃ©todo para debugging - mostrar contenido del token (solo en desarrollo)
+  // NOTA: Solo usar en desarrollo, no en producciÃ³n
   debugTokenInfo(): void {
     const tokenData = this.getTokenData();
     if (!tokenData) {
@@ -301,7 +301,7 @@ export class AuthService {
     }
   }
 
-  // Refresh Token - Renovar token automáticamente
+  // Refresh Token - Renovar token automÃ¡ticamente
   refreshToken(): Observable<any> {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) {
@@ -324,9 +324,9 @@ export class AuthService {
     );
   }
 
-  // Iniciar refresh automático del token cada 15 minutos
+  // Iniciar refresh automÃ¡tico del token cada 15 minutos
   private startTokenRefresh(): void {
-    this.stopTokenRefresh(); // Detener cualquier subscripción previa
+    this.stopTokenRefresh(); // Detener cualquier subscripciÃ³n previa
 
     // Renovar token cada 15 minutos (900000 ms)
     this.refreshTokenSubscription = timer(900000, 900000).pipe(
@@ -358,7 +358,7 @@ export class AuthService {
 
   // Verificar estado del usuario y token expirado cada 60 segundos
   private startUserStatusCheck(): void {
-    this.stopUserStatusCheck(); // Detener cualquier subscripción previa
+    this.stopUserStatusCheck(); // Detener cualquier subscripciÃ³n previa
 
     // Verificar cada 60 segundos (60000 ms)
     this.userCheckSubscription = timer(60000, 60000).pipe(
@@ -383,7 +383,7 @@ export class AuthService {
     ).subscribe({
       next: (response) => {
         // If it unwrapped a boolean or an object with activo
-        const isInactive = (typeof response === 'boolean') ? !response : (response && response.activo === false);
+        const isInactive = (typeof response === 'boolean') ? !response : (response?.activo === false);
         if (isInactive) {
           this.logout();
         }
@@ -402,7 +402,7 @@ export class AuthService {
     }
   }
 
-  // Método público para forzar verificación de estado
+  // MÃ©todo pÃºblico para forzar verificaciÃ³n de estado
   checkUserStatus(): Observable<any> {
     const token = this.getToken();
     if (!token) {
@@ -414,4 +414,5 @@ export class AuthService {
     }).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 }
+
 

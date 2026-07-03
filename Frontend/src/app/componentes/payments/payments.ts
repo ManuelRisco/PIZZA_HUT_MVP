@@ -20,11 +20,11 @@ export class Payments implements OnInit {
   error = false;
   loading = false;
 
-  // Paginación
+  // PaginaciÃ³n
   currentPage = 1;
   itemsPerPage = 10;
 
-  constructor(private paymentService: Payment) {}
+  constructor(private readonly paymentService: Payment) {}
 
   ngOnInit(): void {
     this.cargarPayments();
@@ -34,7 +34,7 @@ export class Payments implements OnInit {
     this.loading = true;
     this.paymentService.obtenerTodos().subscribe({
       next: (data) => {
-        this.payments = data.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+        this.payments = data.toSorted((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
         this.aplicarFiltro();
         this.loading = false;
       },
@@ -102,3 +102,4 @@ export class Payments implements OnInit {
     setTimeout(() => this.mensaje = '', 3000);
   }
 }
+

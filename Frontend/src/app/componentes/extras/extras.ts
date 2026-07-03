@@ -33,8 +33,8 @@ export class ExtrasComponent implements OnInit {
   ];
 
   constructor(
-    private extraService: ExtraService,
-    private formBuilder: FormBuilder
+    private readonly extraService: ExtraService,
+    private readonly formBuilder: FormBuilder
   ) {
     this.extraForm = this.formBuilder.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
@@ -138,7 +138,7 @@ export class ExtrasComponent implements OnInit {
   }
 
   eliminarExtra(id: number): void {
-    if (!confirm('¿Está seguro de eliminar este extra?')) return;
+    if (!confirm('Â¿EstÃ¡ seguro de eliminar este extra?')) return;
 
     this.loading = true;
     this.extraService.eliminar(id).subscribe({
@@ -185,3 +185,4 @@ export class ExtrasComponent implements OnInit {
     return cat?.label || categoria;
   }
 }
+

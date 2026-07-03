@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { Categorias } from './categorias';
@@ -20,7 +22,7 @@ describe('Categorias', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Categorias],
-      providers: [
+      providers: [provideHttpClient(), provideRouter([]), 
         { provide: CategoriaService, useValue: categoriaServiceMock },
         { provide: PizzaService, useValue: pizzaServiceMock }
       ]
@@ -36,3 +38,5 @@ describe('Categorias', () => {
     expect(component).toBeTruthy();
   });
 });
+
+

@@ -16,12 +16,15 @@ import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/order-items")
 @CrossOrigin(origins = "http://localhost:4200")
 public class OrderItemController {
+
+    private static final String MSG_KEY = "message";
+    private static final String ITEM_TYPE_PIZZA = "PIZZA";
+    private static final String ERROR_NOT_FOUND = "OrderItem no encontrado";
 
     private final OrderItemService orderItemService;
     private final com.example.services.PizzaService pizzaService;
@@ -69,12 +72,12 @@ public class OrderItemController {
         List<OrderItem> orderItems = orderItemService.listarOrderItems();
         List<OrderItemDTO> orderItemsDTO = orderItems.stream()
             .map(OrderItemDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(orderItemsDTO));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerOrderItemPorId(@PathVariable("id") Integer id) {
+    public ResponseEntity<Object> obtenerOrderItemPorId(@PathVariable("id") Integer id) {
         Optional<OrderItem> orderItemOpt = orderItemService.obtenerPorId(id);
         if (orderItemOpt.isPresent()) {
             OrderItem orderItem = orderItemOpt.get();
@@ -82,90 +85,59 @@ public class OrderItemController {
                 validarAccesoAOrder(orderItem.getOrderId());
             } catch (AccessDeniedException e) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", e.getMessage()));
+                    .body(Map.of(MSG_KEY, e.getMessage()));
             }
             
             OrderItemDTO orderItemDTO = new OrderItemDTO(orderItem);
             return ResponseEntity.ok(ApiResponse.success(orderItemDTO));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", "OrderItem no encontrado"));
+                .body(Map.of(MSG_KEY, ERROR_NOT_FOUND));
         }
     }
 
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<?> obtenerOrderItemsPorOrderId(@PathVariable("orderId") Integer orderId) {
+    public ResponseEntity<Object> obtenerOrderItemsPorOrderId(@PathVariable("orderId") Integer orderId) {
         try {
             validarAccesoAOrder(orderId);
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
         
         List<OrderItem> orderItems = orderItemService.obtenerPorOrderId(orderId);
         List<OrderItemDTO> orderItemsDTO = orderItems.stream()
             .map(OrderItemDTO::new)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(ApiResponse.success(orderItemsDTO));
     }
 
     @PostMapping
-    public ResponseEntity<?> crearOrderItem(@Valid @RequestBody OrderItemDTO orderItemDTO) {
+    public ResponseEntity<Object> crearOrderItem(@Valid @RequestBody OrderItemDTO orderItemDTO) {
         try {
             validarAccesoAOrder(orderItemDTO.getOrderId());
             
-            java.math.BigDecimal unitPrice = java.math.BigDecimal.ZERO;
-            java.math.BigDecimal sizeExtra = java.math.BigDecimal.ZERO;
-            String itemType = orderItemDTO.getItemType() != null ? orderItemDTO.getItemType().toUpperCase() : "PIZZA";
-
-            if ("PIZZA".equals(itemType) && orderItemDTO.getPizzaId() != null) {
-                com.example.models.Pizza pizza = pizzaService.obtenerPorId(orderItemDTO.getPizzaId())
-                        .orElseThrow(() -> new IllegalArgumentException("Pizza no encontrada"));
-                unitPrice = pizza.getPrice();
-                
-                if (orderItemDTO.getSizeId() != null) {
-                    com.example.models.Size size = sizeService.obtenerPorId(orderItemDTO.getSizeId())
-                            .orElseThrow(() -> new IllegalArgumentException("Tamaño no encontrado"));
-                    sizeExtra = size.getExtraCost();
-                }
-            } else if ("EXTRA".equals(itemType) && orderItemDTO.getExtraId() != null) {
-                com.example.models.Extra extra = extraService.obtenerPorId(orderItemDTO.getExtraId())
-                        .orElseThrow(() -> new IllegalArgumentException("Extra no encontrado"));
-                unitPrice = extra.getPrice();
-            }
-
-            java.math.BigDecimal totalUnitPrice = unitPrice.add(sizeExtra);
-            java.math.BigDecimal lineTotal = totalUnitPrice.multiply(new java.math.BigDecimal(orderItemDTO.getQuantity()));
-
             OrderItem orderItem = new OrderItem();
-            orderItem.setOrderId(orderItemDTO.getOrderId());
-            orderItem.setPizzaId(orderItemDTO.getPizzaId());
-            orderItem.setExtraId(orderItemDTO.getExtraId());
-            orderItem.setItemType(itemType);
-            orderItem.setSizeId(orderItemDTO.getSizeId());
-            orderItem.setQuantity(orderItemDTO.getQuantity());
-            orderItem.setUnitPrice(totalUnitPrice);
-            orderItem.setSizeExtra(sizeExtra);
-            orderItem.setLineTotal(lineTotal);
+            populateOrderItemAndPrices(orderItem, orderItemDTO);
 
             OrderItem orderItemCreado = orderItemService.crearOrderItem(orderItem);
             return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(new OrderItemDTO(orderItemCreado), "Creado exitosamente"));
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarOrderItem(@PathVariable("id") Integer id, @Valid @RequestBody OrderItemDTO orderItemDTO) {
+    public ResponseEntity<Object> actualizarOrderItem(@PathVariable("id") Integer id, @Valid @RequestBody OrderItemDTO orderItemDTO) {
         try {
             Optional<OrderItem> orderItemOpt = orderItemService.obtenerPorId(id);
             if (orderItemOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "OrderItem no encontrado"));
+                    .body(Map.of(MSG_KEY, ERROR_NOT_FOUND));
             }
             validarAccesoAOrder(orderItemOpt.get().getOrderId());
             
@@ -174,69 +146,74 @@ public class OrderItemController {
                 validarAccesoAOrder(orderItemDTO.getOrderId());
             }
 
-            java.math.BigDecimal unitPrice = java.math.BigDecimal.ZERO;
-            java.math.BigDecimal sizeExtra = java.math.BigDecimal.ZERO;
-            String itemType = orderItemDTO.getItemType() != null ? orderItemDTO.getItemType().toUpperCase() : "PIZZA";
-
-            if ("PIZZA".equals(itemType) && orderItemDTO.getPizzaId() != null) {
-                com.example.models.Pizza pizza = pizzaService.obtenerPorId(orderItemDTO.getPizzaId())
-                        .orElseThrow(() -> new IllegalArgumentException("Pizza no encontrada"));
-                unitPrice = pizza.getPrice();
-                
-                if (orderItemDTO.getSizeId() != null) {
-                    com.example.models.Size size = sizeService.obtenerPorId(orderItemDTO.getSizeId())
-                            .orElseThrow(() -> new IllegalArgumentException("Tamaño no encontrado"));
-                    sizeExtra = size.getExtraCost();
-                }
-            } else if ("EXTRA".equals(itemType) && orderItemDTO.getExtraId() != null) {
-                com.example.models.Extra extra = extraService.obtenerPorId(orderItemDTO.getExtraId())
-                        .orElseThrow(() -> new IllegalArgumentException("Extra no encontrado"));
-                unitPrice = extra.getPrice();
-            }
-
-            java.math.BigDecimal totalUnitPrice = unitPrice.add(sizeExtra);
-            java.math.BigDecimal lineTotal = totalUnitPrice.multiply(new java.math.BigDecimal(orderItemDTO.getQuantity()));
-
             OrderItem orderItem = new OrderItem();
-            orderItem.setOrderId(orderItemDTO.getOrderId());
-            orderItem.setPizzaId(orderItemDTO.getPizzaId());
-            orderItem.setExtraId(orderItemDTO.getExtraId());
-            orderItem.setItemType(itemType);
-            orderItem.setSizeId(orderItemDTO.getSizeId());
-            orderItem.setQuantity(orderItemDTO.getQuantity());
-            orderItem.setUnitPrice(totalUnitPrice);
-            orderItem.setSizeExtra(sizeExtra);
-            orderItem.setLineTotal(lineTotal);
+            populateOrderItemAndPrices(orderItem, orderItemDTO);
 
             OrderItem orderItemActualizado = orderItemService.actualizarOrderItem(id, orderItem);
             return ResponseEntity.ok(ApiResponse.success(new OrderItemDTO(orderItemActualizado)));
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarOrderItem(@PathVariable("id") Integer id) {
+    public ResponseEntity<Object> eliminarOrderItem(@PathVariable("id") Integer id) {
         try {
             Optional<OrderItem> orderItemOpt = orderItemService.obtenerPorId(id);
             if (orderItemOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "OrderItem no encontrado"));
+                    .body(Map.of(MSG_KEY, ERROR_NOT_FOUND));
             }
             validarAccesoAOrder(orderItemOpt.get().getOrderId());
             
             orderItemService.eliminarOrderItem(id);
-            return ResponseEntity.ok(ApiResponse.success(Map.of("message", "OrderItem eliminado correctamente")));
+            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "OrderItem eliminado correctamente")));
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", e.getMessage()));
+                .body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
+
+    private void populateOrderItemAndPrices(OrderItem orderItem, OrderItemDTO orderItemDTO) {
+        java.math.BigDecimal unitPrice = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal sizeExtra = java.math.BigDecimal.ZERO;
+        String itemType = orderItemDTO.getItemType() != null ? orderItemDTO.getItemType().toUpperCase() : ITEM_TYPE_PIZZA;
+
+        if (ITEM_TYPE_PIZZA.equals(itemType) && orderItemDTO.getPizzaId() != null) {
+            com.example.models.Pizza pizza = pizzaService.obtenerPorId(orderItemDTO.getPizzaId())
+                    .orElseThrow(() -> new IllegalArgumentException("Pizza no encontrada"));
+            unitPrice = pizza.getPrice();
+            
+            if (orderItemDTO.getSizeId() != null) {
+                com.example.models.Size size = sizeService.obtenerPorId(orderItemDTO.getSizeId())
+                        .orElseThrow(() -> new IllegalArgumentException("TamaÃ±o no encontrado"));
+                sizeExtra = size.getExtraCost();
+            }
+        } else if ("EXTRA".equals(itemType) && orderItemDTO.getExtraId() != null) {
+            com.example.models.Extra extra = extraService.obtenerPorId(orderItemDTO.getExtraId())
+                    .orElseThrow(() -> new IllegalArgumentException("Extra no encontrado"));
+            unitPrice = extra.getPrice();
+        }
+
+        java.math.BigDecimal totalUnitPrice = unitPrice.add(sizeExtra);
+        java.math.BigDecimal lineTotal = totalUnitPrice.multiply(new java.math.BigDecimal(orderItemDTO.getQuantity()));
+
+        orderItem.setOrderId(orderItemDTO.getOrderId());
+        orderItem.setPizzaId(orderItemDTO.getPizzaId());
+        orderItem.setExtraId(orderItemDTO.getExtraId());
+        orderItem.setItemType(itemType);
+        orderItem.setSizeId(orderItemDTO.getSizeId());
+        orderItem.setQuantity(orderItemDTO.getQuantity());
+        orderItem.setUnitPrice(totalUnitPrice);
+        orderItem.setSizeExtra(sizeExtra);
+        orderItem.setLineTotal(lineTotal);
+    }
 }
+

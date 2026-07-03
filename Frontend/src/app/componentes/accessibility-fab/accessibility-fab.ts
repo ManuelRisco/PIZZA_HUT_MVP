@@ -20,8 +20,8 @@ export class AccessibilityFabComponent implements OnInit {
   reducirMovimiento: boolean = false;
 
   constructor(
-    private accessibilityService: AccessibilityService,
-    @Inject(PLATFORM_ID) private platformId: Object
+    private readonly accessibilityService: AccessibilityService,
+    @Inject(PLATFORM_ID) private readonly platformId: Object
   ) {}
 
   ngOnInit(): void {
@@ -122,7 +122,7 @@ export class AccessibilityFabComponent implements OnInit {
 
   getFontSizeLabel(size: string): string {
     const labels: { [key: string]: string } = {
-      'pequena': 'Pequeña (90%)',
+      'pequena': 'PequeÃ±a (90%)',
       'normal': 'Normal',
       'grande': 'Grande (125%)',
       'extra-grande': 'Extra Grande (150%)'
@@ -130,3 +130,4 @@ export class AccessibilityFabComponent implements OnInit {
     return labels[size] || size;
   }
 }
+

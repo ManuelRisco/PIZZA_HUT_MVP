@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
   import { MenuComponent   } from './menu';
@@ -8,6 +10,7 @@ describe('Menu', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideRouter([])],
       imports: [MenuComponent]
     })
     .compileComponents();
@@ -21,3 +24,5 @@ describe('Menu', () => {
     expect(component).toBeTruthy();
   });
 });
+
+

@@ -12,12 +12,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/ingredients")
 @CrossOrigin(origins = "http://localhost:4200")
 public class IngredientController {
+
+    private static final String MSG_KEY = "message";
+    private static final String MSG_NOT_FOUND = "Ingrediente no encontrado";
 
     private final IngredientService ingredientService;
 
@@ -30,7 +32,7 @@ public class IngredientController {
         List<Ingredient> ingredientes = ingredientService.listarIngredientes();
         List<IngredientDTO> ingredientesDTO = ingredientes.stream()
                 .map(IngredientDTO::new)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(ApiResponse.success(ingredientesDTO));
     }
 
@@ -38,29 +40,29 @@ public class IngredientController {
     public ResponseEntity<ApiResponse<List<IngredientDTO>>> listarIngredientesDisponibles() {
         List<Ingredient> ingredientes = ingredientService.listarIngredientes().stream()
                 .filter(i -> i.isAvailable())
-                .collect(Collectors.toList());
+                .toList();
         List<IngredientDTO> ingredientesDTO = ingredientes.stream()
                 .map(IngredientDTO::new)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(ApiResponse.success(ingredientesDTO));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerIngredientePorId(@PathVariable("id") Integer id) { // Corregido
+    public ResponseEntity<Object> obtenerIngredientePorId(@PathVariable("id") Integer id) {
         Optional<Ingredient> ingredientOpt = ingredientService.obtenerPorId(id);
         if (ingredientOpt.isPresent()) {
             IngredientDTO ingredientDTO = new IngredientDTO(ingredientOpt.get());
             return ResponseEntity.ok(ApiResponse.success(ingredientDTO));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Ingrediente no encontrado"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(MSG_KEY, MSG_NOT_FOUND));
         }
     }
 
     @PostMapping
-    public ResponseEntity<?> crearIngrediente(@RequestBody IngredientDTO ingredientDTO) {
+    public ResponseEntity<Object> crearIngrediente(@RequestBody IngredientDTO ingredientDTO) {
         if (ingredientService.existsByName(ingredientDTO.getName())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", "El nombre del ingrediente ya existe"));
+                    .body(Map.of(MSG_KEY, "El nombre del ingrediente ya existe"));
         }
 
         Ingredient ingredient = new Ingredient();
@@ -74,8 +76,8 @@ public class IngredientController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarIngrediente(@PathVariable("id") Integer id,
-            @RequestBody IngredientDTO ingredientDTO) { // Corregido
+    public ResponseEntity<Object> actualizarIngrediente(@PathVariable("id") Integer id,
+            @RequestBody IngredientDTO ingredientDTO) {
         Ingredient ingredientActualizado = new Ingredient();
         ingredientActualizado.setName(ingredientDTO.getName());
         ingredientActualizado.setExtraCost(ingredientDTO.getExtraCost());
@@ -86,24 +88,24 @@ public class IngredientController {
             IngredientDTO responseDTO = new IngredientDTO(ingredient);
             return ResponseEntity.ok(ApiResponse.success(responseDTO));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Ingrediente no encontrado"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(MSG_KEY, MSG_NOT_FOUND));
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarIngrediente(@PathVariable("id") Integer id) { // Corregido
+    public ResponseEntity<Object> eliminarIngrediente(@PathVariable("id") Integer id) {
         boolean eliminado = ingredientService.eliminarIngrediente(id);
         if (eliminado) {
-            return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Ingrediente eliminado correctamente")));
+            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Ingrediente eliminado correctamente")));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Ingrediente no encontrado"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(MSG_KEY, MSG_NOT_FOUND));
         }
     }
 
     @PatchMapping("/{id}/availability")
-    public ResponseEntity<?> cambiarDisponibilidad(
-            @PathVariable("id") Integer id, // Corregido
-            @RequestParam("available") boolean available) { // Corregido: @RequestParam tambi\u00e9n lo necesita
+    public ResponseEntity<Object> cambiarDisponibilidad(
+            @PathVariable("id") Integer id,
+            @RequestParam("available") boolean available) {
         Optional<Ingredient> ingredientOpt = ingredientService.obtenerPorId(id);
         if (ingredientOpt.isPresent()) {
             Ingredient ingredient = ingredientOpt.get();
@@ -112,7 +114,8 @@ public class IngredientController {
             IngredientDTO responseDTO = new IngredientDTO(actualizado);
             return ResponseEntity.ok(ApiResponse.success(responseDTO));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Ingrediente no encontrado"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(MSG_KEY, MSG_NOT_FOUND));
         }
     }
 }
+
