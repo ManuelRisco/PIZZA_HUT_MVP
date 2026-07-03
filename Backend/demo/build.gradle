@@ -2,6 +2,8 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '4.1.0'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
+	id 'org.sonarqube' version '6.0.1.5171'
 }
 
 springBoot {
@@ -69,4 +71,34 @@ tasks.withType(JavaCompile).configureEach {
 task buildFresh() {
 	dependsOn clean, build
 	description = 'Limpia y construye desde cero (útil si hay errores de compilación)'
+}
+
+// ===== JaCoCo (Cobertura de Tests) =====
+jacoco {
+	toolVersion = "0.8.12"
+}
+
+tasks.named('test') {
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = true
+		html.required = true
+	}
+}
+
+// ===== SonarQube Configuration =====
+sonarqube {
+	properties {
+		property "sonar.projectKey", "ManuelRisco_PIZZA_HUT_MVP_Backend"
+		property "sonar.projectName", "Pizza Hut MVP - Backend"
+		property "sonar.host.url", System.getenv("SONAR_HOST_URL") ?: "http://localhost:9000"
+		property "sonar.token", System.getenv("SONAR_TOKEN") ?: ""
+		property "sonar.java.source", "21"
+		property "sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml"
+		property "sonar.exclusions", "**/config/**,**/dto/**,**/models/**"
+	}
 }
