@@ -38,7 +38,7 @@ public class Category {
     @JsonIgnore  // Ocultar metadatos internos
     private LocalDateTime deletedAt;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "category", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Pizza> pizzas;
 

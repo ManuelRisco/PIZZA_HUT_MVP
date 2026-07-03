@@ -19,7 +19,7 @@ public class OrderService {
     }
 
     public List<Order> listarOrders() {
-        return orderRepository.findAll();
+        return orderRepository.findTop100ByOrderByCreatedAtDesc();
     }
 
     @SuppressWarnings("null")
@@ -40,8 +40,8 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+    @SuppressWarnings("null")
     public Order actualizarOrder(Integer id, Order orderActualizada) {
-        @SuppressWarnings("null")
         Optional<Order> orderOpt = orderRepository.findById(id);
         if (orderOpt.isEmpty()) {
             throw new IllegalArgumentException("Order no encontrado");
@@ -90,7 +90,6 @@ public class OrderService {
             order.setEstimatedDelivery(orderActualizada.getEstimatedDelivery());
         }
 
-        order.setUpdatedAt(java.time.LocalDateTime.now());
         return orderRepository.save(order);
     }
 

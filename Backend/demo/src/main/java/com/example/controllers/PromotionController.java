@@ -14,15 +14,20 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.example.security.SecurityUtils;
+import org.springframework.security.access.AccessDeniedException;
+
 @RestController
 @RequestMapping("/api/promociones")
 @CrossOrigin(origins = "http://localhost:4200")
 public class PromotionController {
 
     private final PromotionService promotionService;
+    private final SecurityUtils securityUtils;
 
-    public PromotionController(PromotionService promotionService) {
+    public PromotionController(PromotionService promotionService, SecurityUtils securityUtils) {
         this.promotionService = promotionService;
+        this.securityUtils = securityUtils;
     }
 
     @GetMapping
@@ -71,10 +76,20 @@ public class PromotionController {
         try {
             String code = (String) request.get("code");
             BigDecimal orderTotal = new BigDecimal(request.get("orderTotal").toString());
+            
             Integer userId = request.containsKey("userId") ? 
                 Integer.parseInt(request.get("userId").toString()) : null;
             
-            // Obtener items si est\u00e1n disponibles
+            // PREVENCIÓN DE IDOR: Forzar que el usuario solo pueda validar para sí mismo
+            if (!securityUtils.isAdmin()) {
+                Integer currentUserId = securityUtils.getCurrentUserId();
+                if (currentUserId == null) {
+                    throw new AccessDeniedException("Usuario no autenticado");
+                }
+                userId = currentUserId; // Forzar el ID del token
+            }
+            
+            // Obtener items si están disponibles
             @SuppressWarnings("unchecked")
             java.util.List<java.util.Map<String, Object>> items = 
                 (java.util.List<java.util.Map<String, Object>>) request.get("items");

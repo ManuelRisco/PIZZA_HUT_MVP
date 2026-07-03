@@ -657,13 +657,13 @@ export class CarritoComponent implements OnInit, OnDestroy {
       this.totals = {
         ...baseTotals,
         deliveryFee: 0,
-        total: baseTotals.subtotal - this.promoDiscount,
+        total: Math.max(0, baseTotals.subtotal - this.promoDiscount),
       };
     } else {
       this.totals = {
         ...baseTotals,
         deliveryFee: this.baseDeliveryFee,
-        total: baseTotals.subtotal + this.baseDeliveryFee - this.promoDiscount,
+        total: Math.max(0, baseTotals.subtotal + this.baseDeliveryFee - this.promoDiscount),
       };
     }
   }

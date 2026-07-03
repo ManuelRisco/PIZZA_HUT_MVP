@@ -12,6 +12,8 @@ public class OrderTracking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private Integer orderId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
     private Order.OrderStatus status;
     private String description;
     private LocalDateTime createdAt;

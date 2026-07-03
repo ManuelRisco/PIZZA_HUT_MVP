@@ -149,85 +149,192 @@
 
     <!-- Scrollable Content -->
     <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 min-w-0 w-full">
-      <!-- Vista Dashboard HOME (El rediseño solicitado visual) -->
+      <!-- Vista Dashboard HOME -->
       <div *ngIf="vistaActual === 'dashboard'" class="max-w-7xl mx-auto space-y-6">
         
-        <!-- Charts and Top Items Row -->
+        <!-- ==================== KPI CARDS ROW ==================== -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Ventas Hoy -->
+          <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <i class="bi bi-cash-stack text-emerald-600 text-xl"></i>
+              </div>
+              <div class="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full"
+                   [ngClass]="pedidosHoy > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-400'">
+                <i class="bi bi-bag-check text-[10px]"></i>
+                {{ pedidosHoy }} hoy
+              </div>
+            </div>
+            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Ventas Hoy</p>
+            <p class="text-2xl font-black text-gray-900">S/ {{ ventasHoy | number:'1.2-2' }}</p>
+          </div>
+
+          <!-- Pedidos Pendientes -->
+          <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+               (click)="cambiarVista('orders')">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <i class="bi bi-clock-history text-amber-600 text-xl"></i>
+              </div>
+              <div class="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full"
+                   [ngClass]="pedidosPendientes > 0 ? 'bg-amber-50 text-amber-600 animate-pulse' : 'bg-gray-100 text-gray-400'">
+                <i class="bi bi-exclamation-circle text-[10px]"></i>
+                Requieren atención
+              </div>
+            </div>
+            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pedidos Pendientes</p>
+            <p class="text-2xl font-black" [ngClass]="pedidosPendientes > 0 ? 'text-amber-600' : 'text-gray-900'">{{ pedidosPendientes }}</p>
+          </div>
+
+          <!-- Total Clientes -->
+          <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+               (click)="cambiarVista('usuarios')">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <i class="bi bi-people-fill text-blue-600 text-xl"></i>
+              </div>
+            </div>
+            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Clientes</p>
+            <p class="text-2xl font-black text-gray-900">{{ totalClientes }}</p>
+          </div>
+
+          <!-- Rating Promedio -->
+          <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+               (click)="cambiarVista('reviews')">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-xl bg-yellow-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <i class="bi bi-star-fill text-yellow-500 text-xl"></i>
+              </div>
+              <div class="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-yellow-50 text-yellow-600">
+                {{ totalReviews }} reseñas
+              </div>
+            </div>
+            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Rating Promedio</p>
+            <p class="text-2xl font-black text-gray-900">
+              {{ ratingPromedio | number:'1.1-1' }}
+              <span class="text-sm font-bold text-gray-400">/ 5</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- ==================== CHARTS ROW ==================== -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Gráfico Simulado -->
-          <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-300 shadow-sm flex flex-col">
-            <div class="flex justify-between items-center mb-6">
+          <!-- Gráfico Ventas Semanales -->
+          <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col">
+            <div class="flex justify-between items-start mb-6">
               <div>
                 <h3 class="text-xl font-bold text-black">Ventas Semanales</h3>
-                <p class="text-sm text-gray-700">Resumen de ingresos de los últimos 7 días</p>
+                <p class="text-sm text-gray-500">Ingresos de los últimos 7 días</p>
+              </div>
+              <div class="text-right">
+                <p class="text-2xl font-black text-black">S/ {{ ventasSemanaTotal | number:'1.2-2' }}</p>
+                <div class="flex items-center justify-end gap-1 mt-1">
+                  <i class="bi text-xs"
+                     [ngClass]="cambioSemanal >= 0 ? 'bi-arrow-up-short text-emerald-500' : 'bi-arrow-down-short text-red-500'"></i>
+                  <span class="text-xs font-bold"
+                        [ngClass]="cambioSemanal >= 0 ? 'text-emerald-500' : 'text-red-500'">
+                    {{ cambioSemanal >= 0 ? '+' : '' }}{{ cambioSemanal | number:'1.1-1' }}%
+                  </span>
+                  <span class="text-xs text-gray-400">vs semana anterior</span>
+                </div>
               </div>
             </div>
             <!-- Barras del gráfico CSS puro -->
-            <div class="flex-1 flex items-end justify-between gap-2 mt-4 pt-4 border-t border-gray-300 min-h-[200px]">
+            <div class="flex-1 flex items-end justify-between gap-3 mt-2 pt-4 border-t border-gray-100 min-h-[200px]">
               <div *ngFor="let dia of ventasSemanales" 
                    class="w-full flex flex-col items-center gap-2 h-full justify-end group relative"
                    [ngClass]="{'cursor-pointer hover:scale-105 transition-transform': dia.pedidos && dia.pedidos.length > 0}"
                    (click)="verPedidosDelDia(dia)">
-                <div class="w-full rounded-t-sm transition-all duration-300"
-                     [ngClass]="dia.porcentaje === 100 ? 'bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-gray-200 group-hover:bg-gray-300'"
+                <div class="w-full rounded-lg transition-all duration-500"
+                     [ngClass]="dia.porcentaje === 100 ? 'bg-gradient-to-t from-red-700 to-red-500 shadow-[0_0_20px_rgba(220,38,38,0.3)]' : 'bg-gray-100 group-hover:bg-gray-200'"
                      [style.height.%]="dia.porcentaje"></div>
-                <span class="text-xs font-bold" [ngClass]="dia.porcentaje === 100 ? 'text-black' : 'text-gray-400'">{{ dia.dia }}</span>
+                <span class="text-[11px] font-bold" [ngClass]="dia.porcentaje === 100 ? 'text-black' : 'text-gray-400'">{{ dia.dia }}</span>
                 <!-- Tooltip -->
-                <div class="absolute -top-8 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                  S/ {{ dia.total | number:'1.2-2' }}
+                <div class="absolute -top-10 bg-gray-900 text-white text-[11px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-lg">
+                  S/ {{ dia.total | number:'1.2-2' }} · {{ dia.pedidos?.length || 0 }} pedidos
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Más Vendidos -->
-          <div class="bg-white rounded-2xl p-6 border border-gray-300 shadow-sm flex flex-col">
-            <h3 class="text-xl font-bold text-black">Más Vendidos</h3>
-            <p class="text-sm text-gray-700 mb-6">Productos estrella del mes</p>
+          <!-- Más Vendidos (Top 5) -->
+          <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col">
+            <div class="flex justify-between items-center mb-5">
+              <div>
+                <h3 class="text-xl font-bold text-black">Más Vendidos</h3>
+                <p class="text-sm text-gray-500">Ranking de productos</p>
+              </div>
+              <span class="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-full">TOP 5</span>
+            </div>
             
             <div class="space-y-4 flex-1">
-              <div class="flex items-center gap-4" *ngFor="let producto of masVendidos; let i = index">
-                <div class="w-14 h-14 rounded-lg bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center font-bold text-gray-400 text-xl">
-                  #{{ i + 1 }}
+              <div class="flex items-center gap-3" *ngFor="let producto of masVendidos; let i = index">
+                <!-- Rank badge -->
+                <div class="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center font-black text-sm"
+                     [ngClass]="{
+                       'bg-yellow-100 text-yellow-700': i === 0,
+                       'bg-gray-100 text-gray-500': i === 1,
+                       'bg-orange-50 text-orange-600': i === 2,
+                       'bg-gray-50 text-gray-400': i > 2
+                     }">
+                  {{ i + 1 }}
                 </div>
-                <div class="flex-1">
-                  <h4 class="font-bold text-black text-sm">{{ producto.nombre }}</h4>
-                  <p class="text-xs text-gray-700">{{ producto.cantidad }} vendidos</p>
+                <!-- Product info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between mb-1">
+                    <h4 class="font-bold text-black text-sm truncate">{{ producto.nombre }}</h4>
+                    <span class="font-bold text-red-600 text-sm shrink-0 ml-2">S/ {{ producto.precio | number:'1.2-2' }}</span>
+                  </div>
+                  <!-- Progress bar -->
+                  <div class="w-full bg-gray-100 rounded-full h-1.5">
+                    <div class="h-1.5 rounded-full transition-all duration-700"
+                         [ngClass]="i === 0 ? 'bg-red-500' : 'bg-gray-300'"
+                         [style.width.%]="producto.porcentaje"></div>
+                  </div>
+                  <p class="text-[11px] text-gray-400 mt-1 font-medium">{{ producto.cantidad }} vendidos · S/ {{ producto.ingresos | number:'1.2-2' }}</p>
                 </div>
-                <span class="font-bold text-red-600">S/ {{ producto.precio }}</span>
               </div>
-              <div *ngIf="masVendidos.length === 0" class="text-center text-gray-500 py-4 text-sm">
-                No hay ventas registradas.
+              <div *ngIf="masVendidos.length === 0" class="text-center text-gray-400 py-8 text-sm">
+                <i class="bi bi-box-seam text-3xl block mb-2"></i>
+                No hay ventas registradas
               </div>
             </div>
 
-            <button class="w-full mt-6 py-2 px-4 border-2 border-gray-800 text-black rounded-lg font-bold hover:bg-gray-800 hover:text-white transition-colors" (click)="cambiarVista('pizzas')">
+            <button class="w-full mt-5 py-2.5 px-4 border-2 border-gray-800 text-black rounded-xl font-bold hover:bg-gray-800 hover:text-white transition-colors text-sm" (click)="cambiarVista('pizzas')">
               Ver todo el menú
             </button>
           </div>
         </div>
 
-        <!-- Tabla de Pedidos -->
-        <div class="bg-white rounded-2xl p-6 border border-gray-300 shadow-sm">
+        <!-- ==================== PEDIDOS RECIENTES ==================== -->
+        <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
           <div class="flex justify-between items-center mb-6">
             <div>
               <h3 class="text-xl font-bold text-black">Pedidos Recientes</h3>
-              <p class="text-sm text-gray-700">Monitoreo en tiempo real de las órdenes entrantes</p>
+              <p class="text-sm text-gray-500">Últimas órdenes registradas</p>
             </div>
-            <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors shadow-md" (click)="descargarReporte()">
-              DESCARGAR REPORTE
-            </button>
+            <div class="flex items-center gap-3">
+              <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm transition-colors" (click)="cambiarVista('orders')">
+                Ver todos
+              </button>
+              <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors shadow-md flex items-center gap-2" (click)="descargarReporte()">
+                <i class="bi bi-download"></i>
+                Reporte Excel
+              </button>
+            </div>
           </div>
 
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr class="bg-gray-50 text-gray-700 text-xs uppercase tracking-wider">
+                <tr class="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wider">
                   <th class="py-3 px-4 rounded-l-lg font-semibold">ID Pedido</th>
                   <th class="py-3 px-4 font-semibold">Cliente</th>
                   <th class="py-3 px-4 font-semibold">Producto</th>
                   <th class="py-3 px-4 font-semibold">Estado</th>
                   <th class="py-3 px-4 font-semibold">Total</th>
+                  <th class="py-3 px-4 font-semibold">Fecha</th>
                   <th class="py-3 px-4 text-center rounded-r-lg font-semibold">Acciones</th>
                 </tr>
               </thead>
@@ -258,12 +365,18 @@
                     </span>
                   </td>
                   <td class="py-4 px-4 font-black text-black">S/ {{ pedido.total | number:'1.2-2' }}</td>
+                  <td class="py-4 px-4 text-gray-400 text-xs">
+                    {{ pedido.createdAt | date:'dd/MM/yy HH:mm' }}
+                  </td>
                   <td class="py-4 px-4 text-center">
                     <button class="text-gray-400 hover:text-red-600 transition-colors" (click)="cambiarVista('orders')"><i class="bi bi-eye text-lg"></i></button>
                   </td>
                 </tr>
                 <tr *ngIf="pedidosRecientes.length === 0">
-                  <td colspan="6" class="py-8 text-center text-gray-500">No hay pedidos recientes.</td>
+                  <td colspan="7" class="py-8 text-center text-gray-400">
+                    <i class="bi bi-inbox text-3xl block mb-2"></i>
+                    No hay pedidos recientes
+                  </td>
                 </tr>
               </tbody>
             </table>

@@ -1,21 +1,32 @@
 package com.example.dtos;
 
 import com.example.models.OrderItem;
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 
 public class OrderItemDTO {
     private Integer id;
+    
+    @NotNull(message = "El ID del pedido es obligatorio")
     private Integer orderId;
+    
     private Integer pizzaId;
     private Integer extraId;
+    
+    @NotBlank(message = "El tipo de ítem es obligatorio")
     private String itemType; // "PIZZA" o "EXTRA"
+    
     private Integer sizeId;
+    
+    @NotNull(message = "La cantidad es obligatoria")
+    @Min(value = 1, message = "La cantidad mínima es 1")
     private Integer quantity;
+    
     private BigDecimal unitPrice;
     private BigDecimal sizeExtra;
     private BigDecimal lineTotal;
 
-    // Constructor vac\u00edo
+    // Constructor vacío
     public OrderItemDTO() {}
 
     // Constructor desde entidad

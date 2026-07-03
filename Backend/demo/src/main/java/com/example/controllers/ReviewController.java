@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import com.example.dtos.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -78,13 +79,13 @@ public class ReviewController {
     }
 
     @PostMapping
-    public ResponseEntity<?> crearReview(@RequestBody ReviewDTO reviewDTO) {
+    public ResponseEntity<?> crearReview(@Valid @RequestBody ReviewDTO reviewDTO) {
         try {
             if (!securityUtils.isAdmin()) {
                 Integer currentUserId = securityUtils.getCurrentUserId();
                 if (currentUserId == null || !currentUserId.equals(reviewDTO.getUserId())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "No puedes crear rese\u00f1as para otros usuarios"));
+                        .body(Map.of("message", "No puedes crear reseñas para otros usuarios"));
                 }
             }
             
@@ -104,7 +105,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarReview(@PathVariable("id") Integer id, @RequestBody ReviewDTO reviewDTO) { // Corregido
+    public ResponseEntity<?> actualizarReview(@PathVariable("id") Integer id, @Valid @RequestBody ReviewDTO reviewDTO) { // Corregido
         try {
             Optional<Review> reviewOpt = reviewService.obtenerPorId(id);
             if (reviewOpt.isEmpty()) {

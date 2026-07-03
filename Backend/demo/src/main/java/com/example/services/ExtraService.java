@@ -2,6 +2,8 @@ package com.example.services;
 
 import com.example.models.Extra;
 import com.example.repositories.ExtraRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,10 +21,12 @@ public class ExtraService {
         this.extraRepository = extraRepository;
     }
 
+    @Cacheable("extras")
     public List<Extra> listarExtras() {
         return extraRepository.findByDeletedAtIsNullOrderByDisplayOrderAsc();
     }
 
+    @Cacheable("extrasDisponibles")
     public List<Extra> listarExtrasDisponibles() {
         return extraRepository.findByIsAvailableTrueAndDeletedAtIsNull();
     }
@@ -47,6 +51,7 @@ public class ExtraService {
         return extraRepository.findByNameContainingIgnoreCaseAndDeletedAtIsNull(nombre);
     }
 
+    @CacheEvict(value = {"extras", "extrasDisponibles"}, allEntries = true)
     public Extra crearExtra(Extra extra) {
         if (extraRepository.existsByName(extra.getName())) {
             throw new IllegalArgumentException("Ya existe un extra con ese nombre");
@@ -54,6 +59,7 @@ public class ExtraService {
         return extraRepository.save(extra);
     }
 
+    @CacheEvict(value = {"extras", "extrasDisponibles"}, allEntries = true)
     public Extra actualizarExtra(Integer id, Extra extraActualizado) {
         if (id == null) {
             throw new IllegalArgumentException("ID no puede ser null");
@@ -75,6 +81,7 @@ public class ExtraService {
         return extraRepository.save(extra);
     }
 
+    @CacheEvict(value = {"extras", "extrasDisponibles"}, allEntries = true)
     public void eliminarExtra(Integer id) {
         if (id == null) {
             throw new IllegalArgumentException("ID no puede ser null");
@@ -89,6 +96,7 @@ public class ExtraService {
         extraRepository.save(extra);
     }
 
+    @CacheEvict(value = {"extras", "extrasDisponibles"}, allEntries = true)
     public Extra cambiarDisponibilidad(Integer id, boolean disponible) {
         Optional<Extra> extraOpt = obtenerPorId(id);
         if (extraOpt.isEmpty()) {
@@ -100,6 +108,7 @@ public class ExtraService {
         return extraRepository.save(extra);
     }
 
+    @CacheEvict(value = {"extras", "extrasDisponibles"}, allEntries = true)
     public Extra cambiarDisponibilidad(Integer id) {
         Optional<Extra> extraOpt = obtenerPorId(id);
         if (extraOpt.isEmpty()) {

@@ -3,6 +3,8 @@ package com.example.services;
 import com.example.models.Ingredient;
 import com.example.repositories.IngredientRepository;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,8 +21,9 @@ public class IngredientService {
         this.ingredientRepository = ingredientRepository;
     }
 
+    @Cacheable("ingredients")
     public List<Ingredient> listarIngredientes() {
-        return ingredientRepository.findAll();
+        return ingredientRepository.findByDeletedAtIsNull();
     }
 
     @SuppressWarnings("null")
@@ -28,6 +31,7 @@ public class IngredientService {
         return ingredientRepository.findById(id);
     }
 
+    @CacheEvict(value = "ingredients", allEntries = true)
     public Ingredient crearIngrediente(Ingredient ingredient) {
         if (ingredientRepository.existsByName(ingredient.getName())) {
             throw new IllegalArgumentException("El nombre del ingrediente ya está registrado.");
@@ -35,6 +39,7 @@ public class IngredientService {
         return ingredientRepository.save(ingredient);
     }
 
+    @CacheEvict(value = "ingredients", allEntries = true)
     public Ingredient actualizarIngrediente(Integer id, Ingredient ingredientActualizado) {
         @SuppressWarnings("null")
         Optional<Ingredient> ingredientOpt = ingredientRepository.findById(id);
@@ -49,13 +54,13 @@ public class IngredientService {
             ingredient.setName(ingredientActualizado.getName());
             ingredient.setExtraCost(ingredientActualizado.getExtraCost());
             ingredient.setAvailable(ingredientActualizado.isAvailable());
-            ingredient.setUpdatedAt(java.time.LocalDateTime.now());
             ingredient.setDeletedAt(ingredientActualizado.getDeletedAt());
             return ingredientRepository.save(ingredient);
         }
         return null;
     }
 
+    @CacheEvict(value = "ingredients", allEntries = true)
     public boolean eliminarIngrediente(Integer id) {
         @SuppressWarnings("null")
         Optional<Ingredient> ingredientOpt = ingredientRepository.findById(id);

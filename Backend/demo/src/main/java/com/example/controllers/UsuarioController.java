@@ -16,6 +16,7 @@ import com.example.exceptions.ResourceNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -43,7 +44,7 @@ public class UsuarioController {
     }
 
     @PostMapping("/registro")
-    public ResponseEntity<ApiResponse<Void>> registrarUsuario(@RequestBody UsuarioCreateDTO usuarioDTO) {
+    public ResponseEntity<ApiResponse<Void>> registrarUsuario(@Valid @RequestBody UsuarioCreateDTO usuarioDTO) {
         Usuario usuario = usuarioMapper.toEntity(usuarioDTO);
 
         // Mapeo manual de la contrase\u00f1a para asegurar que no se pierda por
@@ -52,7 +53,8 @@ public class UsuarioController {
             usuario.setPasswordHash(usuarioDTO.getPassword());
         }
 
-        usuario.setRole(usuarioDTO.getRole() != null ? usuarioDTO.getRole() : Usuario.Role.CUSTOMER);
+        // PREVENCIÓN DE ESCALADA DE PRIVILEGIOS: Todo registro por este endpoint público siempre será CUSTOMER
+        usuario.setRole(Usuario.Role.CUSTOMER);
 
         String mensaje = usuarioService.registrarUsuario(usuario);
         if (mensaje.contains("\u00e9xito")) {
@@ -71,7 +73,7 @@ public class UsuarioController {
 
     @SuppressWarnings("null")
     @PostMapping("/ingresar")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> loginUsuario(@RequestBody LoginDTO loginDTO,
+    public ResponseEntity<ApiResponse<Map<String, Object>>> loginUsuario(@Valid @RequestBody LoginDTO loginDTO,
             HttpServletRequest request) {
         Usuario user = usuarioService.obtenerPorEmail(loginDTO.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));

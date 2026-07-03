@@ -49,7 +49,7 @@ public class Pizza {
     @JsonIgnore  // Ocultar metadatos internos
     private LocalDateTime deletedAt;
 
-    @OneToMany(mappedBy = "pizza", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "pizza", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
     private List<PizzaIngredient> pizzaIngredients;
 
     // Constructor vac\u00edo

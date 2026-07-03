@@ -1,13 +1,19 @@
 package com.example.dtos;
 
+import jakarta.validation.constraints.*;
+
 public class LoginDTO {
+    @NotBlank(message = "El email es obligatorio")
+    @Email(message = "El email debe ser válido")
     private String email;
+    
+    @NotBlank(message = "La contraseña es obligatoria")
     private String password;
 
-    // Constructor vac\u00edo
+    // Constructor vacío
     public LoginDTO() {}
 
-    // Constructor con par\u00e1metros
+    // Constructor con parámetros
     public LoginDTO(String email, String password) {
         this.email = email;
         this.password = password;

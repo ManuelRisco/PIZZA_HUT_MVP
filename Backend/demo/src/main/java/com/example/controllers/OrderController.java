@@ -13,6 +13,7 @@ import com.example.security.SecurityUtils;
 import org.springframework.http.ResponseEntity;
 import com.example.dtos.ApiResponse;
 import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -112,6 +113,9 @@ public class OrderController {
 
     @GetMapping("/status/{status}")
     public ResponseEntity<ApiResponse<List<OrderDTO>>> obtenerOrdersPorStatus(@PathVariable("status") String status) {
+        if (!securityUtils.isAdmin()) {
+            throw new org.springframework.security.access.AccessDeniedException("Solo administradores pueden listar pedidos por estado globalmente");
+        }
         try {
             Order.OrderStatus orderStatus = Order.OrderStatus.valueOf(status.toUpperCase());
             List<Order> orders = orderService.obtenerPorStatus(orderStatus);
@@ -125,8 +129,19 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<?> crearOrder(@RequestBody OrderDTO orderDTO) {
+    public ResponseEntity<?> crearOrder(@Valid @RequestBody OrderDTO orderDTO) {
         try {
+            // PREVENCIÓN DE IDOR: Forzar que el cliente solo pueda crear pedidos para sí mismo
+            Integer currentUserId = securityUtils.getCurrentUserId();
+            if (!securityUtils.isAdmin()) {
+                if (currentUserId == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Usuario no autenticado"));
+                }
+                orderDTO.setUserId(currentUserId);
+            } else if (orderDTO.getUserId() == null) {
+                orderDTO.setUserId(currentUserId);
+            }
+
             // Validar deliveryType
             Order.DeliveryType deliveryType = Order.DeliveryType.DELIVERY; // Default
             if (orderDTO.getDeliveryType() != null) {
@@ -157,6 +172,10 @@ public class OrderController {
                     var promotionOpt = promotionService.obtenerPorCodigo(promoCode);
                     if (promotionOpt.isPresent()) {
                         promotionAUsar = promotionOpt.get();
+                        
+                        // Validación estricta de negocio
+                        promotionService.verificarReglasDeUsuario(promotionAUsar, orderDTO.getUserId());
+                        
                         BigDecimal subtotal = orderDTO.getSubtotal();
                         discount = promotionService.calcularDescuento(promotionAUsar, subtotal);
                         promotionId = promotionAUsar.getId();
@@ -206,8 +225,21 @@ public class OrderController {
     }
 
     @PostMapping("/checkout")
-    public ResponseEntity<ApiResponse<OrderDTO>> checkout(@RequestBody CheckoutRequestDTO req) {
+    public ResponseEntity<ApiResponse<OrderDTO>> checkout(@Valid @RequestBody CheckoutRequestDTO req) {
         try {
+            // PREVENCIÓN DE IDOR: Forzar que el cliente solo pueda hacer checkout para sí mismo
+            Integer currentUserId = securityUtils.getCurrentUserId();
+            if (!securityUtils.isAdmin()) {
+                if (currentUserId == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Usuario no autenticado"));
+                }
+                if (req.getOrder() != null) {
+                    req.getOrder().setUserId(currentUserId);
+                }
+            } else if (req.getOrder() != null && req.getOrder().getUserId() == null) {
+                req.getOrder().setUserId(currentUserId);
+            }
+
             Order orderCreado = checkoutService.checkout(req);
             return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(new OrderDTO(orderCreado), "Pedido procesado exitosamente"));
@@ -218,7 +250,7 @@ public class OrderController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarOrder(@PathVariable("id") Integer id, @RequestBody OrderDTO orderDTO) {
+    public ResponseEntity<?> actualizarOrder(@PathVariable("id") Integer id, @Valid @RequestBody OrderDTO orderDTO) {
         try {
             // Validar deliveryType
             Order.DeliveryType deliveryType = Order.DeliveryType.DELIVERY; // Default
@@ -356,6 +388,7 @@ public class OrderController {
             LEFT JOIN payment_methods pm ON o.paymentMethodId = pm.id
             """ + (currentUserId != null ? "WHERE o.userId = ? " : "") + """
             ORDER BY o.createdAt DESC
+            LIMIT 100
             """;
         
         // Ejecutar query con parámetros (previene SQL injection)

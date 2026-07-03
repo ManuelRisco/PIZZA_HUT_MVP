@@ -19,10 +19,14 @@ public class CheckoutService {
     private final PromotionService promotionService;
     private final OrderItemExtraService orderItemExtraService;
     private final IngredientService ingredientService;
+    private final PizzaService pizzaService;
+    private final ExtraService extraService;
+    private final SizeService sizeService;
 
     public CheckoutService(OrderService orderService, OrderItemService orderItemService, AddressService addressService,
                            PaymentService paymentService, PromotionService promotionService,
-                           OrderItemExtraService orderItemExtraService, IngredientService ingredientService) {
+                           OrderItemExtraService orderItemExtraService, IngredientService ingredientService,
+                           PizzaService pizzaService, ExtraService extraService, SizeService sizeService) {
         this.orderService = orderService;
         this.orderItemService = orderItemService;
         this.addressService = addressService;
@@ -30,6 +34,9 @@ public class CheckoutService {
         this.promotionService = promotionService;
         this.orderItemExtraService = orderItemExtraService;
         this.ingredientService = ingredientService;
+        this.pizzaService = pizzaService;
+        this.extraService = extraService;
+        this.sizeService = sizeService;
     }
 
     public Order checkout(CheckoutRequestDTO req) {
@@ -81,19 +88,58 @@ public class CheckoutService {
 
         Order savedOrder = orderService.crearOrder(order);
 
-        // 4. Process Items
+        // 4. Process Items and Calculate Subtotal
+        BigDecimal realSubtotal = BigDecimal.ZERO;
+        
         if (req.getItems() != null) {
             for (CheckoutRequestDTO.CheckoutItemDTO itemDTO : req.getItems()) {
                 if (itemDTO.getQuantity() != null && itemDTO.getQuantity() <= 0) {
                     throw new IllegalArgumentException("Cantidad inválida. Debe ser mayor a cero.");
                 }
+                
+                BigDecimal unitPrice = BigDecimal.ZERO;
+                BigDecimal sizeExtra = BigDecimal.ZERO;
+                BigDecimal extraIngredientsCost = BigDecimal.ZERO;
+                
+                if ("PIZZA".equalsIgnoreCase(itemDTO.getItemType())) {
+                    Pizza pizza = pizzaService.obtenerPorId(itemDTO.getPizzaId())
+                            .orElseThrow(() -> new IllegalArgumentException("Pizza no encontrada"));
+                    unitPrice = pizza.getPrice();
+                    
+                    if (itemDTO.getSizeId() != null) {
+                        Size size = sizeService.obtenerPorId(itemDTO.getSizeId())
+                                .orElseThrow(() -> new IllegalArgumentException("Tamaño no encontrado"));
+                        sizeExtra = size.getExtraCost(); // Asumiendo que es un extra fijo, o multiplicar. En este MVP parece sumarse
+                    }
+                } else if ("EXTRA".equalsIgnoreCase(itemDTO.getItemType())) {
+                    Extra extra = extraService.obtenerPorId(itemDTO.getExtraId())
+                            .orElseThrow(() -> new IllegalArgumentException("Extra no encontrado"));
+                    unitPrice = extra.getPrice();
+                }
+
+                // Calcular costo de ingredientes extra
+                if (itemDTO.getExtraIngredientIds() != null && !itemDTO.getExtraIngredientIds().isEmpty()) {
+                    for (Integer ingId : itemDTO.getExtraIngredientIds()) {
+                        Ingredient ingredient = ingredientService.obtenerPorId(ingId).orElse(null);
+                        if (ingredient != null && ingredient.getExtraCost() != null) {
+                            extraIngredientsCost = extraIngredientsCost.add(ingredient.getExtraCost());
+                        }
+                    }
+                }
+
+                // El precio total por unidad es (precioBase + extraPorTamaño + costoIngredientesExtra)
+                BigDecimal totalUnitPrice = unitPrice.add(sizeExtra).add(extraIngredientsCost);
+                BigDecimal lineTotal = totalUnitPrice.multiply(new BigDecimal(itemDTO.getQuantity()));
+                
+                realSubtotal = realSubtotal.add(lineTotal);
+                
                 OrderItem item = new OrderItem();
                 item.setOrderId(savedOrder.getId());
                 item.setItemType(itemDTO.getItemType().toUpperCase());
                 item.setQuantity(itemDTO.getQuantity());
-                item.setUnitPrice(itemDTO.getUnitPrice());
-                item.setSizeExtra(BigDecimal.ZERO);
-                item.setLineTotal(itemDTO.getLineTotal());
+                item.setUnitPrice(totalUnitPrice);
+                item.setSizeExtra(sizeExtra);
+                item.setLineTotal(lineTotal);
 
                 if ("PIZZA".equalsIgnoreCase(itemDTO.getItemType())) {
                     item.setPizzaId(itemDTO.getPizzaId());
@@ -108,17 +154,33 @@ public class CheckoutService {
                 if (itemDTO.getExtraIngredientIds() != null && !itemDTO.getExtraIngredientIds().isEmpty()) {
                     for (Integer ingId : itemDTO.getExtraIngredientIds()) {
                         ingredientService.obtenerPorId(ingId).ifPresent(ingredient -> {
-                            OrderItemExtra extra = new OrderItemExtra();
-                            extra.setOrderItemId(savedItem.getId());
-                            extra.setIngredientId(ingredient.getId());
-                            extra.setIngredientName(ingredient.getName());
-                            extra.setExtraCost(ingredient.getExtraCost() != null ? ingredient.getExtraCost() : BigDecimal.ZERO);
-                            orderItemExtraService.crearOrderItemExtra(extra);
+                            OrderItemExtra orderItemExtra = new OrderItemExtra();
+                            orderItemExtra.setOrderItemId(savedItem.getId());
+                            orderItemExtra.setIngredientId(ingredient.getId());
+                            orderItemExtra.setIngredientName(ingredient.getName());
+                            orderItemExtra.setExtraCost(ingredient.getExtraCost() != null ? ingredient.getExtraCost() : BigDecimal.ZERO);
+                            orderItemExtraService.crearOrderItemExtra(orderItemExtra);
                         });
                     }
                 }
             }
         }
+        
+        // 5. Re-calculate Promos and Order Totals with REAL subtotal
+        if (promoCode != null && !promoCode.trim().isEmpty()) {
+            if (promotionAUsar != null) {
+                // Validación estricta de negocio: ¿Este usuario tiene derecho a usar este cupón?
+                promotionService.verificarReglasDeUsuario(promotionAUsar, req.getOrder().getUserId());
+                
+                discount = promotionService.calcularDescuento(promotionAUsar, realSubtotal);
+            }
+        }
+        
+        savedOrder.setSubtotal(realSubtotal);
+        savedOrder.setDiscount(discount);
+        BigDecimal calculatedTotal = realSubtotal.add(savedOrder.getDeliveryFee()).subtract(discount);
+        savedOrder.setTotal(calculatedTotal.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : calculatedTotal);
+        orderService.actualizarOrder(savedOrder.getId(), savedOrder);
 
         // 5. Process Payment
         if (req.getPayment() != null && req.getPayment().getPaymentMethodId() != null) {

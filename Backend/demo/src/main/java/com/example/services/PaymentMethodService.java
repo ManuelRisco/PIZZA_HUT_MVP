@@ -2,6 +2,8 @@ package com.example.services;
 
 import com.example.models.PaymentMethod;
 import com.example.repositories.PaymentMethodRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ public class PaymentMethodService {
         this.paymentRepository = paymentRepository;
     }
 
+    @Cacheable("paymentMethods")
     public List<PaymentMethod> obtenerTodos() {
         return paymentMethodRepository.findAll();
     }
@@ -30,10 +33,12 @@ public class PaymentMethodService {
         return paymentMethodRepository.findById(id);
     }
 
+    @Cacheable("paymentMethodsActivos")
     public List<PaymentMethod> obtenerActivos() {
         return paymentMethodRepository.findByActive(true);
     }
 
+    @CacheEvict(value = {"paymentMethods", "paymentMethodsActivos"}, allEntries = true)
     public PaymentMethod crearMetodoPago(PaymentMethod paymentMethod) {
         if (paymentMethod.getName() == null || paymentMethod.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Debe ingresar un nombre válido.");
@@ -49,6 +54,7 @@ public class PaymentMethodService {
         return paymentMethodRepository.save(paymentMethod);
     }
 
+    @CacheEvict(value = {"paymentMethods", "paymentMethodsActivos"}, allEntries = true)
     public PaymentMethod actualizarMetodoPago(Integer id, PaymentMethod paymentMethodActualizado) {
         if (paymentMethodActualizado.getName() == null || paymentMethodActualizado.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Debe ingresar un nombre válido.");
@@ -87,6 +93,7 @@ public class PaymentMethodService {
     }
 
     @SuppressWarnings("null")
+    @CacheEvict(value = {"paymentMethods", "paymentMethodsActivos"}, allEntries = true)
     public boolean eliminarMetodoPago(Integer id) {
         Optional<PaymentMethod> paymentMethodOpt = paymentMethodRepository.findById(id);
         if (paymentMethodOpt.isPresent()) {
@@ -103,6 +110,7 @@ public class PaymentMethodService {
         return paymentMethodRepository.existsByName(name);
     }
 
+    @CacheEvict(value = {"paymentMethods", "paymentMethodsActivos"}, allEntries = true)
     public PaymentMethod cambiarEstado(Integer id, boolean isActive) {
         @SuppressWarnings("null")
         Optional<PaymentMethod> paymentMethodOpt = paymentMethodRepository.findById(id);

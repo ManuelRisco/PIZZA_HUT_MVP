@@ -3,6 +3,8 @@ package com.example.services;
 import com.example.models.Pizza;
 import com.example.repositories.PizzaRepository;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,14 +24,16 @@ public class PizzaService {
         this.categoryRepository = categoryRepository;
     }
 
+    @Cacheable("pizzas")
     public List<Pizza> listarPizzas() {
-        return pizzaRepository.findAll();
+        return pizzaRepository.findByDeletedAtIsNull();
     }
 
     public Optional<Pizza> obtenerPorId(Integer id) {
         return pizzaRepository.findById(id);
     }
 
+    @CacheEvict(value = "pizzas", allEntries = true)
     @SuppressWarnings("null")
     public Pizza crearPizza(Pizza pizza) {
         if (pizza.getName() == null || pizza.getName().trim().isEmpty()) {
@@ -42,6 +46,7 @@ public class PizzaService {
         return pizzaRepository.save(pizza);
     }
 
+    @CacheEvict(value = "pizzas", allEntries = true)
     @SuppressWarnings("null")
     public Pizza actualizarPizza(Integer id, Pizza pizzaActualizada) {
         if (pizzaActualizada.getName() == null || pizzaActualizada.getName().trim().isEmpty()) {
@@ -62,13 +67,13 @@ public class PizzaService {
             pizza.setPrice(pizzaActualizada.getPrice());
             pizza.setIsAvailable(pizzaActualizada.getIsAvailable());
             pizza.setIsPopular(pizzaActualizada.getIsPopular());
-            pizza.setUpdatedAt(java.time.LocalDateTime.now());
             pizza.setDeletedAt(pizzaActualizada.getDeletedAt());
             return pizzaRepository.save(pizza);
         }
         return null;
     }
 
+    @CacheEvict(value = "pizzas", allEntries = true)
     public boolean eliminarPizza(Integer id) {
         Optional<Pizza> pizzaOpt = pizzaRepository.findById(id);
         if (pizzaOpt.isPresent()) {

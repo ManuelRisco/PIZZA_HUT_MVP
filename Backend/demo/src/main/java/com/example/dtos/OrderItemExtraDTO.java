@@ -1,14 +1,24 @@
 package com.example.dtos;
 
 import com.example.models.OrderItemExtra;
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 
 public class OrderItemExtraDTO {
 
     private Integer id;
+    
+    @NotNull(message = "El ID del OrderItem es obligatorio")
     private Integer orderItemId;
+    
+    @NotNull(message = "El ID del ingrediente es obligatorio")
     private Integer ingredientId;
+    
+    @NotBlank(message = "El nombre del ingrediente es obligatorio")
     private String ingredientName;
+    
+    @NotNull(message = "El costo extra es obligatorio")
+    @DecimalMin(value = "0.0", inclusive = true, message = "El costo extra no puede ser negativo")
     private BigDecimal extraCost;
 
     // ==== Constructores ====

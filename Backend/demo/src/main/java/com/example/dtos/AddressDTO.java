@@ -2,19 +2,30 @@ package com.example.dtos;
 
 import com.example.models.Address;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class AddressDTO {
     private Integer id;
+    
+    @NotNull(message = "El ID del usuario es obligatorio")
     private Integer userId;
+    
+    @NotBlank(message = "La línea 1 de la dirección es obligatoria")
     private String line1;
+    
+    @NotBlank(message = "La ciudad es obligatoria")
     private String city;
+    
+    @NotBlank(message = "El distrito es obligatorio")
     private String district;
+    
     private String reference;
     
     @JsonProperty("isDefault")
     private Boolean isDefault;
 
-    // Constructor vac\u00edo
+    // Constructor vacío
     public AddressDTO() {}
 
     // Constructor desde entidad

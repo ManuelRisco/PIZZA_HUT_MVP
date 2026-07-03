@@ -1,19 +1,28 @@
 package com.example.dtos;
 
 import com.example.models.Review;
+import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
 
 public class ReviewDTO {
     private Integer id;
+    
     private Integer userId;
-    private Integer orderId;  // Cambiado de pizzaId a orderId
+    
+    @NotNull(message = "El ID del pedido es obligatorio")
+    private Integer orderId;
+    
+    @NotNull(message = "La calificación es obligatoria")
+    @Min(value = 1, message = "La calificación mínima es 1")
+    @Max(value = 5, message = "La calificación máxima es 5")
     private Integer rating;
+    
     private String comment;
     private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // Constructor vac\u00edo
+    // Constructor vacío
     public ReviewDTO() {}
 
     // Constructor desde entidad

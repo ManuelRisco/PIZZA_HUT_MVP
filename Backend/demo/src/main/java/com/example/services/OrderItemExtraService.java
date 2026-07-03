@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
+@SuppressWarnings("null")
 public class OrderItemExtraService {
 
     private final OrderItemExtraRepository orderItemExtraRepository;
@@ -24,7 +25,10 @@ public class OrderItemExtraService {
         return orderItemExtraRepository.findByOrderItemId(orderItemId);
     }
 
-    @SuppressWarnings("null")
+    public java.util.Optional<OrderItemExtra> obtenerPorId(Integer id) {
+        return orderItemExtraRepository.findById(id);
+    }
+
     @Transactional
     public OrderItemExtra crearOrderItemExtra(OrderItemExtra orderItemExtra) {
         return orderItemExtraRepository.save(orderItemExtra);

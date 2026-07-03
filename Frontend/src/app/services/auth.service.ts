@@ -356,12 +356,12 @@ export class AuthService {
     }
   }
 
-  // Verificar estado del usuario y token expirado cada 15 segundos
+  // Verificar estado del usuario y token expirado cada 60 segundos
   private startUserStatusCheck(): void {
     this.stopUserStatusCheck(); // Detener cualquier subscripción previa
 
-    // Verificar cada 15 segundos (15000 ms)
-    this.userCheckSubscription = timer(15000, 15000).pipe(
+    // Verificar cada 60 segundos (60000 ms)
+    this.userCheckSubscription = timer(60000, 60000).pipe(
       switchMap(() => {
         const token = this.getToken();
         if (!token) {

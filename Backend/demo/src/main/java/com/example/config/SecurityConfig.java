@@ -158,14 +158,15 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/order-item-extras/**").hasAnyRole("CUSTOMER", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/order-item-extras/**").hasRole("ADMIN")
                 
-                // Order Tracking - Solo ADMIN
+                // Order Tracking
+                .requestMatchers(HttpMethod.GET, "/api/order-tracking/**").hasAnyRole("CUSTOMER", "ADMIN")
                 .requestMatchers("/api/order-tracking/**").hasRole("ADMIN")
                 
                 // ==========================================
                 // PAGOS (Payments)
                 // ==========================================
                 .requestMatchers(HttpMethod.POST, "/api/payments").hasAnyRole("CUSTOMER", "ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/payments/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/payments/**").hasAnyRole("ADMIN", "CUSTOMER")
                 .requestMatchers(HttpMethod.PUT, "/api/payments/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/payments/**").hasRole("ADMIN")
                 

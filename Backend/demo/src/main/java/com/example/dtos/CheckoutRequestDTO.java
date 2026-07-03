@@ -2,18 +2,37 @@ package com.example.dtos;
 
 import java.math.BigDecimal;
 import java.util.List;
+import jakarta.validation.constraints.*;
+import jakarta.validation.Valid;
 
 public class CheckoutRequestDTO {
     
+    @Valid
+    @NotNull(message = "El pedido es obligatorio")
     private OrderDTO order;
+    
+    @Valid
+    @NotNull(message = "La dirección es obligatoria")
     private AddressDTO address;
+    
+    @Valid
+    @NotEmpty(message = "Debe haber al menos un artículo en el pedido")
     private List<CheckoutItemDTO> items;
+    
+    @Valid
+    @NotNull(message = "Los datos de pago son obligatorios")
     private PaymentDTO payment;
     
     public static class AddressDTO {
+        @NotBlank(message = "La línea 1 de la dirección es obligatoria")
         private String line1;
+        
+        @NotBlank(message = "La ciudad es obligatoria")
         private String city;
+        
+        @NotBlank(message = "El distrito es obligatorio")
         private String district;
+        
         private String reference;
         private Boolean isDefault;
         
@@ -30,13 +49,24 @@ public class CheckoutRequestDTO {
     }
 
     public static class CheckoutItemDTO {
+        @NotBlank(message = "El tipo de artículo es obligatorio")
         private String itemType; // "EXTRA" o "PIZZA"
+        
         private Integer pizzaId;
         private Integer extraId;
         private Integer sizeId;
+        
+        @NotNull(message = "La cantidad es obligatoria")
+        @Min(value = 1, message = "La cantidad mínima es 1")
         private Integer quantity;
+        
+        @NotNull(message = "El precio unitario es obligatorio")
+        @DecimalMin(value = "0.0", inclusive = false, message = "El precio unitario debe ser mayor a 0")
         private BigDecimal unitPrice;
+        
+        @NotNull(message = "El total de línea es obligatorio")
         private BigDecimal lineTotal;
+        
         private List<Integer> extraIngredientIds;
 
         public String getItemType() { return itemType; }
@@ -58,9 +88,16 @@ public class CheckoutRequestDTO {
     }
     
     public static class PaymentDTO {
+        @NotNull(message = "El método de pago es obligatorio")
         private Integer paymentMethodId;
+        
+        @NotNull(message = "El monto a pagar es obligatorio")
+        @DecimalMin(value = "0.0", inclusive = false, message = "El monto debe ser mayor a 0")
         private BigDecimal amount;
+        
+        @NotBlank(message = "El estado del pago es obligatorio")
         private String status;
+        
         private String transactionId;
 
         public Integer getPaymentMethodId() { return paymentMethodId; }

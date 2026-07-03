@@ -2,6 +2,8 @@ package com.example.services;
 
 import com.example.models.Size;
 import com.example.repositories.SizeRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,7 @@ public class SizeService {
         this.sizeRepository = sizeRepository;
     }
 
+    @Cacheable("sizes")
     public List<Size> listarSizes() {
         return sizeRepository.findByDeletedAtIsNull();
     }
@@ -27,6 +30,7 @@ public class SizeService {
         return sizeRepository.findById(id);
     }
 
+    @CacheEvict(value = "sizes", allEntries = true)
     public Size crearSize(Size size) {
         if (sizeRepository.existsByNameAndDeletedAtIsNull(size.getName())) {
             throw new IllegalArgumentException("Ya existe un tamaño con ese nombre");
@@ -48,6 +52,7 @@ public class SizeService {
         return sizeRepository.save(size);
     }
 
+    @CacheEvict(value = "sizes", allEntries = true)
     public Size actualizarSize(Integer id, Size size) {
         @SuppressWarnings("null")
         Size existingSize = sizeRepository.findById(id)
@@ -70,6 +75,7 @@ public class SizeService {
         return sizeRepository.save(existingSize);
     }
 
+    @CacheEvict(value = "sizes", allEntries = true)
     public void eliminarSize(Integer id) {
         @SuppressWarnings("null")
         Optional<Size> sizeOpt = sizeRepository.findById(id);

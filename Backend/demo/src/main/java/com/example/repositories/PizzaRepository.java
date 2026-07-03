@@ -12,6 +12,9 @@ public interface PizzaRepository extends JpaRepository<Pizza, Integer> {
     @EntityGraph(attributePaths = { "category" })
     List<Pizza> findAll();
 
+    @EntityGraph(attributePaths = { "category" })
+    List<Pizza> findByDeletedAtIsNull();
+
     @SuppressWarnings("null")
     @EntityGraph(attributePaths = { "category" })
     Optional<Pizza> findById(Integer id);

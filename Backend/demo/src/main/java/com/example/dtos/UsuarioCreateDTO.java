@@ -1,15 +1,24 @@
 package com.example.dtos;
 
 import com.example.models.Usuario;
+import jakarta.validation.constraints.*;
 
 public class UsuarioCreateDTO {
+    @NotBlank(message = "El email es obligatorio")
+    @Email(message = "El email debe ser válido")
     private String email;
+    
+    @NotBlank(message = "La contraseña es obligatoria")
+    @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
     private String password;
+    
+    @NotBlank(message = "El nombre es obligatorio")
     private String name;
+    
     private String phone;
     private Usuario.Role role;
 
-    // Constructor vac\u00edo
+    // Constructor vacío
     public UsuarioCreateDTO() {}
 
     // Getters y setters

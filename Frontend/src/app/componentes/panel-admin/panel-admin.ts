@@ -52,12 +52,22 @@ export class PanelAdmin implements OnInit, OnDestroy {
   sidebarCollapsed: boolean = false;
   private pollingSubscription?: Subscription;
 
-  // Nuevas propiedades para dashboard
+  // Propiedades para dashboard
   pedidosRecientes: OrderCompleteDTO[] = [];
   todosLosPedidos: OrderCompleteDTO[] = [];
   masVendidos: any[] = [];
   ventasSemanales: any[] = [];
   
+  // KPI Cards
+  ventasHoy: number = 0;
+  pedidosHoy: number = 0;
+  pedidosPendientes: number = 0;
+  totalClientes: number = 0;
+  ratingPromedio: number = 0;
+  totalReviews: number = 0;
+  ventasSemanaTotal: number = 0;
+  cambioSemanal: number = 0; // Porcentaje de cambio vs semana anterior
+
   // Propiedad para el modal de pedidos del día
   diaSeleccionado: any = null;
 
@@ -97,8 +107,8 @@ export class PanelAdmin implements OnInit, OnDestroy {
   }
 
   iniciarAutoRefresh(): void {
-    // Actualizar cada 15 segundos sin recargar la página
-    this.pollingSubscription = timer(0, 15000).subscribe(() => {
+    // Actualizar cada 60 segundos (reducido de 15s para no saturar la BD)
+    this.pollingSubscription = timer(0, 60000).subscribe(() => {
       if (this.vistaActual === 'dashboard') {
         this.cargarEstadisticas();
       }
@@ -106,14 +116,11 @@ export class PanelAdmin implements OnInit, OnDestroy {
   }
 
   cargarEstadisticas(): void {
-    const hoyStr = new Date().toDateString();
-
     // Cargar pedidos recientes, ventas semanales y más vendidos
     this.orderService.obtenerTodosCompletos().subscribe({
       next: (pedidos) => {
         this.todosLosPedidos = pedidos;
-        // Pedidos Recientes
-        // Ordenamos por fecha de forma descendente y tomamos los 5 últimos
+        // Pedidos Recientes - últimos 5 ordenados por fecha descendente
         const pedidosOrdenados = [...pedidos].sort((a, b) => {
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -121,14 +128,63 @@ export class PanelAdmin implements OnInit, OnDestroy {
         });
         this.pedidosRecientes = pedidosOrdenados.slice(0, 5);
 
+        // Calcular KPIs de pedidos
+        this.calcularKPIsPedidos(pedidos);
+
         // Ventas Semanales
         this.calcularVentasSemanales(pedidos);
 
-        // Más Vendidos
+        // Más Vendidos (Top 5)
         this.calcularMasVendidos(pedidos);
       },
       error: (err) => console.error('Error al cargar pedidos completos:', err)
     });
+
+    // Cargar total de clientes
+    this.usuarioService.listarUsuarios().subscribe({
+      next: (usuarios) => {
+        this.totalClientes = usuarios.filter(u => u.role === 'CUSTOMER').length;
+      },
+      error: (err) => console.error('Error al cargar usuarios:', err)
+    });
+
+    // Cargar rating promedio
+    this.reviewService.obtenerTodos().subscribe({
+      next: (reviews) => {
+        const activeReviews = reviews.filter(r => r.active !== false);
+        this.totalReviews = activeReviews.length;
+        if (activeReviews.length > 0) {
+          this.ratingPromedio = activeReviews.reduce((sum, r) => sum + r.rating, 0) / activeReviews.length;
+        } else {
+          this.ratingPromedio = 0;
+        }
+      },
+      error: (err) => console.error('Error al cargar reseñas:', err)
+    });
+  }
+
+  calcularKPIsPedidos(pedidos: OrderCompleteDTO[]): void {
+    const hoy = new Date();
+    const hoyStr = hoy.toDateString();
+
+    // Ventas de Hoy (solo pedidos DELIVERED de hoy)
+    const pedidosHoyDelivered = pedidos.filter(p => {
+      if (!p.createdAt) return false;
+      const fechaPedido = new Date(p.createdAt);
+      return fechaPedido.toDateString() === hoyStr && p.status === 'DELIVERED';
+    });
+    this.ventasHoy = pedidosHoyDelivered.reduce((sum, p) => sum + (p.total || 0), 0);
+
+    // Pedidos de Hoy (todos los estados)
+    this.pedidosHoy = pedidos.filter(p => {
+      if (!p.createdAt) return false;
+      return new Date(p.createdAt).toDateString() === hoyStr;
+    }).length;
+
+    // Pedidos Pendientes (PENDING, CONFIRMED o PREPARING)
+    this.pedidosPendientes = pedidos.filter(p =>
+      p.status === 'PENDING' || p.status === 'CONFIRMED' || p.status === 'PREPARING'
+    ).length;
   }
 
   calcularVentasSemanales(pedidos: OrderCompleteDTO[]): void {
@@ -178,6 +234,30 @@ export class PanelAdmin implements OnInit, OnDestroy {
       }
     });
 
+    // Total de la semana actual
+    this.ventasSemanaTotal = ventas.reduce((sum, v) => sum + v.total, 0);
+
+    // Calcular ventas de la semana anterior para comparativa
+    const inicioSemanaAnterior = new Date(hoy);
+    inicioSemanaAnterior.setDate(hoy.getDate() - 13);
+    const finSemanaAnterior = new Date(hoy);
+    finSemanaAnterior.setDate(hoy.getDate() - 7);
+
+    const ventasSemanaAnterior = pedidos
+      .filter(p => {
+        if (!p.createdAt || p.status !== 'DELIVERED') return false;
+        const fecha = new Date(p.createdAt);
+        return fecha >= inicioSemanaAnterior && fecha < finSemanaAnterior;
+      })
+      .reduce((sum, p) => sum + (p.total || 0), 0);
+
+    // Calcular porcentaje de cambio
+    if (ventasSemanaAnterior > 0) {
+      this.cambioSemanal = ((this.ventasSemanaTotal - ventasSemanaAnterior) / ventasSemanaAnterior) * 100;
+    } else {
+      this.cambioSemanal = this.ventasSemanaTotal > 0 ? 100 : 0;
+    }
+
     // Calcular porcentajes para la altura de las barras CSS
     const maxTotal = Math.max(...ventas.map(v => v.total));
     ventas.forEach(v => {
@@ -189,7 +269,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
   }
 
   calcularMasVendidos(pedidos: OrderCompleteDTO[]): void {
-    const conteoProductos: { [key: string]: { nombre: string, cantidad: number, precio: number } } = {};
+    const conteoProductos: { [key: string]: { nombre: string, cantidad: number, precio: number, ingresos: number } } = {};
 
     pedidos.forEach(pedido => {
       if (pedido.status !== 'CANCELLED' && pedido.items) {
@@ -199,18 +279,26 @@ export class PanelAdmin implements OnInit, OnDestroy {
             conteoProductos[nombreProducto] = {
               nombre: nombreProducto,
               cantidad: 0,
-              precio: item.unitPrice || 0
+              precio: item.unitPrice || 0,
+              ingresos: 0
             };
           }
           conteoProductos[nombreProducto].cantidad += (item.quantity || 1);
+          conteoProductos[nombreProducto].ingresos += (item.unitPrice || 0) * (item.quantity || 1);
         });
       }
     });
 
-    // Convertir objeto a array y ordenar de mayor a menor
+    // Convertir objeto a array y ordenar de mayor a menor — Top 5
     const masVendidosArr = Object.values(conteoProductos)
       .sort((a, b) => b.cantidad - a.cantidad)
-      .slice(0, 3); // Top 3
+      .slice(0, 5);
+
+    // Calcular porcentaje relativo al más vendido para barras visuales
+    const maxCantidad = masVendidosArr.length > 0 ? masVendidosArr[0].cantidad : 1;
+    masVendidosArr.forEach(p => {
+      (p as any).porcentaje = (p.cantidad / maxCantidad) * 100;
+    });
 
     this.masVendidos = masVendidosArr;
   }

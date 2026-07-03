@@ -3,6 +3,8 @@ package com.example.services;
 import com.example.repositories.CategoryRepository;
 import com.example.models.Category;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,8 +24,9 @@ public class CategoryService {
         this.pizzaRepository = pizzaRepository;
     }
 
+    @Cacheable("categories")
     public List<Category> listarCategorias() {
-        return categoryRepository.findAll();
+        return categoryRepository.findByDeletedAtIsNull();
     }
 
     @SuppressWarnings("null")
@@ -31,6 +34,7 @@ public class CategoryService {
         return categoryRepository.findById(id);
     }
 
+    @CacheEvict(value = "categories", allEntries = true)
     public Category crearCategoria(Category category) {
         if (category.getName() == null || category.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Debe ingresar un nombre válido para la categoría.");
@@ -41,6 +45,7 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
+    @CacheEvict(value = "categories", allEntries = true)
     public Category actualizarCategoria(Integer id, Category categoryActualizada) {
         if (categoryActualizada.getName() == null || categoryActualizada.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Debe ingresar un nombre válido para la categoría.");
@@ -59,13 +64,13 @@ public class CategoryService {
             category.setDescription(categoryActualizada.getDescription());
             category.setImageUrl(categoryActualizada.getImageUrl());
             category.setDisplayOrder(categoryActualizada.getDisplayOrder());
-            category.setUpdatedAt(java.time.LocalDateTime.now());
             category.setDeletedAt(categoryActualizada.getDeletedAt());
             return categoryRepository.save(category);
         }
         return null;
     }
 
+    @CacheEvict(value = "categories", allEntries = true)
     public boolean eliminarCategoria(Integer id) {
         @SuppressWarnings("null")
         Optional<Category> categoryOpt = categoryRepository.findById(id);

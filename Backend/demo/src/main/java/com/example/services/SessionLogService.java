@@ -51,7 +51,7 @@ public class SessionLogService {
     }
 
     public List<SessionLog> listarSesionesActivas() {
-        return sessionLogRepository.findByIsActiveTrueOrderByLoginTimeDesc();
+        return sessionLogRepository.findTop100ByIsActiveTrueOrderByLoginTimeDesc();
     }
 
     public List<SessionLog> listarSesionesPorUsuario(Integer userId) {

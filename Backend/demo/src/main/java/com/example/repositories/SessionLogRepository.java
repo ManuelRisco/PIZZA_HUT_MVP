@@ -20,6 +20,9 @@ public interface SessionLogRepository extends JpaRepository<SessionLog, Long> {
     // Buscar todas las sesiones activas
     List<SessionLog> findByIsActiveTrueOrderByLoginTimeDesc();
     
+    // Buscar top 100 sesiones activas
+    List<SessionLog> findTop100ByIsActiveTrueOrderByLoginTimeDesc();
+    
     // Buscar sesiones de un usuario (todas)
     List<SessionLog> findByUserIdOrderByLoginTimeDesc(Integer userId);
     

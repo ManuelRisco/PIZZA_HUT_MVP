@@ -1,27 +1,46 @@
 package com.example.dtos;
 
 import com.example.models.Order;
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class OrderDTO {
     private Integer id;
+    
     private Integer userId;
+    
+    @NotNull(message = "El ID de la dirección es obligatorio")
     private Integer addressId;
+    
     private String status;
-    private String deliveryType;  // Nuevo: PICKUP o DELIVERY
-    private Integer paymentMethodId;  // Cambio: ahora es ID en lugar de string
-    private Integer promotionId;  // ID de la promoci\u00f3n aplicada
+    private String deliveryType;  // PICKUP o DELIVERY
+    
+    @NotNull(message = "El ID del método de pago es obligatorio")
+    private Integer paymentMethodId;
+    
+    private Integer promotionId;  // ID de la promoción aplicada
+    
+    @NotNull(message = "El subtotal es obligatorio")
+    @DecimalMin(value = "0.0", inclusive = true, message = "El subtotal no puede ser negativo")
     private BigDecimal subtotal;
+    
+    @NotNull(message = "La tarifa de entrega es obligatoria")
+    @DecimalMin(value = "0.0", inclusive = true, message = "La tarifa de entrega no puede ser negativa")
     private BigDecimal deliveryFee;
+    
     private BigDecimal discount;
+    
+    @NotNull(message = "El total es obligatorio")
+    @DecimalMin(value = "0.0", inclusive = true, message = "El total no puede ser negativo")
     private BigDecimal total;
+    
     private String notes;
     private String promoCode;
     private LocalDateTime estimatedDelivery;
     private LocalDateTime createdAt;
 
-    // Constructor vac\u00edo
+    // Constructor vacío
     public OrderDTO() {}
 
     // Constructor desde entidad

@@ -27,7 +27,7 @@ public class AuditLogService {
     }
 
     public List<AuditLog> listarTodos() {
-        return auditLogRepository.findAll();
+        return auditLogRepository.findTop100ByOrderByCreatedAtDesc();
     }
 
     public List<AuditLog> listarRecientes() {

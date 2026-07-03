@@ -1,13 +1,16 @@
 package com.example.controllers;
 
 import com.example.services.OrderTrackingService;
+import com.example.services.OrderService;
 import com.example.dtos.OrderTrackingDTO;
 import com.example.models.OrderTracking;
 import com.example.models.Order;
+import com.example.security.SecurityUtils;
 import org.springframework.http.ResponseEntity;
 import com.example.dtos.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 import java.util.Map;
@@ -20,13 +23,39 @@ import java.util.stream.Collectors;
 public class OrderTrackingController {
 
     private final OrderTrackingService orderTrackingService;
+    private final OrderService orderService;
+    private final SecurityUtils securityUtils;
 
-    public OrderTrackingController(OrderTrackingService orderTrackingService) {
+    public OrderTrackingController(OrderTrackingService orderTrackingService,
+                                   OrderService orderService,
+                                   SecurityUtils securityUtils) {
         this.orderTrackingService = orderTrackingService;
+        this.orderService = orderService;
+        this.securityUtils = securityUtils;
+    }
+
+    private void validarAccesoAOrder(Integer orderId) {
+        if (!securityUtils.isAdmin()) {
+            Integer currentUserId = securityUtils.getCurrentUserId();
+            if (currentUserId == null) {
+                throw new AccessDeniedException("Usuario no autenticado");
+            }
+            
+            Order order = orderService.obtenerPorId(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("El pedido no existe"));
+                
+            if (!order.getUserId().equals(currentUserId)) {
+                throw new AccessDeniedException("No tienes permiso para acceder al rastreo de este pedido");
+            }
+        }
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<OrderTrackingDTO>>> listarOrderTrackings() {
+        if (!securityUtils.isAdmin()) {
+            throw new AccessDeniedException("Solo administradores pueden listar todos los rastreos");
+        }
+        
         List<OrderTracking> orderTrackings = orderTrackingService.listarOrderTrackings();
         List<OrderTrackingDTO> orderTrackingsDTO = orderTrackings.stream()
             .map(OrderTrackingDTO::new)
@@ -38,7 +67,15 @@ public class OrderTrackingController {
     public ResponseEntity<?> obtenerOrderTrackingPorId(@PathVariable("id") Integer id) {
         Optional<OrderTracking> orderTrackingOpt = orderTrackingService.obtenerPorId(id);
         if (orderTrackingOpt.isPresent()) {
-            OrderTrackingDTO orderTrackingDTO = new OrderTrackingDTO(orderTrackingOpt.get());
+            OrderTracking orderTracking = orderTrackingOpt.get();
+            try {
+                validarAccesoAOrder(orderTracking.getOrderId());
+            } catch (AccessDeniedException e) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", e.getMessage()));
+            }
+            
+            OrderTrackingDTO orderTrackingDTO = new OrderTrackingDTO(orderTracking);
             return ResponseEntity.ok(ApiResponse.success(orderTrackingDTO));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -47,7 +84,14 @@ public class OrderTrackingController {
     }
 
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<ApiResponse<List<OrderTrackingDTO>>> obtenerOrderTrackingsPorOrderId(@PathVariable("orderId") Integer orderId) {
+    public ResponseEntity<?> obtenerOrderTrackingsPorOrderId(@PathVariable("orderId") Integer orderId) {
+        try {
+            validarAccesoAOrder(orderId);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("message", e.getMessage()));
+        }
+        
         List<OrderTracking> orderTrackings = orderTrackingService.obtenerPorOrderId(orderId);
         List<OrderTrackingDTO> orderTrackingsDTO = orderTrackings.stream()
             .map(OrderTrackingDTO::new)

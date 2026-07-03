@@ -131,6 +131,9 @@ public class Promotion {
                 break;
             case FIXED_AMOUNT:
                 discount = discountValue;
+                if (discount.compareTo(orderTotal) > 0) {
+                    discount = orderTotal;
+                }
                 break;
             case BUNDLE:
                 // Para bundles, el descuento se calcula en base al precio final

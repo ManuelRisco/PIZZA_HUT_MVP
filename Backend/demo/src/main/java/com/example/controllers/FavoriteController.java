@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import com.example.dtos.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Map;
@@ -108,26 +109,32 @@ public class FavoriteController {
     }
 
     @PostMapping
-    public ResponseEntity<?> crearFavorite(@RequestBody FavoriteDTO favoriteDTO) {
+    public ResponseEntity<?> crearFavorite(@Valid @RequestBody FavoriteDTO favoriteDTO) {
         try {
-            // Validar que el cliente solo pueda crear favoritos para s\u00ed mismo
             if (!securityUtils.isAdmin()) {
                 Integer currentUserId = securityUtils.getCurrentUserId();
                 if (currentUserId == null || !currentUserId.equals(favoriteDTO.getUserId())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "No puedes crear favoritos para otros usuarios"));
+                        .body(Map.of("message", "No puedes agregar favoritos para otros usuarios"));
                 }
             }
-            
+
             FavoriteId id = new FavoriteId(favoriteDTO.getUserId(), favoriteDTO.getPizzaId());
+            
+            // Verificar si ya existe
+            if (favoriteService.obtenerPorId(id).isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "La pizza ya está en tus favoritos"));
+            }
+            
             Favorite favorite = new Favorite();
             favorite.setId(id);
             
             Favorite favoriteCreado = favoriteService.crearFavorite(favorite);
-            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(new FavoriteDTO(favoriteCreado), "Creado exitosamente"));
+            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(new FavoriteDTO(favoriteCreado), "Favorito creado exitosamente"));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "Error al crear el favorito"));
         }
     }
 
