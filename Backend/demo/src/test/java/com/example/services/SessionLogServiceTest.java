@@ -41,7 +41,6 @@ class SessionLogServiceTest {
     // CU02: Iniciar Sesión
     // ==========================================
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU02 - Flujo Principal: Iniciar sesión y registrar token [RF03, RF04]")
     void testCrearSesionExitosa() {
@@ -72,7 +71,6 @@ class SessionLogServiceTest {
     // CU03: Cerrar Sesión
     // ==========================================
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU03 - Flujo Principal: Cerrar sesión e invalidar token [RF05, RF06]")
     void testCerrarSesion() {
@@ -87,7 +85,6 @@ class SessionLogServiceTest {
         verify(repository, times(1)).save(sessionLog);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU03 - A1: Intentar cerrar sesión inexistente")
     void testCerrarSesionInexistente() {

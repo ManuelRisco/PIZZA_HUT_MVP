@@ -46,7 +46,6 @@ class UsuarioServiceTest {
     // CU01: Registrarse
     // ==========================================
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU01 - Flujo Principal: Registro exitoso [RF01]")
     void testCrearUsuarioExitoso() {
@@ -60,7 +59,6 @@ class UsuarioServiceTest {
         verify(usuarioRepository, times(1)).save(usuarioTest);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU01 - A1: Error por campos incompletos (Contraseña muy corta)")
     void testRegistroCamposIncompletos() {
@@ -71,7 +69,6 @@ class UsuarioServiceTest {
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU01 - A4: Error por correo ya registrado [RF02]")
     void testRegistroCorreoYaRegistrado() {
@@ -87,7 +84,6 @@ class UsuarioServiceTest {
     // CU04: Ver Perfil
     // ==========================================
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU04 - Flujo Principal: Actualizar perfil exitosamente [RF07, RF08]")
     void testActualizarPerfilExitoso() {
@@ -103,7 +99,6 @@ class UsuarioServiceTest {
         verify(usuarioRepository, times(1)).save(any(Usuario.class));
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU04 - A1: Error al actualizar con correo en uso")
     void testActualizarPerfilCorreoEnUso() {
@@ -137,7 +132,6 @@ class UsuarioServiceTest {
     // CU11: Gestionar Usuarios
     // ==========================================
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU11 - Flujo Principal: Editar rol de usuario [RF21]")
     void testEditarRolUsuario() {
@@ -156,7 +150,6 @@ class UsuarioServiceTest {
         assertNull(usuarioTest.getRefreshToken()); // Tokens are invalidated on role change
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU11 - Flujo Principal: Inactivar usuario [RF21, RF22]")
     void testInactivarUsuario() {
@@ -170,7 +163,6 @@ class UsuarioServiceTest {
         verify(usuarioRepository, times(1)).save(usuarioTest);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU11 - A1: Error al intentar editar usuario no encontrado")
     void testEditarUsuarioNoEncontrado() {

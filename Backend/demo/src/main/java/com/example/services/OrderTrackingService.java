@@ -22,7 +22,6 @@ public class OrderTrackingService {
         return orderTrackingRepository.findAll();
     }
 
-    @SuppressWarnings("null")
     public Optional<OrderTracking> obtenerPorId(Integer id) {
         return orderTrackingRepository.findById(id);
     }
@@ -31,12 +30,10 @@ public class OrderTrackingService {
         return orderTrackingRepository.findByOrderId(orderId);
     }
 
-    @SuppressWarnings("null")
     public OrderTracking crearOrderTracking(OrderTracking orderTracking) {
         return orderTrackingRepository.save(orderTracking);
     }
 
-    @SuppressWarnings("null")
     public void eliminarOrderTracking(Integer id) {
         if (!orderTrackingRepository.existsById(id)) {
             throw new IllegalArgumentException("OrderTracking no encontrado");

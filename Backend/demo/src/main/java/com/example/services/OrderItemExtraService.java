@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-@SuppressWarnings("null")
 public class OrderItemExtraService {
 
     private final OrderItemExtraRepository orderItemExtraRepository;

@@ -115,7 +115,6 @@ class OrderServiceTest {
     // Actualizaciones de Orden (Parte del ciclo de vida de la orden)
     // ==========================================
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU16 - Adicional: Actualizar estado de orden existente")
     void testActualizarOrdenStatus() {

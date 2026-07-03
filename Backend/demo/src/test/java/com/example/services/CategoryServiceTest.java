@@ -59,7 +59,6 @@ class CategoryServiceTest {
         verify(categoryRepository, times(1)).findAll();
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU13 - Flujo Principal: Crear categoría exitosamente [RF25, RF26]")
     void testCrearCategoria() {
@@ -72,7 +71,6 @@ class CategoryServiceTest {
         verify(categoryRepository, times(1)).save(categoryTest);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU13 - Flujo Principal: Actualizar categoría existente [RF25, RF26]")
     void testActualizarCategoriaExistente() {
@@ -89,7 +87,6 @@ class CategoryServiceTest {
         verify(categoryRepository, times(1)).save(any(Category.class));
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU13 - Flujo Principal: Eliminar categoría (Soft delete) [RF25]")
     void testEliminarCategoria() {
@@ -103,7 +100,6 @@ class CategoryServiceTest {
         verify(categoryRepository, times(1)).save(categoryTest);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU13 - A1: Error al intentar crear categoría con nombre duplicado")
     void testCrearCategoriaNombreDuplicado() {
@@ -118,7 +114,6 @@ class CategoryServiceTest {
         assertEquals("El nombre de la categoría ya está registrado.", exception.getMessage());
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU13 - A2: Error al intentar eliminar categoría con dependencias (en uso)")
     void testEliminarCategoriaConDependencias() {
@@ -134,7 +129,6 @@ class CategoryServiceTest {
         assertEquals("No se puede eliminar la categoría porque está en uso.", exception.getMessage());
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU13 - A3: Error al guardar con datos incompletos (sin nombre)")
     void testGuardarCategoriaSinNombre() {

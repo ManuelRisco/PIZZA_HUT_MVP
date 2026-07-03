@@ -28,7 +28,6 @@ public class PaymentMethodService {
         return paymentMethodRepository.findAll();
     }
 
-    @SuppressWarnings("null")
     public Optional<PaymentMethod> obtenerPorId(Integer id) {
         return paymentMethodRepository.findById(id);
     }
@@ -59,7 +58,6 @@ public class PaymentMethodService {
         if (paymentMethodActualizado.getName() == null || paymentMethodActualizado.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Debe ingresar un nombre válido.");
         }
-        @SuppressWarnings("null")
         Optional<PaymentMethod> paymentMethodOpt = paymentMethodRepository.findById(id);
         if (paymentMethodOpt.isPresent()) {
             PaymentMethod paymentMethod = paymentMethodOpt.get();
@@ -92,7 +90,6 @@ public class PaymentMethodService {
         return paymentRepository.findPaymentMethodIdsInUse();
     }
 
-    @SuppressWarnings("null")
     @CacheEvict(value = {"paymentMethods", "paymentMethodsActivos"}, allEntries = true)
     public boolean eliminarMetodoPago(Integer id) {
         Optional<PaymentMethod> paymentMethodOpt = paymentMethodRepository.findById(id);
@@ -112,7 +109,6 @@ public class PaymentMethodService {
 
     @CacheEvict(value = {"paymentMethods", "paymentMethodsActivos"}, allEntries = true)
     public PaymentMethod cambiarEstado(Integer id, boolean isActive) {
-        @SuppressWarnings("null")
         Optional<PaymentMethod> paymentMethodOpt = paymentMethodRepository.findById(id);
         if (paymentMethodOpt.isPresent()) {
             PaymentMethod paymentMethod = paymentMethodOpt.get();

@@ -48,7 +48,6 @@ class OrderTrackingServiceTest {
         verify(repository, times(1)).findAll();
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.3: Crear OrderTracking")
     void testCrear() {

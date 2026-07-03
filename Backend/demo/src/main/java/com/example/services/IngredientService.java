@@ -26,7 +26,6 @@ public class IngredientService {
         return ingredientRepository.findByDeletedAtIsNull();
     }
 
-    @SuppressWarnings("null")
     public Optional<Ingredient> obtenerPorId(Integer id) {
         return ingredientRepository.findById(id);
     }
@@ -41,7 +40,6 @@ public class IngredientService {
 
     @CacheEvict(value = "ingredients", allEntries = true)
     public Ingredient actualizarIngrediente(Integer id, Ingredient ingredientActualizado) {
-        @SuppressWarnings("null")
         Optional<Ingredient> ingredientOpt = ingredientRepository.findById(id);
         if (ingredientOpt.isPresent()) {
             Ingredient ingredient = ingredientOpt.get();
@@ -62,7 +60,6 @@ public class IngredientService {
 
     @CacheEvict(value = "ingredients", allEntries = true)
     public boolean eliminarIngrediente(Integer id) {
-        @SuppressWarnings("null")
         Optional<Ingredient> ingredientOpt = ingredientRepository.findById(id);
         if (ingredientOpt.isPresent()) {
             Ingredient ingredient = ingredientOpt.get();

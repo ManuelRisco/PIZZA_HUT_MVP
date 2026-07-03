@@ -22,7 +22,6 @@ public class AddressService {
         return addressRepository.findAll();
     }
 
-    @SuppressWarnings("null")
     public Optional<Address> obtenerPorId(Integer id) {
         return addressRepository.findById(id);
     }
@@ -31,12 +30,10 @@ public class AddressService {
         return addressRepository.findByUserId(userId);
     }
 
-    @SuppressWarnings("null")
     public Address crearAddress(Address address) {
         return addressRepository.save(address);
     }
 
-    @SuppressWarnings("null")
     public Address actualizarAddress(Integer id, Address address) {
         if (!addressRepository.existsById(id)) {
             throw new IllegalArgumentException("Address no encontrado");
@@ -45,7 +42,6 @@ public class AddressService {
         return addressRepository.save(address);
     }
 
-    @SuppressWarnings("null")
     public void eliminarAddress(Integer id) {
         if (!addressRepository.existsById(id)) {
             throw new IllegalArgumentException("Address no encontrado");

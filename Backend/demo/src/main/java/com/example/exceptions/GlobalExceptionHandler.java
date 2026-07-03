@@ -103,7 +103,7 @@ public class GlobalExceptionHandler {
     // Tama\u00f1o m\u00e1ximo de archivo excedido (Para subida de im\u00e1genes/archivos)
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceededException(org.springframework.web.multipart.MaxUploadSizeExceededException ex) {
-        return new ResponseEntity<>(ApiResponse.error("El archivo enviado es demasiado grande. Por favor suba un archivo m\u00e1s peque\u00f1o."), HttpStatus.PAYLOAD_TOO_LARGE);
+        return new ResponseEntity<>(ApiResponse.error("El archivo enviado es demasiado grande. Por favor suba un archivo m\u00e1s peque\u00f1o."), HttpStatus.CONTENT_TOO_LARGE);
     }
 
     // Validaciones a nivel de m\u00e9todo (ej. @Min, @Max, @NotNull en par\u00e1metros sueltos)

@@ -22,7 +22,6 @@ public class OrderItemService {
         return orderItemRepository.findAll();
     }
 
-    @SuppressWarnings("null")
     public Optional<OrderItem> obtenerPorId(Integer id) {
         return orderItemRepository.findById(id);
     }
@@ -31,12 +30,10 @@ public class OrderItemService {
         return orderItemRepository.findByOrderId(orderId);
     }
 
-    @SuppressWarnings("null")
     public OrderItem crearOrderItem(OrderItem orderItem) {
         return orderItemRepository.save(orderItem);
     }
 
-    @SuppressWarnings("null")
     public OrderItem actualizarOrderItem(Integer id, OrderItem orderItem) {
         if (!orderItemRepository.existsById(id)) {
             throw new IllegalArgumentException("OrderItem no encontrado");
@@ -45,7 +42,6 @@ public class OrderItemService {
         return orderItemRepository.save(orderItem);
     }
 
-    @SuppressWarnings("null")
     public void eliminarOrderItem(Integer id) {
         if (!orderItemRepository.existsById(id)) {
             throw new IllegalArgumentException("OrderItem no encontrado");

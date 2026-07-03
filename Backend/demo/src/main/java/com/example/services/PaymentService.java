@@ -22,7 +22,6 @@ public class PaymentService {
         return paymentRepository.findAll();
     }
 
-    @SuppressWarnings("null")
     public Optional<Payment> obtenerPorId(Integer id) {
         return paymentRepository.findById(id);
     }
@@ -31,13 +30,11 @@ public class PaymentService {
         return paymentRepository.findByOrderId(orderId);
     }
 
-    @SuppressWarnings("null")
     public Payment crearPayment(Payment payment) {
         return paymentRepository.save(payment);
     }
 
     public Payment actualizarPayment(Integer id, Payment payment) {
-        @SuppressWarnings("null")
         Payment existingPayment = paymentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Payment no encontrado"));
 
@@ -50,7 +47,6 @@ public class PaymentService {
         return paymentRepository.save(existingPayment);
     }
 
-    @SuppressWarnings("null")
     public void eliminarPayment(Integer id) {
         if (!paymentRepository.existsById(id)) {
             throw new IllegalArgumentException("Payment no encontrado");

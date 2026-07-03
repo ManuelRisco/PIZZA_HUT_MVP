@@ -82,7 +82,6 @@ class PizzaServiceTest {
     // CU12: Gestionar Pizzas
     // ==========================================
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU12 - Flujo Principal: Crear una pizza exitosamente [RF23]")
     void testCrearPizzaExitosa() {
@@ -97,7 +96,6 @@ class PizzaServiceTest {
         verify(pizzaRepository, times(1)).save(pizzaTest);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU12 - Flujo Principal: Editar una pizza existente [RF24]")
     void testActualizarPizzaExistente() {
@@ -120,7 +118,6 @@ class PizzaServiceTest {
         verify(pizzaRepository, times(1)).save(any(Pizza.class));
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU12 - Flujo Principal: Eliminar pizza (Soft Delete) [RF24]")
     void testEliminarPizzaExistente() {
@@ -135,7 +132,6 @@ class PizzaServiceTest {
         verify(pizzaRepository, times(1)).save(pizzaTest);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU12 - A1: Error al guardar con datos incompletos")
     void testCrearPizzaDatosIncompletos() {
@@ -147,7 +143,6 @@ class PizzaServiceTest {
         verify(pizzaRepository, never()).save(any(Pizza.class));
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU12 - A3: Cancelar eliminación / Eliminar pizza que no existe")
     void testEliminarPizzaNoExistente() {

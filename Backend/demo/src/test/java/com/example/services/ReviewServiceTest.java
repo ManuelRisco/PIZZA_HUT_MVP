@@ -68,7 +68,6 @@ class ReviewServiceTest {
     // CU19: Gestionar Reseñas
     // ==========================================
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU19 - Flujo Principal: Aprobar reseña [RF35]")
     void testAprobarReview() {
@@ -100,7 +99,6 @@ class ReviewServiceTest {
         verify(repository, times(1)).deleteById(1);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional: Crear Review")
     void testCrearReview() {

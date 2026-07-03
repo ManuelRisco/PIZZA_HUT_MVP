@@ -50,7 +50,6 @@ class AuditLogServiceTest {
         verify(auditLogRepository, times(1)).findAll();
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.3: Registrar log")
     void testRegistrarLog() {

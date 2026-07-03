@@ -47,7 +47,6 @@ class OrderItemExtraServiceTest {
         verify(repository, times(1)).findAll();
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.3: Crear OrderItemExtra")
     void testCrear() {

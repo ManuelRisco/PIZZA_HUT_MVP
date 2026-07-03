@@ -23,7 +23,6 @@ public class FavoriteService {
         return favoriteRepository.findAll();
     }
 
-    @SuppressWarnings("null")
     public Optional<Favorite> obtenerPorId(FavoriteId id) {
         return favoriteRepository.findById(id);
     }
@@ -36,7 +35,6 @@ public class FavoriteService {
         return favoriteRepository.findByIdPizzaId(pizzaId);
     }
 
-    @SuppressWarnings("null")
     public Favorite crearFavorite(Favorite favorite) {
         if (favoriteRepository.existsById(favorite.getId())) {
             throw new IllegalArgumentException("Este favorito ya existe");
@@ -44,7 +42,6 @@ public class FavoriteService {
         return favoriteRepository.save(favorite);
     }
 
-    @SuppressWarnings("null")
     public void eliminarFavorite(FavoriteId id) {
         if (!favoriteRepository.existsById(id)) {
             throw new IllegalArgumentException("Favorite no encontrado");

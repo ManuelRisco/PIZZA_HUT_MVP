@@ -34,7 +34,6 @@ public class PizzaService {
     }
 
     @CacheEvict(value = "pizzas", allEntries = true)
-    @SuppressWarnings("null")
     public Pizza crearPizza(Pizza pizza) {
         if (pizza.getName() == null || pizza.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Complete todos los campos requeridos.");
@@ -47,7 +46,6 @@ public class PizzaService {
     }
 
     @CacheEvict(value = "pizzas", allEntries = true)
-    @SuppressWarnings("null")
     public Pizza actualizarPizza(Integer id, Pizza pizzaActualizada) {
         if (pizzaActualizada.getName() == null || pizzaActualizada.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Complete todos los campos requeridos.");

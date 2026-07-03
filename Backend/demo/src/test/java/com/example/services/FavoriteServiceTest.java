@@ -47,7 +47,6 @@ class FavoriteServiceTest {
         verify(favoriteRepository, times(1)).findAll();
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.3: Crear favorito")
     void testCrearFavorite() {
@@ -58,7 +57,6 @@ class FavoriteServiceTest {
         verify(favoriteRepository, times(1)).save(favorite);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.4: Obtener por ID")
     void testObtenerPorId() {
@@ -68,7 +66,6 @@ class FavoriteServiceTest {
         verify(favoriteRepository, times(1)).findById(any());
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.5: Eliminar favorito")
     void testEliminar() {

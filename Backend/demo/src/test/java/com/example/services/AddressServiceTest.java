@@ -50,7 +50,6 @@ class AddressServiceTest {
         verify(addressRepository, times(1)).findAll();
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.3: Crear dirección")
     void testCrearAddress() {
@@ -69,7 +68,6 @@ class AddressServiceTest {
         verify(addressRepository, times(1)).findById(1);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.5: Actualizar Address")
     void testActualizarAddress() {

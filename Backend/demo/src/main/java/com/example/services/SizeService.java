@@ -25,7 +25,6 @@ public class SizeService {
         return sizeRepository.findByDeletedAtIsNull();
     }
 
-    @SuppressWarnings("null")
     public Optional<Size> obtenerPorId(Integer id) {
         return sizeRepository.findById(id);
     }
@@ -54,7 +53,6 @@ public class SizeService {
 
     @CacheEvict(value = "sizes", allEntries = true)
     public Size actualizarSize(Integer id, Size size) {
-        @SuppressWarnings("null")
         Size existingSize = sizeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Size no encontrado"));
 
@@ -77,7 +75,6 @@ public class SizeService {
 
     @CacheEvict(value = "sizes", allEntries = true)
     public void eliminarSize(Integer id) {
-        @SuppressWarnings("null")
         Optional<Size> sizeOpt = sizeRepository.findById(id);
         if (sizeOpt.isEmpty()) {
             throw new IllegalArgumentException("Size no encontrado");

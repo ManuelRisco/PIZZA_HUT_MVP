@@ -51,7 +51,6 @@ class ExtraServiceTest {
         verify(extraRepository, times(1)).findByDeletedAtIsNullOrderByDisplayOrderAsc();
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.3: Crear extra")
     void testCrearExtra() {
@@ -71,7 +70,6 @@ class ExtraServiceTest {
         verify(extraRepository, times(1)).findById(1);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.5: Actualizar Extra")
     void testActualizar() {
@@ -83,7 +81,6 @@ class ExtraServiceTest {
         verify(extraRepository, times(1)).save(extra);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.6: Eliminar Extra")
     void testEliminar() {

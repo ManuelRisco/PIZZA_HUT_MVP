@@ -52,7 +52,6 @@ class IngredientServiceTest {
         verify(ingredientRepository, times(1)).findAll();
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU14 - Flujo Principal: Crear ingrediente exitosamente [RF25, RF26]")
     void testCrearIngredient() {
@@ -64,7 +63,6 @@ class IngredientServiceTest {
         verify(ingredientRepository, times(1)).save(ingredient);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU14 - Flujo Principal: Actualizar Ingrediente [RF25, RF26]")
     void testActualizar() {
@@ -78,7 +76,6 @@ class IngredientServiceTest {
         verify(ingredientRepository, times(1)).save(ingredient);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU14 - Flujo Principal: Eliminar Ingrediente (Soft delete) [RF25]")
     void testEliminar() {
@@ -92,7 +89,6 @@ class IngredientServiceTest {
         verify(ingredientRepository, times(1)).save(ingredient);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU14 - A1: Error al intentar crear ingrediente con nombre duplicado")
     void testCrearIngredienteNombreDuplicado() {

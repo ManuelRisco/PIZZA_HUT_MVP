@@ -47,7 +47,6 @@ class PizzaIngredientServiceTest {
         verify(repository, times(1)).findAll();
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.3: Crear PizzaIngredient")
     void testCrear() {
@@ -57,7 +56,6 @@ class PizzaIngredientServiceTest {
         verify(repository, times(1)).save(pi);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.4: Obtener por ID")
     void testObtenerPorId() {
@@ -67,7 +65,6 @@ class PizzaIngredientServiceTest {
         verify(repository, times(1)).findById(any());
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.5: Actualizar PizzaIngredient")
     void testActualizar() {
@@ -79,7 +76,6 @@ class PizzaIngredientServiceTest {
         verify(repository, times(1)).save(pi);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.6: Eliminar PizzaIngredient")
     void testEliminar() {

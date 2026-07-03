@@ -1,3 +1,9 @@
 {
-  "java.compile.nullAnalysis.mode": "automatic"
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.settings.url": "",
+  "java.jdt.ls.vmargs": "-Xmx1G",
+  "java.project.referencedLibraries": [],
+  "java.compile.compilerArgs": ["-parameters"]
 }
+    

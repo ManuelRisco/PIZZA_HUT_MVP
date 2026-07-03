@@ -55,7 +55,6 @@ class SizeServiceTest {
         verify(repository, times(1)).findByDeletedAtIsNull();
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU15 - Flujo Principal: Crear tamaño exitosamente [RF27, RF28]")
     void testCrearSize() {
@@ -69,7 +68,6 @@ class SizeServiceTest {
         verify(repository, times(1)).save(size);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU15 - Flujo Principal: Actualizar tamaño [RF27, RF28]")
     void testActualizar() {
@@ -83,7 +81,6 @@ class SizeServiceTest {
         verify(repository, times(1)).save(size);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU15 - Flujo Principal: Eliminar tamaño (Soft Delete) [RF27]")
     void testEliminar() {
@@ -95,7 +92,6 @@ class SizeServiceTest {
         verify(repository, times(1)).save(size);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU15 - A1: Error al intentar crear tamaño con nombre duplicado")
     void testCrearSizeNombreDuplicado() {
@@ -109,7 +105,6 @@ class SizeServiceTest {
         verify(repository, never()).save(any(Size.class));
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU15 - A2: Error al intentar crear tamaño con multiplicador de precio negativo")
     void testCrearSizePrecioNegativo() {

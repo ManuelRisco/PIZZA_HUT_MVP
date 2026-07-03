@@ -98,7 +98,6 @@ class PaymentServiceTest {
     // Otros métodos de gestión
     // ==========================================
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional: Crear pago exitosamente")
     void testCrearPagoExitoso() {

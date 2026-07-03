@@ -57,7 +57,6 @@ class PaymentMethodServiceTest {
         verify(repository, times(1)).findAll();
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU18 - Flujo Principal: Crear método de pago exitosamente [RF33, RF34]")
     void testCrear() {
@@ -70,7 +69,6 @@ class PaymentMethodServiceTest {
         verify(repository, times(1)).save(method);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU18 - Flujo Principal: Actualizar método de pago [RF33, RF34]")
     void testActualizar() {
@@ -85,7 +83,6 @@ class PaymentMethodServiceTest {
         verify(repository, times(1)).save(method);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU18 - Flujo Principal: Eliminar método de pago [RF33]")
     void testEliminar() {
@@ -99,7 +96,6 @@ class PaymentMethodServiceTest {
         verify(repository, times(1)).delete(method);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU18 - A1: Error al guardar con datos incompletos (sin nombre)")
     void testCrearMetodoDatosIncompletos() {
@@ -114,7 +110,6 @@ class PaymentMethodServiceTest {
         assertEquals("Debe ingresar un nombre válido.", exception.getMessage());
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("CU18 - A2: Error al intentar crear método con nombre duplicado")
     void testCrearMetodoNombreDuplicado() {

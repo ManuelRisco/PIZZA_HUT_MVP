@@ -29,7 +29,6 @@ public class CategoryService {
         return categoryRepository.findByDeletedAtIsNull();
     }
 
-    @SuppressWarnings("null")
     public Optional<Category> obtenerPorId(Integer id) {
         return categoryRepository.findById(id);
     }
@@ -51,7 +50,6 @@ public class CategoryService {
             throw new IllegalArgumentException("Debe ingresar un nombre válido para la categoría.");
         }
 
-        @SuppressWarnings("null")
         Optional<Category> categoryOpt = categoryRepository.findById(id);
         if (categoryOpt.isPresent()) {
             Category category = categoryOpt.get();
@@ -72,7 +70,6 @@ public class CategoryService {
 
     @CacheEvict(value = "categories", allEntries = true)
     public boolean eliminarCategoria(Integer id) {
-        @SuppressWarnings("null")
         Optional<Category> categoryOpt = categoryRepository.findById(id);
         if (categoryOpt.isPresent()) {
             if (pizzaRepository.existsByCategoryId(id)) {

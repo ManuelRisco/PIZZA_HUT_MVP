@@ -22,7 +22,6 @@ public class ReviewService {
         return reviewRepository.findAll();
     }
 
-    @SuppressWarnings("null")
     public Optional<Review> obtenerPorId(Integer id) {
         return reviewRepository.findById(id);
     }
@@ -35,13 +34,11 @@ public class ReviewService {
         return reviewRepository.findByUserId(userId);
     }
 
-    @SuppressWarnings("null")
     public Review crearReview(Review review) {
         return reviewRepository.save(review);
     }
 
     public Review actualizarReview(Integer id, Review review) {
-        @SuppressWarnings("null")
         Review existingReview = reviewRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Review no encontrado"));
 
@@ -51,7 +48,6 @@ public class ReviewService {
         return reviewRepository.save(existingReview);
     }
 
-    @SuppressWarnings("null")
     public void eliminarReview(Integer id) {
         if (!reviewRepository.existsById(id)) {
             throw new IllegalArgumentException("Review no encontrado");
@@ -60,7 +56,6 @@ public class ReviewService {
     }
 
     public Review desactivarReview(Integer id) {
-        @SuppressWarnings("null")
         Optional<Review> reviewOpt = reviewRepository.findById(id);
         if (!reviewOpt.isPresent()) {
             throw new IllegalArgumentException("Review no encontrado");
@@ -71,7 +66,6 @@ public class ReviewService {
     }
 
     public Review activarReview(Integer id) {
-        @SuppressWarnings("null")
         Optional<Review> reviewOpt = reviewRepository.findById(id);
         if (!reviewOpt.isPresent()) {
             throw new IllegalArgumentException("Review no encontrado");

@@ -71,7 +71,6 @@ public class UsuarioController {
         }
     }
 
-    @SuppressWarnings("null")
     @PostMapping("/ingresar")
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginUsuario(@Valid @RequestBody LoginDTO loginDTO,
             HttpServletRequest request) {
@@ -123,7 +122,6 @@ public class UsuarioController {
         return ResponseEntity.ok(ApiResponse.success(usuarioService.obtenerPorEmail(email).isPresent()));
     }
 
-    @SuppressWarnings("null")
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse<Map<String, Object>>> refreshToken(@RequestBody Map<String, String> request) {
         String refreshToken = request.get("refreshToken");
@@ -155,7 +153,6 @@ public class UsuarioController {
                 Map.of("token", newToken, "refreshToken", newRefreshToken, "usuario", usuarioMapper.toDto(user))));
     }
 
-    @SuppressWarnings("null")
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(@RequestHeader("Authorization") String authHeader,
             HttpServletRequest request) {
@@ -239,7 +236,6 @@ public class UsuarioController {
     @GetMapping("/usuarios/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UsuarioDTO>> obtenerUsuarioPorId(@PathVariable("id") Long id) {
-        @SuppressWarnings("null")
         Usuario user = usuarioService.obtenerPorId(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
         return ResponseEntity.ok(ApiResponse.success(usuarioMapper.toDto(user)));
@@ -254,7 +250,6 @@ public class UsuarioController {
             usuarioActualizado.setPasswordHash(usuarioDTO.getPassword());
         }
 
-        @SuppressWarnings("null")
         Usuario usuario = usuarioService.actualizarUsuario(id, usuarioActualizado);
         auditLogService.registrarActualizacion(
                 getCurrentUserId(),
@@ -265,7 +260,6 @@ public class UsuarioController {
         return ResponseEntity.ok(ApiResponse.success(usuarioMapper.toDto(usuario)));
     }
 
-    @SuppressWarnings("null")
     @DeleteMapping("/usuarios/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> eliminarUsuario(@PathVariable("id") Long id) {
@@ -280,7 +274,6 @@ public class UsuarioController {
         return ResponseEntity.ok(ApiResponse.success(null, "Usuario eliminado correctamente"));
     }
 
-    @SuppressWarnings("null")
     @PatchMapping("/usuarios/{id}/inactivar")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> inactivarUsuario(@PathVariable("id") Long id) {
@@ -296,7 +289,6 @@ public class UsuarioController {
         return ResponseEntity.ok(ApiResponse.success(null, "Usuario inactivado correctamente"));
     }
 
-    @SuppressWarnings("null")
     @PatchMapping("/usuarios/{id}/reactivar")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> reactivarUsuario(@PathVariable("id") Long id) {
@@ -312,7 +304,6 @@ public class UsuarioController {
         return ResponseEntity.ok(ApiResponse.success(null, "Usuario reactivado correctamente"));
     }
 
-    @SuppressWarnings("null")
     @GetMapping("/usuarios/{id}/activo")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Boolean>> verificarUsuarioActivo(@PathVariable("id") Long id) {
@@ -337,7 +328,6 @@ public class UsuarioController {
             throw new BadRequestException("La nueva contraseña es obligatoria");
         }
 
-        @SuppressWarnings("null")
         boolean actualizado = usuarioService.cambiarPassword(id, nuevaPassword);
         if (!actualizado) {
             throw new ResourceNotFoundException("Usuario no encontrado");

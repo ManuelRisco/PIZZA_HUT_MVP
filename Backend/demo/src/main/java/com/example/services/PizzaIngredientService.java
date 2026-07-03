@@ -24,19 +24,16 @@ public class PizzaIngredientService {
         return pizzaIngredientRepository.findAll();
     }
 
-    @SuppressWarnings("null")
     public Optional<PizzaIngredient> obtenerPorId(PizzaIngredientId id) {
         return pizzaIngredientRepository.findById(id);
     }
 
-    @SuppressWarnings("null")
     public PizzaIngredient crearPizzaIngrediente(PizzaIngredient pizzaIngredient) {
         return pizzaIngredientRepository.save(pizzaIngredient);
     }
 
     public PizzaIngredient actualizarPizzaIngrediente(PizzaIngredientId id,
             PizzaIngredient pizzaIngredientActualizado) {
-        @SuppressWarnings("null")
         Optional<PizzaIngredient> piOpt = pizzaIngredientRepository.findById(id);
         if (piOpt.isPresent()) {
             PizzaIngredient pi = piOpt.get();
@@ -48,7 +45,6 @@ public class PizzaIngredientService {
         return null;
     }
 
-    @SuppressWarnings("null")
     public boolean eliminarPizzaIngrediente(PizzaIngredientId id) {
         if (pizzaIngredientRepository.existsById(id)) {
             pizzaIngredientRepository.deleteById(id);

@@ -48,7 +48,6 @@ class OrderItemServiceTest {
         verify(repository, times(1)).findAll();
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.3: Crear OrderItem")
     void testCrear() {
@@ -67,7 +66,6 @@ class OrderItemServiceTest {
         verify(repository, times(1)).findById(1);
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("Adicional.5: Actualizar OrderItem")
     void testActualizar() {

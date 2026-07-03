@@ -22,7 +22,6 @@ public class OrderService {
         return orderRepository.findTop100ByOrderByCreatedAtDesc();
     }
 
-    @SuppressWarnings("null")
     public Optional<Order> obtenerPorId(Integer id) {
         return orderRepository.findById(id);
     }
@@ -35,12 +34,10 @@ public class OrderService {
         return orderRepository.findByStatus(status);
     }
 
-    @SuppressWarnings("null")
     public Order crearOrder(Order order) {
         return orderRepository.save(order);
     }
 
-    @SuppressWarnings("null")
     public Order actualizarOrder(Integer id, Order orderActualizada) {
         Optional<Order> orderOpt = orderRepository.findById(id);
         if (orderOpt.isEmpty()) {
@@ -93,7 +90,6 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    @SuppressWarnings("null")
     public void eliminarOrder(Integer id) {
         if (!orderRepository.existsById(id)) {
             throw new IllegalArgumentException("Order no encontrado");
