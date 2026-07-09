@@ -25,6 +25,11 @@
   bottom: 24px;
   left: 24px;
   z-index: 9999;
+  transition: bottom 0.3s ease-in-out;
+}
+
+.accessibility-fab-container.shifted-up {
+  bottom: 60px;
 }
 
 /* ========== BOTÓN FAB ========== */
@@ -494,51 +499,142 @@
 }
 
 /* ========== HIGH CONTRAST MODE ========== */
+
+/* FAB Button */
 :host-context(html[data-contraste="alto"]) .fab-button {
-  background: #000 !important;
-  border: 3px solid #000000 !important;
-  box-shadow: 0 0 0 3px #000, 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  background: #000000 !important;
+  border: 3px solid #ffffff !important;
+  box-shadow: 0 0 0 2px #000, 0 0 0 5px #ffffff !important;
 }
 
 :host-context(html[data-contraste="alto"]) .fab-icon {
-  filter: brightness(0) saturate(100%) invert(89%) sepia(86%) saturate(1000%) hue-rotate(359deg) brightness(103%) contrast(106%) !important;
+  filter: brightness(0) invert(1) !important;
 }
 
+/* Panel */
 :host-context(html[data-contraste="alto"]) .accessibility-panel {
-  background: #000 !important;
+  background: #000000 !important;
   border: 2px solid #ffffff !important;
   color: #ffffff !important;
 }
 
 :host-context(html[data-contraste="alto"]) .panel-header {
-  background: #000 !important;
-  border-bottom: 2px solid #000000 !important;
+  background: #000000 !important;
+  border-bottom: 2px solid #ffffff !important;
 }
 
-:host-context(html[data-contraste="alto"]) .option-info,
-:host-context(html[data-contraste="alto"]) .section-title,
-:host-context(html[data-contraste="alto"]) .chip-option,
-:host-context(html[data-contraste="alto"]) .font-option,
-:host-context(html[data-contraste="alto"]) .language-selector-btn,
-:host-context(html[data-contraste="alto"]) .language-item {
-  color: #000000 !important;
+:host-context(html[data-contraste="alto"]) .panel-icon {
+  filter: brightness(0) invert(1) !important;
 }
 
+:host-context(html[data-contraste="alto"]) .panel-close {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid #ffffff !important;
+  color: #ffffff !important;
+}
+
+:host-context(html[data-contraste="alto"]) .panel-divider {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Títulos de sección */
+:host-context(html[data-contraste="alto"]) .section-title {
+  color: #ffffff !important;
+}
+
+:host-context(html[data-contraste="alto"]) .section-title i {
+  color: #00ffff !important;
+  filter: none !important;
+}
+
+:host-context(html[data-contraste="alto"]) .option-info {
+  color: #ffffff !important;
+}
+
+:host-context(html[data-contraste="alto"]) .option-info i {
+  color: #ffffff !important;
+  filter: none !important;
+}
+
+/* ---- Toggles (Alto Contraste, Lectura Fácil, Reducir Movimiento) ---- */
+:host-context(html[data-contraste="alto"]) .toggle-option {
+  background: transparent !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+:host-context(html[data-contraste="alto"]) .toggle-option:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: #ffffff !important;
+}
+
+:host-context(html[data-contraste="alto"]) .toggle-option.active {
+  background: rgba(0, 255, 255, 0.08) !important;
+  border-color: #00ffff !important;
+}
+
+/* Toggle switch — apagado: oscuro; encendido: cian */
 :host-context(html[data-contraste="alto"]) .toggle-switch {
-  border: 2px solid #000000 !important;
+  background: #333333 !important;
+  border: 2px solid #ffffff !important;
 }
 
-:host-context(html[data-contraste="alto"]) .chip-option,
-:host-context(html[data-contraste="alto"]) .font-option,
-:host-context(html[data-contraste="alto"]) .language-selector-btn,
-:host-context(html[data-contraste="alto"]) .language-item {
-  border-color: #000000 !important;
-  background: #000 !important;
+:host-context(html[data-contraste="alto"]) .toggle-switch.on {
+  background: #00ffff !important;
+  border-color: #00ffff !important;
+}
+
+:host-context(html[data-contraste="alto"]) .toggle-knob {
+  background: #ffffff !important;
+}
+
+:host-context(html[data-contraste="alto"]) .toggle-switch.on .toggle-knob {
+  background: #000000 !important;
+}
+
+/* ---- Chips de filtro de color ---- */
+:host-context(html[data-contraste="alto"]) .chip-option {
+  background: #000000 !important;
+  border: 2px solid #ffffff !important;
+  color: #ffffff !important;
+}
+
+:host-context(html[data-contraste="alto"]) .chip-option:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: #00ffff !important;
 }
 
 :host-context(html[data-contraste="alto"]) .chip-option.active {
+  background: rgba(0, 255, 255, 0.15) !important;
+  border: 2px solid #00ffff !important;
+  color: #00ffff !important;
+}
+
+/* Forzar el span dentro del chip activo a cian (anula el span global blanco) */
+:host-context(html[data-contraste="alto"]) .chip-option.active span {
+  color: #00ffff !important;
+}
+
+/* ---- Opciones de tamaño de fuente ---- */
+:host-context(html[data-contraste="alto"]) .font-option {
   background: #000000 !important;
+  border: 1.5px solid #ffffff !important;
   color: #ffffff !important;
+}
+
+:host-context(html[data-contraste="alto"]) .font-option:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: #00ffff !important;
+}
+
+:host-context(html[data-contraste="alto"]) .font-option.active {
+  background: rgba(0, 255, 255, 0.15) !important;
+  border: 2px solid #00ffff !important;
+  color: #00ffff !important;
+}
+
+/* Forzar el span dentro de la opción activa a cian (anula el span global blanco) */
+:host-context(html[data-contraste="alto"]) .font-option.active span {
+  color: #00ffff !important;
 }
 
 /* Ocultar la barra de Google Translate globalmente si es necesario */

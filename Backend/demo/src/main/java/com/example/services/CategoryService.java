@@ -72,8 +72,9 @@ public class CategoryService {
     public boolean eliminarCategoria(Integer id) {
         Optional<Category> categoryOpt = categoryRepository.findById(id);
         if (categoryOpt.isPresent()) {
-            if (pizzaRepository.existsByCategoryId(id)) {
-                throw new IllegalStateException("No se puede eliminar la categoría porque está en uso.");
+            if (pizzaRepository.existsByCategoryIdAndDeletedAtIsNull(id)) {
+                throw new IllegalStateException(
+                        "No se puede eliminar la categoría porque está en uso por una pizza activa.");
             }
             Category category = categoryOpt.get();
             category.setDeletedAt(java.time.LocalDateTime.now());

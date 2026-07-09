@@ -16,7 +16,7 @@ export class Size {
 
   constructor(private readonly http: HttpClient) {}
 
-  // Operaciones CRUD para TamaÃ±os
+  // Operaciones CRUD para Tamaños
   obtenerTodos(): Observable<SizeDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/sizes`).pipe(map(res => res.data !== undefined ? res.data : res));
   }

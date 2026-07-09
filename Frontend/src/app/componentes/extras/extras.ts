@@ -138,7 +138,7 @@ export class ExtrasComponent implements OnInit {
   }
 
   eliminarExtra(id: number): void {
-    if (!confirm('Â¿EstÃ¡ seguro de eliminar este extra?')) return;
+    if (!confirm('¿Está seguro de eliminar este extra?')) return;
 
     this.loading = true;
     this.extraService.eliminar(id).subscribe({

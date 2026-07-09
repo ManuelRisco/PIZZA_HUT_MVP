@@ -48,13 +48,13 @@ export class Join {
     // Extraer la parte local (antes del @)
     const localPart = email.split('@')[0];
 
-    // Validar longitud: mÃ­nimo 2 caracteres (local), mÃ¡ximo 30 total
+    // Validar longitud: mínimo 2 caracteres (local), máximo 30 total
     if (localPart.length < 2 || email.length > 31) return false;
 
     return true;
   }
 
-  // Validar contraseÃ±a (mÃ­nimo 6, mÃ¡ximo 20 caracteres)
+  // Validar contraseña (mínimo 6, máximo 20 caracteres)
   isValidPassword(password: string): boolean {
     return password.length >= 6 && password.length <= 20;
   }
@@ -66,19 +66,19 @@ export class Join {
 
     // Validar email
     if (!this.usuario.email || this.usuario.email.trim() === '') {
-      errors.push({ field: 'email', message: 'Complete el campo correo electrÃ³nico.', code: 'CP02' });
-      this.fieldErrors['email'] = 'Correo electrÃ³nico requerido';
+      errors.push({ field: 'email', message: 'Complete el campo correo electrónico.', code: 'CP02' });
+      this.fieldErrors['email'] = 'Correo electrónico requerido';
     } else if (!this.isValidEmail(this.usuario.email)) {
-      errors.push({ field: 'email', message: 'Ingrese un correo electrÃ³nico vÃ¡lido (2-20 caracteres).', code: 'CP03' });
-      this.fieldErrors['email'] = 'Formato invÃ¡lido: mÃ­nimo 2 caracteres, mÃ¡ximo 20 total (ej: usuario@dominio.com)';
+      errors.push({ field: 'email', message: 'Ingrese un correo electrónico válido (2-20 caracteres).', code: 'CP03' });
+      this.fieldErrors['email'] = 'Formato inválido: mínimo 2 caracteres, máximo 20 total (ej: usuario@dominio.com)';
     }
-    // Validar contraseÃ±a
+    // Validar contraseña
     if (!this.usuario.password || this.usuario.password.trim() === '') {
-      errors.push({ field: 'password', message: 'Complete el campo contraseÃ±a.', code: 'CP06' });
-      this.fieldErrors['password'] = 'ContraseÃ±a requerida';
+      errors.push({ field: 'password', message: 'Complete el campo contraseña.', code: 'CP06' });
+      this.fieldErrors['password'] = 'Contraseña requerida';
     } else if (!this.isValidPassword(this.usuario.password)) {
-      errors.push({ field: 'password', message: 'La contraseÃ±a debe tener entre 6 y 20 caracteres.', code: 'CP07' });
-      this.fieldErrors['password'] = 'ContraseÃ±a debe tener entre 6 y 20 caracteres';
+      errors.push({ field: 'password', message: 'La contraseña debe tener entre 6 y 20 caracteres.', code: 'CP07' });
+      this.fieldErrors['password'] = 'Contraseña debe tener entre 6 y 20 caracteres';
     }
 
     return errors;
@@ -109,7 +109,7 @@ export class Join {
           return;
         }
 
-        // Redirigir segÃºn el rol del usuario en la respuesta (CP08, CP09)
+        // Redirigir según el rol del usuario en la respuesta (CP08, CP09)
         if (response.usuario.role === 'ADMIN') {
           this.router.navigate(['/panel-admin']);
         } else if (response.usuario.role === 'CUSTOMER') {
@@ -122,13 +122,13 @@ export class Join {
 
         // Distinguir entre errores
         if (!error.status || error.status === 0) {
-          // CP11: Error de servidor o conexiÃ³n
+          // CP11: Error de servidor o conexión
           this.serverError = true;
-          this.loginError = 'Error de conexiÃ³n con el servidor. Intente mÃ¡s tarde.';
+          this.loginError = 'Error de conexión con el servidor. Intente más tarde.';
         } else if (error.status === 401) {
-          // CP05: ContraseÃ±a incorrecta
-          this.loginError = 'ContraseÃ±a incorrecta';
-          this.fieldErrors['password'] = 'ContraseÃ±a incorrecta';
+          // CP05: Contraseña incorrecta
+          this.loginError = 'Contraseña incorrecta';
+          this.fieldErrors['password'] = 'Contraseña incorrecta';
         } else if (error.status === 404) {
           // CP04: Correo no registrado
           this.loginError = 'El correo no se encuentra registrado en el sistema.';
@@ -137,7 +137,7 @@ export class Join {
           // Usuario bloqueado o sin acceso
           this.loginError = error.error?.message || 'Acceso denegado. Su cuenta puede estar bloqueada.';
         } else {
-          this.loginError = error.error?.message || 'Correo o contraseÃ±a incorrectos';
+          this.loginError = error.error?.message || 'Correo o contraseña incorrectos';
         }
       }
     });

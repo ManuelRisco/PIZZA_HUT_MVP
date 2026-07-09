@@ -41,11 +41,11 @@ export class Usuarios implements OnInit, OnDestroy {
   success = '';
   filtroActivo: 'todos' | 'admins' | 'activos' | 'admins-activos' = 'todos';
   
-  // Variables para mostrar/ocultar contraseÃ±as
+  // Variables para mostrar/ocultar contraseñas
   showPassword = false;
   showConfirmPassword = false;
 
-  // Variables para la modal de creaciÃ³n/ediciÃ³n
+  // Variables para la modal de creación/edición
   mostrarModal: boolean = false;
   
   // Variables para Logs del Sistema
@@ -145,7 +145,7 @@ export class Usuarios implements OnInit, OnDestroy {
     if (emailSub) this.subscriptions.push(emailSub);
   }
 
-  // Validador personalizado para comparar contraseÃ±as
+  // Validador personalizado para comparar contraseñas
   passwordsMatchValidator: ValidatorFn = (form: AbstractControl) => {
     const password = form.get('password')?.value;
     const confirm = form.get('confirmPassword')?.value;
@@ -158,7 +158,7 @@ export class Usuarios implements OnInit, OnDestroy {
     this.loading = true;
     this.limpiarMensajes();
     
-    // Aplicar filtro segÃºn el seleccionado (Specification Pattern)
+    // Aplicar filtro según el seleccionado (Specification Pattern)
     this.aplicarFiltro();
   }
 
@@ -272,7 +272,7 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   /**
-   * Aplica paginaciÃ³n a los usuarios
+   * Aplica paginación a los usuarios
    */
   aplicarPaginacion(): void {
     const totalPages = Math.ceil(this.usuarios.length / this.itemsPerPage);
@@ -288,7 +288,7 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   /**
-   * Cambia de pÃ¡gina
+   * Cambia de página
    */
   onPageChange(page: number): void {
     this.currentPage = page;
@@ -422,7 +422,7 @@ export class Usuarios implements OnInit, OnDestroy {
     this.usuarioForm.patchValue({ role: 'CUSTOMER' });
     this.selectedUsuarioId = undefined;
     
-    // Asegurar que todos los campos estÃ©n habilitados
+    // Asegurar que todos los campos estén habilitados
     this.usuarioForm.get('email')?.enable();
     this.usuarioForm.get('name')?.enable();
     this.usuarioForm.get('phone')?.enable();
@@ -445,7 +445,7 @@ export class Usuarios implements OnInit, OnDestroy {
       role: usuario.role
     });
     
-    // Asegurar que todos los campos estÃ©n habilitados para ediciÃ³n
+    // Asegurar que todos los campos estén habilitados para edición
     this.usuarioForm.get('email')?.enable();
     this.usuarioForm.get('name')?.enable();
     this.usuarioForm.get('phone')?.enable();
@@ -515,7 +515,7 @@ export class Usuarios implements OnInit, OnDestroy {
       const usuarioOriginal = this.usuarios.find(u => u.id === this.selectedUsuarioId);
       
       if (usuarioOriginal && formValue.role !== usuarioOriginal.role) {
-        this.mostrarMensajeError('ðŸš« Por seguridad, no puedes cambiar tu propio rol mientras estÃ¡s logueado');
+        this.mostrarMensajeError('ðŸš« Por seguridad, no puedes cambiar tu propio rol mientras estás logueado');
         return;
       }
     }
@@ -598,11 +598,11 @@ export class Usuarios implements OnInit, OnDestroy {
     // Verificar si es el usuario actual usando el token
     const userInfo = this.authService.getUserInfo();
     if (userInfo?.email === email) {
-      this.mostrarMensajeError('ðŸš« Por seguridad, no puedes eliminar tu propio usuario mientras estÃ¡s logueado como administrador');
+      this.mostrarMensajeError('ðŸš« Por seguridad, no puedes eliminar tu propio usuario mientras estás logueado como administrador');
       return;
     }
 
-    if (confirm(`Â¿EstÃ¡ seguro de que desea eliminar el usuario "${email}"?`)) {
+    if (confirm(`¿Está seguro de que desea eliminar el usuario "${email}"?`)) {
       this.loading = true;
       this.limpiarMensajes();
       
@@ -610,7 +610,7 @@ export class Usuarios implements OnInit, OnDestroy {
         next: (response) => {
           this.mostrarMensajeExito('Usuario eliminado correctamente');
           
-          // Recargar la lista desde el servidor para mantener sincronizaciÃ³n
+          // Recargar la lista desde el servidor para mantener sincronización
           this.recargarListaSinLoading();
         },
         error: (error) => {
@@ -636,7 +636,7 @@ export class Usuarios implements OnInit, OnDestroy {
       return;
     }
 
-    if (confirm(`Â¿Desea inactivar el usuario "${email}"?\n\nEl usuario no serÃ¡ eliminado, solo marcado como inactivo.`)) {
+    if (confirm(`¿Desea inactivar el usuario "${email}"?\n\nEl usuario no será eliminado, solo marcado como inactivo.`)) {
       this.loading = true;
       this.limpiarMensajes();
       
@@ -658,7 +658,7 @@ export class Usuarios implements OnInit, OnDestroy {
    * Reactiva un usuario previamente inactivado
    */
   reactivarUsuario(id: number, email: string): void {
-    if (confirm(`Â¿Desea reactivar el usuario "${email}"?`)) {
+    if (confirm(`¿Desea reactivar el usuario "${email}"?`)) {
       this.loading = true;
       this.limpiarMensajes();
       
@@ -677,14 +677,14 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   /**
-   * Verifica si un usuario estÃ¡ activo
+   * Verifica si un usuario está activo
    */
   estaActivo(usuario: UsuarioDTO): boolean {
     return usuario.deletedAt === null || usuario.deletedAt === undefined;
   }
 
   private setupFormValidators(): void {
-    // Para crear nuevo usuario, contraseÃ±a es requerida con patrÃ³n
+    // Para crear nuevo usuario, contraseña es requerida con patrón
     this.usuarioForm.get('password')?.setValidators([
       Validators.required, 
       Validators.minLength(6),
@@ -697,12 +697,12 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   private setupFormValidatorsForEdit(): void {
-    // Para editar usuario, contraseÃ±a es opcional
+    // Para editar usuario, contraseña es opcional
     this.usuarioForm.get('password')?.clearValidators();
     this.usuarioForm.get('confirmPassword')?.clearValidators();
     this.usuarioForm.clearValidators();
     
-    // Mantener validaciones bÃ¡sicas
+    // Mantener validaciones básicas
     this.usuarioForm.get('email')?.setValidators([Validators.required, Validators.email]);
     this.usuarioForm.get('name')?.setValidators([
       Validators.required, 
@@ -727,7 +727,7 @@ export class Usuarios implements OnInit, OnDestroy {
     this.success = mensaje;
     this.error = '';
     
-    // Limpiar el mensaje despuÃ©s de 3 segundos
+    // Limpiar el mensaje después de 3 segundos
     setTimeout(() => {
       this.success = '';
     }, 3000);
@@ -763,9 +763,9 @@ export class Usuarios implements OnInit, OnDestroy {
       return false; // Si no hay nombre, no hay duplicado
     }
 
-    // Filtrar usuarios con el mismo nombre (ignorando mayÃºsculas/minÃºsculas)
+    // Filtrar usuarios con el mismo nombre (ignorando mayúsculas/minúsculas)
     const usuariosConMismoNombre = this.usuarios.filter(usuario => {
-      // En modo ediciÃ³n, ignorar el usuario actual
+      // En modo edición, ignorar el usuario actual
       if (this.editMode && usuario.id === this.selectedUsuarioId) {
         return false;
       }
@@ -783,9 +783,9 @@ export class Usuarios implements OnInit, OnDestroy {
       return false; // Si no hay email, no hay duplicado
     }
 
-    // Filtrar usuarios con el mismo email (ignorando mayÃºsculas/minÃºsculas)
+    // Filtrar usuarios con el mismo email (ignorando mayúsculas/minúsculas)
     const usuariosConMismoEmail = this.usuarios.filter(usuario => {
-      // En modo ediciÃ³n, ignorar el usuario actual
+      // En modo edición, ignorar el usuario actual
       if (this.editMode && usuario.id === this.selectedUsuarioId) {
         return false;
       }
@@ -797,9 +797,9 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   esCampoProtegido(campo: string): boolean {
-    // Verificar si el campo deberÃ­a estar protegido para el usuario actual
+    // Verificar si el campo debería estar protegido para el usuario actual
     if (this.editMode && this.selectedUsuarioId && this.esUsuarioActualPorId(this.selectedUsuarioId)) {
-      return campo === 'role'; // Solo el rol estÃ¡ protegido para el usuario actual
+      return campo === 'role'; // Solo el rol está protegido para el usuario actual
     }
     return false;
   }
@@ -810,13 +810,13 @@ export class Usuarios implements OnInit, OnDestroy {
         case 'role':
           return 'Por seguridad, no puedes cambiar tu propio rol';
         default:
-          return 'Este campo estÃ¡ protegido para tu seguridad';
+          return 'Este campo está protegido para tu seguridad';
       }
     }
     return '';
   }
 
-  // MÃ©todos para formateo de fechas
+  // Métodos para formateo de fechas
   formatearFechaRelativa(fecha: string | null | undefined): string {
     if (!fecha) return '-';
     
@@ -830,7 +830,7 @@ export class Usuarios implements OnInit, OnDestroy {
     if (diffMins < 1) return 'Hace unos segundos';
     if (diffMins < 60) return `Hace ${diffMins} min`;
     if (diffHoras < 24) return `Hace ${diffHoras}h`;
-    if (diffDias < 7) return `Hace ${diffDias} dÃ­a${diffDias > 1 ? 's' : ''}`;
+    if (diffDias < 7) return `Hace ${diffDias} día${diffDias > 1 ? 's' : ''}`;
     
     return fechaDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
   }
@@ -870,7 +870,7 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   // ==========================================
-  // LÃ“GICA DE LOGS DE SISTEMA
+  // LÓGICA DE LOGS DE SISTEMA
   // ==========================================
 
   abrirModalLogs(): void {
@@ -913,7 +913,7 @@ export class Usuarios implements OnInit, OnDestroy {
             this.cdr.detectChanges();
           },
           error: (error) => {
-            this.mostrarMensajeError('Error al cargar registro de auditorÃ­a');
+            this.mostrarMensajeError('Error al cargar registro de auditoría');
             this.loadingLogs = false;
             this.cdr.detectChanges();
           }
@@ -924,21 +924,21 @@ export class Usuarios implements OnInit, OnDestroy {
 
   forzarCierreSesion(token: string | undefined): void {
     if (!token) return;
-    if (confirm('Â¿EstÃ¡ seguro de forzar el cierre de esta sesiÃ³n? El usuario serÃ¡ desconectado inmediatamente.')) {
+    if (confirm('¿Está seguro de forzar el cierre de esta sesión? El usuario será desconectado inmediatamente.')) {
       this.subscriptions.push(
         this.sessionLogService.cerrarSesionExterna(token).subscribe({
           next: () => {
-            this.mostrarMensajeExito('SesiÃ³n cerrada remotamente.');
+            this.mostrarMensajeExito('Sesión cerrada remotamente.');
             this.cargarLogs();
             
-            // Si el admin cierra su propia sesiÃ³n actual, desconectarlo inmediatamente
+            // Si el admin cierra su propia sesión actual, desconectarlo inmediatamente
             const currentToken = this.authService.getToken();
             if (token === currentToken) {
               this.authService.logout();
             }
           },
           error: (error) => {
-            this.mostrarMensajeError('Error al cerrar sesiÃ³n remotamente.');
+            this.mostrarMensajeError('Error al cerrar sesión remotamente.');
           }
         })
       );

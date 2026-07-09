@@ -47,7 +47,7 @@ export class PizzaService {
     );
   }
 
-  // Operaciones para CategorÃ­as
+  // Operaciones para Categorías
   listarCategorias(): Observable<CategoryDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/categories`).pipe(
       map(res => res.data ? res.data : res)

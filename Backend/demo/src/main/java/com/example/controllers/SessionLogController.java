@@ -69,25 +69,25 @@ public class SessionLogController {
     }
 
     @GetMapping("/usuario/{userId}")
-    public ResponseEntity<ApiResponse<List<SessionLogDTO>>> listarPorUsuario(@PathVariable Integer userId) {
+    public ResponseEntity<ApiResponse<List<SessionLogDTO>>> listarPorUsuario(@PathVariable("userId") Integer userId) {
         List<SessionLog> sessions = sessionLogService.listarSesionesPorUsuario(userId);
         return ResponseEntity.ok(ApiResponse.success(mapToDTOs(sessions)));
     }
 
     @GetMapping("/usuario/{userId}/activas")
-    public ResponseEntity<ApiResponse<List<SessionLogDTO>>> listarActivasPorUsuario(@PathVariable Integer userId) {
+    public ResponseEntity<ApiResponse<List<SessionLogDTO>>> listarActivasPorUsuario(@PathVariable("userId") Integer userId) {
         List<SessionLog> sessions = sessionLogService.listarSesionesActivasPorUsuario(userId);
         return ResponseEntity.ok(ApiResponse.success(mapToDTOs(sessions)));
     }
 
     @GetMapping("/usuario/{userId}/count")
-    public ResponseEntity<ApiResponse<Map<String, Long>>> contarSesionesActivas(@PathVariable Integer userId) {
+    public ResponseEntity<ApiResponse<Map<String, Long>>> contarSesionesActivas(@PathVariable("userId") Integer userId) {
         Long count = sessionLogService.contarSesionesActivasPorUsuario(userId);
         return ResponseEntity.ok(ApiResponse.success(Map.of("count", count)));
     }
 
     @GetMapping("/usuario/{userId}/ultima")
-    public ResponseEntity<ApiResponse<SessionLogDTO>> obtenerUltimaSesion(@PathVariable Integer userId) {
+    public ResponseEntity<ApiResponse<SessionLogDTO>> obtenerUltimaSesion(@PathVariable("userId") Integer userId) {
         Optional<SessionLog> session = sessionLogService.obtenerUltimaSesion(userId);
         if (session.isPresent()) {
             SessionLogDTO dto = new SessionLogDTO(session.get());
@@ -106,7 +106,7 @@ public class SessionLogController {
     }
 
     @GetMapping("/ip/{ipAddress}")
-    public ResponseEntity<ApiResponse<List<SessionLogDTO>>> listarPorIP(@PathVariable String ipAddress) {
+    public ResponseEntity<ApiResponse<List<SessionLogDTO>>> listarPorIP(@PathVariable("ipAddress") String ipAddress) {
         List<SessionLog> sessions = sessionLogService.listarSesionesPorIP(ipAddress);
         return ResponseEntity.ok(ApiResponse.success(mapToDTOs(sessions)));
     }
@@ -121,13 +121,13 @@ public class SessionLogController {
     }
 
     @GetMapping("/largas")
-    public ResponseEntity<ApiResponse<List<SessionLogDTO>>> listarSesionesLargas(@RequestParam(defaultValue = "12") int horas) {
+    public ResponseEntity<ApiResponse<List<SessionLogDTO>>> listarSesionesLargas(@RequestParam(value = "horas", defaultValue = "12") int horas) {
         List<SessionLog> sessions = sessionLogService.listarSesionesLargasActivas(horas);
         return ResponseEntity.ok(ApiResponse.success(mapToDTOs(sessions)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<SessionLogDTO>> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<SessionLogDTO>> obtenerPorId(@PathVariable("id") Long id) {
         Optional<SessionLog> session = sessionLogService.obtenerPorId(id);
         if (session.isPresent()) {
             SessionLogDTO dto = new SessionLogDTO(session.get());
@@ -147,8 +147,8 @@ public class SessionLogController {
 
     @PostMapping("/cerrar/{sessionToken}")
     public ResponseEntity<Object> cerrarSesion(
-            @PathVariable String sessionToken,
-            @RequestParam(required = false) String reason) {
+            @PathVariable("sessionToken") String sessionToken,
+            @RequestParam(value = "reason", required = false) String reason) {
         
         SessionLog.LogoutReason logoutReason = SessionLog.LogoutReason.MANUAL;
         if (reason != null) {
@@ -169,8 +169,8 @@ public class SessionLogController {
 
     @PostMapping("/cerrar-usuario/{userId}")
     public ResponseEntity<Object> cerrarSesionesPorUsuario(
-            @PathVariable Integer userId,
-            @RequestParam(required = false) String reason) {
+            @PathVariable("userId") Integer userId,
+            @RequestParam(value = "reason", required = false) String reason) {
         
         SessionLog.LogoutReason logoutReason = SessionLog.LogoutReason.FORCED;
         if (reason != null) {
@@ -188,7 +188,7 @@ public class SessionLogController {
     }
 
     @PostMapping("/limpiar-inactivas")
-    public ResponseEntity<Object> limpiarSesionesInactivas(@RequestParam(defaultValue = "24") int horas) {
+    public ResponseEntity<Object> limpiarSesionesInactivas(@RequestParam(value = "horas", defaultValue = "24") int horas) {
         sessionLogService.cerrarSesionesInactivas(horas);
         return ResponseEntity.ok().body(Map.of(MSG_KEY, "Sesiones inactivas cerradas correctamente"));
     }

@@ -2,6 +2,9 @@
   max-width: 1350px;
   margin: 2rem auto;
   padding: 0 1.5rem 3rem;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .cart-wrapper h1 {
@@ -20,6 +23,10 @@
   padding: 3rem 2rem;
   text-align: center;
   box-shadow: 0 10px 40px rgba(34, 34, 34, 0.08);
+  max-width: 420px;
+  width: 100%;
+  margin: auto;
+  align-self: center;
 }
 
 .empty-state i {

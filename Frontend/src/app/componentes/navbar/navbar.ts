@@ -27,7 +27,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   mostrarSelectorIdioma: boolean = false;
   idiomas: { code: string; name: string; flag: string }[] = [];
 
-  // Estado para MenÃº MÃ³vil
+  // Estado para Menú Móvil
   isMobileMenuOpen: boolean = false;
 
   constructor(
@@ -49,21 +49,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.cartCount = this.cartService.getItemCount();
     });
 
-    // Anunciar cuando el componente estÃ¡ listo
-    this.accessibilityService.announce('Barra de navegaciÃ³n cargada. Use Alt+M para MenÃº, Alt+C para Carrito, Alt+P para Perfil', 'polite');
+    // Anunciar cuando el componente está listo
+    this.accessibilityService.announce('Barra de navegación cargada. Use Alt+M para Menú, Alt+C para Carrito, Alt+P para Perfil', 'polite');
 
     // Cargar idiomas
     this.idiomas = this.translateService.getAvailableLanguages();
     this.idiomaActual = this.translateService.getCurrentLang();
 
-    // Pre-cargar Google Translate si ya se seleccionÃ³ un idioma diferente
+    // Pre-cargar Google Translate si ya se seleccionó un idioma diferente
     if (this.idiomaActual !== 'es') {
       this.translateService.loadGoogleTranslate();
     }
   }
 
   ngOnDestroy() {
-    // Limpiar la suscripciÃ³n cuando se destruya el componente
+    // Limpiar la suscripción cuando se destruya el componente
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
     }
@@ -74,7 +74,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   toggleMobileMenu() {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
-    // Cerrar otros menÃºs si se abre el mÃ³vil
+    // Cerrar otros menús si se abre el móvil
     if (this.isMobileMenuOpen) {
       this.mostrarMenuUsuario = false;
       this.mostrarSelectorIdioma = false;
@@ -83,8 +83,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   toggleMenuUsuario() {
     this.mostrarMenuUsuario = !this.mostrarMenuUsuario;
+    if (this.mostrarMenuUsuario) {
+      this.mostrarSelectorIdioma = false; // Cerrar el otro
+      setTimeout(() => {
+        const menu = document.querySelector('.user-dropdown');
+        if (menu) {
+          const firstItem = menu.querySelector('button, a, input, [tabindex]:not([tabindex="-1"])') as HTMLElement;
+          if (firstItem) {
+            firstItem.focus();
+          }
+        }
+      }, 0);
+    }
     const estado = this.mostrarMenuUsuario ? 'abierto' : 'cerrado';
-    this.accessibilityService.announce(`MenÃº de usuario ${estado}`, 'polite');
+    this.accessibilityService.announce(`Menú de usuario ${estado}`, 'polite');
   }
 
   @HostListener('document:click', ['$event'])
@@ -96,7 +108,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (!target.closest('.language-menu-container')) {
       this.mostrarSelectorIdioma = false;
     }
-    // Cerrar menÃº mÃ³vil al hacer click fuera
+    // Cerrar menú móvil al hacer click fuera
     if (!target.closest('.navbar-links') && !target.closest('.hamburger-btn') && this.isMobileMenuOpen) {
       this.isMobileMenuOpen = false;
     }
@@ -111,7 +123,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       case 'M':
         event.preventDefault();
         this.router.navigate(['/menu']);
-        this.accessibilityService.announceNavigation('MenÃº');
+        this.accessibilityService.announceNavigation('Menú');
         break;
       case 'C':
         event.preventDefault();
@@ -132,17 +144,59 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.router.navigate(['/promociones']);
         this.accessibilityService.announceNavigation('Promociones');
         break;
+      case 'I':
+        event.preventDefault();
+        this.router.navigate(['/']);
+        this.accessibilityService.announceNavigation('Inicio');
+        break;
+      case 'U':
+        event.preventDefault();
+        this.router.navigate(['/ubicacion']);
+        this.accessibilityService.announceNavigation('Ubicación');
+        break;
+      case 'L':
+        event.preventDefault();
+        this.toggleSelectorIdioma();
+        break;
+      case 'Y':
+        event.preventDefault();
+        this.accessibilityService.toggleShortcutsGuide();
+        const estadoGuia = this.accessibilityService.shortcutsGuideState ? 'abierta' : 'cerrada';
+        this.accessibilityService.announce(`Guía de atajos ${estadoGuia}`, 'polite');
+        break;
+      case 'S':
+        if (!this.usuarioActual) {
+          event.preventDefault();
+          this.router.navigate(['/join']);
+          this.accessibilityService.announceNavigation('Iniciar Sesión');
+        }
+        break;
+      case 'R':
+        if (!this.usuarioActual) {
+          event.preventDefault();
+          this.router.navigate(['/register']);
+          this.accessibilityService.announceNavigation('Registro de cuenta');
+        }
+        break;
+      case 'D':
+        if (this.usuarioActual) {
+          event.preventDefault();
+          const ruta = this.esAdmin ? '/admin/dashboard' : '/cliente/dashboard';
+          this.router.navigate([ruta]);
+          this.accessibilityService.announceNavigation('Panel de control');
+        }
+        break;
     }
   }
 
   cerrarSesion() {
-    if (confirm('Â¿EstÃ¡s seguro de que deseas cerrar sesiÃ³n?')) {
+    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
       this.authService.logout();
       this.usuarioActual = null;
       this.esAdmin = false;
       this.mostrarMenuUsuario = false;
       this.router.navigate(['/']);
-      this.accessibilityService.announceSuccess('SesiÃ³n cerrada correctamente');
+      this.accessibilityService.announceSuccess('Sesión cerrada correctamente');
     }
   }
 
@@ -153,7 +207,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     // Si es la ruta de perfil del admin, navegar al panel y cambiar vista
     if (ruta === '/admin/perfil') {
       this.router.navigate(['/admin/dashboard']).then(() => {
-        // Emitir evento o llamar mÃ©todo del panel admin para cambiar a vista 'mi-perfil'
+        // Emitir evento o llamar método del panel admin para cambiar a vista 'mi-perfil'
         // Por ahora navegamos al dashboard y el admin puede hacer clic en "Mi Perfil" en el sidebar
       });
     } else {
@@ -167,7 +221,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     // Obtener solo el primer nombre
     const primerNombre = this.usuarioActual.name.trim().split(' ')[0];
 
-    // Retornar las primeras 2 letras del primer nombre en mayÃºsculas
+    // Retornar las primeras 2 letras del primer nombre en mayúsculas
     return primerNombre.substring(0, 2).toUpperCase();
   }
 
@@ -176,6 +230,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
   toggleSelectorIdioma(): void {
     this.mostrarMenuUsuario = false;
     this.mostrarSelectorIdioma = !this.mostrarSelectorIdioma;
+    if (this.mostrarSelectorIdioma) {
+      setTimeout(() => {
+        const menu = document.querySelector('.language-dropdown');
+        if (menu) {
+          const firstItem = menu.querySelector('button, a, input, [tabindex]:not([tabindex="-1"])') as HTMLElement;
+          if (firstItem) {
+            firstItem.focus();
+          }
+        }
+      }, 0);
+    }
   }
 
   cambiarIdioma(langCode: string): void {

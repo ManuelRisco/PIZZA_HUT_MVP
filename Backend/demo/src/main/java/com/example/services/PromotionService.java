@@ -4,6 +4,9 @@ import com.example.models.Promotion;
 import com.example.repositories.PromotionRepository;
 import com.example.repositories.OrderRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,14 +36,17 @@ public class PromotionService {
         this.orderRepository = orderRepository;
     }
 
+    @Cacheable(value = "allPromotions")
     public List<Promotion> listarPromociones() {
         return promotionRepository.findByDeletedAtIsNull();
     }
 
+    @Cacheable(value = "activePromotions")
     public List<Promotion> listarPromocionesActivas() {
         return promotionRepository.findActivePromotions(LocalDateTime.now());
     }
 
+    @Cacheable(value = "promotionsByType", key = "#p0.name()")
     public List<Promotion> listarPromocionesActivasPorTipo(Promotion.ApplicableTo tipo) {
         return promotionRepository.findActivePromotionsByType(LocalDateTime.now(), tipo);
     }
@@ -57,6 +63,11 @@ public class PromotionService {
         return promotionRepository.findByCodeAndDeletedAtIsNull(code);
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "allPromotions", allEntries = true),
+        @CacheEvict(value = "activePromotions", allEntries = true),
+        @CacheEvict(value = "promotionsByType", allEntries = true)
+    })
     public Promotion crearPromocion(Promotion promotion) {
         if (promotionRepository.existsByCodeAndDeletedAtIsNull(promotion.getCode())) {
             throw new IllegalArgumentException("Ya existe una promoción con ese código");
@@ -90,6 +101,11 @@ public class PromotionService {
         return promotionRepository.save(promotion);
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "allPromotions", allEntries = true),
+        @CacheEvict(value = "activePromotions", allEntries = true),
+        @CacheEvict(value = "promotionsByType", allEntries = true)
+    })
     public Promotion actualizarPromocion(Integer id, Promotion promocionActualizada) {
         Optional<Promotion> promocionOpt = obtenerPorId(id);
         if (promocionOpt.isEmpty()) {
@@ -121,6 +137,11 @@ public class PromotionService {
         return promotionRepository.save(promotion);
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "allPromotions", allEntries = true),
+        @CacheEvict(value = "activePromotions", allEntries = true),
+        @CacheEvict(value = "promotionsByType", allEntries = true)
+    })
     public void eliminarPromocion(Integer id) {
         Optional<Promotion> promocionOpt = obtenerPorId(id);
         if (promocionOpt.isEmpty()) {
@@ -132,6 +153,11 @@ public class PromotionService {
         promotionRepository.save(promotion);
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "allPromotions", allEntries = true),
+        @CacheEvict(value = "activePromotions", allEntries = true),
+        @CacheEvict(value = "promotionsByType", allEntries = true)
+    })
     public Promotion activarPromocion(Integer id) {
         Optional<Promotion> promocionOpt = obtenerPorId(id);
         if (promocionOpt.isEmpty()) {
@@ -143,6 +169,11 @@ public class PromotionService {
         return promotionRepository.save(promotion);
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "allPromotions", allEntries = true),
+        @CacheEvict(value = "activePromotions", allEntries = true),
+        @CacheEvict(value = "promotionsByType", allEntries = true)
+    })
     public Promotion desactivarPromocion(Integer id) {
         Optional<Promotion> promocionOpt = obtenerPorId(id);
         if (promocionOpt.isEmpty()) {

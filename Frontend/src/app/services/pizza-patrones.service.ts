@@ -8,8 +8,8 @@ import { IngredientService } from './ingredient.service';
 import { environment } from '../../environments/environment';
 
 /**
- * Servicio que simulaba los patrones de diseÃ±o del backend para pizzas.
- * Ahora utiliza los endpoints estÃ¡ndar y filtra en el cliente para mantener la interfaz.
+ * Servicio que simulaba los patrones de diseño del backend para pizzas.
+ * Ahora utiliza los endpoints estándar y filtra en el cliente para mantener la interfaz.
  */
 @Injectable({
   providedIn: 'root'
@@ -42,7 +42,7 @@ export class PizzaPatronesService {
   }
 
   /**
-   * SPECIFICATION PATTERN - Filtrar pizzas por categorÃ­a (Simulado)
+   * SPECIFICATION PATTERN - Filtrar pizzas por categoría (Simulado)
    */
   listarPizzasPorCategoria(categoryId: number): Observable<PizzaDTO[]> {
     return this.pizzaService.listarPizzas().pipe(

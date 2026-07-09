@@ -17,7 +17,7 @@ export class AdminGuard implements CanActivate {
         this.authService.validateUserIntegrity()) {
       return true;
     } else {
-      // Si alguna validaciÃ³n falla, hacer logout y redirigir
+      // Si alguna validación falla, hacer logout y redirigir
       this.authService.logout();
       this.router.navigate(['/join']);
       return false;

@@ -10,27 +10,27 @@ import { CommonModule } from '@angular/common';
     <div class="not-found-container">
       <div class="not-found-content">
         <div class="pizza-icon">ðŸ•</div>
-        <h1>Â¡Oops! PÃ¡gina no encontrada</h1>
+        <h1>¡Oops! Página no encontrada</h1>
         <h2>Error 404</h2>
-        <p>La pÃ¡gina que buscas no existe, pero tenemos deliciosas pizzas esperÃ¡ndote.</p>
+        <p>La página que buscas no existe, pero tenemos deliciosas pizzas esperándote.</p>
 
         <div class="action-buttons">
           <button class="btn-home" (click)="navegarA('/')">
             <i class="fas fa-home"></i> Ir al Inicio
           </button>
           <button class="btn-menu" (click)="navegarA('/menu')">
-            <i class="fas fa-pizza-slice"></i> Ver MenÃº
+            <i class="fas fa-pizza-slice"></i> Ver Menú
           </button>
         </div>
 
         <div class="suggested-links">
-          <h3>Â¿QuizÃ¡s buscabas?</h3>
+          <h3>¿Quizás buscabas?</h3>
           <ul>
-            <li><a (click)="navegarA('/menu')" href="javascript:void(0)">MenÃº</a></li>
+            <li><a (click)="navegarA('/menu')" href="javascript:void(0)">Menú</a></li>
             <li><a (click)="navegarA('/extras')" href="javascript:void(0)">Extras</a></li>
             <li><a (click)="navegarA('/promociones')" href="javascript:void(0)">Promociones</a></li>
             <li><a (click)="navegarA('/cart')" href="javascript:void(0)">Carrito</a></li>
-            <li><a (click)="navegarA('/ubicacion')" href="javascript:void(0)">UbicaciÃ³n</a></li>
+            <li><a (click)="navegarA('/ubicacion')" href="javascript:void(0)">Ubicación</a></li>
           </ul>
         </div>
       </div>

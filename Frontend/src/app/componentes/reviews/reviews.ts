@@ -19,7 +19,7 @@ export class Reviews implements OnInit {
   cargando = true;
   isAdmin = false;
 
-  // PaginaciÃ³n
+  // Paginación
   currentPage = 1;
   itemsPerPage = 10;
 
@@ -37,7 +37,7 @@ export class Reviews implements OnInit {
     this.cargando = true;
     
     if (this.isAdmin) {
-      // Admin ve todas las reseÃ±as
+      // Admin ve todas las reseñas
       this.reviewService.obtenerTodos().subscribe({
         next: (data) => {
           this.reviews = data.toSorted((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
@@ -45,13 +45,13 @@ export class Reviews implements OnInit {
           this.aplicarPaginacion();
         },
         error: (err) => {
-          console.error('Error al cargar reseÃ±as:', err);
-          this.mostrarMensaje('Error al cargar reseÃ±as. Verifica que el servidor estÃ© corriendo.', true);
+          console.error('Error al cargar reseñas:', err);
+          this.mostrarMensaje('Error al cargar reseñas. Verifica que el servidor esté corriendo.', true);
           this.cargando = false;
         }
       });
     } else {
-      // Cliente ve solo sus reseÃ±as
+      // Cliente ve solo sus reseñas
       const currentUser = this.authService.getCurrentUser();
       if (currentUser?.id) {
         this.reviewService.obtenerPorUsuario(currentUser.id).subscribe({
@@ -61,8 +61,8 @@ export class Reviews implements OnInit {
             this.aplicarPaginacion();
           },
           error: (err) => {
-            console.error('Error al cargar reseÃ±as:', err);
-            this.mostrarMensaje('Error al cargar tus reseÃ±as.', true);
+            console.error('Error al cargar reseñas:', err);
+            this.mostrarMensaje('Error al cargar tus reseñas.', true);
             this.cargando = false;
           }
         });
@@ -91,45 +91,45 @@ export class Reviews implements OnInit {
   }
 
   eliminarReview(id: number): void {
-    if (confirm('Â¿EstÃ¡ seguro de eliminar esta reseÃ±a?')) {
+    if (confirm('¿Está seguro de eliminar esta reseña?')) {
       this.reviewService.eliminar(id).subscribe({
         next: () => {
-          this.mostrarMensaje('ReseÃ±a eliminada correctamente');
+          this.mostrarMensaje('Reseña eliminada correctamente');
           this.cargarReviews();
         },
         error: (err) => {
           console.error('Error al eliminar:', err);
-          this.mostrarMensaje('Error al eliminar reseÃ±a', true);
+          this.mostrarMensaje('Error al eliminar reseña', true);
         }
       });
     }
   }
 
   desactivarReview(id: number): void {
-    if (confirm('Â¿EstÃ¡ seguro de desactivar esta reseÃ±a?')) {
+    if (confirm('¿Está seguro de desactivar esta reseña?')) {
       this.reviewService.desactivar(id).subscribe({
         next: () => {
-          this.mostrarMensaje('ReseÃ±a desactivada correctamente');
+          this.mostrarMensaje('Reseña desactivada correctamente');
           this.cargarReviews();
         },
         error: (err) => {
           console.error('Error al desactivar:', err);
-          this.mostrarMensaje('Error al desactivar reseÃ±a', true);
+          this.mostrarMensaje('Error al desactivar reseña', true);
         }
       });
     }
   }
 
   activarReview(id: number): void {
-    if (confirm('Â¿EstÃ¡ seguro de activar esta reseÃ±a?')) {
+    if (confirm('¿Está seguro de activar esta reseña?')) {
       this.reviewService.activar(id).subscribe({
         next: () => {
-          this.mostrarMensaje('ReseÃ±a activada correctamente');
+          this.mostrarMensaje('Reseña activada correctamente');
           this.cargarReviews();
         },
         error: (err) => {
           console.error('Error al activar:', err);
-          this.mostrarMensaje('Error al activar reseÃ±a', true);
+          this.mostrarMensaje('Error al activar reseña', true);
         }
       });
     }

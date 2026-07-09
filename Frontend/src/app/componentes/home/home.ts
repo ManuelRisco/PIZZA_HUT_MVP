@@ -35,7 +35,7 @@ export class Home implements AfterViewInit {
       this.el.nativeElement.querySelectorAll('.animate-on-scroll').forEach((elem: any) => {
         observer.observe(elem);
       });
-    }, 100); // PequeÃ±o retraso para asegurar que los componentes hijos se hayan renderizado
+    }, 100); // Pequeño retraso para asegurar que los componentes hijos se hayan renderizado
   }
 }
 

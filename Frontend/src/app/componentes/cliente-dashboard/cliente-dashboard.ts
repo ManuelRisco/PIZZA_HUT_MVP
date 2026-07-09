@@ -42,7 +42,7 @@ export class ClienteDashboardComponent implements OnInit {
       return;
     }
 
-    // Leer el parÃ¡metro de vista desde la ruta
+    // Leer el parámetro de vista desde la ruta
     const vistaFromRoute = this.route.snapshot.data['vista'];
     
     // Siempre usar la vista de la ruta si existe, y guardarla
@@ -50,20 +50,20 @@ export class ClienteDashboardComponent implements OnInit {
       this.vistaActual = vistaFromRoute;
       sessionStorage.setItem('clienteVistaActual', vistaFromRoute);
     } else {
-      // Si no hay parÃ¡metro de ruta, usar la vista por defecto
+      // Si no hay parámetro de ruta, usar la vista por defecto
       this.vistaActual = 'dashboard';
       sessionStorage.setItem('clienteVistaActual', 'dashboard');
     }
 
-    // Obtener informaciÃ³n completa del usuario desde el backend
+    // Obtener información completa del usuario desde el backend
     this.usuarioService.obtenerUsuarioActual().subscribe({
       next: (usuario) => {
         this.usuario = usuario;
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error al cargar informaciÃ³n del usuario:', error);
-        // Fallback: usar datos del token si falla la peticiÃ³n
+        console.error('Error al cargar información del usuario:', error);
+        // Fallback: usar datos del token si falla la petición
         this.usuario = {
           ...currentUser,
           active: true,
@@ -99,7 +99,7 @@ export class ClienteDashboardComponent implements OnInit {
   }
 
   cerrarSesion(): void {
-    if (confirm('Â¿EstÃ¡s seguro de que deseas cerrar sesiÃ³n?')) {
+    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
       // Limpiar la vista guardada
       sessionStorage.removeItem('clienteVistaActual');
       this.authService.logout();
@@ -117,7 +117,7 @@ export class ClienteDashboardComponent implements OnInit {
     // Obtener solo el primer nombre
     const primerNombre = this.usuario.name.trim().split(' ')[0];
     
-    // Retornar las primeras 2 letras del primer nombre en mayÃºsculas
+    // Retornar las primeras 2 letras del primer nombre en mayúsculas
     return primerNombre.substring(0, 2).toUpperCase();
   }
 }

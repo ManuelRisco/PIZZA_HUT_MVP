@@ -1,7 +1,7 @@
 <!-- Overlay para cerrar el panel -->
 <div class="fab-overlay" [class.active]="isPanelOpen" (click)="closePanel()"></div>
 
-<div class="accessibility-fab-container">
+<div class="accessibility-fab-container" [class.shifted-up]="accessibilityService.shortcutsGuide$ | async">
   <!-- Panel de Accesibilidad -->
   <div class="accessibility-panel" [class.open]="isPanelOpen" aria-label="Panel de accesibilidad" aria-modal="true">
     
@@ -111,6 +111,36 @@
             <div class="toggle-knob"></div>
           </div>
         </button>
+      </div>
+      
+      <div class="panel-divider"></div>
+
+      <!-- Sección: Atajos de Teclado -->
+      <div class="panel-section">
+        <ng-container *ngIf="!(accessibilityService.shortcutsGuide$ | async)">
+          <div class="section-title mb-2">
+            <i class="bi bi-keyboard" aria-hidden="true"></i>
+            <span>Atajos de Teclado</span>
+          </div>
+          <div class="shortcuts-list" style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 8px; padding-left: 4px;">
+            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">I</kbd> <span style="white-space: nowrap;">Inicio</span></div>
+            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">M</kbd> <span style="white-space: nowrap;">Menú</span></div>
+            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">E</kbd> <span style="white-space: nowrap;">Extras</span></div>
+            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">O</kbd> <span style="white-space: nowrap;">Promociones</span></div>
+            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">C</kbd> <span style="white-space: nowrap;">Carrito</span></div>
+            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">P</kbd> <span style="white-space: nowrap;">Perfil</span></div>
+            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">U</kbd> <span style="white-space: nowrap;">Ubicación</span></div>
+            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">L</kbd> <span style="white-space: nowrap;">Idioma</span></div>
+            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">Y</kbd> <span style="white-space: nowrap;">Guía de Atajos</span></div>
+          </div>
+        </ng-container>
+        
+        <div class="mt-2 text-center">
+          <button class="btn btn-dark btn-sm w-100" (click)="toggleGuia()" style="font-weight: 500; letter-spacing: 1px;">
+            <i class="bi bi-layout-text-window-reverse me-2"></i> 
+            {{ (accessibilityService.shortcutsGuide$ | async) ? 'OCULTAR GUÍA GLOBAL' : 'MOSTRAR GUÍA GLOBAL' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>

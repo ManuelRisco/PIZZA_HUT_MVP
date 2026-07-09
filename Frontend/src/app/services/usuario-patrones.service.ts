@@ -22,7 +22,7 @@ export interface CrearAdminDTO {
   name: string;
 }
 
-// Interface para la respuesta de informaciÃ³n de patrones
+// Interface para la respuesta de información de patrones
 export interface PatronesInfo {
   patrones_implementados: string[];
   endpoints_disponibles: { [key: string]: string };
@@ -30,8 +30,8 @@ export interface PatronesInfo {
 }
 
 /**
- * Servicio que simulaba los patrones de diseÃ±o del backend para usuarios.
- * Ahora utiliza los endpoints estÃ¡ndar y filtra en el cliente para mantener la interfaz.
+ * Servicio que simulaba los patrones de diseño del backend para usuarios.
+ * Ahora utiliza los endpoints estándar y filtra en el cliente para mantener la interfaz.
  */
 @Injectable({
   providedIn: 'root'
@@ -49,7 +49,7 @@ export class UsuarioPatronesService {
   ) { }
 
   /**
-   * Obtiene informaciÃ³n sobre los patrones implementados (Simulado localmente)
+   * Obtiene información sobre los patrones implementados (Simulado localmente)
    */
   obtenerInformacionPatrones(): Observable<PatronesInfo> {
     return of({
@@ -62,7 +62,7 @@ export class UsuarioPatronesService {
         'activos': 'GET /api/usuarios/patrones/activos',
         'adminsActivos': 'GET /api/usuarios/patrones/admins-activos'
       },
-      documentacion: 'InformaciÃ³n sobre los patrones de diseÃ±o simulada en el frontend.'
+      documentacion: 'Información sobre los patrones de diseño simulada en el frontend.'
     });
   }
 
@@ -74,12 +74,12 @@ export class UsuarioPatronesService {
       `${this.apiUrl}/registro`,
       { ...datos, role: 'CUSTOMER' },
       this.httpOptions
-    ).pipe(map(res => ({ message: res.message || 'Cliente creado con Ã©xito' })));
+    ).pipe(map(res => ({ message: res.message || 'Cliente creado con éxito' })));
   }
 
   /**
    * Crea un administrador usando Factory Pattern (Mapeado a /api/usuarios)
-   * Requiere autenticaciÃ³n como ADMIN
+   * Requiere autenticación como ADMIN
    */
   crearAdministrador(datos: CrearAdminDTO): Observable<{ message: string }> {
     const token = this.authService.getToken();
@@ -91,7 +91,7 @@ export class UsuarioPatronesService {
       `${this.apiUrl}/usuarios`,
       { ...datos, role: 'ADMIN' },
       { headers }
-    ).pipe(map(res => ({ message: res.message || 'Administrador creado con Ã©xito' })));
+    ).pipe(map(res => ({ message: res.message || 'Administrador creado con éxito' })));
   }
 
   /**

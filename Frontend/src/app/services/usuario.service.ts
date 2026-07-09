@@ -25,7 +25,7 @@ export class UsuarioService {
     return this.http.get<any>(`${this.apiUrl}/usuarios/${id}`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Obtener informaciÃ³n del usuario autenticado actual
+  // Obtener información del usuario autenticado actual
   obtenerUsuarioActual(): Observable<UsuarioDTO> {
     return this.http.get<any>(`${this.apiUrl}/usuarios/me`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
@@ -60,17 +60,17 @@ export class UsuarioService {
     return this.http.put<any>(`${this.apiUrl}/usuarios/me`, datos, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Cambiar contraseÃ±a del usuario actual
+  // Cambiar contraseña del usuario actual
   cambiarPassword(id: number, passwordData: { password: string }): Observable<any> {
     return this.http.patch<any>(`${this.apiUrl}/usuarios/${id}/cambiar-password`, passwordData, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Operaciones de autenticaciÃ³n
+  // Operaciones de autenticación
   login(loginData: LoginDTO): Observable<AuthResponseDTO> {
     return this.http.post<any>(`${this.apiUrl}/ingresar`, loginData, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Endpoints pÃºblicos para validaciÃ³n de duplicados
+  // Endpoints públicos para validación de duplicados
   verificarEmail(email: string): Observable<{existe: boolean}> {
     return this.http.get<any>(`${this.apiUrl}/verificar-email?email=${encodeURIComponent(email)}`).pipe(map(res => typeof res.data === 'boolean' ? {existe: res.data} : res));
   }

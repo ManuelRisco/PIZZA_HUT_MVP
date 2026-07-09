@@ -20,7 +20,7 @@ export class AccessibilityFabComponent implements OnInit {
   reducirMovimiento: boolean = false;
 
   constructor(
-    private readonly accessibilityService: AccessibilityService,
+    public readonly accessibilityService: AccessibilityService,
     @Inject(PLATFORM_ID) private readonly platformId: Object
   ) {}
 
@@ -108,6 +108,14 @@ export class AccessibilityFabComponent implements OnInit {
     }
   }
 
+  toggleGuia(): void {
+    this.accessibilityService.toggleShortcutsGuide();
+    const currentState = this.accessibilityService.shortcutsGuideState;
+    this.accessibilityService.announce(
+      currentState ? 'Guía global de atajos activada' : 'Guía global de atajos desactivada'
+    );
+  }
+
   // ===== LABELS =====
 
   getColorblindLabel(mode: string): string {
@@ -122,7 +130,7 @@ export class AccessibilityFabComponent implements OnInit {
 
   getFontSizeLabel(size: string): string {
     const labels: { [key: string]: string } = {
-      'pequena': 'PequeÃ±a (90%)',
+      'pequena': 'Pequeña (90%)',
       'normal': 'Normal',
       'grande': 'Grande (125%)',
       'extra-grande': 'Extra Grande (150%)'

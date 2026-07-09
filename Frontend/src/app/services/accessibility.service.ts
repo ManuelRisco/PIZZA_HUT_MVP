@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Subject, BehaviorSubject } from 'rxjs';
 
 export interface AccessibilityAnnouncement {
   message: string;
@@ -13,6 +13,31 @@ export interface AccessibilityAnnouncement {
 export class AccessibilityService {
   private readonly announceSubject= new Subject<AccessibilityAnnouncement>();
   public announce$ = this.announceSubject.asObservable();
+
+  // Estado para la guía inferior de atajos
+  private readonly shortcutsGuideSubject = new BehaviorSubject<boolean>(
+    this.getInitialShortcutsState()
+  );
+  public shortcutsGuide$ = this.shortcutsGuideSubject.asObservable();
+
+  private getInitialShortcutsState(): boolean {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return localStorage.getItem('accessibility_shortcuts_guide') === 'true';
+    }
+    return false;
+  }
+
+  public toggleShortcutsGuide(): void {
+    const newState = !this.shortcutsGuideSubject.value;
+    this.shortcutsGuideSubject.next(newState);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('accessibility_shortcuts_guide', newState.toString());
+    }
+  }
+
+  public get shortcutsGuideState(): boolean {
+    return this.shortcutsGuideSubject.value;
+  }
 
   private liveRegionElement: HTMLDivElement | null = null;
 

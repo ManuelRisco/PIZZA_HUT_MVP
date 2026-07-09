@@ -21,12 +21,12 @@ export class Order {
     return this.http.get<any>(`${this.apiUrl}/orders`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
   
-  // Obtener pedidos completos con toda la informaciÃ³n
+  // Obtener pedidos completos con toda la información
   obtenerTodosCompletos(): Observable<OrderCompleteDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/orders/complete`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
   
-  // Obtener items de un pedido con informaciÃ³n completa
+  // Obtener items de un pedido con información completa
   obtenerItemsCompletos(orderId: number): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/orders/${orderId}/items`).pipe(map(res => res.data !== undefined ? res.data : res));
   }

@@ -8,3 +8,24 @@
     <app-afk-modal></app-afk-modal>
 </div>
 <app-accessibility-fab></app-accessibility-fab>
+
+<!-- Guía Global de Atajos (Banner Inferior) -->
+@if (accessibilityService.shortcutsGuide$ | async) {
+  <div class="fixed-bottom bg-dark text-white shadow-lg border-top border-secondary py-2 px-3" style="z-index: 9999; font-size: 0.9rem;">
+    <div class="d-flex flex-wrap justify-content-center align-items-center gap-3">
+      <span class="fw-bold me-2 text-uppercase text-warning"><i class="bi bi-keyboard me-1"></i> Guía Rápida:</span>
+      <span class="d-flex align-items-center"><kbd class="bg-secondary px-1 rounded mx-1">Alt</kbd>+<kbd class="bg-secondary px-1 rounded mx-1">I</kbd> Inicio</span>
+      <span class="d-flex align-items-center"><kbd class="bg-secondary px-1 rounded mx-1">Alt</kbd>+<kbd class="bg-secondary px-1 rounded mx-1">M</kbd> Menú</span>
+      <span class="d-flex align-items-center"><kbd class="bg-secondary px-1 rounded mx-1">Alt</kbd>+<kbd class="bg-secondary px-1 rounded mx-1">E</kbd> Extras</span>
+      <span class="d-flex align-items-center"><kbd class="bg-secondary px-1 rounded mx-1">Alt</kbd>+<kbd class="bg-secondary px-1 rounded mx-1">O</kbd> Promociones</span>
+      <span class="d-flex align-items-center"><kbd class="bg-secondary px-1 rounded mx-1">Alt</kbd>+<kbd class="bg-secondary px-1 rounded mx-1">C</kbd> Carrito</span>
+      <span class="d-flex align-items-center"><kbd class="bg-secondary px-1 rounded mx-1">Alt</kbd>+<kbd class="bg-secondary px-1 rounded mx-1">P</kbd> Perfil</span>
+      <span class="d-flex align-items-center"><kbd class="bg-secondary px-1 rounded mx-1">Alt</kbd>+<kbd class="bg-secondary px-1 rounded mx-1">U</kbd> Ubicación</span>
+      <span class="d-flex align-items-center"><kbd class="bg-secondary px-1 rounded mx-1">Alt</kbd>+<kbd class="bg-secondary px-1 rounded mx-1">L</kbd> Idioma</span>
+      <span class="d-flex align-items-center"><kbd class="bg-secondary px-1 rounded mx-1">Alt</kbd>+<kbd class="bg-secondary px-1 rounded mx-1">Y</kbd> Guía Atajos</span>
+      <button class="btn btn-sm btn-outline-light ms-auto rounded-circle p-1 lh-1" (click)="accessibilityService.toggleShortcutsGuide()" aria-label="Cerrar guía de atajos">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+  </div>
+}

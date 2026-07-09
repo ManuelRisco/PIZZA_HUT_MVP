@@ -44,7 +44,7 @@ public class ExtraController {
     }
 
     @GetMapping("/categoria/{categoria}")
-    public ResponseEntity<ApiResponse<List<ExtraDTO>>> listarPorCategoria(@PathVariable Extra.ExtraCategory categoria) {
+    public ResponseEntity<ApiResponse<List<ExtraDTO>>> listarPorCategoria(@PathVariable("categoria") Extra.ExtraCategory categoria) {
         List<Extra> extras = extraService.listarExtrasPorCategoria(categoria);
         List<ExtraDTO> dtos = extras.stream()
             .map(ExtraDTO::new)
@@ -53,14 +53,14 @@ public class ExtraController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ExtraDTO>> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<ExtraDTO>> obtenerPorId(@PathVariable("id") Integer id) {
         Optional<Extra> extra = extraService.obtenerPorId(id);
         return extra.map(e -> ResponseEntity.ok(ApiResponse.success(new ExtraDTO(e))))
             .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/buscar")
-    public ResponseEntity<ApiResponse<List<ExtraDTO>>> buscarPorNombre(@RequestParam String nombre) {
+    public ResponseEntity<ApiResponse<List<ExtraDTO>>> buscarPorNombre(@RequestParam("nombre") String nombre) {
         List<Extra> extras = extraService.buscarPorNombre(nombre);
         List<ExtraDTO> dtos = extras.stream()
             .map(ExtraDTO::new)
@@ -86,7 +86,7 @@ public class ExtraController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> actualizar(@PathVariable Integer id, @RequestBody ExtraDTO extraDTO) {
+    public ResponseEntity<Object> actualizar(@PathVariable("id") Integer id, @RequestBody ExtraDTO extraDTO) {
         try {
             Extra extra = new Extra();
             extra.setName(extraDTO.getName());
@@ -103,7 +103,7 @@ public class ExtraController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> eliminar(@PathVariable Integer id) {
+    public ResponseEntity<Object> eliminar(@PathVariable("id") Integer id) {
         try {
             extraService.eliminarExtra(id);
             return ResponseEntity.ok().body(Map.of("message", "Extra eliminado correctamente", "id", id));
@@ -118,7 +118,7 @@ public class ExtraController {
     }
 
     @PatchMapping("/{id}/disponibilidad")
-    public ResponseEntity<Object> cambiarDisponibilidad(@PathVariable Integer id) {
+    public ResponseEntity<Object> cambiarDisponibilidad(@PathVariable("id") Integer id) {
         try {
             Extra extraActualizado = extraService.cambiarDisponibilidad(id);
             return ResponseEntity.ok(ApiResponse.success(new ExtraDTO(extraActualizado)));

@@ -20,4 +20,5 @@ public interface PizzaRepository extends JpaRepository<Pizza, Integer> {
     boolean existsByName(String name);
 
     boolean existsByCategoryId(Integer categoryId);
+    boolean existsByCategoryIdAndDeletedAtIsNull(Integer categoryId);
 }

@@ -20,7 +20,7 @@ export class Payments implements OnInit {
   error = false;
   loading = false;
 
-  // PaginaciÃ³n
+  // Paginación
   currentPage = 1;
   itemsPerPage = 10;
 

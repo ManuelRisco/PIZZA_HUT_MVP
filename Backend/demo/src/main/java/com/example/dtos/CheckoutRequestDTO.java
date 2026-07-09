@@ -12,7 +12,6 @@ public class CheckoutRequestDTO {
     private OrderDTO order;
     
     @Valid
-    @NotNull(message = "La dirección es obligatoria")
     private AddressDTO address;
     
     @Valid

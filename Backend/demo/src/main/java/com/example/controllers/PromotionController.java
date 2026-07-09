@@ -50,7 +50,7 @@ public class PromotionController {
     }
 
     @GetMapping("/activas/{tipo}")
-    public ResponseEntity<ApiResponse<List<PromotionDTO>>> listarActivasPorTipo(@PathVariable Promotion.ApplicableTo tipo) {
+    public ResponseEntity<ApiResponse<List<PromotionDTO>>> listarActivasPorTipo(@PathVariable("tipo") Promotion.ApplicableTo tipo) {
         List<Promotion> promotions = promotionService.listarPromocionesActivasPorTipo(tipo);
         List<PromotionDTO> dtos = promotions.stream()
             .map(PromotionDTO::new)
@@ -59,14 +59,14 @@ public class PromotionController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<PromotionDTO>> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<PromotionDTO>> obtenerPorId(@PathVariable("id") Integer id) {
         Optional<Promotion> promotion = promotionService.obtenerPorId(id);
         return promotion.map(p -> ResponseEntity.ok(ApiResponse.success(new PromotionDTO(p))))
             .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/codigo/{code}")
-    public ResponseEntity<ApiResponse<PromotionDTO>> obtenerPorCodigo(@PathVariable String code) {
+    public ResponseEntity<ApiResponse<PromotionDTO>> obtenerPorCodigo(@PathVariable("code") String code) {
         Optional<Promotion> promotion = promotionService.obtenerPorCodigo(code);
         return promotion.map(p -> ResponseEntity.ok(ApiResponse.success(new PromotionDTO(p))))
             .orElse(ResponseEntity.notFound().build());
@@ -152,7 +152,7 @@ public class PromotionController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> actualizar(@PathVariable Integer id, @RequestBody PromotionDTO promotionDTO) {
+    public ResponseEntity<Object> actualizar(@PathVariable("id") Integer id, @RequestBody PromotionDTO promotionDTO) {
         try {
             Promotion promotion = new Promotion();
             promotion.setCode(promotionDTO.getCode());
@@ -181,7 +181,7 @@ public class PromotionController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> eliminar(@PathVariable Integer id) {
+    public ResponseEntity<Object> eliminar(@PathVariable("id") Integer id) {
         try {
             promotionService.eliminarPromocion(id);
             return ResponseEntity.ok().body(Map.of(MSG_KEY, "PromociÃ³n eliminada correctamente", "id", id));
@@ -194,7 +194,7 @@ public class PromotionController {
     }
 
     @PatchMapping("/{id}/activar")
-    public ResponseEntity<Object> activar(@PathVariable Integer id) {
+    public ResponseEntity<Object> activar(@PathVariable("id") Integer id) {
         try {
             Promotion promocionActualizada = promotionService.activarPromocion(id);
             return ResponseEntity.ok(ApiResponse.success(new PromotionDTO(promocionActualizada)));
@@ -204,7 +204,7 @@ public class PromotionController {
     }
 
     @PatchMapping("/{id}/desactivar")
-    public ResponseEntity<Object> desactivar(@PathVariable Integer id) {
+    public ResponseEntity<Object> desactivar(@PathVariable("id") Integer id) {
         try {
             Promotion promocionActualizada = promotionService.desactivarPromocion(id);
             return ResponseEntity.ok(ApiResponse.success(new PromotionDTO(promocionActualizada)));
@@ -214,7 +214,7 @@ public class PromotionController {
     }
 
     @GetMapping("/proximas-vencer")
-    public ResponseEntity<ApiResponse<List<PromotionDTO>>> proximasAVencer(@RequestParam(defaultValue = "7") int dias) {
+    public ResponseEntity<ApiResponse<List<PromotionDTO>>> proximasAVencer(@RequestParam(value = "dias", defaultValue = "7") int dias) {
         List<Promotion> promotions = promotionService.obtenerPromocionesProximasAVencer(dias);
         List<PromotionDTO> dtos = promotions.stream()
             .map(PromotionDTO::new)

@@ -95,11 +95,11 @@ export class Register implements OnInit {
       this.registerForm.markAllAsTouched();
       this.accessibilityService.announceError(errorMessage);
       
-      // Anunciar el primer error especÃ­fico
+      // Anunciar el primer error específico
       const controls = this.registerForm.controls;
       for (const name in controls) {
         if (controls[name].invalid) {
-          this.accessibilityService.announceValidationError(name, 'Campo invÃ¡lido o incompleto');
+          this.accessibilityService.announceValidationError(name, 'Campo inválido o incompleto');
           break;
         }
       }
@@ -151,10 +151,10 @@ export class Register implements OnInit {
     if (error.error?.message) {
       const serverMessage = error.error.message.toLowerCase();
 
-      // Manejo dinÃ¡mico de duplicados devueltos por el backend
+      // Manejo dinámico de duplicados devueltos por el backend
       if (serverMessage.includes('correo') || serverMessage.includes('email')) {
         this.registerForm.get('email')?.setErrors({ duplicado: true });
-        errorMessage = 'El correo electrÃ³nico ya se encuentra registrado';
+        errorMessage = 'El correo electrónico ya se encuentra registrado';
       } else if (serverMessage.includes('nombre') || serverMessage.includes('name')) {
         this.registerForm.get('name')?.setErrors({ duplicado: true });
         errorMessage = 'El nombre de usuario ya se encuentra registrado';

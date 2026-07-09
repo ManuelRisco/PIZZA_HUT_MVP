@@ -35,7 +35,7 @@ export class Promociones implements OnInit {
     { value: 'ALL', label: 'Todo' },
     { value: 'PIZZAS', label: 'Solo Pizzas' },
     { value: 'EXTRAS', label: 'Solo Extras' },
-    { value: 'SPECIFIC_PRODUCTS', label: 'Productos EspecÃ­ficos' }
+    { value: 'SPECIFIC_PRODUCTS', label: 'Productos Específicos' }
   ];
 
   constructor(
@@ -158,32 +158,32 @@ export class Promociones implements OnInit {
 
     observable.subscribe({
       next: () => {
-        this.success = this.editMode ? 'PromociÃ³n actualizada correctamente' : 'PromociÃ³n creada correctamente';
+        this.success = this.editMode ? 'Promoción actualizada correctamente' : 'Promoción creada correctamente';
         this.cargarPromociones();
         this.cancelar();
         this.loading = false;
         setTimeout(() => this.success = '', 3000);
       },
       error: (err) => {
-        this.error = err.error?.message || 'Error al guardar promociÃ³n';
+        this.error = err.error?.message || 'Error al guardar promoción';
         this.loading = false;
       }
     });
   }
 
   eliminarPromocion(id: number): void {
-    if (!confirm('Â¿EstÃ¡ seguro de eliminar esta promociÃ³n?')) return;
+    if (!confirm('¿Está seguro de eliminar esta promoción?')) return;
 
     this.loading = true;
     this.promocionService.eliminar(id).subscribe({
       next: () => {
-        this.success = 'PromociÃ³n eliminada correctamente';
+        this.success = 'Promoción eliminada correctamente';
         this.cargarPromociones();
         this.loading = false;
         setTimeout(() => this.success = '', 3000);
       },
       error: (err) => {
-        this.error = 'Error al eliminar promociÃ³n';
+        this.error = 'Error al eliminar promoción';
         this.loading = false;
       }
     });
@@ -197,7 +197,7 @@ export class Promociones implements OnInit {
 
     observable.subscribe({
       next: () => {
-        this.success = promocion.isActive ? 'PromociÃ³n desactivada' : 'PromociÃ³n activada';
+        this.success = promocion.isActive ? 'Promoción desactivada' : 'Promoción activada';
         this.cargarPromociones();
         setTimeout(() => this.success = '', 2000);
       },

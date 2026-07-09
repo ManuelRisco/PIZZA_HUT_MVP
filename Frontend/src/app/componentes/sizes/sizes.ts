@@ -21,7 +21,7 @@ export class Sizes implements OnInit {
   error = false;
   loading = true;
 
-  // PaginaciÃ³n
+  // Paginación
   currentPage = 1;
   itemsPerPage = 10;
 
@@ -40,8 +40,8 @@ export class Sizes implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error al cargar tamaÃ±os:', err);
-        this.mostrarMensaje('Error al cargar tamaÃ±os', true);
+        console.error('Error al cargar tamaños:', err);
+        this.mostrarMensaje('Error al cargar tamaños', true);
         this.loading = false;
       }
     });
@@ -88,40 +88,40 @@ export class Sizes implements OnInit {
     if (this.isEditing && this.selectedSize.id) {
       this.sizeService.actualizar(this.selectedSize.id, this.selectedSize).subscribe({
         next: () => {
-          this.mostrarMensaje('TamaÃ±o actualizado correctamente');
+          this.mostrarMensaje('Tamaño actualizado correctamente');
           this.cargarSizes();
           this.cerrarModal();
         },
         error: (err) => {
           console.error('Error al actualizar:', err);
-          this.mostrarMensaje('Error al actualizar tamaÃ±o', true);
+          this.mostrarMensaje('Error al actualizar tamaño', true);
         }
       });
     } else {
       this.sizeService.crear(this.selectedSize).subscribe({
         next: () => {
-          this.mostrarMensaje('TamaÃ±o creado correctamente');
+          this.mostrarMensaje('Tamaño creado correctamente');
           this.cargarSizes();
           this.cerrarModal();
         },
         error: (err) => {
           console.error('Error al crear:', err);
-          this.mostrarMensaje('Error al crear tamaÃ±o', true);
+          this.mostrarMensaje('Error al crear tamaño', true);
         }
       });
     }
   }
 
   eliminar(id: number): void {
-    if (confirm('Â¿EstÃ¡ seguro de eliminar este tamaÃ±o?')) {
+    if (confirm('¿Está seguro de eliminar este tamaño?')) {
       this.sizeService.eliminar(id).subscribe({
         next: () => {
-          this.mostrarMensaje('TamaÃ±o eliminado correctamente');
+          this.mostrarMensaje('Tamaño eliminado correctamente');
           this.cargarSizes();
         },
         error: (err) => {
           console.error('Error al eliminar:', err);
-          this.mostrarMensaje('Error al eliminar tamaÃ±o', true);
+          this.mostrarMensaje('Error al eliminar tamaño', true);
         }
       });
     }

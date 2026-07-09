@@ -22,7 +22,7 @@ export class Ingredientes implements OnInit {
   filtroDisponibilidad: string = 'TODOS';
   loading: boolean = true;
 
-  // PaginaciÃ³n
+  // Paginación
   currentPage = 1;
   itemsPerPage = 10;
 
@@ -125,7 +125,7 @@ export class Ingredientes implements OnInit {
   }
 
   eliminar(id: number): void {
-    if (confirm('Â¿EstÃ¡ seguro de eliminar este ingrediente?')) {
+    if (confirm('¿Está seguro de eliminar este ingrediente?')) {
       this.ingredientService.eliminar(id).subscribe({
         next: () => {
           alert('Ingrediente eliminado exitosamente');

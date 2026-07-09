@@ -7,6 +7,8 @@ import { ToastComponent } from './componentes/toast/toast.component';
 import { IdleTimeoutService } from './services/idle-timeout.service';
 import { AfkModalComponent } from './componentes/afk-modal/afk-modal.component';
 import { AccessibilityFabComponent } from './componentes/accessibility-fab/accessibility-fab';
+import { AccessibilityService } from './services/accessibility.service';
+import { AsyncPipe } from '@angular/common';
 
 @Component({    
   selector: 'app-root',
@@ -18,6 +20,7 @@ import { AccessibilityFabComponent } from './componentes/accessibility-fab/acces
     AfkModalComponent,
     AccessibilityFabComponent,
     RouterOutlet,
+    AsyncPipe
 ],
   templateUrl: './app.html',
   styleUrls: ['./app.css']
@@ -27,6 +30,7 @@ export class App implements OnInit, OnDestroy {
   private observer: MutationObserver | null = null;
   private lastFocusedElement: HTMLElement | null = null;
   private readonly idleTimeoutService = inject(IdleTimeoutService);
+  public readonly accessibilityService = inject(AccessibilityService);
 
   constructor(@Inject(PLATFORM_ID) private readonly platformId: Object) {}
 

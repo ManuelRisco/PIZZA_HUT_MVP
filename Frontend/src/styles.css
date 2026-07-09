@@ -81,16 +81,23 @@ html[data-contraste="alto"] .text-gray-900 {
   color: #ffffff !important;
 }
 
-html[data-contraste="alto"] img,
 html[data-contraste="alto"] svg,
-html[data-contraste="alto"] i.bi {
-  filter: contrast(120%) saturate(120%) !important;
+html[data-contraste="alto"] i.bi,
+html[data-contraste="alto"] i.fa,
+html[data-contraste="alto"] i.fas,
+html[data-contraste="alto"] i.far,
+html[data-contraste="alto"] i.fab {
+  filter: brightness(0) invert(1) !important;
+}
+
+html[data-contraste="alto"] img {
+  border: 1px solid #ffffff !important;
 }
 
 /* Mantener los estilos de navegación visible */
 html[data-contraste="alto"] .navbar {
   background: #000 !important;
-  border-bottom: 3px solid #000000 !important;
+  border-bottom: 3px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .navbar a {
@@ -115,16 +122,17 @@ html[data-contraste="alto"] .navbar-links a:hover {
 }
 
 /* Botones */
-html[data-contraste="alto"] button {
+html[data-contraste="alto"] button:not(.chip-option):not(.font-option):not(.toggle-option):not(.panel-close):not(.fab-button) {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  border: 2px solid #ffffff !important;
   font-weight: bold;
 }
 
-html[data-contraste="alto"] button:hover {
-  background-color: #000000 !important;
-  color: #ffffff !important;
+html[data-contraste="alto"] button:not(.chip-option):not(.font-option):not(.toggle-option):not(.panel-close):not(.fab-button):hover {
+  background-color: #111111 !important;
+  color: #00ffff !important;
+  border-color: #00ffff !important;
 }
 
 html[data-contraste="alto"] button:focus {
@@ -148,7 +156,7 @@ html[data-contraste="alto"] .btn-success,
 html[data-contraste="alto"] .btn-warning {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  border: 2px solid #ffffff !important;
   font-weight: bold;
 }
 
@@ -187,7 +195,7 @@ html[data-contraste="alto"] textarea,
 html[data-contraste="alto"] select {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  border: 2px solid #ffffff !important;
 }
 
 
@@ -218,7 +226,7 @@ html[data-contraste="alto"] .promo-section,
 html[data-contraste="alto"] .promo-applied {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  border: 1px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .cart-summary label,
@@ -240,8 +248,8 @@ html[data-contraste="alto"] .radio-option:hover span {
 }
 
 html[data-contraste="alto"] .quantity-control {
-  background-color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  background-color: #000000 !important;
+  border: 1px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .quantity-control .quantity-display {
@@ -280,7 +288,7 @@ html[data-contraste="alto"] .remove-button:hover {
 html[data-contraste="alto"] .promo-input {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  border: 2px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .promo-input:focus {
@@ -292,7 +300,7 @@ html[data-contraste="alto"] .btn-promo,
 html[data-contraste="alto"] .btn-remove-promo {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  border: 1px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .btn-promo:hover,
@@ -306,8 +314,8 @@ html[data-contraste="alto"] .btn-remove-promo:hover {
 html[data-contraste="alto"] .dropdown-content,
 html[data-contraste="alto"] .user-dropdown,
 html[data-contraste="alto"] .accessibility-dropdown {
-  background-color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  background-color: #000000 !important;
+  border: 2px solid #ffffff !important;
 }
 
 /* Items dentro del dropdown - MÁS ESPECÍFICO */
@@ -341,6 +349,7 @@ html[data-contraste="alto"] .user-info-dropdown {
 html[data-contraste="alto"] .avatar-circle {
   background: #000000 !important;
   color: #ffffff !important;
+  border: 2px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .avatar-circle.admin {
@@ -378,8 +387,8 @@ html[data-contraste="alto"] a:hover .bi {
 
 /* Cards */
 html[data-contraste="alto"] .card {
-  background-color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  background-color: #000000 !important;
+  border: 2px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .card-body {
@@ -409,13 +418,12 @@ html[data-contraste="alto"] [class*="success"],
 html[data-contraste="alto"] [class*="warning"] {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  border: 2px solid #ffffff !important;
 }
 
 /* Imágenes - mejorar visibilidad sin romper diseño */
 html[data-contraste="alto"] img:not(.object-cover) {
-  /* Opcional: un ligero borde solo a las imágenes sueltas, no fondos ni carruseles */
-  border: 1px solid #000000 !important;
+  border: 1px solid #ffffff !important;
 }
 
 /* Texto para mejorar contraste */
@@ -442,42 +450,40 @@ html[data-contraste="alto"] :focus-visible {
 /* ========== REGLAS AGRESIVAS FINALES PARA COBERTURA COMPLETA ========== */
 
 /* Todos los elementos interactivos */
-html[data-contraste="alto"] a,
-html[data-contraste="alto"] button,
+html[data-contraste="alto"] button:not(.chip-option):not(.font-option):not(.toggle-option):not(.panel-close):not(.fab-button),
 html[data-contraste="alto"] input[type="button"],
 html[data-contraste="alto"] input[type="submit"],
 html[data-contraste="alto"] input[type="reset"],
 html[data-contraste="alto"] [role="button"] {
   color: #ffffff !important;
   background-color: #000000 !important;
-  border: 2px solid #000000 !important;
+  border: 2px solid #ffffff !important;
 }
 
-html[data-contraste="alto"] a:hover,
-html[data-contraste="alto"] button:hover,
+html[data-contraste="alto"] button:not(.chip-option):not(.font-option):not(.toggle-option):not(.panel-close):not(.fab-button):hover,
 html[data-contraste="alto"] input[type="button"]:hover,
 html[data-contraste="alto"] input[type="submit"]:hover,
 html[data-contraste="alto"] input[type="reset"]:hover,
 html[data-contraste="alto"] [role="button"]:hover {
-  color: #ffffff !important;
-  background-color: #000000 !important;
-  border-color: #ffffff !important;
+  color: #00ffff !important;
+  background-color: #111111 !important;
+  border-color: #00ffff !important;
 }
 
 /* Bootstrap buttons */
 html[data-contraste="alto"] .btn {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  border: 2px solid #ffffff !important;
   font-weight: bold !important;
 }
 
 html[data-contraste="alto"] .btn:hover,
 html[data-contraste="alto"] .btn:active,
 html[data-contraste="alto"] .btn:focus {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-  border-color: #ffffff !important;
+  background-color: #111111 !important;
+  color: #00ffff !important;
+  border-color: #00ffff !important;
 }
 
 html[data-contraste="alto"] .btn-primary,
@@ -487,7 +493,7 @@ html[data-contraste="alto"] .btn-warning,
 html[data-contraste="alto"] .btn-info {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  border: 2px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .btn-primary:hover,
@@ -495,20 +501,21 @@ html[data-contraste="alto"] .btn-danger:hover,
 html[data-contraste="alto"] .btn-success:hover,
 html[data-contraste="alto"] .btn-warning:hover,
 html[data-contraste="alto"] .btn-info:hover {
-  background-color: #000000 !important;
-  color: #ffffff !important;
+  background-color: #111111 !important;
+  color: #00ffff !important;
+  border-color: #00ffff !important;
 }
 
 /* Dropdown items - extra specificity */
 html[data-contraste="alto"] .dropdown-menu {
-  background-color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  background-color: #000000 !important;
+  border: 2px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .dropdown-menu .dropdown-item {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border-bottom: 1px solid #000000 !important;
+  border-bottom: 1px solid #333333 !important;
 }
 
 html[data-contraste="alto"] .dropdown-menu .dropdown-item:hover {
@@ -533,8 +540,8 @@ html[data-contraste="alto"] .nav-link:hover {
 }
 
 html[data-contraste="alto"] .nav-link.active {
-  color: #ffffff !important;
-  border-bottom: 2px solid #000000 !important;
+  color: #00ffff !important;
+  border-bottom: 2px solid #00ffff !important;
 }
 
 /* ========== ADMIN PANEL - COMPONENTES ESPECÍFICOS ========== */
@@ -542,11 +549,11 @@ html[data-contraste="alto"] .nav-link.active {
 /* Sidebar Admin */
 html[data-contraste="alto"] .sidebar {
   background: #000 !important;
-  border-right: 3px solid #000000 !important;
+  border-right: 3px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .sidebar-header {
-  border-bottom: 2px solid #000000 !important;
+  border-bottom: 2px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .sidebar-header button {
@@ -564,7 +571,7 @@ html[data-contraste="alto"] .sidebar-header h5 {
 }
 
 html[data-contraste="alto"] .user-info {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
   border-color: #ffffff !important;
 }
 
@@ -572,7 +579,7 @@ html[data-contraste="alto"] .avatar {
   background: #000000 !important;
   color: #ffffff !important;
   font-weight: bold;
-  border: 2px solid #000000 !important;
+  border: 2px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .sidebar-nav {
@@ -593,8 +600,8 @@ html[data-contraste="alto"] .nav-item:hover {
 
 html[data-contraste="alto"] .nav-item.active {
   background-color: #1a1a1a !important;
-  color: #ffffff !important;
-  border-left: 3px solid #000000 !important;
+  color: #00ffff !important;
+  border-left: 3px solid #00ffff !important;
   font-weight: bold !important;
 }
 
@@ -609,8 +616,8 @@ html[data-contraste="alto"] .nav-item.text-danger:hover {
 }
 
 html[data-contraste="alto"] .sidebar-footer {
-  border-top: 2px solid #000000 !important;
-  background-color: #ffffff !important;
+  border-top: 2px solid #ffffff !important;
+  background-color: #000000 !important;
 }
 
 html[data-contraste="alto"] .sidebar-divider {
@@ -624,7 +631,7 @@ html[data-contraste="alto"] .main-content {
 }
 
 html[data-contraste="alto"] .content-wrapper {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
 }
 
 /* Dashboard Home */
@@ -635,7 +642,7 @@ html[data-contraste="alto"] .dashboard-home {
 html[data-contraste="alto"] .dashboard-home h2 {
   color: #ffffff !important;
   font-weight: bold !important;
-  border-bottom: 2px solid #000000 !important;
+  border-bottom: 2px solid #ffffff !important;
   padding-bottom: 10px !important;
 }
 
@@ -663,54 +670,67 @@ html[data-contraste="alto"] .stat-card p {
 html[data-contraste="alto"] .stat-card:hover {
   background-color: #1a1a1a !important;
   border-color: #00ffff !important;
-  box-shadow: 0 0 15px #000000 !important;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3) !important;
 }
 
 /* Bootstrap Color Classes Override */
 html[data-contraste="alto"] .bg-success {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
   border: 2px solid #00ff00 !important;
 }
 
 html[data-contraste="alto"] .bg-danger {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
+  border: 2px solid #ff4444 !important;
 }
 
 html[data-contraste="alto"] .bg-primary {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
   border: 2px solid #0066ff !important;
 }
 
 html[data-contraste="alto"] .bg-warning {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
   border: 2px solid #ffaa00 !important;
 }
 
 html[data-contraste="alto"] .bg-info {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
   border: 2px solid #00aaff !important;
 }
 
 html[data-contraste="alto"] .bg-dark {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
   border: 2px solid #888888 !important;
 }
 
 html[data-contraste="alto"] .bg-secondary {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
   border: 2px solid #888888 !important;
 }
 
 html[data-contraste="alto"] .bg-light {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
   border: 2px solid #888888 !important;
 }
 
 /* Tablas */
 html[data-contraste="alto"] table {
   border-collapse: collapse !important;
+  border: 1px solid #ffffff !important;
 }
 
+html[data-contraste="alto"] th,
+html[data-contraste="alto"] td {
+  border: 1px solid #ffffff !important;
+  color: #ffffff !important;
+  background-color: #000000 !important;
+}
+
+html[data-contraste="alto"] thead th {
+  background-color: #111111 !important;
+  font-weight: bold !important;
+}
 
 html[data-contraste="alto"] tbody tr:nth-child(even) {
   background-color: #0a0a0a !important;
@@ -739,7 +759,7 @@ html[data-contraste="alto"] textarea,
 html[data-contraste="alto"] select {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  border: 2px solid #ffffff !important;
   font-size: 1rem !important;
 }
 
@@ -748,30 +768,38 @@ html[data-contraste="alto"] input::placeholder {
   color: #888888 !important;
 }
 
+html[data-contraste="alto"] input:focus,
+html[data-contraste="alto"] textarea:focus,
+html[data-contraste="alto"] select:focus {
+  border-color: #00ffff !important;
+  outline: 2px solid #00ffff !important;
+  outline-offset: 1px;
+}
+
 /* Checkboxes y Radios */
 html[data-contraste="alto"] input[type="checkbox"],
 html[data-contraste="alto"] input[type="radio"] {
   width: 20px !important;
   height: 20px !important;
-  border: 2px solid #000000 !important;
+  border: 2px solid #ffffff !important;
   accent-color: #ffffff !important;
 }
 
 /* Modales */
 html[data-contraste="alto"] .modal,
 html[data-contraste="alto"] .modal-content {
-  background-color: #ffffff !important;
-  border: 3px solid #000000 !important;
+  background-color: #000000 !important;
+  border: 3px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .modal-header {
-  border-bottom: 2px solid #000000 !important;
-  background-color: #ffffff !important;
+  border-bottom: 2px solid #ffffff !important;
+  background-color: #000000 !important;
 }
 
 html[data-contraste="alto"] .modal-header .btn-close {
   filter: invert(1) !important;
-  border: 2px solid #000000 !important;
+  border: 2px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .modal-body {
@@ -780,8 +808,8 @@ html[data-contraste="alto"] .modal-body {
 }
 
 html[data-contraste="alto"] .modal-footer {
-  border-top: 2px solid #000000 !important;
-  background-color: #ffffff !important;
+  border-top: 2px solid #ffffff !important;
+  background-color: #000000 !important;
 }
 
 /* Alertas */
@@ -818,19 +846,19 @@ html[data-contraste="alto"] .close {
 
 /* Pagination */
 html[data-contraste="alto"] .pagination {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
 }
 
 html[data-contraste="alto"] .page-link {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  border: 1px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .page-link:hover {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-  border-color: #ffffff !important;
+  background-color: #111111 !important;
+  color: #00ffff !important;
+  border-color: #00ffff !important;
 }
 
 html[data-contraste="alto"] .page-item.active .page-link {
@@ -841,7 +869,7 @@ html[data-contraste="alto"] .page-item.active .page-link {
 
 html[data-contraste="alto"] .page-item.disabled .page-link {
   color: #555555 !important;
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
   border-color: #555555 !important;
 }
 
@@ -857,13 +885,13 @@ html[data-contraste="alto"] li {
 
 /* Collapses */
 html[data-contraste="alto"] .collapse {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
 }
 
 html[data-contraste="alto"] .accordion-button {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  border: 1px solid #ffffff !important;
   font-weight: bold !important;
 }
 
@@ -886,7 +914,7 @@ html[data-contraste="alto"] .accordion-body {
 
 /* Tabs */
 html[data-contraste="alto"] .nav-tabs {
-  border-bottom: 2px solid #000000 !important;
+  border-bottom: 2px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .nav-tabs .nav-link {
@@ -908,13 +936,13 @@ html[data-contraste="alto"] .nav-tabs .nav-link.active {
 }
 
 html[data-contraste="alto"] .tab-content {
-  background-color: #ffffff !important;
+  background-color: #000000 !important;
 }
 
 /* Breadcrumbs */
 html[data-contraste="alto"] .breadcrumb {
-  background-color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  background-color: #000000 !important;
+  border: 1px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .breadcrumb-item {
@@ -937,13 +965,13 @@ html[data-contraste="alto"] .breadcrumb-item.active {
 
 /* Progress Bars */
 html[data-contraste="alto"] .progress {
-  background-color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  background-color: #333333 !important;
+  border: 1px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .progress-bar {
-  background-color: #000000 !important;
-  color: #ffffff !important;
+  background-color: #00ffff !important;
+  color: #000000 !important;
   font-weight: bold !important;
 }
 
@@ -959,14 +987,14 @@ html[data-contraste="alto"] .spinner-grow {
 
 /* Popovers */
 html[data-contraste="alto"] .popover {
-  background-color: #ffffff !important;
-  border: 2px solid #000000 !important;
+  background-color: #000000 !important;
+  border: 2px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .popover-header {
   background-color: #1a1a1a !important;
   color: #ffffff !important;
-  border-bottom: 1px solid #000000 !important;
+  border-bottom: 1px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .popover-body {
@@ -977,7 +1005,7 @@ html[data-contraste="alto"] .popover-body {
 html[data-contraste="alto"] .tooltip-inner {
   background-color: #000000 !important;
   color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  border: 1px solid #ffffff !important;
 }
 
 html[data-contraste="alto"] .tooltip-arrow {
@@ -1248,3 +1276,15 @@ body > .skiptranslate:not(#google_translate_element) {
   overflow: hidden !important;
 }
 /* ========== FIN GOOGLE TRANSLATE ========== */
+
+/* =========================================================================
+   CAROUSEL ALTO CONTRASTE
+   ========================================================================= */
+html[data-contraste="alto"] .carousel-text {
+  color: #ffffff !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  padding: 0.1em 0.3em !important;
+  border-radius: 12px !important;
+  display: inline-block !important;
+  backdrop-filter: blur(4px);
+}

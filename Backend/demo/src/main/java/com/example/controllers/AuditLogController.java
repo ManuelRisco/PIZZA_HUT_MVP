@@ -49,9 +49,9 @@ public class AuditLogController {
             if (log.getUserId() != null) {
                 com.example.models.Usuario u = usersMap.get(log.getUserId().longValue());
                 if (u != null) {
-                    String displayName = (u.getName() != null && !u.getName().trim().isEmpty()) 
-                                         ? u.getName() 
-                                         : u.getEmail();
+                    String displayName = (u.getName() != null && !u.getName().trim().isEmpty())
+                            ? u.getName()
+                            : u.getEmail();
                     dto.setUserName(displayName);
                 }
             }
@@ -66,38 +66,40 @@ public class AuditLogController {
     }
 
     @GetMapping("/recientes")
-    public ResponseEntity<ApiResponse<List<AuditLogDTO>>> listarRecientes(@RequestParam(defaultValue = "24") int horas) {
+    public ResponseEntity<ApiResponse<List<AuditLogDTO>>> listarRecientes(
+            @RequestParam(value = "horas", defaultValue = "24") int horas) {
         List<AuditLog> logs = auditLogService.listarRecientes(horas);
         return ResponseEntity.ok(ApiResponse.success(mapToDTOs(logs)));
     }
 
     @GetMapping("/usuario/{userId}")
-    public ResponseEntity<ApiResponse<List<AuditLogDTO>>> listarPorUsuario(@PathVariable Integer userId) {
+    public ResponseEntity<ApiResponse<List<AuditLogDTO>>> listarPorUsuario(@PathVariable("userId") Integer userId) {
         List<AuditLog> logs = auditLogService.listarPorUsuario(userId);
         return ResponseEntity.ok(ApiResponse.success(mapToDTOs(logs)));
     }
 
     @GetMapping("/usuario/{userId}/rango")
     public ResponseEntity<ApiResponse<List<AuditLogDTO>>> listarPorUsuarioEnRango(
-            @PathVariable Integer userId,
+            @PathVariable("userId") Integer userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        
+
         List<AuditLog> logs = auditLogService.listarPorUsuarioEnRango(userId, start, end);
         return ResponseEntity.ok(ApiResponse.success(mapToDTOs(logs)));
     }
 
     @GetMapping("/tipo/{actionType}")
-    public ResponseEntity<ApiResponse<List<AuditLogDTO>>> listarPorTipo(@PathVariable AuditLog.ActionType actionType) {
+    public ResponseEntity<ApiResponse<List<AuditLogDTO>>> listarPorTipo(
+            @PathVariable("actionType") AuditLog.ActionType actionType) {
         List<AuditLog> logs = auditLogService.listarPorTipoAccion(actionType);
         return ResponseEntity.ok(ApiResponse.success(mapToDTOs(logs)));
     }
 
     @GetMapping("/entidad/{entityType}/{entityId}")
     public ResponseEntity<ApiResponse<List<AuditLogDTO>>> listarPorEntidad(
-            @PathVariable String entityType,
-            @PathVariable Integer entityId) {
-        
+            @PathVariable("entityType") String entityType,
+            @PathVariable("entityId") Integer entityId) {
+
         List<AuditLog> logs = auditLogService.listarPorEntidad(entityType, entityId);
         return ResponseEntity.ok(ApiResponse.success(mapToDTOs(logs)));
     }
@@ -110,31 +112,30 @@ public class AuditLogController {
 
     @GetMapping("/ip/{ipAddress}")
     public ResponseEntity<ApiResponse<List<AuditLogDTO>>> listarPorIP(
-            @PathVariable String ipAddress,
+            @PathVariable("ipAddress") String ipAddress,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        
+
         List<AuditLog> logs = auditLogService.listarPorIP(ipAddress, start, end);
         return ResponseEntity.ok(ApiResponse.success(mapToDTOs(logs)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<AuditLogDTO>> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<AuditLogDTO>> obtenerPorId(@PathVariable("id") Long id) {
         Optional<AuditLog> log = auditLogService.obtenerPorId(id);
         if (log.isPresent()) {
             AuditLogDTO dto = new AuditLogDTO(log.get());
             if (log.get().getUserId() != null) {
                 usuarioRepository.findById(log.get().getUserId().longValue())
-                    .ifPresent(u -> {
-                        String displayName = (u.getName() != null && !u.getName().trim().isEmpty()) 
-                                             ? u.getName() 
-                                             : u.getEmail();
-                        dto.setUserName(displayName);
-                    });
+                        .ifPresent(u -> {
+                            String displayName = (u.getName() != null && !u.getName().trim().isEmpty())
+                                    ? u.getName()
+                                    : u.getEmail();
+                            dto.setUserName(displayName);
+                        });
             }
             return ResponseEntity.ok(ApiResponse.success(dto));
         }
         return ResponseEntity.notFound().build();
     }
 }
-

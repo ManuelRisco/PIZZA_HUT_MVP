@@ -34,7 +34,7 @@ export class ClientePedidosComponent implements OnInit {
   
   estados = ['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
 
-  // Para el modal de reseÃ±a
+  // Para el modal de reseña
   nuevaReview: ReviewDTO = {
     orderId: 0,
     userId: 0,
@@ -62,13 +62,13 @@ export class ClientePedidosComponent implements OnInit {
     if (currentUser?.id) {
       this.reviewService.obtenerPorUsuario(currentUser.id).subscribe({
         next: (reviews) => {
-          // Guardar los IDs de pedidos que ya tienen reseÃ±a
+          // Guardar los IDs de pedidos que ya tienen reseña
           this.pedidosConReview = new Set(reviews.map(r => r.orderId));
-          // Guardar las reseÃ±as completas en un mapa
+          // Guardar las reseñas completas en un mapa
           this.reviewsDelUsuario = new Map(reviews.map(r => [r.orderId, r]));
         },
         error: (err) => {
-          console.error('Error al cargar reseÃ±as:', err);
+          console.error('Error al cargar reseñas:', err);
         }
       });
     }
@@ -172,7 +172,7 @@ export class ClientePedidosComponent implements OnInit {
 
   // Los clientes NO pueden cambiar el estado de sus pedidos
   cambiarEstado(order: OrderCompleteDTO, nuevoEstado: string): void {
-    // Este mÃ©todo estÃ¡ aquÃ­ para compatibilidad con el template pero no hace nada
+    // Este método está aquí para compatibilidad con el template pero no hace nada
     // Solo los administradores pueden cambiar estados
   }
 
@@ -242,7 +242,7 @@ export class ClientePedidosComponent implements OnInit {
     });
   }
 
-  // MÃ©todos para reseÃ±as
+  // Métodos para reseñas
   abrirModalReview(order: OrderCompleteDTO): void {
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser?.id) {
@@ -271,7 +271,7 @@ export class ClientePedidosComponent implements OnInit {
 
     const reviewExistente = this.reviewsDelUsuario.get(order.id || 0);
     if (!reviewExistente) {
-      this.mostrarMensaje('No se encontrÃ³ la reseÃ±a', true);
+      this.mostrarMensaje('No se encontró la reseña', true);
       return;
     }
 
@@ -317,13 +317,13 @@ export class ClientePedidosComponent implements OnInit {
   private actualizarReview(): void {
     this.reviewService.actualizar(this.nuevaReview.id as number, this.nuevaReview).subscribe({
       next: () => {
-        this.mostrarMensaje('Â¡ReseÃ±a actualizada exitosamente!');
+        this.mostrarMensaje('¡Reseña actualizada exitosamente!');
         this.reviewsDelUsuario.set(this.nuevaReview.orderId, this.nuevaReview);
         this.cerrarModalReview();
       },
       error: (err) => {
-        console.error('Error al actualizar reseÃ±a:', err);
-        this.mostrarMensaje('Error al actualizar la reseÃ±a', true);
+        console.error('Error al actualizar reseña:', err);
+        this.mostrarMensaje('Error al actualizar la reseña', true);
       }
     });
   }
@@ -331,14 +331,14 @@ export class ClientePedidosComponent implements OnInit {
   private crearNuevaReview(): void {
     this.reviewService.crear(this.nuevaReview).subscribe({
       next: (reviewCreada) => {
-        this.mostrarMensaje('Â¡ReseÃ±a enviada exitosamente!');
+        this.mostrarMensaje('¡Reseña enviada exitosamente!');
         this.pedidosConReview.add(this.nuevaReview.orderId);
         this.reviewsDelUsuario.set(this.nuevaReview.orderId, reviewCreada);
         this.cerrarModalReview();
       },
       error: (err) => {
-        console.error('Error al guardar reseÃ±a:', err);
-        this.mostrarMensaje('Error al enviar la reseÃ±a', true);
+        console.error('Error al guardar reseña:', err);
+        this.mostrarMensaje('Error al enviar la reseña', true);
       }
     });
   }
@@ -354,20 +354,20 @@ export class ClientePedidosComponent implements OnInit {
   eliminarReview(order: OrderCompleteDTO): void {
     const reviewExistente = this.reviewsDelUsuario.get(order.id || 0);
     if (!reviewExistente?.id) {
-      this.mostrarMensaje('No se encontrÃ³ la reseÃ±a', true);
+      this.mostrarMensaje('No se encontró la reseña', true);
       return;
     }
 
-    if (confirm('Â¿EstÃ¡s seguro de que deseas eliminar esta reseÃ±a?')) {
+    if (confirm('¿Estás seguro de que deseas eliminar esta reseña?')) {
       this.reviewService.eliminar(reviewExistente.id).subscribe({
         next: () => {
-          this.mostrarMensaje('ReseÃ±a eliminada exitosamente');
+          this.mostrarMensaje('Reseña eliminada exitosamente');
           this.pedidosConReview.delete(order.id || 0);
           this.reviewsDelUsuario.delete(order.id || 0);
         },
         error: (err) => {
-          console.error('Error al eliminar reseÃ±a:', err);
-          this.mostrarMensaje('Error al eliminar la reseÃ±a', true);
+          console.error('Error al eliminar reseña:', err);
+          this.mostrarMensaje('Error al eliminar la reseña', true);
         }
       });
     }

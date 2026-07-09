@@ -10,7 +10,6 @@ public class OrderDTO {
     
     private Integer userId;
     
-    @NotNull(message = "El ID de la dirección es obligatorio")
     private Integer addressId;
     
     private String status;

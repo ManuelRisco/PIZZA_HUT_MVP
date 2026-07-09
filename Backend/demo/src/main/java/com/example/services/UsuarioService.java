@@ -87,7 +87,7 @@ public class UsuarioService {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 
-    @Cacheable(value = "users", key = "#id")
+    @Cacheable(value = "users", key = "#p0")
     public Optional<Usuario> obtenerPorId(@NonNull Long id) {
         return usuarioRepository.findById(id);
     }
@@ -96,7 +96,7 @@ public class UsuarioService {
         return usuarioRepository.findAll();
     }
 
-    @CacheEvict(value = "users", key = "#id")
+    @CacheEvict(value = "users", key = "#p0")
     public Usuario actualizarUsuario(@NonNull Long id, Usuario usuarioActualizado) {
         Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
         if (usuarioOpt.isPresent()) {
@@ -156,7 +156,7 @@ public class UsuarioService {
 
     // M\u00e9todo espec\u00edfico para actualizar perfil sin tocar la
     // contrase\u00f1a
-    @CacheEvict(value = "users", key = "#id")
+    @CacheEvict(value = "users", key = "#p0")
     public Usuario actualizarPerfil(@NonNull Long id, String name, String email, String phone) {
         Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
         if (usuarioOpt.isEmpty()) {
@@ -178,7 +178,7 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    @CacheEvict(value = "users", key = "#id")
+    @CacheEvict(value = "users", key = "#p0")
     public boolean eliminarUsuario(@NonNull Long id) {
         if (usuarioRepository.existsById(id)) {
             usuarioRepository.deleteById(id);
@@ -191,7 +191,7 @@ public class UsuarioService {
      * Inactiva un usuario (Soft Delete)
      * Marca el campo deleted_at con la fecha actual
      */
-    @CacheEvict(value = "users", key = "#id")
+    @CacheEvict(value = "users", key = "#p0")
     public boolean inactivarUsuario(@NonNull Long id) {
         Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
         if (usuarioOpt.isPresent()) {
@@ -207,7 +207,7 @@ public class UsuarioService {
      * Reactiva un usuario previamente inactivado
      * Limpia el campo deleted_at
      */
-    @CacheEvict(value = "users", key = "#id")
+    @CacheEvict(value = "users", key = "#p0")
     public boolean reactivarUsuario(@NonNull Long id) {
         Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
         if (usuarioOpt.isPresent()) {
@@ -230,7 +230,7 @@ public class UsuarioService {
     /**
      * Cambia la contrase\u00f1a de un usuario
      */
-    @CacheEvict(value = "users", key = "#id")
+    @CacheEvict(value = "users", key = "#p0")
     public boolean cambiarPassword(@NonNull Long id, String nuevaPassword) {
         Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
         if (usuarioOpt.isPresent()) {

@@ -42,7 +42,7 @@ export class Categorias implements OnInit {
   error = '';
   success = '';
 
-  // PaginaciÃ³n
+  // Paginación
   currentPage = 1;
   itemsPerPage = 10;
 
@@ -80,7 +80,7 @@ export class Categorias implements OnInit {
         this.aplicarPaginacion();
       },
       error: (error) => {
-        this.mostrarMensajeError(error.error?.message || 'Error al cargar las categorÃ­as');
+        this.mostrarMensajeError(error.error?.message || 'Error al cargar las categorías');
         this.loading = false;
         this.cdr.detectChanges();
       }
@@ -115,7 +115,7 @@ export class Categorias implements OnInit {
         this.actualizarCategoriasEnUso();
       },
       error: (error) => {
-        this.mostrarMensajeError(error.error?.message || 'Error al recargar las categorÃ­as');
+        this.mostrarMensajeError(error.error?.message || 'Error al recargar las categorías');
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -172,12 +172,12 @@ export class Categorias implements OnInit {
     }
 
     if (this.verificarNombreDuplicado()) {
-      this.mostrarMensajeError('Ya existe una categorÃ­a con ese nombre');
+      this.mostrarMensajeError('Ya existe una categoría con ese nombre');
       return;
     }
 
     if (this.verificarOrdenDuplicado()) {
-      this.mostrarMensajeError('El orden de visualizaciÃ³n ya estÃ¡ en uso');
+      this.mostrarMensajeError('El orden de visualización ya está en uso');
       return;
     }
 
@@ -197,12 +197,12 @@ export class Categorias implements OnInit {
 
       this.categoriaService.actualizarCategoria(this.selectedCategoriaId, payload).subscribe({
         next: () => {
-          this.mostrarMensajeExito('CategorÃ­a actualizada correctamente');
+          this.mostrarMensajeExito('Categoría actualizada correctamente');
           this.cancelar();
           this.recargarListaSinLoading();
         },
         error: (error) => {
-          this.mostrarMensajeError(error.error?.message || 'Error al actualizar la categorÃ­a');
+          this.mostrarMensajeError(error.error?.message || 'Error al actualizar la categoría');
           this.loading = false;
         },
         complete: () => {
@@ -212,12 +212,12 @@ export class Categorias implements OnInit {
     } else {
       this.categoriaService.crearCategoria(payload).subscribe({
         next: () => {
-          this.mostrarMensajeExito('CategorÃ­a creada correctamente');
+          this.mostrarMensajeExito('Categoría creada correctamente');
           this.cancelar();
           this.recargarListaSinLoading();
         },
         error: (error) => {
-          this.mostrarMensajeError(error.error?.message || 'Error al crear la categorÃ­a');
+          this.mostrarMensajeError(error.error?.message || 'Error al crear la categoría');
           this.loading = false;
         },
         complete: () => {
@@ -228,7 +228,7 @@ export class Categorias implements OnInit {
   }
 
   eliminarCategoria(id: number, nombre: string): void {
-    if (!confirm(`Â¿EstÃ¡ seguro de que desea eliminar la categorÃ­a "${nombre}"?`)) {
+    if (!confirm(`¿Está seguro de que desea eliminar la categoría "${nombre}"?`)) {
       return;
     }
 
@@ -237,12 +237,12 @@ export class Categorias implements OnInit {
 
     this.categoriaService.eliminarCategoria(id).subscribe({
       next: () => {
-        this.mostrarMensajeExito('CategorÃ­a eliminada correctamente');
+        this.mostrarMensajeExito('Categoría eliminada correctamente');
         this.recargarListaSinLoading();
         this.cargarPizzasEnUso();
       },
       error: (error) => {
-        this.mostrarMensajeError(error.error?.message || 'Error al eliminar la categorÃ­a');
+        this.mostrarMensajeError(error.error?.message || 'Error al eliminar la categoría');
         this.loading = false;
       },
       complete: () => {
@@ -348,10 +348,10 @@ export class Categorias implements OnInit {
 
   private actualizarCategoriasEnUso(): void {
     this.categoriasEnUso.clear();
-    // Buscar categorÃ­as en uso por nombre
+    // Buscar categorías en uso por nombre
     this.pizzas.forEach(pizza => {
       if (pizza.categoryName) {
-        // Encontrar la categorÃ­a por nombre para obtener su ID
+        // Encontrar la categoría por nombre para obtener su ID
         const categoria = this.categorias.find(cat => cat.name === pizza.categoryName);
         if (categoria?.id) {
           this.categoriasEnUso.add(categoria.id);
@@ -363,12 +363,12 @@ export class Categorias implements OnInit {
   formatearFecha(fechaString: string): string {
     try {
       const fecha = new Date(fechaString);
-      // Verificar si la fecha es vÃ¡lida
+      // Verificar si la fecha es válida
       if (Number.isNaN(fecha.getTime())) {
         return 'N/D';
       }
       
-      // Formatear la fecha en espaÃ±ol
+      // Formatear la fecha en español
       return fecha.toLocaleDateString('es-ES', {
         year: 'numeric',
         month: '2-digit',
