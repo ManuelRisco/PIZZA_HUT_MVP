@@ -1,10 +1,12 @@
 {
   "css.lint.unknownAtRules": "ignore",
+  "java.jdt.ls.java.home": "C:\\Program Files\\Java\\jdk-21.0.10.7-hotspot",
+  "java.server.launchMode": "Standard",
+  "java.import.gradle.enabled": true,
+  "java.import.gradle.wrapper.enabled": true,
   "java.compile.nullAnalysis.mode": "automatic",
-  "java.configuration.updateBuildConfiguration": "interactive",
-  "java.settings.url": "",
+  "java.configuration.updateBuildConfiguration": "automatic",
   "java.jdt.ls.vmargs": "-Xmx1G",
-  "java.project.referencedLibraries": [],
   "java.compile.compilerArgs": ["-parameters"],
   "java.debug.settings.onBuildFailureProceed": true
 }
