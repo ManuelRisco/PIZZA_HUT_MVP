@@ -8,6 +8,7 @@ export interface Extra {
   id?: number;
   name: string;
   description?: string;
+  imageUrl?: string;
   price: number;
   category: 'BEBIDA' | 'POSTRE' | 'ENTRADA' | 'COMPLEMENTO';
   isAvailable: boolean;

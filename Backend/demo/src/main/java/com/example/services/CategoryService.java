@@ -60,7 +60,6 @@ public class CategoryService {
             }
             category.setName(categoryActualizada.getName());
             category.setDescription(categoryActualizada.getDescription());
-            category.setImageUrl(categoryActualizada.getImageUrl());
             category.setDisplayOrder(categoryActualizada.getDisplayOrder());
             category.setDeletedAt(categoryActualizada.getDeletedAt());
             return categoryRepository.save(category);

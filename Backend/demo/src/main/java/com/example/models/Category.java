@@ -21,9 +21,6 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(length = 500)
-    private String imageUrl;
-
     @Column(nullable = false)
     private Integer displayOrder = 0;
 
@@ -46,12 +43,11 @@ public class Category {
     public Category() {}
 
     // Constructor completo
-    public Category(Integer id, String name, String description, String imageUrl, Integer displayOrder,
+    public Category(Integer id, String name, String description, Integer displayOrder,
                     LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt, List<Pizza> pizzas) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.imageUrl = imageUrl;
         this.displayOrder = displayOrder;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -68,9 +64,6 @@ public class Category {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     public Integer getDisplayOrder() { return displayOrder; }
     public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }

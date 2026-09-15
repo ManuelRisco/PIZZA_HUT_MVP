@@ -18,6 +18,9 @@ public class Extra {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(length = 500)
+    private String imageUrl;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
@@ -51,9 +54,10 @@ public class Extra {
     // ==== Constructores ====
     public Extra() {}
 
-    public Extra(String name, String description, BigDecimal price, ExtraCategory category) {
+    public Extra(String name, String description, String imageUrl, BigDecimal price, ExtraCategory category) {
         this.name = name;
         this.description = description;
+        this.imageUrl = imageUrl;
         this.price = price;
         this.category = category;
     }
@@ -92,6 +96,14 @@ public class Extra {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public BigDecimal getPrice() {

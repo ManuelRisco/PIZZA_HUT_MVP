@@ -72,6 +72,7 @@ public class ExtraService {
         Extra extra = extraOpt.get();
         extra.setName(extraActualizado.getName());
         extra.setDescription(extraActualizado.getDescription());
+        extra.setImageUrl(extraActualizado.getImageUrl());
         extra.setPrice(extraActualizado.getPrice());
         extra.setCategory(extraActualizado.getCategory());
         extra.setIsAvailable(extraActualizado.getIsAvailable());

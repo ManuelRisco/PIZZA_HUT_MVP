@@ -3,7 +3,6 @@ export interface CategoryDTO {
   id?: number;
   name: string;
   description?: string;
-  imageUrl?: string;
   displayOrder?: number;
   updatedAt?: string; // Fecha de actualización en formato ISO string
 }

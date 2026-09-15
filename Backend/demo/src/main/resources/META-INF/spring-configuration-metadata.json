@@ -6,7 +6,18 @@
       "description": "JWT Secret Key for signing tokens."
     },
     {
+      "name": "app.jwt-secret",
+      "type": "java.lang.String",
+      "description": "JWT Secret Key for signing tokens."
+    },
+    {
       "name": "app.jwtExpirationInMs",
+      "type": "java.lang.Integer",
+      "description": "JWT Token Expiration time in milliseconds.",
+      "defaultValue": 900000
+    },
+    {
+      "name": "app.jwt-expiration-in-ms",
       "type": "java.lang.Integer",
       "description": "JWT Token Expiration time in milliseconds.",
       "defaultValue": 900000
@@ -16,6 +27,42 @@
       "type": "java.lang.Integer",
       "description": "JWT Refresh Token Expiration time in milliseconds.",
       "defaultValue": 86400000
+    },
+    {
+      "name": "app.jwt-refresh-expiration-in-ms",
+      "type": "java.lang.Integer",
+      "description": "JWT Refresh Token Expiration time in milliseconds.",
+      "defaultValue": 86400000
+    },
+    {
+      "name": "app.upload.dir",
+      "type": "java.lang.String",
+      "description": "Directorio para almacenar archivos e imágenes subidos.",
+      "defaultValue": "uploads"
+    },
+    {
+      "name": "app.upload.max-width",
+      "type": "java.lang.Integer",
+      "description": "Ancho máximo en píxeles para redimensionar imágenes.",
+      "defaultValue": 800
+    },
+    {
+      "name": "app.upload.max-height",
+      "type": "java.lang.Integer",
+      "description": "Alto máximo en píxeles para redimensionar imágenes.",
+      "defaultValue": 800
+    },
+    {
+      "name": "app.upload.thumbnail-width",
+      "type": "java.lang.Integer",
+      "description": "Ancho del thumbnail en píxeles.",
+      "defaultValue": 200
+    },
+    {
+      "name": "app.upload.thumbnail-height",
+      "type": "java.lang.Integer",
+      "description": "Alto del thumbnail en píxeles.",
+      "defaultValue": 200
     }
   ]
 }

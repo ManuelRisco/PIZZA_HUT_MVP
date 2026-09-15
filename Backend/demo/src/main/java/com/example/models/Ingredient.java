@@ -9,7 +9,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "ingredients")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Ingredient {
 
     @Id
@@ -26,27 +26,28 @@ public class Ingredient {
     private boolean isAvailable = true;
 
     @Column(nullable = false)
-    @JsonIgnore  // Ocultar metadatos internos
+    @JsonIgnore // Ocultar metadatos internos
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(nullable = false)
-    @JsonIgnore  // Ocultar metadatos internos
+    @JsonIgnore // Ocultar metadatos internos
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @JsonIgnore  // Ocultar metadatos internos
+    @JsonIgnore // Ocultar metadatos internos
     private LocalDateTime deletedAt;
 
-    @OneToMany(mappedBy = "ingredient", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "ingredient", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<PizzaIngredient> pizzaIngredients;
 
     // Constructor vac\u00edo
-    public Ingredient() {}
+    public Ingredient() {
+    }
 
     // Constructor completo
     public Ingredient(Integer id, String name, java.math.BigDecimal extraCost, boolean isAvailable,
-                      LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt,
-                      List<PizzaIngredient> pizzaIngredients) {
+            LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt,
+            List<PizzaIngredient> pizzaIngredients) {
         this.id = id;
         this.name = name;
         this.extraCost = extraCost;
@@ -58,33 +59,74 @@ public class Ingredient {
     }
 
     // Getters y setters
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public Integer getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
-    public java.math.BigDecimal getExtraCost() { return extraCost; }
-    public void setExtraCost(java.math.BigDecimal extraCost) { this.extraCost = extraCost; }
+    public String getName() {
+        return name;
+    }
 
-    public boolean isAvailable() { return isAvailable; }
-    public void setAvailable(boolean available) { this.isAvailable = available; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public java.math.BigDecimal getExtraCost() {
+        return extraCost;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setExtraCost(java.math.BigDecimal extraCost) {
+        this.extraCost = extraCost;
+    }
 
-    public LocalDateTime getDeletedAt() { return deletedAt; }
-    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    public boolean isAvailable() {
+        return isAvailable;
+    }
 
-    public List<PizzaIngredient> getPizzaIngredients() { return pizzaIngredients; }
-    public void setPizzaIngredients(List<PizzaIngredient> pizzaIngredients) { this.pizzaIngredients = pizzaIngredients; }
+    public void setAvailable(boolean available) {
+        this.isAvailable = available;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    public List<PizzaIngredient> getPizzaIngredients() {
+        return pizzaIngredients;
+    }
+
+    public void setPizzaIngredients(List<PizzaIngredient> pizzaIngredients) {
+        this.pizzaIngredients = pizzaIngredients;
+    }
 
     @PrePersist
     protected void onCreate() {
-        if (this.createdAt == null) this.createdAt = LocalDateTime.now();
+        if (this.createdAt == null)
+            this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
 

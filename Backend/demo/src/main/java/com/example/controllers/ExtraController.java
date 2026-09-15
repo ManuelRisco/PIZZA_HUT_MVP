@@ -73,6 +73,8 @@ public class ExtraController {
         try {
             Extra extra = new Extra();
             extra.setName(extraDTO.getName());
+            extra.setDescription(extraDTO.getDescription());
+            extra.setImageUrl(extraDTO.getImageUrl());
             extra.setPrice(extraDTO.getPrice());
             if (extraDTO.getCategory() != null) {
                 extra.setCategory(Extra.ExtraCategory.valueOf(extraDTO.getCategory()));
@@ -90,6 +92,8 @@ public class ExtraController {
         try {
             Extra extra = new Extra();
             extra.setName(extraDTO.getName());
+            extra.setDescription(extraDTO.getDescription());
+            extra.setImageUrl(extraDTO.getImageUrl());
             extra.setPrice(extraDTO.getPrice());
             if (extraDTO.getCategory() != null) {
                 extra.setCategory(Extra.ExtraCategory.valueOf(extraDTO.getCategory()));

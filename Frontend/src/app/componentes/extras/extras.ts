@@ -39,6 +39,7 @@ export class ExtrasComponent implements OnInit {
     this.extraForm = this.formBuilder.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       description: [''],
+      imageUrl: [''],
       price: ['', [Validators.required, Validators.min(0)]],
       category: ['BEBIDA', Validators.required],
       isAvailable: [true],
@@ -102,7 +103,7 @@ export class ExtrasComponent implements OnInit {
   abrirFormulario(): void {
     this.showForm = true;
     this.editMode = false;
-    this.extraForm.reset({ isAvailable: true, category: 'BEBIDA', displayOrder: 0 });
+    this.extraForm.reset({ isAvailable: true, category: 'BEBIDA', displayOrder: 0, imageUrl: '' });
   }
 
   editarExtra(extra: Extra): void {

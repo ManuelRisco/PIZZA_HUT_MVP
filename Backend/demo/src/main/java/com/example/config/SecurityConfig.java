@@ -95,6 +95,13 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/extras/**").hasRole("ADMIN")
                 
                 // ==========================================
+                // UPLOADS (Imágenes estáticas y subida de archivos)
+                // ==========================================
+                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/uploads/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/uploads/**").hasRole("ADMIN")
+                
+                // ==========================================
                 // PROMOCIONES
                 // ==========================================
                 .requestMatchers(HttpMethod.GET, "/api/promociones/**").permitAll()

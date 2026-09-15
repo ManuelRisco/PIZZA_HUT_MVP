@@ -71,6 +71,19 @@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col relative group"
              [ngClass]="!extra.isAvailable ? 'opacity-75 grayscale-[0.5]' : ''">
           
+          <!-- Imagen -->
+          <div class="h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
+            @if (extra.imageUrl) {
+              <img [src]="extra.imageUrl" [alt]="extra.name"
+                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                   loading="lazy">
+            } @else {
+              <div class="flex flex-col items-center justify-center text-gray-300">
+                <i class="bi text-4xl" [ngClass]="obtenerIconoCategoria(extra.category || '')"></i>
+              </div>
+            }
+          </div>
+
           <!-- Contenido -->
           <div class="p-6 flex flex-col flex-1 relative z-10">
             <!-- Badge Categoría -->

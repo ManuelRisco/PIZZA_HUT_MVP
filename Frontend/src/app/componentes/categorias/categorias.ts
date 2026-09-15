@@ -5,7 +5,6 @@ import { HttpClientModule } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { CategoriaService } from '../../services/categoria.service';
 import { PizzaService } from '../../services/pizza.service';
-import { ImageOptimizerService } from '../../services/image-optimizer.service';
 import { CategoryDTO, PizzaDTO } from '../../models/pizza.interface';
 import { PaginationComponent } from '../pagination/pagination';
 
@@ -23,11 +22,6 @@ import { PaginationComponent } from '../pagination/pagination';
   styleUrl: './categorias.css'
 })
 export class Categorias implements OnInit {
-  onImageError(event: any): void {
-    if (event.target) {
-      event.target.style.display = 'none';
-    }
-  }
 
   categorias: CategoryDTO[] = [];
   categoriasPaginadas: CategoryDTO[] = [];
@@ -51,13 +45,11 @@ export class Categorias implements OnInit {
     private readonly pizzaService: PizzaService,
     private readonly formBuilder: FormBuilder,
     private readonly cdr: ChangeDetectorRef,
-    private readonly router: Router,
-    private readonly imageOptimizer: ImageOptimizerService
+    private readonly router: Router
   ) {
     this.categoriaForm = this.formBuilder.group({
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       description: [''],
-      imageUrl: [''],
       displayOrder: [1, [Validators.required, Validators.min(1)]]
     });
   }
@@ -133,7 +125,6 @@ export class Categorias implements OnInit {
     this.categoriaForm.reset({
       name: '',
       description: '',
-      imageUrl: '',
       displayOrder: this.obtenerSiguienteOrden()
     });
     this.limpiarMensajes();
@@ -146,7 +137,6 @@ export class Categorias implements OnInit {
     this.categoriaForm.patchValue({
       name: categoria.name,
       description: categoria.description || '',
-      imageUrl: categoria.imageUrl || '',
       displayOrder: categoria.displayOrder ?? 1
     });
     this.limpiarMensajes();
@@ -188,7 +178,6 @@ export class Categorias implements OnInit {
     const payload: CategoryDTO = {
       name: (formValue.name ?? '').trim(),
       description: formValue.description?.trim() || '',
-      imageUrl: formValue.imageUrl?.trim() || '',
       displayOrder: Math.max(1, Number(formValue.displayOrder) || 1)
     };
 
@@ -380,13 +369,7 @@ export class Categorias implements OnInit {
       return 'N/D';
     }
   }
-
-  /**
-   * Obtiene la URL optimizada de una imagen
-   */
-  getOptimizedImageUrl(imageUrl: string | undefined): string {
-    return this.imageOptimizer.optimizeImageUrl(imageUrl, 'low');
-  }
 }
+
 
 

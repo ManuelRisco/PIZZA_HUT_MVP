@@ -8,7 +8,6 @@ public class CategoryDTO {
     private Integer id;
     private String name;
     private String description;
-    private String imageUrl;
     private Integer displayOrder;
     private LocalDateTime updatedAt;
 
@@ -20,7 +19,6 @@ public class CategoryDTO {
         this.id = category.getId();
         this.name = category.getName();
         this.description = category.getDescription();
-        this.imageUrl = category.getImageUrl();
         this.displayOrder = category.getDisplayOrder();
         this.updatedAt = category.getUpdatedAt();
     }
@@ -34,9 +32,6 @@ public class CategoryDTO {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     public Integer getDisplayOrder() { return displayOrder; }
     public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }

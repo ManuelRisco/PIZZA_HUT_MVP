@@ -9,6 +9,7 @@ public class ExtraDTO {
     private Integer id;
     private String name;
     private String description;
+    private String imageUrl;
     private BigDecimal price;
     private String category;
     private Boolean isAvailable;
@@ -24,6 +25,7 @@ public class ExtraDTO {
         this.id = extra.getId();
         this.name = extra.getName();
         this.description = extra.getDescription();
+        this.imageUrl = extra.getImageUrl();
         this.price = extra.getPrice();
         this.category = extra.getCategory() != null ? extra.getCategory().name() : null;
         this.isAvailable = extra.getIsAvailable();
@@ -55,6 +57,14 @@ public class ExtraDTO {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public BigDecimal getPrice() {
