@@ -9,24 +9,25 @@
 # 2. NodeJS y Angular (Frontend)
 # ==========================================
 node_modules/
-/.angular/cache/
-/dist/
-/tmp/
-/out-tsc/
-/bazel-out/
+.angular/
+dist/
+tmp/
+out-tsc/
+bazel-out/
+.scannerwork/
 
 # Archivos de logs de npm/yarn
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-/.pnpm-debug.log*
+.pnpm-debug.log*
 
 # ==========================================
 # 3. Java y Gradle (Backend Spring Boot)
 # ==========================================
 # Caché y archivos locales de compilación de Gradle
 .gradle/
-/build/
+build/
 
 # Archivos de empaquetado final de Java
 *.class

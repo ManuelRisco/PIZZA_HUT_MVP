@@ -51,26 +51,10 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-    // Agregar Mockito como agente
-    jvmArgs = ["-javaagent:${classpath.find { it.name.contains('byte-buddy-agent') }.absolutePath}"]
-}
-
 // IMPORTANTE: La flag '-parameters' es REQUERIDA por Spring para resolver parámetros en request mappings
-// Sin ella, obtendrás: "Name for argument of type [java.lang.Integer] not specified, and parameter name information not available"
-// Si experimentas este error:
-//   1. Ejecuta: ./gradlew clean build
-//   2. Reinicia la aplicación Spring Boot
 tasks.withType(JavaCompile).configureEach {
 	options.compilerArgs.add('-parameters')
 	options.encoding = 'UTF-8'
-}
-
-// Task conveniente para reconstruir desde cero
-task buildFresh() {
-	dependsOn clean, build
-	description = 'Limpia y construye desde cero (útil si hay errores de compilación)'
 }
 
 // ===== JaCoCo (Cobertura de Tests) =====
@@ -79,8 +63,11 @@ jacoco {
 }
 
 tasks.named('test') {
-	ignoreFailures = true
-	finalizedBy jacocoTestReport
+    useJUnitPlatform()
+    // Agregar Mockito como agente
+    jvmArgs = ["-javaagent:${classpath.find { it.name.contains('byte-buddy-agent') }.absolutePath}"]
+    ignoreFailures = true
+    finalizedBy jacocoTestReport
 }
 
 jacocoTestReport {
