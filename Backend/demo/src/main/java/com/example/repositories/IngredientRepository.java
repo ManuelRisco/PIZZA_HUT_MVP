@@ -12,6 +12,10 @@ import java.util.Optional;
 
 public interface IngredientRepository extends JpaRepository<Ingredient, Integer> {
     boolean existsByName(String name);
+    boolean existsByNameAndDeletedAtIsNull(String name);
+    boolean existsByNameAndDeletedAtIsNullAndIdNot(String name, Integer id);
+    Optional<Ingredient> findByName(String name);
+    Optional<Ingredient> findByNameAndDeletedAtIsNull(String name);
     List<Ingredient> findByDeletedAtIsNull();
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

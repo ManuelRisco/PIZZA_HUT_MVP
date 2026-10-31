@@ -89,7 +89,7 @@ export class ExtrasComponent implements OnInit {
   cargarExtras(): void {
     this.loading = true;
     this.loadError = '';
-    this.extraService.listarTodos().subscribe({
+    this.extraService.listarTodos(true).subscribe({
       next: (data) => {
         this.todosLosExtras = data || [];
         this.recalcularKpis();
@@ -291,6 +291,23 @@ export class ExtrasComponent implements OnInit {
       error: (err) => {
         this.guardando = false;
         this.error = err.error?.message || 'Error al guardar extra';
+      }
+    });
+  }
+
+
+  restaurarExtra(id: number, nombre?: string): void {
+    if (!confirm('¿Desea restaurar el extra' + (nombre ? ` "${nombre}"` : '') + '?')) return;
+
+    this.extraService.restaurar(id).subscribe({
+      next: () => {
+        this.success = 'Extra' + (nombre ? ` "${nombre}"` : '') + ' restaurado con éxito';
+        this.cargarExtras();
+        setTimeout(() => this.success = '', 3000);
+      },
+      error: (err) => {
+        this.error = err?.error?.message || 'Error al restaurar extra';
+        setTimeout(() => this.error = '', 3000);
       }
     });
   }

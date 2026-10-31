@@ -17,9 +17,9 @@ public class Size {
     @Column(nullable = false, precision = 5, scale = 2)
     private BigDecimal recipeMultiplier = BigDecimal.ONE;
     @Column(nullable = false)
-    private Integer stockQuantity = 50;
+    private Integer stockQuantity = 0;
     @Column(nullable = false)
-    private Integer minStock = 10;
+    private Integer minStock = 0;
     private String description;
     private Integer displayOrder;
     private LocalDateTime createdAt;

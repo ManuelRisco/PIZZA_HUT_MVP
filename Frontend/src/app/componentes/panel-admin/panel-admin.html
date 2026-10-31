@@ -601,8 +601,8 @@
                     <button
                       type="button"
                       class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 inline-flex items-center justify-center transition-colors cursor-pointer"
-                      (click)="cambiarVista('orders')"
-                      title="Ir a gestión de pedidos"
+                      (click)="verDetallePedido(pedido)"
+                      title="Ver detalle del pedido"
                     >
                       <i class="bi bi-eye"></i>
                     </button>
@@ -633,7 +633,9 @@
         <div *ngIf="vistaActual === 'sizes'"><app-sizes></app-sizes></div>
         <div *ngIf="vistaActual === 'extras'"><app-extras></app-extras></div>
         <div *ngIf="vistaActual === 'promociones'"><app-promociones></app-promociones></div>
-        <div *ngIf="vistaActual === 'orders'"><app-orders></app-orders></div>
+        <div *ngIf="vistaActual === 'orders'">
+          <app-orders [orderIdToOpen]="pedidoSeleccionadoId" (orderOpened)="pedidoSeleccionadoId = null"></app-orders>
+        </div>
         <div *ngIf="vistaActual === 'payments'"><app-payments></app-payments></div>
         <div *ngIf="vistaActual === 'metodos-pago'"><app-metodos-pago></app-metodos-pago></div>
         <div *ngIf="vistaActual === 'reviews'"><app-reviews></app-reviews></div>
@@ -693,7 +695,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
-                <tr *ngFor="let pedido of diaModalPedidosPaginados; trackBy: trackByPedido" class="hover:bg-gray-50 transition-colors">
+                <tr *ngFor="let pedido of diaModalPedidosPaginados; trackBy: trackByPedido" (click)="diaSeleccionado = null; verDetallePedido(pedido)" class="hover:bg-red-50/60 transition-colors cursor-pointer" title="Ver detalle de este pedido">
                   <td class="px-5 py-3.5 font-black text-gray-900">#PH-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
                   <td class="px-5 py-3.5 text-gray-600">{{ pedido.createdAt | date:'shortTime' }}</td>
                   <td class="px-5 py-3.5">

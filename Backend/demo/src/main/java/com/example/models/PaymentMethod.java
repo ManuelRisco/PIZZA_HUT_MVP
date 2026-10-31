@@ -32,6 +32,9 @@ public class PaymentMethod {
     @JsonIgnore
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    @Column(name = "deletedAt")
+    private LocalDateTime deletedAt;
+
     // Ciclo de vida
     @PrePersist
     protected void onCreate() {
@@ -44,7 +47,7 @@ public class PaymentMethod {
         updatedAt = LocalDateTime.now();
     }
 
-    // Constructor vac\u00edo
+    // Constructor vacío
     public PaymentMethod() {}
 
     // Constructor completo
@@ -57,6 +60,12 @@ public class PaymentMethod {
         this.displayOrder = displayOrder;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    public PaymentMethod(Integer id, String name, String description, boolean active, 
+                        int displayOrder, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
+        this(id, name, description, active, displayOrder, createdAt, updatedAt);
+        this.deletedAt = deletedAt;
     }
 
     // Getters y Setters
@@ -80,4 +89,7 @@ public class PaymentMethod {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

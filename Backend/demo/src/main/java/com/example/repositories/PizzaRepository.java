@@ -1,6 +1,8 @@
 package com.example.repositories;
 
 import com.example.models.Pizza;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
@@ -13,6 +15,12 @@ public interface PizzaRepository extends JpaRepository<Pizza, Integer> {
 
     @EntityGraph(attributePaths = { "category" })
     List<Pizza> findByDeletedAtIsNull();
+
+    @EntityGraph(attributePaths = { "category" })
+    Page<Pizza> findByDeletedAtIsNull(Pageable pageable);
+
+    @EntityGraph(attributePaths = { "category" })
+    Page<Pizza> findAll(Pageable pageable);
 
     @EntityGraph(attributePaths = { "category" })
     Optional<Pizza> findById(Integer id);

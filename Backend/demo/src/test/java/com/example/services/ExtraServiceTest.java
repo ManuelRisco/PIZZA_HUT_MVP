@@ -90,4 +90,20 @@ class ExtraServiceTest {
         verify(extraRepository, times(1)).findById(1);
         verify(extraRepository, times(1)).save(extra);
     }
+
+    @Test
+    @DisplayName("Adicional.7: Restaurar Extra soft-deleted")
+    void testRestaurar() {
+        extra.setDeletedAt(java.time.LocalDateTime.now());
+        when(extraRepository.findById(1)).thenReturn(Optional.of(extra));
+        when(extraRepository.save(any(Extra.class))).thenReturn(extra);
+
+        boolean result = extraService.restaurarExtra(1);
+
+        assertTrue(result);
+        assertNull(extra.getDeletedAt());
+        assertTrue(extra.getIsAvailable());
+        verify(extraRepository, times(1)).findById(1);
+        verify(extraRepository, times(1)).save(extra);
+    }
 }

@@ -31,8 +31,9 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CategoryDTO>>> getAllCategories() {
-        List<Category> categorias = categoryService.listarCategorias();
+    public ResponseEntity<ApiResponse<List<CategoryDTO>>> getAllCategories(
+            @RequestParam(value = "includeDeleted", defaultValue = "false") boolean includeDeleted) {
+        List<Category> categorias = categoryService.listarTodasCategorias(includeDeleted);
         return ResponseEntity.ok(ApiResponse.success(categoryMapper.toDtoList(categorias)));
     }
 
@@ -73,6 +74,15 @@ public class CategoryController {
         if (!categoryService.eliminarCategoria(id)) {
             throw new ResourceNotFoundException(MSG_NOT_FOUND_PREFIX + id);
         }
-        return ResponseEntity.ok(ApiResponse.success(null, "Categoría eliminada correctamente"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Categoría eliminada lógicamente"));
+    }
+
+    @PatchMapping("/{id}/restore")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> restoreCategory(@PathVariable("id") Integer id) {
+        if (!categoryService.restaurarCategoria(id)) {
+            throw new ResourceNotFoundException(MSG_NOT_FOUND_PREFIX + id);
+        }
+        return ResponseEntity.ok(ApiResponse.success(null, "Categoría restaurada con éxito"));
     }
 }

@@ -23,6 +23,7 @@ public class ExtraDTO {
     private boolean outOfStock;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 
     // Constructor vacío
     public ExtraDTO() {}
@@ -51,6 +52,7 @@ public class ExtraDTO {
         this.lowStock = !this.outOfStock && this.stockQuantity <= this.minStock;
         this.createdAt = extra.getCreatedAt();
         this.updatedAt = extra.getUpdatedAt();
+        this.deletedAt = extra.getDeletedAt();
     }
 
     // Getters y Setters
@@ -101,4 +103,7 @@ public class ExtraDTO {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

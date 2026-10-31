@@ -225,10 +225,17 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
+        /**
+     * Eliminación Lógica (Soft Delete).
+     * Nunca se borra físicamente de la base de datos para mantener integridad referencial e historial.
+     */
     @CacheEvict(value = "users", key = "#p0")
     public boolean eliminarUsuario(@NonNull Long id) {
-        if (usuarioRepository.existsById(id)) {
-            usuarioRepository.deleteById(id);
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
+        if (usuarioOpt.isPresent()) {
+            Usuario usuario = usuarioOpt.get();
+            usuario.setDeletedAt(LocalDateTime.now());
+            usuarioRepository.save(usuario);
             return true;
         }
         return false;

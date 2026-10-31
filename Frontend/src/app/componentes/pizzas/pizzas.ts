@@ -149,7 +149,7 @@ export class Pizzas implements OnInit, OnDestroy {
     this.loading = true;
     this.loadError = '';
 
-    this.pizzaService.listarPizzas().subscribe({
+    this.pizzaService.listarPizzas(true).subscribe({
       next: pizzas => {
         this.todasLasPizzas = pizzas || [];
         this.recalcularKpis();
@@ -275,7 +275,7 @@ export class Pizzas implements OnInit, OnDestroy {
   }
 
   private recargarSinSpinner(): void {
-    this.pizzaService.listarPizzas().subscribe({
+    this.pizzaService.listarPizzas(true).subscribe({
       next: pizzas => {
         this.todasLasPizzas = pizzas || [];
         this.loadError = '';
@@ -837,6 +837,22 @@ export class Pizzas implements OnInit, OnDestroy {
       this.pizzaForm.markAllAsTouched();
       this.mostrarMensajeError('Por favor, complete todos los campos requeridos correctamente');
     }
+  }
+
+
+  restaurarPizza(id: number, nombre: string): void {
+    if (!confirm(`¿Desea restaurar la pizza "${nombre}"?`)) {
+      return;
+    }
+    this.pizzaService.restaurarPizza(id).subscribe({
+      next: () => {
+        this.mostrarMensajeExito(`Pizza "${nombre}" restaurada con éxito`);
+        this.recargarSinSpinner();
+      },
+      error: (error) => {
+        this.mostrarMensajeError(error.error?.message || 'Error al restaurar la pizza');
+      }
+    });
   }
 
   eliminarPizza(id: number, nombre: string): void {

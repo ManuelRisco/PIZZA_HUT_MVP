@@ -63,7 +63,7 @@ export class MetodosPagoComponent implements OnInit {
   cargarMetodosPago(): void {
     this.loading = true;
     this.loadError = '';
-    this.paymentMethodService.listarMetodosPago().subscribe({
+    this.paymentMethodService.listarMetodosPago(true).subscribe({
       next: (data) => {
         this.metodosPago = (data || []).toSorted((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
         this.recalcularKpis();
@@ -229,6 +229,23 @@ export class MetodosPagoComponent implements OnInit {
         console.error(error);
       }
     });
+  }
+
+
+  restaurarMetodoPago(metodo: PaymentMethodDTO): void {
+    if (!metodo.id) return;
+    if (confirm(`¿Desea restaurar el método de pago "${metodo.name}"?`)) {
+      this.paymentMethodService.restaurarMetodoPago(metodo.id).subscribe({
+        next: () => {
+          this.mostrarExito('Método de pago restaurado correctamente');
+          this.cargarMetodosPago();
+        },
+        error: (error) => {
+          this.mostrarError(error?.error?.message || 'Error al restaurar el método de pago');
+          console.error(error);
+        }
+      });
+    }
   }
 
   eliminarMetodoPago(metodo: PaymentMethodDTO): void {

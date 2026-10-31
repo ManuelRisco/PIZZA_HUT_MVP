@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +28,20 @@ public class PizzaService {
     @Cacheable("pizzas")
     public List<Pizza> listarPizzas() {
         return pizzaRepository.findByDeletedAtIsNull();
+    }
+
+    public List<Pizza> listarPizzas(boolean includeDeleted) {
+        if (includeDeleted) {
+            return pizzaRepository.findAll();
+        }
+        return pizzaRepository.findByDeletedAtIsNull();
+    }
+
+    public org.springframework.data.domain.Page<Pizza> listarPizzasPaginadas(boolean includeDeleted, org.springframework.data.domain.Pageable pageable) {
+        if (includeDeleted) {
+            return pizzaRepository.findAll(pageable);
+        }
+        return pizzaRepository.findByDeletedAtIsNull(pageable);
     }
 
     public Optional<Pizza> obtenerPorId(Integer id) {
@@ -76,7 +91,19 @@ public class PizzaService {
         Optional<Pizza> pizzaOpt = pizzaRepository.findById(id);
         if (pizzaOpt.isPresent()) {
             Pizza pizza = pizzaOpt.get();
-            pizza.setDeletedAt(java.time.LocalDateTime.now());
+            pizza.setDeletedAt(LocalDateTime.now());
+            pizzaRepository.save(pizza);
+            return true;
+        }
+        return false;
+    }
+
+    @CacheEvict(value = "pizzas", allEntries = true)
+    public boolean restaurarPizza(Integer id) {
+        Optional<Pizza> pizzaOpt = pizzaRepository.findById(id);
+        if (pizzaOpt.isPresent()) {
+            Pizza pizza = pizzaOpt.get();
+            pizza.setDeletedAt(null);
             pizzaRepository.save(pizza);
             return true;
         }

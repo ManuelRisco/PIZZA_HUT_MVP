@@ -5,6 +5,7 @@ import com.example.repositories.AddressRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,11 +24,11 @@ public class AddressService {
     }
 
     public Optional<Address> obtenerPorId(Integer id) {
-        return addressRepository.findById(id);
+        return addressRepository.findById(id).filter(a -> a.getDeletedAt() == null);
     }
 
     public List<Address> obtenerPorUserId(Integer userId) {
-        return addressRepository.findByUserId(userId);
+        return addressRepository.findByUserIdAndDeletedAtIsNull(userId);
     }
 
     public Address crearAddress(Address address) {
@@ -42,10 +43,17 @@ public class AddressService {
         return addressRepository.save(address);
     }
 
+    /**
+     * Eliminación Lógica (Soft Delete).
+     * Mantiene integridad de historial de entregas pasadas.
+     */
     public void eliminarAddress(Integer id) {
-        if (!addressRepository.existsById(id)) {
+        Optional<Address> addressOpt = addressRepository.findById(id);
+        if (addressOpt.isEmpty()) {
             throw new IllegalArgumentException("Address no encontrado");
         }
-        addressRepository.deleteById(id);
+        Address address = addressOpt.get();
+        address.setDeletedAt(LocalDateTime.now());
+        addressRepository.save(address);
     }
 }

@@ -10,8 +10,9 @@ public class CategoryDTO {
     private String description;
     private Integer displayOrder;
     private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 
-    // Constructor vac\u00edo
+    // Constructor vacío
     public CategoryDTO() {}
 
     // Constructor desde entidad
@@ -21,6 +22,7 @@ public class CategoryDTO {
         this.description = category.getDescription();
         this.displayOrder = category.getDisplayOrder();
         this.updatedAt = category.getUpdatedAt();
+        this.deletedAt = category.getDeletedAt();
     }
 
     // Getters y setters
@@ -38,4 +40,7 @@ public class CategoryDTO {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

@@ -62,7 +62,7 @@ export class Ingredientes implements OnInit {
   cargarIngredientes(): void {
     this.loading = true;
     this.loadError = '';
-    this.ingredientService.obtenerTodos().subscribe({
+    this.ingredientService.obtenerTodos(true).subscribe({
       next: data => {
         this.ingredientes = data || [];
         this.recalcularKpis();
@@ -81,7 +81,7 @@ export class Ingredientes implements OnInit {
   }
 
   private recargarSinSpinner(): void {
-    this.ingredientService.obtenerTodos().subscribe({
+    this.ingredientService.obtenerTodos(true).subscribe({
       next: data => {
         this.ingredientes = data || [];
         this.loadError = '';
@@ -242,6 +242,22 @@ export class Ingredientes implements OnInit {
           console.error('Error al crear ingrediente:', error);
           this.guardando = false;
           this.mostrarAlerta(error.error?.message || 'Error al crear el ingrediente', true);
+        }
+      });
+    }
+  }
+
+
+  restaurar(id: number, nombre?: string): void {
+    if (confirm('¿Desea restaurar el ingrediente' + (nombre ? ` "${nombre}"` : '') + '?')) {
+      this.ingredientService.restaurar(id).subscribe({
+        next: () => {
+          this.mostrarAlerta('Ingrediente restaurado exitosamente');
+          this.recargarSinSpinner();
+        },
+        error: (error) => {
+          console.error('Error al restaurar ingrediente:', error);
+          this.mostrarAlerta(error.error?.message || 'Error al restaurar el ingrediente', true);
         }
       });
     }

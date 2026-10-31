@@ -20,7 +20,7 @@
           class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent font-sans" 
           placeholder="Buscar pizzas..."
           [(ngModel)]="searchTerm"
-          (input)="filtrarPizzas()"
+          (ngModelChange)="filtrarPizzas()"
         >
         @if (searchTerm) {
           <button class="absolute right-3 top-2 text-gray-400 hover:text-gray-600" (click)="limpiarBuscador()">
@@ -38,10 +38,24 @@
     </div>
   }
 
+  <!-- Paginación Superior -->
+  @if (!loading && pizzasFiltradas.length > 0) {
+    <div class="mb-6 pb-4 border-b border-gray-100">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="pizzasFiltradas.length"
+        [itemsPerPage]="itemsPerPage"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
+    </div>
+  }
+
   <!-- Grid de Pizzas -->
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8" aria-label="Lista de pizzas disponibles">
-    @for (pizza of pizzasFiltradas; track pizza.id; let i = $index) {
-      <div class="animate-on-scroll opacity-0 translate-y-12 transition-all duration-1000 hover:duration-300 ease-out bg-white border border-gray-200 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col h-full relative font-sans group cursor-pointer" [id]="'pizza-' + pizza.id">
+    @for (pizza of pizzasPaginadas; track pizza.id; let i = $index) {
+      <div class="animate-fadeIn transition-all duration-300 ease-out bg-white border border-gray-200 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col h-full relative font-sans group cursor-pointer" [id]="'pizza-' + pizza.id">
         
         <!-- Popular & Stock Badges -->
         <div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-1.5">
@@ -76,7 +90,12 @@
         </button>
 
         <!-- Imagen -->
-        <div class="relative pt-[75%] bg-gray-50 overflow-hidden">
+        <div class="relative pt-[75%] bg-gray-50 overflow-hidden cursor-pointer"
+             (click)="!esPizzaAgotada(pizza) && abrirModalPersonalizacion(pizza)"
+             (keydown.enter)="!esPizzaAgotada(pizza) && abrirModalPersonalizacion(pizza)"
+             role="button"
+             tabindex="0"
+             [attr.aria-label]="'Agregar o personalizar ' + pizza.name">
           <img 
             [src]="getOptimizedImageUrl(pizza.imageUrl)" 
             [alt]="pizza.name"
@@ -90,7 +109,8 @@
 
         <!-- Contenido -->
         <div class="p-6 flex flex-col flex-grow border-t border-gray-100">
-          <h3 class="text-xl font-black text-gray-900 uppercase mb-2">{{ pizza.name }}</h3>
+          <h3 class="text-xl font-black text-gray-900 uppercase mb-2 hover:text-red-600 transition-colors cursor-pointer"
+              (click)="!esPizzaAgotada(pizza) && abrirModalPersonalizacion(pizza)">{{ pizza.name }}</h3>
           <p class="text-gray-500 text-sm mb-6 flex-grow leading-relaxed">{{ pizza.description || 'Deliciosa pizza con ingredientes frescos' }}</p>
           
           <div class="flex items-center justify-between mt-auto">
@@ -111,6 +131,20 @@
       </div>
     }
   </div>
+
+  <!-- Paginación -->
+  @if (!loading && pizzasFiltradas.length > 0) {
+    <div class="mt-8 pt-6 border-t border-gray-200">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="pizzasFiltradas.length"
+        [itemsPerPage]="itemsPerPage"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
+    </div>
+  }
 
   @if (!loading && pizzasFiltradas.length === 0) {
     <div class="text-center py-16 text-gray-500">

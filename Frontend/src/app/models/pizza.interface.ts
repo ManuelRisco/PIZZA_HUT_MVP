@@ -5,6 +5,7 @@ export interface CategoryDTO {
   description?: string;
   displayOrder?: number;
   updatedAt?: string; // Fecha de actualización en formato ISO string
+  deletedAt?: string | null;
 }
 
 // Ingrediente dentro de la receta de una pizza
@@ -40,6 +41,7 @@ export interface PizzaDTO {
   lowStock?: boolean;
   outOfStock?: boolean;
   imageError?: boolean; // Para manejar errores de carga de imagen
+  deletedAt?: string | null;
 }
 
 export interface PizzaCreateDTO {
@@ -67,6 +69,7 @@ export interface IngredientDTO {
   allowAsExtra?: boolean;
   lowStock?: boolean;
   outOfStock?: boolean;
+  deletedAt?: string | null;
 }
 
 // Alias para compatibilidad con código existente

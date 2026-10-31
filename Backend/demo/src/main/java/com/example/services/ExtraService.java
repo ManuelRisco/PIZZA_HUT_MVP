@@ -27,9 +27,27 @@ public class ExtraService {
         return extraRepository.findByDeletedAtIsNullOrderByDisplayOrderAsc();
     }
 
+    public List<Extra> listarExtras(boolean includeDeleted) {
+        if (includeDeleted) {
+            return extraRepository.findAll();
+        }
+        return extraRepository.findByDeletedAtIsNullOrderByDisplayOrderAsc();
+    }
+
+    public org.springframework.data.domain.Page<Extra> listarExtrasPaginados(boolean includeDeleted, org.springframework.data.domain.Pageable pageable) {
+        if (includeDeleted) {
+            return extraRepository.findAllByOrderByDisplayOrderAsc(pageable);
+        }
+        return extraRepository.findByDeletedAtIsNullOrderByDisplayOrderAsc(pageable);
+    }
+
     @Cacheable("extrasDisponibles")
     public List<Extra> listarExtrasDisponibles() {
         return extraRepository.findByIsAvailableTrueAndDeletedAtIsNull();
+    }
+
+    public org.springframework.data.domain.Page<Extra> listarExtrasDisponiblesPaginados(org.springframework.data.domain.Pageable pageable) {
+        return extraRepository.findByIsAvailableTrueAndDeletedAtIsNullOrderByDisplayOrderAsc(pageable);
     }
 
     public List<Extra> listarExtrasPorCategoria(Extra.ExtraCategory category) {
@@ -59,7 +77,7 @@ public class ExtraService {
         }
         if (extra.getDisplayOrder() == null) extra.setDisplayOrder(0);
         if (extra.getStockQuantity() == null) extra.setStockQuantity(0);
-        if (extra.getMinStock() == null) extra.setMinStock(5);
+        if (extra.getMinStock() == null) extra.setMinStock(0);
         if (extra.getUnitCost() == null) extra.setUnitCost(BigDecimal.ZERO);
         if (extra.getIsAvailable() == null) extra.setIsAvailable(true);
         return extraRepository.save(extra);
@@ -146,6 +164,21 @@ public class ExtraService {
         Extra extra = extraOpt.get();
         extra.setIsAvailable(!extra.getIsAvailable());
         return extraRepository.save(extra);
+    }
+
+
+    @CacheEvict(value = {"extras", "extrasDisponibles"}, allEntries = true)
+    public boolean restaurarExtra(Integer id) {
+        if (id == null) return false;
+        Optional<Extra> extraOpt = extraRepository.findById(id);
+        if (extraOpt.isEmpty()) {
+            return false;
+        }
+        Extra extra = extraOpt.get();
+        extra.setDeletedAt(null);
+        extra.setIsAvailable(true);
+        extraRepository.save(extra);
+        return true;
     }
 
     public boolean existePorNombre(String nombre) {

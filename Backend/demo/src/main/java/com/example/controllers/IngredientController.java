@@ -30,8 +30,8 @@ public class IngredientController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<IngredientDTO>>> listarIngredientes() {
-        List<Ingredient> ingredientes = ingredientService.listarIngredientes();
+    public ResponseEntity<ApiResponse<List<IngredientDTO>>> listarIngredientes(@RequestParam(value = "includeDeleted", defaultValue = "false") boolean includeDeleted) {
+        List<Ingredient> ingredientes = ingredientService.listarIngredientes(includeDeleted);
         List<IngredientDTO> ingredientesDTO = ingredientes.stream()
                 .map(IngredientDTO::new)
                 .toList();
@@ -107,7 +107,18 @@ public class IngredientController {
     public ResponseEntity<Object> eliminarIngrediente(@PathVariable("id") Integer id) {
         boolean eliminado = ingredientService.eliminarIngrediente(id);
         if (eliminado) {
-            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Ingrediente eliminado correctamente")));
+            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Ingrediente eliminado lógicamente")));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(MSG_KEY, MSG_NOT_FOUND));
+        }
+    }
+
+    @PatchMapping("/{id}/restore")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Object> restoreIngredient(@PathVariable("id") Integer id) {
+        boolean restaurado = ingredientService.restaurarIngrediente(id);
+        if (restaurado) {
+            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Ingrediente restaurado con éxito")));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(MSG_KEY, MSG_NOT_FOUND));
         }

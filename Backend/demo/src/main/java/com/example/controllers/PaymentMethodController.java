@@ -7,6 +7,7 @@ import com.example.models.PaymentMethod;
 import org.springframework.http.ResponseEntity;
 import com.example.dtos.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,8 +29,9 @@ public class PaymentMethodController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PaymentMethodDTO>>> obtenerTodos() {
-        List<PaymentMethod> paymentMethods = paymentMethodService.obtenerTodos();
+    public ResponseEntity<ApiResponse<List<PaymentMethodDTO>>> obtenerTodos(
+            @RequestParam(value = "includeDeleted", defaultValue = "false") boolean includeDeleted) {
+        List<PaymentMethod> paymentMethods = paymentMethodService.obtenerTodos(includeDeleted);
         java.util.Set<Integer> inUseIds = paymentMethodService.getPaymentMethodIdsInUse();
         List<PaymentMethodDTO> dtos = paymentMethods.stream()
                 .map(pm -> {
@@ -68,6 +70,7 @@ public class PaymentMethodController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Object> crearMetodoPago(@RequestBody PaymentMethodDTO paymentMethodDTO) {
         try {
             if (paymentMethodService.existsByName(paymentMethodDTO.getName())) {
@@ -90,6 +93,7 @@ public class PaymentMethodController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Object> actualizarMetodoPago(@PathVariable("id") Integer id, @RequestBody PaymentMethodDTO paymentMethodDTO) {
         try {
             PaymentMethod paymentMethodActualizado = new PaymentMethod();
@@ -113,11 +117,12 @@ public class PaymentMethodController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Object> eliminarMetodoPago(@PathVariable("id") Integer id) {
         try {
             boolean eliminado = paymentMethodService.eliminarMetodoPago(id);
             if (eliminado) {
-                return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Método de pago eliminado correctamente")));
+                return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Método de pago eliminado lógicamente")));
             }
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of(MSG_KEY, MSG_NOT_FOUND));
@@ -127,7 +132,19 @@ public class PaymentMethodController {
         }
     }
 
+    @PatchMapping("/{id}/restore")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Object> restaurarMetodoPago(@PathVariable("id") Integer id) {
+        boolean restaurado = paymentMethodService.restaurarMetodoPago(id);
+        if (restaurado) {
+            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Método de pago restaurado correctamente")));
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of(MSG_KEY, MSG_NOT_FOUND));
+    }
+
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Object> cambiarEstado(
             @PathVariable("id") Integer id,
             @RequestParam("active") boolean active) {

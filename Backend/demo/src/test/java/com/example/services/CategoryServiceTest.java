@@ -2,28 +2,32 @@ package com.example.services;
 
 import com.example.models.Category;
 import com.example.repositories.CategoryRepository;
+import com.example.repositories.PizzaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@DisplayName("CU13: Gestionar categorías - Pruebas TDD")
-class CategoryServiceTest {
+@ExtendWith(MockitoExtension.class)
+@DisplayName("Test de Servicios: CategoryService")
+public class CategoryServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
 
     @Mock
-    private com.example.repositories.PizzaRepository pizzaRepository;
+    private PizzaRepository pizzaRepository;
 
     @InjectMocks
     private CategoryService categoryService;
@@ -32,8 +36,6 @@ class CategoryServiceTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-
         categoryTest = new Category();
         categoryTest.setId(1);
         categoryTest.setName("Pizzas Clásicas");
@@ -62,6 +64,7 @@ class CategoryServiceTest {
     @Test
     @DisplayName("CU13 - Flujo Principal: Crear categoría exitosamente [RF25, RF26]")
     void testCrearCategoria() {
+        when(categoryRepository.findByName(any())).thenReturn(Optional.empty());
         when(categoryRepository.save(any(Category.class))).thenReturn(categoryTest);
 
         Category resultado = categoryService.crearCategoria(categoryTest);
@@ -73,7 +76,7 @@ class CategoryServiceTest {
 
     @Test
     @DisplayName("CU13 - Flujo Principal: Actualizar categoría existente [RF25, RF26]")
-    void testActualizarCategoriaExistente() {
+    void testActualizarCategoria() {
         when(categoryRepository.findById(1)).thenReturn(Optional.of(categoryTest));
         when(categoryRepository.save(any(Category.class))).thenReturn(categoryTest);
 
@@ -91,11 +94,29 @@ class CategoryServiceTest {
     @DisplayName("CU13 - Flujo Principal: Eliminar categoría (Soft delete) [RF25]")
     void testEliminarCategoria() {
         when(categoryRepository.findById(1)).thenReturn(Optional.of(categoryTest));
+        when(pizzaRepository.existsByCategoryIdAndDeletedAtIsNull(1)).thenReturn(false);
         when(categoryRepository.save(any(Category.class))).thenReturn(categoryTest);
 
         boolean resultado = categoryService.eliminarCategoria(1);
 
         assertTrue(resultado);
+        assertNotNull(categoryTest.getDeletedAt());
+        verify(categoryRepository, times(1)).findById(1);
+        verify(categoryRepository, times(1)).save(categoryTest);
+        verify(categoryRepository, never()).delete(any());
+    }
+
+    @Test
+    @DisplayName("CU13 - Flujo Alternativo: Restaurar categoría soft-deleted [RF25]")
+    void testRestaurarCategoria() {
+        categoryTest.setDeletedAt(java.time.LocalDateTime.now());
+        when(categoryRepository.findById(1)).thenReturn(Optional.of(categoryTest));
+        when(categoryRepository.save(any(Category.class))).thenReturn(categoryTest);
+
+        boolean resultado = categoryService.restaurarCategoria(1);
+
+        assertTrue(resultado);
+        assertNull(categoryTest.getDeletedAt());
         verify(categoryRepository, times(1)).findById(1);
         verify(categoryRepository, times(1)).save(categoryTest);
     }
@@ -103,9 +124,7 @@ class CategoryServiceTest {
     @Test
     @DisplayName("CU13 - A1: Error al intentar crear categoría con nombre duplicado")
     void testCrearCategoriaNombreDuplicado() {
-        // Simulando excepcion de constraint
-        when(categoryRepository.save(any(Category.class)))
-                .thenThrow(new IllegalArgumentException("El nombre de la categoría ya está registrado."));
+        when(categoryRepository.findByName("Pizzas Clásicas")).thenReturn(Optional.of(categoryTest));
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             categoryService.crearCategoria(categoryTest);
@@ -117,24 +136,20 @@ class CategoryServiceTest {
     @Test
     @DisplayName("CU13 - A2: Error al intentar eliminar categoría con dependencias (en uso)")
     void testEliminarCategoriaConDependencias() {
-        // Simulando que el controller o service validan uso y lanzan error
         when(categoryRepository.findById(1)).thenReturn(Optional.of(categoryTest));
-        when(categoryRepository.save(any(Category.class)))
-                .thenThrow(new IllegalStateException("No se puede eliminar la categoría porque está en uso."));
+        when(pizzaRepository.existsByCategoryIdAndDeletedAtIsNull(1)).thenReturn(true);
 
         Exception exception = assertThrows(IllegalStateException.class, () -> {
             categoryService.eliminarCategoria(1);
         });
 
-        assertEquals("No se puede eliminar la categoría porque está en uso.", exception.getMessage());
+        assertTrue(exception.getMessage().contains("está en uso por una pizza activa"));
     }
 
     @Test
     @DisplayName("CU13 - A3: Error al guardar con datos incompletos (sin nombre)")
     void testGuardarCategoriaSinNombre() {
         Category catInvalida = new Category();
-        when(categoryRepository.save(any(Category.class)))
-                .thenThrow(new IllegalArgumentException("Debe ingresar un nombre válido para la categoría."));
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             categoryService.crearCategoria(catInvalida);

@@ -79,13 +79,15 @@ class AddressServiceTest {
         verify(addressRepository, times(1)).save(address);
     }
 
-    @Test
-    @DisplayName("Adicional.6: Eliminar Address")
+        @Test
+    @DisplayName("Adicional.6: Eliminar Address (Soft Delete)")
     void testEliminarAddress() {
-        when(addressRepository.existsById(1)).thenReturn(true);
-        doNothing().when(addressRepository).deleteById(1);
+        when(addressRepository.findById(1)).thenReturn(Optional.of(address));
+        when(addressRepository.save(any(Address.class))).thenReturn(address);
         addressService.eliminarAddress(1);
-        verify(addressRepository, times(1)).existsById(1);
-        verify(addressRepository, times(1)).deleteById(1);
+        assertNotNull(address.getDeletedAt());
+        verify(addressRepository, times(1)).findById(1);
+        verify(addressRepository, times(1)).save(address);
+        verify(addressRepository, never()).deleteById(any());
     }
 }

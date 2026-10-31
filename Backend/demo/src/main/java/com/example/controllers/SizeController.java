@@ -28,8 +28,8 @@ public class SizeController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<SizeDTO>>> listarSizes() {
-        List<Size> sizes = sizeService.listarSizes();
+    public ResponseEntity<ApiResponse<List<SizeDTO>>> listarSizes(@RequestParam(value = "includeDeleted", defaultValue = "false") boolean includeDeleted) {
+        List<Size> sizes = sizeService.listarSizes(includeDeleted);
         List<SizeDTO> sizesDTO = sizes.stream()
             .map(SizeDTO::new)
             .toList();
@@ -101,10 +101,21 @@ public class SizeController {
     public ResponseEntity<Object> eliminarSize(@PathVariable("id") Integer id) {
         try {
             sizeService.eliminarSize(id);
-            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Size eliminado correctamente")));
+            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Size eliminado lógicamente")));
         } catch (RuntimeException e) { throw e; } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of(MSG_KEY, e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/{id}/restore")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Object> restoreSize(@PathVariable("id") Integer id) {
+        boolean restaurado = sizeService.restaurarSize(id);
+        if (restaurado) {
+            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Tamaño restaurado con éxito")));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(MSG_KEY, "Size no encontrado"));
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.example.dtos;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import com.example.models.Ingredient;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,6 +25,7 @@ public class IngredientDTO {
 
     private boolean lowStock;
     private boolean outOfStock;
+    private LocalDateTime deletedAt;
 
     // Constructor vacío
     public IngredientDTO() {}
@@ -42,6 +44,7 @@ public class IngredientDTO {
         this.allowAsExtra = ingredient.isAllowAsExtra();
         this.outOfStock = this.stockQuantity.compareTo(BigDecimal.ZERO) <= 0;
         this.lowStock = !this.outOfStock && this.stockQuantity.compareTo(this.minStock) <= 0;
+        this.deletedAt = ingredient.getDeletedAt();
     }
 
     // Getters y setters
@@ -84,4 +87,7 @@ public class IngredientDTO {
 
     public boolean isOutOfStock() { return outOfStock; }
     public void setOutOfStock(boolean outOfStock) { this.outOfStock = outOfStock; }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

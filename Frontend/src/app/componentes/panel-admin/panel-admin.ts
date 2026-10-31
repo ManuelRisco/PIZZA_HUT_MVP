@@ -147,6 +147,9 @@ export class PanelAdmin implements OnInit, OnDestroy {
   diaModalPerPage: number = 10;
   diaModalPedidosPaginados: OrderCompleteDTO[] = [];
 
+  // Pedido seleccionado para abrir en vista de pedidos
+  pedidoSeleccionadoId: number | null = null;
+
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router,
@@ -548,6 +551,12 @@ export class PanelAdmin implements OnInit, OnDestroy {
     }
   }
 
+  verDetallePedido(pedido: OrderCompleteDTO): void {
+    if (!pedido?.id) return;
+    this.pedidoSeleccionadoId = pedido.id;
+    this.cambiarVista('orders');
+  }
+
   cambiarVista(vista: string): void {
     const changed = this.vistaActual !== vista;
     this.vistaActual = vista;
@@ -558,8 +567,13 @@ export class PanelAdmin implements OnInit, OnDestroy {
     }
 
     const targetPath = VISTA_TO_ROUTE[vista];
-    if (targetPath && this.location.path() !== targetPath) {
-      this.location.go(targetPath);
+    if (targetPath) {
+      const fullPath = vista === 'orders' && this.pedidoSeleccionadoId
+        ? `${targetPath}?id=${this.pedidoSeleccionadoId}`
+        : targetPath;
+      if (this.location.path() !== fullPath) {
+        this.location.go(fullPath);
+      }
     }
 
     if (changed && vista === 'dashboard') {

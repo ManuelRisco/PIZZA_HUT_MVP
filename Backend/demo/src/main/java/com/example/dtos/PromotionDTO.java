@@ -23,6 +23,7 @@ public class PromotionDTO {
     private String applicableTo;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
     
     // Campos calculados
     private Boolean currentlyActive;
@@ -50,6 +51,7 @@ public class PromotionDTO {
         this.applicableTo = promotion.getApplicableTo() != null ? promotion.getApplicableTo().name() : null;
         this.createdAt = promotion.getCreatedAt();
         this.updatedAt = promotion.getUpdatedAt();
+        this.deletedAt = promotion.getDeletedAt();
         
         // Calcular campos derivados
         this.currentlyActive = promotion.isCurrentlyActive();
@@ -208,5 +210,13 @@ public class PromotionDTO {
 
     public void setRemainingUses(Integer remainingUses) {
         this.remainingUses = remainingUses;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }

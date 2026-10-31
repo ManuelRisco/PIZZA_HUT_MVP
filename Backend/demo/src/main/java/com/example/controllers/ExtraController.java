@@ -26,8 +26,22 @@ public class ExtraController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ExtraDTO>>> listarTodos() {
-        List<Extra> extras = extraService.listarExtras();
+    public ResponseEntity<ApiResponse<?>> listarTodos(
+            @RequestParam(value = "includeDeleted", defaultValue = "false") boolean includeDeleted,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size) {
+
+        if (page != null && size != null) {
+            int pageIndex = Math.max(0, page > 0 ? page - 1 : page);
+            int pageSize = Math.max(1, size);
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageIndex, pageSize);
+            org.springframework.data.domain.Page<Extra> extraPage = extraService.listarExtrasPaginados(includeDeleted, pageable);
+            List<ExtraDTO> dtos = extraPage.getContent().stream().map(ExtraDTO::new).toList();
+            com.example.dtos.PageResponseDTO<ExtraDTO> pageResponse = com.example.dtos.PageResponseDTO.from(extraPage, dtos);
+            return ResponseEntity.ok(ApiResponse.success(pageResponse));
+        }
+
+        List<Extra> extras = extraService.listarExtras(includeDeleted);
         List<ExtraDTO> dtos = extras.stream()
             .map(ExtraDTO::new)
             .toList();
@@ -35,7 +49,20 @@ public class ExtraController {
     }
 
     @GetMapping("/disponibles")
-    public ResponseEntity<ApiResponse<List<ExtraDTO>>> listarDisponibles() {
+    public ResponseEntity<ApiResponse<?>> listarDisponibles(
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size) {
+
+        if (page != null && size != null) {
+            int pageIndex = Math.max(0, page > 0 ? page - 1 : page);
+            int pageSize = Math.max(1, size);
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageIndex, pageSize);
+            org.springframework.data.domain.Page<Extra> extraPage = extraService.listarExtrasDisponiblesPaginados(pageable);
+            List<ExtraDTO> dtos = extraPage.getContent().stream().map(ExtraDTO::new).toList();
+            com.example.dtos.PageResponseDTO<ExtraDTO> pageResponse = com.example.dtos.PageResponseDTO.from(extraPage, dtos);
+            return ResponseEntity.ok(ApiResponse.success(pageResponse));
+        }
+
         List<Extra> extras = extraService.listarExtrasDisponibles();
         List<ExtraDTO> dtos = extras.stream()
             .map(ExtraDTO::new)
@@ -97,7 +124,7 @@ public class ExtraController {
     public ResponseEntity<Object> eliminar(@PathVariable("id") Integer id) {
         try {
             extraService.eliminarExtra(id);
-            return ResponseEntity.ok().body(Map.of("message", "Extra eliminado correctamente", "id", id));
+            return ResponseEntity.ok().body(Map.of("message", "Extra eliminado lógicamente", "id", id));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage() != null ? e.getMessage() : "Datos de extra inválidos"));
         } catch (RuntimeException e) {
@@ -117,6 +144,18 @@ public class ExtraController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage() != null ? e.getMessage() : "Datos de extra inválidos"));
         }
+    }
+
+    
+    @PatchMapping("/{id}/restore")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Object> restaurarExtra(@PathVariable("id") Integer id) {
+        boolean restaurado = extraService.restaurarExtra(id);
+        if (restaurado) {
+            return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Extra restaurado con éxito")));
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("Extra no encontrado"));
     }
 
     private Extra mapFromDto(ExtraDTO extraDTO) {

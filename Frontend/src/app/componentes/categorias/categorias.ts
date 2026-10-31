@@ -91,7 +91,7 @@ export class Categorias implements OnInit {
     this.loadError = '';
     this.limpiarMensajes();
 
-    this.categoriaService.listarCategorias().subscribe({
+    this.categoriaService.listarCategorias(true).subscribe({
       next: (categorias) => {
         this.categorias = [...(categorias || [])].toSorted(
           (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
@@ -199,7 +199,7 @@ export class Categorias implements OnInit {
   }
 
   recargarListaSinLoading(): void {
-    this.categoriaService.listarCategorias().subscribe({
+    this.categoriaService.listarCategorias(true).subscribe({
       next: (categorias) => {
         this.categorias = [...(categorias || [])].toSorted(
           (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
@@ -315,6 +315,26 @@ export class Categorias implements OnInit {
         }
       });
     }
+  }
+
+
+  restaurarCategoria(id: number, nombre: string): void {
+    if (!confirm(`¿Desea restaurar la categoría "${nombre}"?`)) {
+      return;
+    }
+
+    this.limpiarMensajes();
+
+    this.categoriaService.restaurarCategoria(id).subscribe({
+      next: () => {
+        this.mostrarMensajeExito(`Categoría "${nombre}" restaurada con éxito`);
+        this.recargarListaSinLoading();
+        this.cargarPizzasEnUso();
+      },
+      error: (error) => {
+        this.mostrarMensajeError(error.error?.message || 'Error al restaurar la categoría');
+      }
+    });
   }
 
   eliminarCategoria(id: number, nombre: string): void {

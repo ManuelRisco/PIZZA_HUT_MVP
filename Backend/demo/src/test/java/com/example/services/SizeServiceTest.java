@@ -120,4 +120,19 @@ class SizeServiceTest {
 
         assertEquals("El multiplicador de precio no puede ser negativo.", exception.getMessage());
     }
+
+    @Test
+    @DisplayName("CU15 - Flujo Alternativo: Restaurar tamaño soft-deleted [RF27]")
+    void testRestaurar() {
+        size.setDeletedAt(java.time.LocalDateTime.now());
+        when(repository.findById(1)).thenReturn(Optional.of(size));
+        when(repository.save(any(Size.class))).thenReturn(size);
+
+        boolean result = service.restaurarSize(1);
+
+        assertTrue(result);
+        assertNull(size.getDeletedAt());
+        verify(repository, times(1)).findById(1);
+        verify(repository, times(1)).save(size);
+    }
 }

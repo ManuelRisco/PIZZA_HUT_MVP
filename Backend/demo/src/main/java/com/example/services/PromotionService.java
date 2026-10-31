@@ -41,6 +41,24 @@ public class PromotionService {
         return promotionRepository.findByDeletedAtIsNull();
     }
 
+    public List<Promotion> listarPromociones(boolean includeDeleted) {
+        if (includeDeleted) {
+            return promotionRepository.findAll();
+        }
+        return promotionRepository.findByDeletedAtIsNull();
+    }
+
+    public org.springframework.data.domain.Page<Promotion> listarPromocionesPaginadas(boolean includeDeleted, org.springframework.data.domain.Pageable pageable) {
+        if (includeDeleted) {
+            return promotionRepository.findAll(pageable);
+        }
+        return promotionRepository.findByDeletedAtIsNull(pageable);
+    }
+
+    public org.springframework.data.domain.Page<Promotion> listarActivasPaginadas(org.springframework.data.domain.Pageable pageable) {
+        return promotionRepository.findActivePromotions(LocalDateTime.now(), pageable);
+    }
+
     @Cacheable(value = "activePromotions")
     public List<Promotion> listarPromocionesActivas() {
         return promotionRepository.findActivePromotions(LocalDateTime.now());
@@ -158,6 +176,19 @@ public class PromotionService {
         @CacheEvict(value = "activePromotions", allEntries = true),
         @CacheEvict(value = "promotionsByType", allEntries = true)
     })
+    public boolean restaurarPromocion(Integer id) {
+        if (id == null) return false;
+        Optional<Promotion> promoOpt = promotionRepository.findById(id);
+        if (promoOpt.isEmpty()) {
+            return false;
+        }
+        Promotion promotion = promoOpt.get();
+        promotion.setDeletedAt(null);
+        promotion.setIsActive(true);
+        promotionRepository.save(promotion);
+        return true;
+    }
+
     public Promotion activarPromocion(Integer id) {
         Optional<Promotion> promocionOpt = obtenerPorId(id);
         if (promocionOpt.isEmpty()) {

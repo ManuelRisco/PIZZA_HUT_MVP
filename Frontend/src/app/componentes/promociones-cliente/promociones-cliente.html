@@ -54,7 +54,7 @@
           class="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all" 
           placeholder="Buscar promociones..."
           [(ngModel)]="searchTerm"
-          (input)="aplicarFiltros()"
+          (ngModelChange)="onFiltroBusquedaChange()"
         >
         @if (searchTerm) {
           <button class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-red-500 transition-colors" (click)="limpiarBuscador()" type="button">
@@ -73,10 +73,24 @@
     </div>
   }
 
+  <!-- Paginación Superior -->
+  @if (!loading && promocionesFiltradas.length > 0) {
+    <div class="mb-6 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="promocionesFiltradas.length"
+        [itemsPerPage]="itemsPerPage"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
+    </div>
+  }
+
   <!-- Grid de Promociones -->
   @if (!loading && promocionesFiltradas.length > 0) {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-      @for (promo of promocionesFiltradas; track promo.id) {
+      @for (promo of promocionesPaginadas; track promo.id) {
         <div class="bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col relative group"
              [ngStyle]="{'border-color': obtenerColorTipo(promo.discountType)}">
           
@@ -174,6 +188,18 @@
           </div>
         </div>
       }
+    </div>
+
+    <!-- Paginación -->
+    <div class="mb-8 pt-4 border-t border-gray-100">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="promocionesFiltradas.length"
+        [itemsPerPage]="itemsPerPage"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
     </div>
   }
 

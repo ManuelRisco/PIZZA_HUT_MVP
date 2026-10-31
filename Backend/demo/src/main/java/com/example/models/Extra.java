@@ -38,7 +38,7 @@ public class Extra {
     private Integer stockQuantity = 0;
 
     @Column(nullable = false)
-    private Integer minStock = 5;
+    private Integer minStock = 0;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal unitCost = BigDecimal.ZERO;

@@ -5,17 +5,22 @@ import { PromocionService, Promotion } from '../../services/promocion.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 import { AccessibilityService } from '../../services/accessibility.service';
+import { PaginationComponent } from '../pagination/pagination';
 
 @Component({
   selector: 'app-promociones-cliente',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginationComponent],
   templateUrl: './promociones-cliente.html',
   styleUrls: ['./promociones-cliente.css']
 })
 export class PromocionesClienteComponent implements OnInit {
   promociones: Promotion[] = [];
   promocionesFiltradas: Promotion[] = [];
+  promocionesPaginadas: Promotion[] = [];
+  currentPage: number = 1;
+  itemsPerPage: number = 6;
+  pageSizeOptions: number[] = [6, 12, 24];
   searchTerm: string = '';
   tipoSeleccionado: string = 'TODOS';
   loading = false;
@@ -69,6 +74,12 @@ export class PromocionesClienteComponent implements OnInit {
 
   cambiarTipo(tipo: string): void {
     this.tipoSeleccionado = tipo;
+    this.currentPage = 1;
+    this.aplicarFiltros();
+  }
+
+  onFiltroBusquedaChange(): void {
+    this.currentPage = 1;
     this.aplicarFiltros();
   }
 
@@ -91,10 +102,38 @@ export class PromocionesClienteComponent implements OnInit {
     }
 
     this.promocionesFiltradas = resultado;
+    this.aplicarPaginacion();
+  }
+
+  aplicarPaginacion(): void {
+    const totalPages = Math.ceil(this.promocionesFiltradas.length / this.itemsPerPage);
+    if (this.currentPage > totalPages && totalPages > 0) {
+      this.currentPage = totalPages;
+    } else if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.promocionesPaginadas = this.promocionesFiltradas.slice(startIndex, endIndex);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.aplicarPaginacion();
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  onItemsPerPageChange(size: number): void {
+    this.itemsPerPage = size;
+    this.currentPage = 1;
+    this.aplicarPaginacion();
   }
 
   limpiarBuscador(): void {
     this.searchTerm = '';
+    this.currentPage = 1;
     this.aplicarFiltros();
   }
 

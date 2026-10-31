@@ -179,12 +179,21 @@
             </p>
 
             <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pt-2 border-t border-gray-100 text-[11px]">
-              <span
-                class="px-2 py-0.5 rounded-md font-bold"
-                [ngClass]="categoriaEnUso(categoria.id) ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-500'"
-              >
-                {{ categoriaEnUso(categoria.id) ? ('En uso · ' + (pizzasPorCategoriaMap.get(categoria.id!) || 0) + ' pizzas') : 'Sin pizzas asignadas' }}
-              </span>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span
+                  class="px-2 py-0.5 rounded-md font-bold"
+                  [ngClass]="categoriaEnUso(categoria.id) ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-500'"
+                >
+                  {{ categoriaEnUso(categoria.id) ? ('En uso · ' + (pizzasPorCategoriaMap.get(categoria.id!) || 0) + ' pizzas') : 'Sin pizzas asignadas' }}
+                </span>
+                <span
+                  class="px-2 py-0.5 rounded-md font-bold text-[11px]"
+                  [ngClass]="categoria.deletedAt ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'"
+                >
+                  <i class="bi" [ngClass]="categoria.deletedAt ? 'bi-slash-circle mr-1' : 'bi-check-circle mr-1'"></i>
+                  {{ categoria.deletedAt ? 'Eliminada' : 'Activa' }}
+                </span>
+              </div>
               <span class="text-gray-400 flex items-center gap-1">
                 <i class="bi bi-clock"></i>
                 {{ (categoria.id && fechasFormateadasMap.get(categoria.id)) || 'N/D' }}
@@ -194,24 +203,37 @@
 
           <!-- Botones de acción -->
           <div class="flex gap-2 mt-auto">
-            <button
-              type="button"
-              class="flex-1 bg-gray-100 hover:bg-gray-900 hover:text-white text-gray-700 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-              (click)="editarCategoria(categoria)"
-              title="Editar categoría"
-            >
-              <i class="bi bi-pencil-fill"></i> Editar
-            </button>
+            <ng-container *ngIf="categoria.deletedAt">
+              <button
+                type="button"
+                class="flex-1 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-200"
+                (click)="restaurarCategoria(categoria.id!, categoria.name)"
+                title="Restaurar categoría"
+              >
+                <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+              </button>
+            </ng-container>
 
-            <button
-              *ngIf="puedeEliminar(categoria.id)"
-              type="button"
-              class="flex-1 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-              (click)="eliminarCategoria(categoria.id!, categoria.name)"
-              title="Eliminar categoría"
-            >
-              <i class="bi bi-trash-fill"></i> Eliminar
-            </button>
+            <ng-container *ngIf="!categoria.deletedAt">
+              <button
+                type="button"
+                class="flex-1 bg-gray-100 hover:bg-gray-900 hover:text-white text-gray-700 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                (click)="editarCategoria(categoria)"
+                title="Editar categoría"
+              >
+                <i class="bi bi-pencil-fill"></i> Editar
+              </button>
+
+              <button
+                *ngIf="puedeEliminar(categoria.id)"
+                type="button"
+                class="flex-1 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                (click)="eliminarCategoria(categoria.id!, categoria.name)"
+                title="Eliminar categoría"
+              >
+                <i class="bi bi-trash-fill"></i> Eliminar
+              </button>
+            </ng-container>
           </div>
         </div>
       </div>

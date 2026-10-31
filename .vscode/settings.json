@@ -6,6 +6,7 @@
   "java.autobuild.enabled": true,
   "java.import.gradle.enabled": true,
   "java.import.gradle.wrapper.enabled": true,
+  "java.import.gradle.annotationProcessing.enabled": false,
   "java.import.exclusions": [
     "**/node_modules/**",
     "**/.metadata/**",
@@ -28,5 +29,7 @@
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.jdt.ls.vmargs": "-Xmx1G",
   "java.compile.compilerArgs": ["-parameters"],
-  "java.debug.settings.onBuildFailureProceed": true
+  "java.debug.settings.onBuildFailureProceed": true,
+  "java.gradle.buildServer.enabled": "off",
+  "boot-java.boot-version-validation.check": "off"
 }

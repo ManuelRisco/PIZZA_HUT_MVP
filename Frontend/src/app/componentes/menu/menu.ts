@@ -16,16 +16,22 @@ import { AccessibilityService } from '../../services/accessibility.service';
 import { ToastService } from '../../services/toast.service';
 import { TranslateService } from '../../services/translate.service';
 import { SizeDTO, IngredientDTO } from '../../models/admin.interface';
+import { PaginationComponent } from '../pagination/pagination';
 
 @Component({
   selector: 'app-menu',
-  imports: [CommonModule, FormsModule, RouterModule],
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule, PaginationComponent],
   templateUrl: './menu.html',
   styleUrls: ['./menu.css']
 })
 export class MenuComponent implements OnInit, AfterViewInit {
   pizzas: PizzaDTO[] = [];
   pizzasFiltradas: PizzaDTO[] = [];
+  pizzasPaginadas: PizzaDTO[] = [];
+  currentPage: number = 1;
+  itemsPerPage: number = 6;
+  pageSizeOptions: number[] = [6, 9, 12];
   searchTerm: string = '';
   loading = false;
   error = '';
@@ -80,29 +86,11 @@ export class MenuComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.scrollObserver = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('opacity-100', 'translate-y-0');
-            entry.target.classList.remove('opacity-0', 'translate-y-12');
-            this.scrollObserver?.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
-    );
-    this.setupScrollAnimations();
+    // Inicialización de vista
   }
 
   private setupScrollAnimations(): void {
-    if (!this.scrollObserver) return;
-
-    setTimeout(() => {
-      this.el.nativeElement.querySelectorAll('.animate-on-scroll').forEach((elem: any) => {
-        this.scrollObserver?.observe(elem);
-      });
-    }, 200);
+    // Animaciones gestionadas por CSS sin depender de IntersectionObserver
   }
 
   verificarAutenticacion(): void {
@@ -156,6 +144,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
           this.toastService.showSuccess('Eliminado de favoritos');
           this.accessibility.announceRemovedFromFavorites(pizzaName);
           this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzasFiltradas]);
+          this.aplicarPaginacion();
         },
         error: error => {
           console.error('Error al eliminar favorito:', error);
@@ -170,6 +159,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
           this.toastService.showSuccess('Agregado a favoritos');
           this.accessibility.announceAddedToFavorites(pizzaName);
           this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzasFiltradas]);
+          this.aplicarPaginacion();
         },
         error: error => {
           console.error('Error al agregar favorito:', error);
@@ -251,6 +241,8 @@ export class MenuComponent implements OnInit, AfterViewInit {
     }
 
     this.pizzasFiltradas = this.ordenarPorFavoritos(pizzasFiltradas);
+    this.currentPage = 1;
+    this.aplicarPaginacion();
 
     if (termino) {
       const resultCount = this.pizzasFiltradas.length;
@@ -264,6 +256,32 @@ export class MenuComponent implements OnInit, AfterViewInit {
     }
 
     this.setupScrollAnimations();
+  }
+
+  aplicarPaginacion(): void {
+    const totalPages = Math.ceil(this.pizzasFiltradas.length / this.itemsPerPage);
+    if (this.currentPage > totalPages && totalPages > 0) {
+      this.currentPage = totalPages;
+    } else if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.pizzasPaginadas = this.pizzasFiltradas.slice(startIndex, endIndex);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.aplicarPaginacion();
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  onItemsPerPageChange(size: number): void {
+    this.itemsPerPage = size;
+    this.currentPage = 1;
+    this.aplicarPaginacion();
   }
 
   private ordenarPorFavoritos(pizzas: PizzaDTO[]): PizzaDTO[] {
@@ -280,6 +298,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
   private aplicarOrdenamientoFavoritos(): void {
     if (this.pizzas.length > 0) {
       this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzasFiltradas]);
+      this.aplicarPaginacion();
     }
   }
 
@@ -311,7 +330,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
 
   limpiarBuscador(): void {
     this.searchTerm = '';
-    this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzas]);
+    this.filtrarPizzas();
     this.accessibility.announce('Búsqueda borrada. Mostrando todas las pizzas disponibles');
 
     setTimeout(() => {

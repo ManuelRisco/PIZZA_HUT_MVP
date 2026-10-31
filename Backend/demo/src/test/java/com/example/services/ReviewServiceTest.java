@@ -87,16 +87,19 @@ class ReviewServiceTest {
         verify(repository, times(1)).save(any(Review.class));
     }
 
-    @Test
-    @DisplayName("CU19 - Flujo Principal: Eliminar reseña [RF35]")
+        @Test
+    @DisplayName("CU19 - Flujo Principal: Eliminar reseña (Soft Delete) [RF35]")
     void testEliminarReview() {
-        when(repository.existsById(1)).thenReturn(true);
-        doNothing().when(repository).deleteById(1);
+        when(repository.findById(1)).thenReturn(Optional.of(review));
+        when(repository.save(any(Review.class))).thenReturn(review);
 
         service.eliminarReview(1);
 
-        verify(repository, times(1)).existsById(1);
-        verify(repository, times(1)).deleteById(1);
+        assertFalse(review.getActive());
+        assertNotNull(review.getDeletedAt());
+        verify(repository, times(1)).findById(1);
+        verify(repository, times(1)).save(review);
+        verify(repository, never()).deleteById(any());
     }
 
     @Test

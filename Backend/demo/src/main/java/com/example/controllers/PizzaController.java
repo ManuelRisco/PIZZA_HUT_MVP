@@ -62,9 +62,10 @@ public class PizzaController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PizzaDTO>>> getAllPizzas() {
-        List<Pizza> pizzas = pizzaService.listarPizzas();
-        List<PizzaDTO> dtos = pizzaMapper.toDtoList(pizzas);
+    public ResponseEntity<ApiResponse<?>> getAllPizzas(
+            @RequestParam(value = "includeDeleted", defaultValue = "false") boolean includeDeleted,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size) {
 
         Map<Integer, Ingredient> ingredientMap = ingredientService.listarIngredientes().stream()
                 .collect(Collectors.toMap(Ingredient::getId, Function.identity(), (a, b) -> a));
@@ -77,6 +78,21 @@ public class PizzaController {
             }
         }
 
+        if (page != null && size != null) {
+            int pageIndex = Math.max(0, page > 0 ? page - 1 : page);
+            int pageSize = Math.max(1, size);
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageIndex, pageSize);
+            org.springframework.data.domain.Page<Pizza> pizzaPage = pizzaService.listarPizzasPaginadas(includeDeleted, pageable);
+            List<PizzaDTO> dtos = pizzaMapper.toDtoList(pizzaPage.getContent());
+            for (PizzaDTO dto : dtos) {
+                enrichPizzaDto(dto, recipesByPizza.getOrDefault(dto.getId(), Collections.emptyList()), ingredientMap);
+            }
+            com.example.dtos.PageResponseDTO<PizzaDTO> pageResponse = com.example.dtos.PageResponseDTO.from(pizzaPage, dtos);
+            return ResponseEntity.ok(ApiResponse.success(pageResponse));
+        }
+
+        List<Pizza> pizzas = pizzaService.listarPizzas(includeDeleted);
+        List<PizzaDTO> dtos = pizzaMapper.toDtoList(pizzas);
         for (PizzaDTO dto : dtos) {
             enrichPizzaDto(dto, recipesByPizza.getOrDefault(dto.getId(), Collections.emptyList()), ingredientMap);
         }
@@ -187,7 +203,16 @@ public class PizzaController {
         if (!pizzaService.eliminarPizza(id)) {
             throw new ResourceNotFoundException(MSG_NOT_FOUND_PREFIX + id);
         }
-        return ResponseEntity.ok(ApiResponse.success(null, "Pizza eliminada correctamente"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Pizza eliminada lógicamente"));
+    }
+
+    @PatchMapping("/{id}/restore")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> restorePizza(@PathVariable("id") Integer id) {
+        if (!pizzaService.restaurarPizza(id)) {
+            throw new ResourceNotFoundException(MSG_NOT_FOUND_PREFIX + id);
+        }
+        return ResponseEntity.ok(ApiResponse.success(null, "Pizza restaurada con éxito"));
     }
 
     private void savePizzaRecipe(Pizza pizza, List<PizzaIngredientDTO> recipeDtos) {

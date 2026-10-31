@@ -2,6 +2,8 @@ package com.example.repositories;
 
 import com.example.models.Extra;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -29,6 +31,13 @@ public interface ExtraRepository extends JpaRepository<Extra, Integer> {
     
     // Obtener todos ordenados por displayOrder
     List<Extra> findByDeletedAtIsNullOrderByDisplayOrderAsc();
+
+    Page<Extra> findByDeletedAtIsNullOrderByDisplayOrderAsc(Pageable pageable);
+    Page<Extra> findByIsAvailableTrueAndDeletedAtIsNullOrderByDisplayOrderAsc(Pageable pageable);
+    Page<Extra> findAllByOrderByDisplayOrderAsc(Pageable pageable);
+    Page<Extra> findByDeletedAtIsNull(Pageable pageable);
+    Page<Extra> findByIsAvailableTrueAndDeletedAtIsNull(Pageable pageable);
+    Page<Extra> findAll(Pageable pageable);
     
     // Obtener por categoría ordenados
     List<Extra> findByCategoryAndDeletedAtIsNullOrderByDisplayOrderAsc(Extra.ExtraCategory category);

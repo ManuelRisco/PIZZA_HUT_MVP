@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,15 +28,42 @@ public class IngredientService {
         return ingredientRepository.findByDeletedAtIsNull();
     }
 
+    public List<Ingredient> listarIngredientes(boolean includeDeleted) {
+        if (includeDeleted) {
+            return ingredientRepository.findAll();
+        }
+        return ingredientRepository.findByDeletedAtIsNull();
+    }
+
     public Optional<Ingredient> obtenerPorId(Integer id) {
         return ingredientRepository.findById(id);
     }
 
     @CacheEvict(value = { "ingredients", "pizzas" }, allEntries = true)
     public Ingredient crearIngrediente(Ingredient ingredient) {
-        if (ingredientRepository.existsByName(ingredient.getName())) {
+        if (ingredient.getName() == null || ingredient.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre del ingrediente es obligatorio.");
+        }
+
+        Optional<Ingredient> existingOpt = ingredientRepository.findByName(ingredient.getName());
+        if (existingOpt.isPresent()) {
+            Ingredient existing = existingOpt.get();
+            if (existing.getDeletedAt() != null) {
+                // Reactivar si estaba soft-deleted
+                existing.setDeletedAt(null);
+                existing.setAvailable(true);
+                if (ingredient.getUnit() != null) existing.setUnit(ingredient.getUnit());
+                if (ingredient.getStockQuantity() != null) existing.setStockQuantity(ingredient.getStockQuantity());
+                if (ingredient.getMinStock() != null) existing.setMinStock(ingredient.getMinStock());
+                if (ingredient.getUnitCost() != null) existing.setUnitCost(ingredient.getUnitCost());
+                if (ingredient.getExtraPortionQuantity() != null) existing.setExtraPortionQuantity(ingredient.getExtraPortionQuantity());
+                if (ingredient.getExtraCost() != null) existing.setExtraCost(ingredient.getExtraCost());
+                existing.setAllowAsExtra(ingredient.isAllowAsExtra());
+                return ingredientRepository.save(existing);
+            }
             throw new IllegalArgumentException("El nombre del ingrediente ya está registrado.");
         }
+
         if (ingredient.getUnit() == null || ingredient.getUnit().isBlank()) {
             ingredient.setUnit("g");
         }
@@ -65,7 +93,7 @@ public class IngredientService {
 
             if (ingredientActualizado.getName() != null
                     && !ingredient.getName().equals(ingredientActualizado.getName())
-                    && ingredientRepository.existsByName(ingredientActualizado.getName())) {
+                    && ingredientRepository.existsByNameAndDeletedAtIsNull(ingredientActualizado.getName())) {
                 throw new IllegalArgumentException("El nombre del ingrediente ya está registrado.");
             }
 
@@ -92,7 +120,9 @@ public class IngredientService {
                 ingredient.setExtraPortionQuantity(ingredientActualizado.getExtraPortionQuantity());
             }
             ingredient.setAllowAsExtra(ingredientActualizado.isAllowAsExtra());
-            ingredient.setDeletedAt(ingredientActualizado.getDeletedAt());
+            if (ingredientActualizado.getDeletedAt() != null) {
+                ingredient.setDeletedAt(ingredientActualizado.getDeletedAt());
+            }
             return ingredientRepository.save(ingredient);
         }
         return null;
@@ -103,7 +133,20 @@ public class IngredientService {
         Optional<Ingredient> ingredientOpt = ingredientRepository.findById(id);
         if (ingredientOpt.isPresent()) {
             Ingredient ingredient = ingredientOpt.get();
-            ingredient.setDeletedAt(java.time.LocalDateTime.now());
+            ingredient.setDeletedAt(LocalDateTime.now());
+            ingredientRepository.save(ingredient);
+            return true;
+        }
+        return false;
+    }
+
+    @CacheEvict(value = { "ingredients", "pizzas" }, allEntries = true)
+    public boolean restaurarIngrediente(Integer id) {
+        Optional<Ingredient> ingredientOpt = ingredientRepository.findById(id);
+        if (ingredientOpt.isPresent()) {
+            Ingredient ingredient = ingredientOpt.get();
+            ingredient.setDeletedAt(null);
+            ingredient.setAvailable(true);
             ingredientRepository.save(ingredient);
             return true;
         }
@@ -111,6 +154,6 @@ public class IngredientService {
     }
 
     public boolean existsByName(String name) {
-        return ingredientRepository.existsByName(name);
+        return ingredientRepository.existsByNameAndDeletedAtIsNull(name);
     }
 }

@@ -77,14 +77,14 @@ public class DatabaseStockInitializer implements CommandLineRunner {
 
             // 3. Agregar columnas stockQuantity y minStock en tabla sizes si no existen
             try {
-                jdbcTemplate.execute("ALTER TABLE `sizes` ADD COLUMN `stockQuantity` INT NOT NULL DEFAULT 50");
+                jdbcTemplate.execute("ALTER TABLE `sizes` ADD COLUMN `stockQuantity` INT NOT NULL DEFAULT 0");
                 log.info("Columna stockQuantity agregada a tabla sizes.");
             } catch (Exception ignored) {
                 // Ya existe la columna
             }
 
             try {
-                jdbcTemplate.execute("ALTER TABLE `sizes` ADD COLUMN `minStock` INT NOT NULL DEFAULT 10");
+                jdbcTemplate.execute("ALTER TABLE `sizes` ADD COLUMN `minStock` INT NOT NULL DEFAULT 0");
                 log.info("Columna minStock agregada a tabla sizes.");
             } catch (Exception ignored) {
                 // Ya existe la columna
@@ -106,15 +106,7 @@ public class DatabaseStockInitializer implements CommandLineRunner {
                 log.info("Columna lineCost agregada a tabla order_items.");
             } catch (Exception ignored) {}
 
-            // 2. Unificar multiplicador de receta y poblar stock compartido de masas por tamaño
-            jdbcTemplate.update("UPDATE `sizes` SET `recipeMultiplier` = 1.00 WHERE `recipeMultiplier` IS NULL OR `recipeMultiplier` != 1.00");
-
-            jdbcTemplate.update("UPDATE `sizes` SET `stockQuantity` = 50, `minStock` = 10 WHERE LOWER(`name`) = 'personal' OR `id` = 1");
-            jdbcTemplate.update("UPDATE `sizes` SET `stockQuantity` = 40, `minStock` = 10 WHERE LOWER(`name`) = 'mediana' OR `id` = 2");
-            jdbcTemplate.update("UPDATE `sizes` SET `stockQuantity` = 30, `minStock` = 8 WHERE LOWER(`name`) = 'familiar' OR `id` = 3");
-            jdbcTemplate.update("UPDATE `sizes` SET `stockQuantity` = 20, `minStock` = 5 WHERE LOWER(`name`) LIKE '%extra%' OR LOWER(`name`) LIKE '%fiesta%' OR `id` = 4");
-
-            log.info("Alineación de stock completada: Todas las pizzas comparten el stock de masa por tamaño.");
+            log.info("Verificación de estructura y columnas de stock completada.");
         } catch (Exception e) {
             log.warn("Aviso en DatabaseStockInitializer: {}", e.getMessage());
         }

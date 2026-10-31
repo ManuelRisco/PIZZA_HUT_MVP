@@ -97,7 +97,7 @@ export class Promociones implements OnInit {
   cargarPromociones(): void {
     this.loading = true;
     this.loadError = '';
-    this.promocionService.listarTodas().subscribe({
+    this.promocionService.listarTodas(true).subscribe({
       next: (data) => {
         this.todasLasPromociones = data || [];
         this.precomputarMetricasYFechas();
@@ -270,6 +270,23 @@ export class Promociones implements OnInit {
       error: (err) => {
         this.guardando = false;
         this.error = err.error?.message || 'Error al guardar promoción';
+      }
+    });
+  }
+
+
+  restaurarPromocion(id: number, nombre?: string): void {
+    if (!confirm('¿Desea restaurar la promoción' + (nombre ? ` "${nombre}"` : '') + '?')) return;
+
+    this.promocionService.restaurar(id).subscribe({
+      next: () => {
+        this.success = 'Promoción' + (nombre ? ` "${nombre}"` : '') + ' restaurada con éxito';
+        this.cargarPromociones();
+        setTimeout(() => this.success = '', 3000);
+      },
+      error: (err) => {
+        this.error = err?.error?.message || 'Error al restaurar promoción';
+        setTimeout(() => this.error = '', 3000);
       }
     });
   }

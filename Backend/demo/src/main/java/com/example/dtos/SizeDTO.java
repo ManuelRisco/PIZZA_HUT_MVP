@@ -2,6 +2,7 @@ package com.example.dtos;
 
 import com.example.models.Size;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public class SizeDTO {
     private Integer id;
@@ -12,6 +13,7 @@ public class SizeDTO {
     private Integer minStock;
     private String description;
     private Integer displayOrder;
+    private LocalDateTime deletedAt;
 
     // Constructor vacío
     public SizeDTO() {}
@@ -26,6 +28,7 @@ public class SizeDTO {
         this.minStock = size.getMinStock();
         this.description = size.getDescription();
         this.displayOrder = size.getDisplayOrder();
+        this.deletedAt = size.getDeletedAt();
     }
 
     // Getters y Setters
@@ -52,4 +55,7 @@ public class SizeDTO {
 
     public Integer getDisplayOrder() { return displayOrder; }
     public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

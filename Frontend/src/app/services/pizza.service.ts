@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PizzaDTO, PizzaCreateDTO, PizzaIngredientDTO, CategoryDTO, IngredientDTO } from '../models/pizza.interface';
@@ -17,8 +17,12 @@ export class PizzaService {
   constructor(private readonly http: HttpClient) {}
 
   // Operaciones CRUD para Pizzas
-  listarPizzas(): Observable<PizzaDTO[]> {
-    return this.http.get<any>(`${this.apiUrl}/pizzas`).pipe(
+  listarPizzas(includeDeleted: boolean = false): Observable<PizzaDTO[]> {
+    let params = new HttpParams();
+    if (includeDeleted) {
+      params = params.set('includeDeleted', 'true');
+    }
+    return this.http.get<any>(`${this.apiUrl}/pizzas`, { params }).pipe(
       map(res => (res.data !== undefined ? res.data : res))
     );
   }
@@ -59,9 +63,19 @@ export class PizzaService {
     );
   }
 
+  restaurarPizza(id: number): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/pizzas/${id}/restore`, {}, this.httpOptions).pipe(
+      map(res => (res.data !== undefined ? res.data : res))
+    );
+  }
+
   // Operaciones para Categorías
-  listarCategorias(): Observable<CategoryDTO[]> {
-    return this.http.get<any>(`${this.apiUrl}/categories`).pipe(
+  listarCategorias(includeDeleted: boolean = false): Observable<CategoryDTO[]> {
+    let params = new HttpParams();
+    if (includeDeleted) {
+      params = params.set('includeDeleted', 'true');
+    }
+    return this.http.get<any>(`${this.apiUrl}/categories`, { params }).pipe(
       map(res => (res.data !== undefined ? res.data : res))
     );
   }
@@ -90,9 +104,19 @@ export class PizzaService {
     );
   }
 
+  restaurarCategoria(id: number): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/categories/${id}/restore`, {}, this.httpOptions).pipe(
+      map(res => (res.data !== undefined ? res.data : res))
+    );
+  }
+
   // Operaciones para Ingredientes
-  listarIngredientes(): Observable<IngredientDTO[]> {
-    return this.http.get<any>(`${this.apiUrl}/ingredients`).pipe(
+  listarIngredientes(includeDeleted: boolean = false): Observable<IngredientDTO[]> {
+    let params = new HttpParams();
+    if (includeDeleted) {
+      params = params.set('includeDeleted', 'true');
+    }
+    return this.http.get<any>(`${this.apiUrl}/ingredients`, { params }).pipe(
       map(res => (res.data !== undefined ? res.data : res))
     );
   }
@@ -117,6 +141,12 @@ export class PizzaService {
 
   eliminarIngrediente(id: number): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/ingredients/${id}`).pipe(
+      map(res => (res.data !== undefined ? res.data : res))
+    );
+  }
+
+  restaurarIngrediente(id: number): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/ingredients/${id}/restore`, {}, this.httpOptions).pipe(
       map(res => (res.data !== undefined ? res.data : res))
     );
   }

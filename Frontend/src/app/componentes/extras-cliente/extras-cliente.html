@@ -44,7 +44,7 @@
           class="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all" 
           placeholder="Buscar extras..."
           [(ngModel)]="searchTerm"
-          (input)="aplicarFiltros()"
+          (ngModelChange)="onFiltroBusquedaChange()"
         >
         @if (searchTerm) {
           <button class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-red-500 transition-colors" (click)="limpiarBuscador()" type="button">
@@ -63,10 +63,24 @@
     </div>
   }
 
+  <!-- Paginación Superior -->
+  @if (!loading && extrasFiltrados.length > 0) {
+    <div class="mb-6 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="extrasFiltrados.length"
+        [itemsPerPage]="itemsPerPage"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
+    </div>
+  }
+
   <!-- Grid de Extras -->
   @if (!loading && extrasFiltrados.length > 0) {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-      @for (extra of extrasFiltrados; track extra.id) {
+      @for (extra of extrasPaginados; track extra.id) {
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col relative group"
              [ngClass]="esAgotado(extra) ? 'opacity-75 grayscale-[0.5]' : ''">
           
@@ -84,7 +98,12 @@
           }
 
           <!-- Imagen -->
-          <div class="h-44 bg-gray-50 flex items-center justify-center overflow-hidden">
+          <div class="h-44 bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer"
+               (click)="!esAgotado(extra) && agregarAlCarrito(extra)"
+               (keydown.enter)="!esAgotado(extra) && agregarAlCarrito(extra)"
+               role="button"
+               tabindex="0"
+               [attr.aria-label]="'Agregar ' + extra.name + ' al carrito'">
             @if (extra.imageUrl && !extra.imageError) {
               <img [src]="getImageUrl(extra.imageUrl)" [alt]="extra.name"
                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -111,7 +130,8 @@
               {{ obtenerNombreCategoria(extra.category || '') }}
             </div>
 
-            <h3 class="text-xl font-black text-gray-800 mb-2 line-clamp-1">{{ extra.name }}</h3>
+            <h3 class="text-xl font-black text-gray-800 mb-2 line-clamp-1 hover:text-red-600 transition-colors cursor-pointer"
+                (click)="!esAgotado(extra) && agregarAlCarrito(extra)">{{ extra.name }}</h3>
             
             @if (extra.description) {
               <p class="text-sm text-gray-500 mb-6 line-clamp-2 flex-1">{{ extra.description }}</p>
@@ -146,6 +166,18 @@
           }
         </div>
       }
+    </div>
+
+    <!-- Paginación -->
+    <div class="mb-8 pt-4 border-t border-gray-100">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="extrasFiltrados.length"
+        [itemsPerPage]="itemsPerPage"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
     </div>
   }
 

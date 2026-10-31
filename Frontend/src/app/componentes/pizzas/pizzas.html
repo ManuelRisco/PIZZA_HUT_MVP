@@ -217,9 +217,14 @@
             <div>
               <div class="flex justify-between items-start gap-2 mb-1.5">
                 <div class="min-w-0 flex-1">
-                  <h4 class="font-black text-gray-900 text-base sm:text-lg leading-tight mb-0.5 group-hover:text-red-600 transition-colors truncate m-0">
-                    {{ pizza.name }}
-                  </h4>
+                  <div class="flex items-center gap-1.5 flex-wrap mb-0.5">
+                    <h4 class="font-black text-gray-900 text-base sm:text-lg leading-tight group-hover:text-red-600 transition-colors truncate m-0">
+                      {{ pizza.name }}
+                    </h4>
+                    <span *ngIf="pizza.deletedAt" class="px-2 py-0.5 rounded-md font-bold text-[10px] bg-rose-50 text-rose-700 border border-rose-200">
+                      <i class="bi bi-slash-circle mr-1"></i>Eliminada
+                    </span>
+                  </div>
                   <p class="text-[11px] text-gray-400 font-mono truncate m-0">
                     #{{ pizza.id }}{{ pizza.imageUrl ? ' · ' + pizza.imageUrl : '' }}
                   </p>
@@ -270,39 +275,52 @@
 
             <!-- Botones de acción responsivos -->
             <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mt-auto pt-2 border-t border-gray-100">
-              <button
-                type="button"
-                class="sm:flex-1 bg-gray-100 hover:bg-gray-900 hover:text-white text-gray-700 font-bold py-2 px-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                (click)="editarPizza(pizza)"
-                title="Editar pizza"
-              >
-                <i class="bi bi-pencil-fill"></i> Editar
-              </button>
-              <button
-                type="button"
-                class="sm:flex-1 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-700 font-bold py-2 px-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                (click)="abrirModalRecetaRapida(pizza)"
-                title="Editar Receta e Insumos"
-              >
-                <i class="bi bi-journal-text"></i> Receta
-              </button>
-              <button
-                type="button"
-                class="sm:flex-1 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-bold py-2 px-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                (click)="mostrarOpcionesExtras(pizza)"
-                title="Simular Extras"
-              >
-                <i class="bi bi-plus-circle-fill"></i> Extras
-              </button>
-              <button
-                type="button"
-                class="bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                (click)="eliminarPizza(pizza.id!, pizza.name)"
-                title="Eliminar pizza"
-              >
-                <i class="bi bi-trash-fill"></i>
-                <span class="sm:hidden">Eliminar</span>
-              </button>
+              <ng-container *ngIf="pizza.deletedAt">
+                <button
+                  type="button"
+                  class="col-span-2 sm:flex-1 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-200"
+                  (click)="restaurarPizza(pizza.id!, pizza.name)"
+                  title="Restaurar pizza"
+                >
+                  <i class="bi bi-arrow-counterclockwise"></i> Restaurar Pizza
+                </button>
+              </ng-container>
+
+              <ng-container *ngIf="!pizza.deletedAt">
+                <button
+                  type="button"
+                  class="sm:flex-1 bg-gray-100 hover:bg-gray-900 hover:text-white text-gray-700 font-bold py-2 px-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  (click)="editarPizza(pizza)"
+                  title="Editar pizza"
+                >
+                  <i class="bi bi-pencil-fill"></i> Editar
+                </button>
+                <button
+                  type="button"
+                  class="sm:flex-1 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-700 font-bold py-2 px-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  (click)="abrirModalRecetaRapida(pizza)"
+                  title="Editar Receta e Insumos"
+                >
+                  <i class="bi bi-journal-text"></i> Receta
+                </button>
+                <button
+                  type="button"
+                  class="sm:flex-1 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-bold py-2 px-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  (click)="mostrarOpcionesExtras(pizza)"
+                  title="Simular Extras"
+                >
+                  <i class="bi bi-plus-circle-fill"></i> Extras
+                </button>
+                <button
+                  type="button"
+                  class="bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                  (click)="eliminarPizza(pizza.id!, pizza.name)"
+                  title="Eliminar pizza"
+                >
+                  <i class="bi bi-trash-fill"></i>
+                  <span class="sm:hidden">Eliminar</span>
+                </button>
+              </ng-container>
             </div>
           </div>
         </div>

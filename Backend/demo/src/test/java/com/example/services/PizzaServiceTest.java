@@ -155,4 +155,19 @@ class PizzaServiceTest {
         verify(pizzaRepository, times(1)).findById(999);
         verify(pizzaRepository, never()).save(any());
     }
+
+    @Test
+    @DisplayName("CU12 - Flujo Alternativo: Restaurar pizza soft-deleted [RF24]")
+    void testRestaurarPizza() {
+        pizzaTest.setDeletedAt(java.time.LocalDateTime.now());
+        when(pizzaRepository.findById(1)).thenReturn(Optional.of(pizzaTest));
+        when(pizzaRepository.save(any(Pizza.class))).thenReturn(pizzaTest);
+
+        boolean restaurada = pizzaService.restaurarPizza(1);
+
+        assertTrue(restaurada);
+        assertNull(pizzaTest.getDeletedAt());
+        verify(pizzaRepository, times(1)).findById(1);
+        verify(pizzaRepository, times(1)).save(pizzaTest);
+    }
 }

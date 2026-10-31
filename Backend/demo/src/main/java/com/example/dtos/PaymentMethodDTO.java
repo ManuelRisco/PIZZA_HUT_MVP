@@ -14,9 +14,10 @@ public class PaymentMethodDTO {
     private int displayOrder;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
     private boolean inUse;
 
-    // Constructor vac\u00edo
+    // Constructor vacío
     public PaymentMethodDTO() {}
 
     // Constructor desde modelo de dominio
@@ -28,6 +29,7 @@ public class PaymentMethodDTO {
         this.displayOrder = paymentMethod.getDisplayOrder();
         this.createdAt = paymentMethod.getCreatedAt();
         this.updatedAt = paymentMethod.getUpdatedAt();
+        this.deletedAt = paymentMethod.getDeletedAt();
     }
 
     // Getters y Setters
@@ -54,6 +56,9 @@ public class PaymentMethodDTO {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 
     public boolean getInUse() { return inUse; }
     public void setInUse(boolean inUse) { this.inUse = inUse; }

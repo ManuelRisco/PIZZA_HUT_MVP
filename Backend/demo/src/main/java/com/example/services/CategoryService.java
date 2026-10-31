@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +30,13 @@ public class CategoryService {
         return categoryRepository.findByDeletedAtIsNull();
     }
 
+    public List<Category> listarTodasCategorias(boolean includeDeleted) {
+        if (includeDeleted) {
+            return categoryRepository.findAll();
+        }
+        return categoryRepository.findByDeletedAtIsNull();
+    }
+
     public Optional<Category> obtenerPorId(Integer id) {
         return categoryRepository.findById(id);
     }
@@ -38,7 +46,17 @@ public class CategoryService {
         if (category.getName() == null || category.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Debe ingresar un nombre válido para la categoría.");
         }
-        if (categoryRepository.existsByName(category.getName())) {
+        
+        Optional<Category> existingOpt = categoryRepository.findByName(category.getName());
+        if (existingOpt.isPresent()) {
+            Category existing = existingOpt.get();
+            if (existing.getDeletedAt() != null) {
+                // Reactivar si estaba soft-deleted
+                existing.setDeletedAt(null);
+                existing.setDescription(category.getDescription());
+                existing.setDisplayOrder(category.getDisplayOrder());
+                return categoryRepository.save(existing);
+            }
             throw new IllegalArgumentException("El nombre de la categoría ya está registrado.");
         }
         return categoryRepository.save(category);
@@ -55,13 +73,15 @@ public class CategoryService {
             Category category = categoryOpt.get();
             // Validar duplicado si cambia el nombre
             if (!category.getName().equals(categoryActualizada.getName())
-                    && categoryRepository.existsByName(categoryActualizada.getName())) {
+                    && categoryRepository.existsByNameAndDeletedAtIsNull(categoryActualizada.getName())) {
                 throw new IllegalArgumentException("El nombre de la categoría ya está registrado.");
             }
             category.setName(categoryActualizada.getName());
             category.setDescription(categoryActualizada.getDescription());
             category.setDisplayOrder(categoryActualizada.getDisplayOrder());
-            category.setDeletedAt(categoryActualizada.getDeletedAt());
+            if (categoryActualizada.getDeletedAt() != null) {
+                category.setDeletedAt(categoryActualizada.getDeletedAt());
+            }
             return categoryRepository.save(category);
         }
         return null;
@@ -76,7 +96,19 @@ public class CategoryService {
                         "No se puede eliminar la categoría porque está en uso por una pizza activa.");
             }
             Category category = categoryOpt.get();
-            category.setDeletedAt(java.time.LocalDateTime.now());
+            category.setDeletedAt(LocalDateTime.now());
+            categoryRepository.save(category);
+            return true;
+        }
+        return false;
+    }
+
+    @CacheEvict(value = "categories", allEntries = true)
+    public boolean restaurarCategoria(Integer id) {
+        Optional<Category> categoryOpt = categoryRepository.findById(id);
+        if (categoryOpt.isPresent()) {
+            Category category = categoryOpt.get();
+            category.setDeletedAt(null);
             categoryRepository.save(category);
             return true;
         }
@@ -84,6 +116,6 @@ public class CategoryService {
     }
 
     public boolean existsByName(String name) {
-        return categoryRepository.existsByName(name);
+        return categoryRepository.existsByNameAndDeletedAtIsNull(name);
     }
 }

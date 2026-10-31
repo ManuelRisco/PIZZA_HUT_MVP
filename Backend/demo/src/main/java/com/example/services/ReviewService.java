@@ -48,11 +48,19 @@ public class ReviewService {
         return reviewRepository.save(existingReview);
     }
 
+        /**
+     * Eliminación Lógica (Soft Delete).
+     * Mantiene consistencia de calificaciones históricas.
+     */
     public void eliminarReview(Integer id) {
-        if (!reviewRepository.existsById(id)) {
+        Optional<Review> reviewOpt = reviewRepository.findById(id);
+        if (reviewOpt.isEmpty()) {
             throw new IllegalArgumentException("Review no encontrado");
         }
-        reviewRepository.deleteById(id);
+        Review review = reviewOpt.get();
+        review.setActive(false);
+        review.setDeletedAt(java.time.LocalDateTime.now());
+        reviewRepository.save(review);
     }
 
     public Review desactivarReview(Integer id) {

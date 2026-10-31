@@ -12,6 +12,7 @@ export interface SizeDTO {
   minStock?: number;
   description?: string;
   displayOrder?: number;
+  deletedAt?: string | null;
 }
 
 // Order (Pedidos)
@@ -157,6 +158,7 @@ export interface IngredientDTO {
   allowAsExtra?: boolean;
   lowStock?: boolean;
   outOfStock?: boolean;
+  deletedAt?: string | null;
 }
 
 // ===================================

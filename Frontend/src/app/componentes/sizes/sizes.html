@@ -192,22 +192,35 @@
             </td>
             <td class="py-3 px-4 text-center">
               <div class="flex items-center justify-center gap-1.5">
-                <button
-                  type="button"
-                  (click)="abrirModal(size)"
-                  class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors cursor-pointer"
-                  title="Editar tamaño"
-                >
-                  <i class="bi bi-pencil-fill text-xs"></i>
-                </button>
-                <button
-                  type="button"
-                  (click)="eliminar(size.id!)"
-                  class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer"
-                  title="Eliminar tamaño"
-                >
-                  <i class="bi bi-trash-fill text-xs"></i>
-                </button>
+                <ng-container *ngIf="size.deletedAt">
+                  <button
+                    type="button"
+                    (click)="restaurar(size.id!, size.name)"
+                    class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center justify-center gap-1 transition-colors cursor-pointer text-xs font-bold border border-emerald-200"
+                    title="Restaurar tamaño"
+                  >
+                    <i class="bi bi-arrow-counterclockwise text-xs"></i> Restaurar
+                  </button>
+                </ng-container>
+
+                <ng-container *ngIf="!size.deletedAt">
+                  <button
+                    type="button"
+                    (click)="abrirModal(size)"
+                    class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Editar tamaño"
+                  >
+                    <i class="bi bi-pencil-fill text-xs"></i>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="eliminar(size.id!)"
+                    class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Eliminar tamaño"
+                  >
+                    <i class="bi bi-trash-fill text-xs"></i>
+                  </button>
+                </ng-container>
               </div>
             </td>
           </tr>

@@ -3,6 +3,7 @@ package com.example.dtos;
 import com.example.models.Pizza;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class PizzaDTO {
@@ -28,6 +29,7 @@ public class PizzaDTO {
     private Integer recipeCount;
     private boolean lowStock;
     private boolean outOfStock;
+    private LocalDateTime deletedAt;
 
     // Constructor vacío
     public PizzaDTO() {}
@@ -43,6 +45,7 @@ public class PizzaDTO {
         this.price = pizza.getPrice();
         this.isAvailable = pizza.getIsAvailable();
         this.isPopular = pizza.getIsPopular();
+        this.deletedAt = pizza.getDeletedAt();
     }
 
     // Getters y setters
@@ -100,4 +103,7 @@ public class PizzaDTO {
 
     public boolean isOutOfStock() { return outOfStock; }
     public void setOutOfStock(boolean outOfStock) { this.outOfStock = outOfStock; }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

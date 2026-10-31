@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +24,13 @@ public class SizeService {
 
     @Cacheable("sizes")
     public List<Size> listarSizes() {
+        return sizeRepository.findByDeletedAtIsNull();
+    }
+
+    public List<Size> listarSizes(boolean includeDeleted) {
+        if (includeDeleted) {
+            return sizeRepository.findAll();
+        }
         return sizeRepository.findByDeletedAtIsNull();
     }
 
@@ -48,15 +56,15 @@ public class SizeService {
             existing.setDeletedAt(null);
             existing.setExtraCost(size.getExtraCost());
             existing.setRecipeMultiplier(size.getRecipeMultiplier());
-            existing.setStockQuantity(size.getStockQuantity() != null ? size.getStockQuantity() : 50);
-            existing.setMinStock(size.getMinStock() != null ? size.getMinStock() : 10);
+            existing.setStockQuantity(size.getStockQuantity() != null ? size.getStockQuantity() : 0);
+            existing.setMinStock(size.getMinStock() != null ? size.getMinStock() : 0);
             existing.setDescription(size.getDescription());
             existing.setDisplayOrder(size.getDisplayOrder());
             return sizeRepository.save(existing);
         }
 
-        if (size.getStockQuantity() == null) size.setStockQuantity(50);
-        if (size.getMinStock() == null) size.setMinStock(10);
+        if (size.getStockQuantity() == null) size.setStockQuantity(0);
+        if (size.getMinStock() == null) size.setMinStock(0);
         return sizeRepository.save(size);
     }
 
@@ -87,6 +95,9 @@ public class SizeService {
         }
         existingSize.setDescription(size.getDescription());
         existingSize.setDisplayOrder(size.getDisplayOrder());
+        if (size.getDeletedAt() != null) {
+            existingSize.setDeletedAt(size.getDeletedAt());
+        }
 
         return sizeRepository.save(existingSize);
     }
@@ -98,7 +109,19 @@ public class SizeService {
             throw new IllegalArgumentException("Size no encontrado");
         }
         Size size = sizeOpt.get();
-        size.setDeletedAt(java.time.LocalDateTime.now());
+        size.setDeletedAt(LocalDateTime.now());
         sizeRepository.save(size);
+    }
+
+    @CacheEvict(value = { "sizes", "pizzas" }, allEntries = true)
+    public boolean restaurarSize(Integer id) {
+        Optional<Size> sizeOpt = sizeRepository.findById(id);
+        if (sizeOpt.isEmpty()) {
+            return false;
+        }
+        Size size = sizeOpt.get();
+        size.setDeletedAt(null);
+        sizeRepository.save(size);
+        return true;
     }
 }

@@ -172,6 +172,14 @@
             </td>
             <td class="py-3 px-4 text-center">
               <span
+                *ngIf="metodo.deletedAt"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black uppercase bg-rose-100 text-rose-800"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                Eliminado
+              </span>
+              <span
+                *ngIf="!metodo.deletedAt"
                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black uppercase"
                 [ngClass]="metodo.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'"
               >
@@ -184,33 +192,44 @@
             </td>
             <td class="py-3 px-4 text-center">
               <div class="flex items-center justify-center gap-1.5">
-                <button
-                  type="button"
-                  (click)="abrirFormularioEditar(metodo)"
-                  class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors cursor-pointer"
-                  title="Editar Método"
-                >
-                  <i class="bi bi-pencil-fill text-xs"></i>
-                </button>
-                <button
-                  type="button"
-                  (click)="cambiarEstado(metodo)"
-                  class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
-                  [ngClass]="metodo.isActive ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-400'"
-                  [title]="metodo.isActive ? 'Desactivar método' : 'Activar método'"
-                >
-                  <i class="bi" [ngClass]="metodo.isActive ? 'bi-toggle-on text-base' : 'bi-toggle-off text-base'"></i>
-                </button>
-                <button
-                  type="button"
-                  (click)="eliminarMetodoPago(metodo)"
-                  class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
-                  [ngClass]="metodo.inUse ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-red-50 hover:bg-red-100 text-red-600'"
-                  [disabled]="metodo.inUse"
-                  [title]="metodo.inUse ? 'No se puede eliminar porque está en uso en órdenes' : 'Eliminar método'"
-                >
-                  <i class="bi bi-trash-fill text-xs"></i>
-                </button>
+                <ng-container *ngIf="metodo.deletedAt">
+                  <button
+                    type="button"
+                    (click)="restaurarMetodoPago(metodo)"
+                    class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center justify-center gap-1 transition-colors cursor-pointer text-xs font-bold border border-emerald-200"
+                    title="Restaurar Método"
+                  >
+                    <i class="bi bi-arrow-counterclockwise text-xs"></i> Restaurar
+                  </button>
+                </ng-container>
+
+                <ng-container *ngIf="!metodo.deletedAt">
+                  <button
+                    type="button"
+                    (click)="abrirFormularioEditar(metodo)"
+                    class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Editar Método"
+                  >
+                    <i class="bi bi-pencil-fill text-xs"></i>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="cambiarEstado(metodo)"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
+                    [ngClass]="metodo.isActive ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-400'"
+                    [title]="metodo.isActive ? 'Desactivar método' : 'Activar método'"
+                  >
+                    <i class="bi" [ngClass]="metodo.isActive ? 'bi-toggle-on text-base' : 'bi-toggle-off text-base'"></i>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="eliminarMetodoPago(metodo)"
+                    class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Eliminar método"
+                  >
+                    <i class="bi bi-trash-fill text-xs"></i>
+                  </button>
+                </ng-container>
               </div>
             </td>
           </tr>

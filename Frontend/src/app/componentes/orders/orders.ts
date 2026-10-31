@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnChanges, SimpleChanges, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Order } from '../../services/order.service';
 import { OrderCompleteDTO } from '../../models/admin.interface';
 import { PaginationComponent } from '../pagination/pagination';
@@ -12,7 +13,10 @@ import { PaginationComponent } from '../pagination/pagination';
   templateUrl: './orders.html',
   styleUrl: './orders.css'
 })
-export class Orders implements OnInit {
+export class Orders implements OnInit, OnChanges {
+  @Input() orderIdToOpen?: number | null = null;
+  @Output() orderOpened = new EventEmitter<number>();
+
   orders: OrderCompleteDTO[] = [];
   filteredOrders: OrderCompleteDTO[] = [];
   ordersPaginados: OrderCompleteDTO[] = [];
@@ -39,10 +43,23 @@ export class Orders implements OnInit {
 
   estados = ['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
 
-  constructor(private readonly orderService: Order) {}
+  constructor(
+    private readonly orderService: Order,
+    private readonly route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
+    const queryId = this.route.snapshot.queryParams['id'] || this.route.snapshot.queryParams['orderId'];
+    if (queryId && !isNaN(Number(queryId))) {
+      this.orderIdToOpen = Number(queryId);
+    }
     this.cargarOrders();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['orderIdToOpen'] && this.orderIdToOpen && this.orders && this.orders.length > 0) {
+      this.abrirPedidoPorIdSiExiste(this.orderIdToOpen);
+    }
   }
 
   recargar(): void {
@@ -64,6 +81,9 @@ export class Orders implements OnInit {
         this.recalcularKpis();
         this.aplicarFiltro();
         this.loading = false;
+        if (this.orderIdToOpen) {
+          this.abrirPedidoPorIdSiExiste(this.orderIdToOpen);
+        }
       },
       error: (err) => {
         console.error('Error al cargar pedidos:', err);
@@ -161,6 +181,32 @@ export class Orders implements OnInit {
     this.aplicarPaginacion();
   }
 
+  abrirPedidoPorIdSiExiste(id: number): void {
+    if (!id || !this.orders || this.orders.length === 0) return;
+    const order = this.orders.find(o => o.id === id);
+    if (order) {
+      // Si el pedido está oculto por filtros actuales, restablecerlos
+      if (this.filtroEstado !== 'TODOS' && order.status !== this.filtroEstado) {
+        this.filtroEstado = 'TODOS';
+      }
+      if (this.filtroDeliveryType !== 'TODOS' && order.deliveryType !== this.filtroDeliveryType) {
+        this.filtroDeliveryType = 'TODOS';
+      }
+      this.terminoBusqueda = '';
+      this.aplicarFiltro();
+
+      // Ajustar la página si el pedido no está en la página 1
+      const orderIndex = this.filteredOrders.findIndex(o => o.id === id);
+      if (orderIndex !== -1) {
+        this.currentPage = Math.floor(orderIndex / this.itemsPerPage) + 1;
+        this.aplicarPaginacion();
+      }
+
+      this.verDetalles(order);
+      this.orderOpened.emit(id);
+    }
+  }
+
   verDetalles(order: OrderCompleteDTO): void {
     this.selectedOrder = order;
     this.showModal = true;
@@ -169,6 +215,7 @@ export class Orders implements OnInit {
   cerrarModal(): void {
     this.showModal = false;
     this.selectedOrder = null;
+    this.orderIdToOpen = null;
   }
 
   cambiarEstado(order: OrderCompleteDTO, nuevoEstado: string, estadoAnterior: OrderCompleteDTO['status']): void {

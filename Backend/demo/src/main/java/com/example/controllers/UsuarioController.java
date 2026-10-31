@@ -269,7 +269,7 @@ public class UsuarioController {
                 getCurrentUserId(),
                 ENTITY_USUARIO,
                 id.intValue(),
-                "Usuario eliminado de forma permanente");
+                "Usuario eliminado lógicamente (Soft Delete)");
         return ResponseEntity.ok(ApiResponse.success(null, "Usuario eliminado correctamente"));
     }
 

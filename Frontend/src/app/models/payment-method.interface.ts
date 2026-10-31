@@ -7,4 +7,5 @@ export interface PaymentMethodDTO {
   createdAt?: string;
   updatedAt?: string;
   inUse?: boolean;
+  deletedAt?: string | null;
 }

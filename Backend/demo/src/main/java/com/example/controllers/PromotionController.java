@@ -32,8 +32,22 @@ public class PromotionController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PromotionDTO>>> listarTodas() {
-        List<Promotion> promotions = promotionService.listarPromociones();
+    public ResponseEntity<ApiResponse<?>> listarTodas(
+            @RequestParam(value = "includeDeleted", defaultValue = "false") boolean includeDeleted,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size) {
+
+        if (page != null && size != null) {
+            int pageIndex = Math.max(0, page > 0 ? page - 1 : page);
+            int pageSize = Math.max(1, size);
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageIndex, pageSize);
+            org.springframework.data.domain.Page<Promotion> promoPage = promotionService.listarPromocionesPaginadas(includeDeleted, pageable);
+            List<PromotionDTO> dtos = promoPage.getContent().stream().map(PromotionDTO::new).toList();
+            com.example.dtos.PageResponseDTO<PromotionDTO> pageResponse = com.example.dtos.PageResponseDTO.from(promoPage, dtos);
+            return ResponseEntity.ok(ApiResponse.success(pageResponse));
+        }
+
+        List<Promotion> promotions = promotionService.listarPromociones(includeDeleted);
         List<PromotionDTO> dtos = promotions.stream()
             .map(PromotionDTO::new)
             .toList();
@@ -41,7 +55,20 @@ public class PromotionController {
     }
 
     @GetMapping("/activas")
-    public ResponseEntity<ApiResponse<List<PromotionDTO>>> listarActivas() {
+    public ResponseEntity<ApiResponse<?>> listarActivas(
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size) {
+
+        if (page != null && size != null) {
+            int pageIndex = Math.max(0, page > 0 ? page - 1 : page);
+            int pageSize = Math.max(1, size);
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageIndex, pageSize);
+            org.springframework.data.domain.Page<Promotion> promoPage = promotionService.listarActivasPaginadas(pageable);
+            List<PromotionDTO> dtos = promoPage.getContent().stream().map(PromotionDTO::new).toList();
+            com.example.dtos.PageResponseDTO<PromotionDTO> pageResponse = com.example.dtos.PageResponseDTO.from(promoPage, dtos);
+            return ResponseEntity.ok(ApiResponse.success(pageResponse));
+        }
+
         List<Promotion> promotions = promotionService.listarPromocionesActivas();
         List<PromotionDTO> dtos = promotions.stream()
             .map(PromotionDTO::new)
@@ -156,7 +183,7 @@ public class PromotionController {
     public ResponseEntity<Object> eliminar(@PathVariable("id") Integer id) {
         try {
             promotionService.eliminarPromocion(id);
-            return ResponseEntity.ok().body(Map.of(MSG_KEY, "Promoción eliminada correctamente", "id", id));
+            return ResponseEntity.ok().body(Map.of(MSG_KEY, "Promoción eliminada lógicamente", "id", id));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage() != null ? e.getMessage() : "No se pudo eliminar la promoción"));
         } catch (RuntimeException e) {
@@ -165,6 +192,16 @@ public class PromotionController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("Error al eliminar promoción: " + e.getMessage()));
         }
+    }
+
+    @PatchMapping("/{id}/restore")
+    public ResponseEntity<Object> restorePromotion(@PathVariable("id") Integer id) {
+        boolean restaurado = promotionService.restaurarPromocion(id);
+        if (restaurado) {
+            return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Promoción restaurada con éxito", "id", id)));
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("Promoción no encontrada"));
     }
 
     @PatchMapping("/{id}/activar")

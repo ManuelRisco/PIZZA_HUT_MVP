@@ -65,7 +65,7 @@ export class Sizes implements OnInit {
   cargarSizes(): void {
     this.loading = true;
     this.loadError = '';
-    this.sizeService.obtenerTodos().subscribe({
+    this.sizeService.obtenerTodos(true).subscribe({
       next: (data) => {
         this.sizes = (data || []).toSorted((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
         this.recalcularKpis();
@@ -219,6 +219,22 @@ export class Sizes implements OnInit {
           this.guardando = false;
           this.mostrarMensaje(err?.error?.message || 'Error al crear tamaño', true);
         },
+      });
+    }
+  }
+
+
+  restaurar(id: number, nombre?: string): void {
+    if (confirm('¿Desea restaurar el tamaño' + (nombre ? ` "${nombre}"` : '') + '?')) {
+      this.sizeService.restaurar(id).subscribe({
+        next: () => {
+          this.mostrarMensaje('Tamaño' + (nombre ? ` "${nombre}"` : '') + ' restaurado con éxito');
+          this.cargarSizes();
+        },
+        error: (err) => {
+          console.error('Error al restaurar tamaño:', err);
+          this.mostrarMensaje(err?.error?.message || 'Error al restaurar tamaño', true);
+        }
       });
     }
   }

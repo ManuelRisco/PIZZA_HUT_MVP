@@ -211,7 +211,11 @@
               </span>
             </td>
             <td class="py-3 px-4 text-center">
+              <span *ngIf="ing.deletedAt" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-700">
+                ELIMINADO
+              </span>
               <span
+                *ngIf="!ing.deletedAt"
                 class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase"
                 [ngClass]="ing.outOfStock ? 'bg-red-100 text-red-700' : (ing.lowStock ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-700')"
               >
@@ -220,31 +224,44 @@
             </td>
             <td class="py-3 px-4 text-center">
               <div class="flex items-center justify-center gap-1.5">
-                <button
-                  type="button"
-                  (click)="abrirModal(ing)"
-                  class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors cursor-pointer"
-                  title="Editar Insumo"
-                >
-                  <i class="bi bi-pencil-fill text-xs"></i>
-                </button>
-                <button
-                  type="button"
-                  (click)="cambiarDisponibilidad(ing)"
-                  class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
-                  [ngClass]="ing.isAvailable ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-400'"
-                  [title]="ing.isAvailable ? 'Desactivar insumo' : 'Activar insumo'"
-                >
-                  <i class="bi" [ngClass]="ing.isAvailable ? 'bi-toggle-on text-base' : 'bi-toggle-off text-base'"></i>
-                </button>
-                <button
-                  type="button"
-                  (click)="eliminar(ing.id!)"
-                  class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer"
-                  title="Eliminar Insumo"
-                >
-                  <i class="bi bi-trash-fill text-xs"></i>
-                </button>
+                <ng-container *ngIf="ing.deletedAt">
+                  <button
+                    type="button"
+                    (click)="restaurar(ing.id!, ing.name)"
+                    class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center justify-center gap-1 transition-colors cursor-pointer text-xs font-bold border border-emerald-200"
+                    title="Restaurar Insumo"
+                  >
+                    <i class="bi bi-arrow-counterclockwise text-xs"></i> Restaurar
+                  </button>
+                </ng-container>
+
+                <ng-container *ngIf="!ing.deletedAt">
+                  <button
+                    type="button"
+                    (click)="abrirModal(ing)"
+                    class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Editar Insumo"
+                  >
+                    <i class="bi bi-pencil-fill text-xs"></i>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="cambiarDisponibilidad(ing)"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
+                    [ngClass]="ing.isAvailable ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-400'"
+                    [title]="ing.isAvailable ? 'Desactivar insumo' : 'Activar insumo'"
+                  >
+                    <i class="bi" [ngClass]="ing.isAvailable ? 'bi-toggle-on text-base' : 'bi-toggle-off text-base'"></i>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="eliminar(ing.id!)"
+                    class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Eliminar Insumo"
+                  >
+                    <i class="bi bi-trash-fill text-xs"></i>
+                  </button>
+                </ng-container>
               </div>
             </td>
           </tr>

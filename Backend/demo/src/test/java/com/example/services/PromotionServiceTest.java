@@ -120,4 +120,21 @@ class PromotionServiceTest {
         assertFalse((Boolean) resultado.get("valid"));
         assertEquals("Esta promoción no está disponible actualmente", resultado.get("message"));
     }
+
+    @Test
+    @DisplayName("CU06 - Adicional: Eliminar lógicamente y restaurar promoción")
+    void testEliminarYRestaurarPromocion() {
+        when(promotionRepository.findById(1)).thenReturn(Optional.of(promotionTest));
+        when(promotionRepository.save(any(Promotion.class))).thenReturn(promotionTest);
+
+        promotionService.eliminarPromocion(1);
+        assertNotNull(promotionTest.getDeletedAt());
+        verify(promotionRepository, times(1)).save(promotionTest);
+
+        boolean restaurada = promotionService.restaurarPromocion(1);
+        assertTrue(restaurada);
+        assertNull(promotionTest.getDeletedAt());
+        assertTrue(promotionTest.getIsActive());
+        verify(promotionRepository, times(2)).save(promotionTest);
+    }
 }
