@@ -10,12 +10,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,6 +47,8 @@ public class CheckoutServiceTest {
     private ExtraService extraService;
     @Mock
     private SizeService sizeService;
+    @Mock
+    private InventoryService inventoryService;
 
     @InjectMocks
     private CheckoutService checkoutService;
@@ -92,7 +96,7 @@ public class CheckoutServiceTest {
     // ==========================================
 
     @Test
-    @DisplayName("CU07 - Flujo Principal: Procesar checkout atómicamente y actualizar total [RF13, RF14]")
+    @DisplayName("CU07 - Flujo Principal: Procesar checkout atómicamente, descontar stock y congelar costos [RF13, RF14]")
     void testCheckoutSuccess() {
         // Arrange
         Address savedAddress = new Address();
@@ -104,6 +108,9 @@ public class CheckoutServiceTest {
         savedOrder.setTotal(new BigDecimal("55.00"));
         savedOrder.setDeliveryFee(new BigDecimal("5.00"));
         when(orderService.crearOrder(any(Order.class))).thenReturn(savedOrder);
+
+        when(inventoryService.deductCheckoutStockAndCalculateUnitCosts(any(), eq(100), eq(1)))
+                .thenReturn(List.of(new BigDecimal("7.23")));
 
         OrderItem savedItem = new OrderItem();
         savedItem.setId(1000);
@@ -129,9 +136,14 @@ public class CheckoutServiceTest {
         assertEquals(100, result.getId());
         assertEquals(new BigDecimal("55.00"), result.getTotal());
 
+        ArgumentCaptor<OrderItem> itemCaptor = ArgumentCaptor.forClass(OrderItem.class);
+        verify(orderItemService, times(1)).crearOrderItem(itemCaptor.capture());
+        assertEquals(new BigDecimal("7.23"), itemCaptor.getValue().getUnitCost());
+        assertEquals(new BigDecimal("14.46"), itemCaptor.getValue().getLineCost());
+
+        verify(inventoryService, times(1)).deductCheckoutStockAndCalculateUnitCosts(any(), eq(100), eq(1));
         verify(addressService, times(1)).crearAddress(any(Address.class));
         verify(orderService, times(1)).crearOrder(any(Order.class));
-        verify(orderItemService, times(1)).crearOrderItem(any(OrderItem.class));
         verify(paymentService, times(1)).crearPayment(any(Payment.class));
     }
 
@@ -157,13 +169,18 @@ public class CheckoutServiceTest {
     }
 
     @Test
-    @DisplayName("CU07 - A4: Producto sin stock suficiente (Simulado)")
+    @DisplayName("CU07 - A4: Producto sin stock suficiente validado por InventoryService")
     void testCheckoutSinStock() {
         Address savedAddress = new Address();
         savedAddress.setId(10);
         when(addressService.crearAddress(any(Address.class))).thenReturn(savedAddress);
-        // Simulando excepcion de stock
-        when(orderService.crearOrder(any(Order.class))).thenThrow(new IllegalStateException("Stock insuficiente para la cantidad seleccionada."));
+
+        Order savedOrder = new Order();
+        savedOrder.setId(100);
+        when(orderService.crearOrder(any(Order.class))).thenReturn(savedOrder);
+
+        when(inventoryService.deductCheckoutStockAndCalculateUnitCosts(any(), eq(100), eq(1)))
+                .thenThrow(new IllegalStateException("Stock insuficiente para la cantidad seleccionada."));
 
         Exception exception = assertThrows(IllegalStateException.class, () -> {
             checkoutService.checkout(request);

@@ -1,234 +1,279 @@
-<div class="max-w-4xl mx-auto font-sans">
-  <!-- Loading State -->
-  @if (loading) {
-    <div class="flex flex-col items-center justify-center py-16">
-      <div class="animate-spin rounded-full h-12 w-12 border-4 border-red-200 border-t-red-600 mb-4"></div>
-      <p class="text-gray-500 font-medium">Cargando tu información...</p>
+<div class="space-y-6 font-sans">
+  <!-- Executive v2 Header Card -->
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel de Cliente</p>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Mi Perfil y Seguridad</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">Actualiza tus datos de contacto y credenciales de acceso</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        (click)="cargarDatosUsuario()"
+        [disabled]="loading"
+        class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise" [class.animate-spin]="loading"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Banner persistente si falla sincronización con Backend -->
+  @if (loadError) {
+    <div class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3" role="alert">
+      <div class="flex items-start sm:items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+          <i class="bi bi-wifi-off text-lg"></i>
+        </div>
+        <div>
+          <p class="text-sm font-black text-red-900 m-0">Problema de conexión</p>
+          <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ loadError }}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="cargarDatosUsuario()"
+        class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise"></i> Reintentar
+      </button>
     </div>
   }
 
-  <!-- Content -->
+  @if (loading) {
+    <div class="bg-white rounded-2xl border border-gray-200 p-16 flex flex-col items-center justify-center shadow-sm">
+      <div class="animate-spin rounded-full h-11 w-11 border-4 border-red-100 border-t-red-600 mb-4"></div>
+      <p class="text-gray-500 font-medium text-sm m-0">Cargando tu información...</p>
+    </div>
+  }
+
   @if (!loading && usuario) {
-    <!-- Mensajes -->
     @if (mensajeExito) {
-      <div class="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-xl flex items-center gap-3 font-medium shadow-sm">
-        <i class="bi bi-check-circle-fill text-emerald-500 text-xl"></i>
+      <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-2xl flex items-center gap-3 font-medium text-sm shadow-2xs">
+        <i class="bi bi-check-circle-fill text-emerald-500 text-lg"></i>
         <span>{{ mensajeExito }}</span>
       </div>
     }
 
     @if (mensajeError) {
-      <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-5 py-4 rounded-xl flex items-center gap-3 font-medium shadow-sm">
-        <i class="bi bi-exclamation-triangle-fill text-red-500 text-xl"></i>
+      <div class="bg-red-50 border border-red-200 text-red-800 px-5 py-3.5 rounded-2xl flex items-center gap-3 font-medium text-sm shadow-2xs">
+        <i class="bi bi-exclamation-triangle-fill text-red-500 text-lg"></i>
         <span>{{ mensajeError }}</span>
       </div>
     }
 
-    <div class="flex flex-col md:flex-row gap-6">
-      
-      <!-- Left Column: Avatar & Stats -->
-      <div class="w-full md:w-1/3 space-y-6">
-        
-        <!-- Avatar Section -->
-        <div class="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm flex flex-col items-center text-center">
-          <div class="w-24 h-24 rounded-full bg-gradient-to-br from-red-500 to-red-700 text-white flex items-center justify-center text-4xl font-black shadow-lg mb-4 ring-4 ring-red-50">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left Column: Avatar & Status -->
+      <div class="space-y-6">
+        <div class="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm flex flex-col items-center text-center">
+          <div class="w-24 h-24 rounded-full bg-gradient-to-br from-red-600 to-red-800 text-white flex items-center justify-center text-3xl font-black shadow-md mb-4 ring-4 ring-red-50">
             {{ getIniciales() }}
           </div>
-          <h2 class="text-xl font-bold text-gray-800 mb-1">{{ usuario?.name }}</h2>
-          <p class="text-sm font-medium text-gray-500 flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full border border-gray-200">
-            <i class="bi bi-person-badge-fill text-red-500"></i> Cliente
-          </p>
+          <h3 class="text-lg font-black text-gray-900 mb-1 truncate max-w-full">{{ usuario?.name }}</h3>
+          <span class="text-xs font-bold text-gray-600 flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-full">
+            <i class="bi bi-person-badge-fill text-red-600"></i> Cliente Registrado
+          </span>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div class="p-5 border-b border-gray-100 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden divide-y divide-gray-100">
+          <div class="p-4 sm:p-5 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-gray-100 text-gray-700 flex items-center justify-center text-lg shrink-0">
               <i class="bi bi-calendar-check-fill"></i>
             </div>
             <div>
-              <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Miembro desde</h4>
-              <p class="font-bold text-gray-800 m-0">{{ usuario?.createdAt ? (usuario.createdAt | date:'dd/MM/yyyy') : 'No disponible' }}</p>
+              <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Miembro desde</p>
+              <p class="font-bold text-gray-900 text-sm m-0 mt-0.5">{{ usuario?.createdAt ? (usuario.createdAt | date:'dd/MM/yyyy') : 'No disponible' }}</p>
             </div>
           </div>
 
-          <div class="p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+          <div class="p-4 sm:p-5 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0">
               <i class="bi bi-shield-check"></i>
             </div>
             <div>
-              <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Estado de cuenta</h4>
-              <div class="flex items-center gap-2">
+              <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Estado de cuenta</p>
+              <div class="flex items-center gap-2 mt-0.5">
                 <span class="w-2 h-2 rounded-full" [ngClass]="usuario?.active !== false ? 'bg-emerald-500' : 'bg-red-500'"></span>
-                <p class="font-bold m-0" [ngClass]="usuario?.active !== false ? 'text-emerald-700' : 'text-red-700'">
+                <p class="font-bold text-sm m-0" [ngClass]="usuario?.active !== false ? 'text-emerald-700' : 'text-red-700'">
                   {{ usuario?.active !== false ? 'Activa' : 'Inactiva' }}
                 </p>
               </div>
             </div>
           </div>
         </div>
-
       </div>
 
-      <!-- Right Column: Info Form -->
-      <div class="w-full md:w-2/3">
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden h-full flex flex-col">
-          
-          <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2 m-0">
-              <i class="bi bi-info-circle-fill text-gray-400"></i> Información Personal
-            </h3>
+      <!-- Right Column: Forms -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/70">
+            <h3 class="text-base font-black text-gray-900 m-0">Información Personal</h3>
             @if (!editando) {
-              <button class="bg-white border border-gray-200 hover:border-gray-800 hover:bg-gray-50 text-gray-800 font-bold py-2 px-4 rounded-xl text-sm transition-colors flex items-center gap-2 shadow-sm" (click)="toggleEdicion()">
+              <button
+                type="button"
+                class="bg-gray-900 hover:bg-black text-white font-bold py-2 px-4 rounded-xl text-xs sm:text-sm transition-colors flex items-center gap-2 cursor-pointer"
+                (click)="toggleEdicion()"
+              >
                 <i class="bi bi-pencil-square"></i> Editar
               </button>
             }
           </div>
 
-          <div class="p-6 md:p-8 flex-1">
-            <div class="space-y-6">
-              
-              <div class="space-y-2">
-                <span class="block text-sm font-bold text-gray-700 uppercase tracking-wider"><i class="bi bi-person text-gray-400 mr-1"></i> Nombre Completo</span>
-                <div class="relative">
-                  <input 
-                    type="text" 
-                    class="w-full pl-4 pr-4 py-3 bg-white border border-gray-200 text-gray-800 font-medium rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500" 
-                    [(ngModel)]="usuario.name" 
-                    [disabled]="!editando">
-                </div>
+          <div class="p-5 sm:p-6">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Nombre Completo</label>
+                <input
+                  type="text"
+                  class="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500"
+                  [(ngModel)]="usuario.name"
+                  [disabled]="!editando"
+                >
               </div>
 
-              <div class="space-y-2">
-                <span class="block text-sm font-bold text-gray-700 uppercase tracking-wider"><i class="bi bi-envelope text-gray-400 mr-1"></i> Correo Electrónico</span>
-                <div class="relative">
-                  <input 
-                    type="email" 
-                    class="w-full pl-4 pr-4 py-3 bg-white border border-gray-200 text-gray-800 font-medium rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500" 
-                    [(ngModel)]="usuario.email" 
-                    [disabled]="!editando">
-                </div>
-                <p class="text-xs text-gray-400 mt-1" *ngIf="editando"><i class="bi bi-info-circle"></i> Usa un correo válido para recibir notificaciones de tus pedidos.</p>
+              <div>
+                <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Correo Electrónico</label>
+                <input
+                  type="email"
+                  class="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500"
+                  [(ngModel)]="usuario.email"
+                  [disabled]="!editando"
+                >
               </div>
 
-              <div class="space-y-2">
-                <span class="block text-sm font-bold text-gray-700 uppercase tracking-wider"><i class="bi bi-telephone text-gray-400 mr-1"></i> Teléfono</span>
-                <div class="relative">
-                  <input 
-                    type="tel" 
-                    class="w-full pl-4 pr-4 py-3 bg-white border border-gray-200 text-gray-800 font-medium rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500" 
-                    [(ngModel)]="usuario.phone" 
-                    [disabled]="!editando"
-                    placeholder="Agregar teléfono">
-                </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Teléfono</label>
+                <input
+                  type="tel"
+                  class="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500"
+                  [(ngModel)]="usuario.phone"
+                  [disabled]="!editando"
+                  placeholder="Agregar teléfono"
+                >
               </div>
-
             </div>
 
             @if (editando) {
-              <div class="mt-8 pt-6 border-t border-gray-100 flex gap-3">
-                <button class="flex-1 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold py-3 px-4 rounded-xl transition-colors flex justify-center items-center gap-2" (click)="toggleEdicion()">
-                  <i class="bi bi-x-lg"></i> Cancelar
+              <div class="mt-6 pt-5 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  [disabled]="guardandoPerfil"
+                  class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-sm transition-colors cursor-pointer"
+                  (click)="toggleEdicion()"
+                >
+                  Cancelar
                 </button>
-                <button class="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2" (click)="guardarCambios()">
-                  <i class="bi bi-check2-circle text-lg"></i> Guardar Cambios
+                <button
+                  type="button"
+                  [disabled]="guardandoPerfil"
+                  class="flex-[2] bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                  (click)="guardarCambios()"
+                >
+                  <i class="bi" [ngClass]="guardandoPerfil ? 'bi-arrow-repeat animate-spin' : 'bi-check2-circle'"></i>
+                  {{ guardandoPerfil ? 'Guardando...' : 'Guardar Cambios' }}
                 </button>
               </div>
             }
           </div>
-
         </div>
 
         <!-- Configuración de Seguridad -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6 flex flex-col">
-          
-          <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2 m-0">
-              <i class="bi bi-shield-lock-fill text-gray-400"></i> Configuración de Seguridad
-            </h3>
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap justify-between items-center gap-2 bg-gray-50/70">
+            <h3 class="text-base font-black text-gray-900 m-0">Configuración de Seguridad</h3>
             @if (!editandoPassword) {
-              <button class="bg-white border border-gray-200 hover:border-gray-800 hover:bg-gray-50 text-gray-800 font-bold py-2 px-4 rounded-xl text-sm transition-colors flex items-center gap-2 shadow-sm" (click)="toggleEdicionPassword()">
+              <button
+                type="button"
+                class="bg-white border border-gray-200 hover:border-gray-900 text-gray-800 font-bold py-2 px-4 rounded-xl text-xs sm:text-sm transition-colors flex items-center gap-2 cursor-pointer"
+                (click)="toggleEdicionPassword()"
+              >
                 <i class="bi bi-key"></i> Cambiar Contraseña
               </button>
             }
           </div>
 
-          <div class="p-6 md:p-8 flex-1">
-            @if (mensajeSeguridadExito) {
-              <div class="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-xl flex items-center gap-3 font-medium shadow-sm">
-                <i class="bi bi-check-circle-fill text-emerald-500 text-xl"></i>
-                <span>{{ mensajeSeguridadExito }}</span>
-              </div>
-            }
-
+          <div class="p-5 sm:p-6">
             @if (mensajeSeguridadError) {
-              <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-5 py-4 rounded-xl flex items-center gap-3 font-medium shadow-sm">
-                <i class="bi bi-exclamation-triangle-fill text-red-500 text-xl"></i>
+              <div class="mb-5 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm font-medium">
+                <i class="bi bi-exclamation-triangle-fill text-red-500"></i>
                 <span>{{ mensajeSeguridadError }}</span>
               </div>
             }
 
             @if (!editandoPassword) {
-              <div class="flex items-center gap-3 text-gray-600 font-medium">
-                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+              <div class="flex items-center gap-3 text-gray-600">
+                <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500">
                   <i class="bi bi-lock-fill"></i>
                 </div>
                 <div>
-                  <p class="m-0 text-gray-800">Contraseña</p>
-                  <p class="m-0 text-sm font-normal text-gray-500">Última actualización: Desconocida</p>
+                  <p class="m-0 text-sm font-bold text-gray-900">Contraseña protegida</p>
+                  <p class="m-0 text-xs text-gray-500">Al cambiar tu contraseña se cerrará la sesión actual por seguridad.</p>
                 </div>
               </div>
             } @else {
-              <div class="space-y-6">
-                
-                <div class="space-y-2">
-                  <span class="block text-sm font-bold text-gray-700 uppercase tracking-wider"><i class="bi bi-lock text-gray-400 mr-1"></i> Contraseña Actual</span>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Contraseña Actual</label>
                   <div class="relative">
-                    <input 
-                      [type]="showPasswordActual ? 'text' : 'password'" 
-                      class="w-full pl-4 pr-10 py-3 bg-white border border-gray-200 text-gray-800 font-medium rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all" 
-                      [(ngModel)]="passwordActual" 
-                      placeholder="Ingresa tu contraseña actual">
-                    <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700" (click)="showPasswordActual = !showPasswordActual">
+                    <input
+                      [type]="showPasswordActual ? 'text' : 'password'"
+                      class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                      [(ngModel)]="passwordActual"
+                      placeholder="Ingresa tu contraseña actual"
+                    >
+                    <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 cursor-pointer" (click)="showPasswordActual = !showPasswordActual">
                       <i class="bi" [ngClass]="showPasswordActual ? 'bi-eye-slash' : 'bi-eye'"></i>
                     </button>
                   </div>
                 </div>
 
-                <div class="space-y-2">
-                  <span class="block text-sm font-bold text-gray-700 uppercase tracking-wider"><i class="bi bi-key text-gray-400 mr-1"></i> Nueva Contraseña</span>
+                <div>
+                  <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Nueva Contraseña</label>
                   <div class="relative">
-                    <input 
-                      [type]="showNuevaPassword ? 'text' : 'password'" 
-                      class="w-full pl-4 pr-10 py-3 bg-white border border-gray-200 text-gray-800 font-medium rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all" 
-                      [(ngModel)]="nuevaPassword" 
-                      placeholder="Mínimo 6 caracteres">
-                    <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700" (click)="showNuevaPassword = !showNuevaPassword">
+                    <input
+                      [type]="showNuevaPassword ? 'text' : 'password'"
+                      class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                      [(ngModel)]="nuevaPassword"
+                      placeholder="Mínimo 6 caracteres"
+                    >
+                    <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 cursor-pointer" (click)="showNuevaPassword = !showNuevaPassword">
                       <i class="bi" [ngClass]="showNuevaPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
                     </button>
                   </div>
                 </div>
 
-                <div class="space-y-2">
-                  <span class="block text-sm font-bold text-gray-700 uppercase tracking-wider"><i class="bi bi-check2-all text-gray-400 mr-1"></i> Confirmar Nueva Contraseña</span>
+                <div>
+                  <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Confirmar Nueva Contraseña</label>
                   <div class="relative">
-                    <input 
-                      [type]="showConfirmarPassword ? 'text' : 'password'" 
-                      class="w-full pl-4 pr-10 py-3 bg-white border border-gray-200 text-gray-800 font-medium rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all" 
-                      [(ngModel)]="confirmarPassword" 
-                      placeholder="Repite la nueva contraseña">
-                    <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700" (click)="showConfirmarPassword = !showConfirmarPassword">
+                    <input
+                      [type]="showConfirmarPassword ? 'text' : 'password'"
+                      class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                      [(ngModel)]="confirmarPassword"
+                      placeholder="Repite la nueva contraseña"
+                    >
+                    <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 cursor-pointer" (click)="showConfirmarPassword = !showConfirmarPassword">
                       <i class="bi" [ngClass]="showConfirmarPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
                     </button>
                   </div>
                 </div>
 
-                <div class="mt-8 pt-6 border-t border-gray-100 flex gap-3">
-                  <button class="flex-1 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold py-3 px-4 rounded-xl transition-colors flex justify-center items-center gap-2" (click)="toggleEdicionPassword()">
-                    <i class="bi bi-x-lg"></i> Cancelar
+                <div class="mt-6 pt-5 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    [disabled]="guardandoPassword"
+                    class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-sm transition-colors cursor-pointer"
+                    (click)="toggleEdicionPassword()"
+                  >
+                    Cancelar
                   </button>
-                  <button class="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2" (click)="cambiarPassword()">
-                    <i class="bi bi-check2-circle text-lg"></i> Actualizar Contraseña
+                  <button
+                    type="button"
+                    [disabled]="guardandoPassword"
+                    class="flex-[2] bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                    (click)="cambiarPassword()"
+                  >
+                    <i class="bi" [ngClass]="guardandoPassword ? 'bi-arrow-repeat animate-spin' : 'bi-check2-circle'"></i>
+                    {{ guardandoPassword ? 'Actualizando...' : 'Actualizar Contraseña' }}
                   </button>
                 </div>
               </div>
@@ -236,7 +281,6 @@
           </div>
         </div>
       </div>
-
     </div>
   }
 </div>

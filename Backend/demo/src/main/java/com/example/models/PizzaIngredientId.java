@@ -7,10 +7,12 @@ import java.util.Objects;
 @Embeddable
 public class PizzaIngredientId implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private Integer pizzaId;
     private Integer ingredientId;
 
-    // Constructor vac\u00edo
+    // Constructor vacío
     public PizzaIngredientId() {}
 
     // Constructor completo

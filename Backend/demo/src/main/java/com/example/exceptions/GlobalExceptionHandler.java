@@ -1,6 +1,8 @@
 package com.example.exceptions;
 
 import com.example.dtos.ApiResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -9,6 +11,8 @@ import org.springframework.web.context.request.WebRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
@@ -20,19 +24,32 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(ApiResponse.error(ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInsufficientStockException(InsufficientStockException ex, WebRequest request) {
+        return new ResponseEntity<>(ApiResponse.error(ex.getMessage()), HttpStatus.CONFLICT);
+    }
+
     // Reglas de negocio y estado ilegal
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(RuntimeException ex, WebRequest request) {
-        return new ResponseEntity<>(ApiResponse.error(ex.getMessage()), HttpStatus.BAD_REQUEST);
+        String msg = ex.getMessage() != null ? ex.getMessage() : "Solicitud inválida.";
+        return new ResponseEntity<>(ApiResponse.error(msg), HttpStatus.BAD_REQUEST);
     }
 
-    // Errores de validaci\u00f3n de DTOs (@Valid)
+    // Uso inválido de argumentos en consultas JPA (ej. ID nulo enviado por el cliente)
+    @ExceptionHandler(org.springframework.dao.InvalidDataAccessApiUsageException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidDataAccessApiUsageException(org.springframework.dao.InvalidDataAccessApiUsageException ex) {
+        String detail = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+        return new ResponseEntity<>(ApiResponse.error("Parámetros de consulta inválidos o incompletos: " + detail), HttpStatus.BAD_REQUEST);
+    }
+
+    // Errores de validación de DTOs (@Valid)
     @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationExceptions(org.springframework.web.bind.MethodArgumentNotValidException ex) {
         String errorMessage = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .reduce((msg1, msg2) -> msg1 + ", " + msg2)
-                .orElse("Validation error");
+                .orElse("Error de validación");
         return new ResponseEntity<>(ApiResponse.error(errorMessage), HttpStatus.BAD_REQUEST);
     }
 
@@ -41,7 +58,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(org.springframework.dao.DataIntegrityViolationException ex) {
         String specificMessage = ex.getMostSpecificCause().getMessage();
         String mensaje = "Error de integridad de datos. Posible registro duplicado o en uso.";
-        
+
         if (specificMessage != null) {
             if (specificMessage.contains("foreign key constraint") || specificMessage.contains("a foreign key constraint fails")) {
                 mensaje = "No se puede eliminar el registro porque tiene otros elementos asociados en el sistema (por ejemplo, pedidos, detalles, etc.). Se recomienda inactivarlo en su lugar.";
@@ -49,7 +66,7 @@ public class GlobalExceptionHandler {
                 mensaje = "No se puede crear o actualizar el registro porque ya existe otro igual (Dato duplicado).";
             }
         }
-        
+
         return new ResponseEntity<>(ApiResponse.error(mensaje), HttpStatus.CONFLICT);
     }
 
@@ -59,33 +76,34 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(ApiResponse.error("Acceso denegado: " + ex.getMessage()), HttpStatus.FORBIDDEN);
     }
 
-    // Seguridad: Fallo de autenticaci\u00f3n (Token inv\u00e1lido/expirado)
+    // Seguridad: Fallo de autenticación (Token inválido/expirado)
     @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
     public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(org.springframework.security.core.AuthenticationException ex) {
-        return new ResponseEntity<>(ApiResponse.error("Autenticaci\u00f3n fallida: " + ex.getMessage()), HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(ApiResponse.error("Autenticación fallida: " + ex.getMessage()), HttpStatus.UNAUTHORIZED);
     }
 
-    // Error en el formato de la petici\u00f3n (JSON mal formado, etc.)
+    // Error en el formato de la petición (JSON mal formado, etc.)
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(org.springframework.http.converter.HttpMessageNotReadableException ex) {
-        return new ResponseEntity<>(ApiResponse.error("El formato de los datos enviados es incorrecto o est\u00e1 incompleto."), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(ApiResponse.error("El formato de los datos enviados es incorrecto o está incompleto."), HttpStatus.BAD_REQUEST);
     }
 
-    // Error cuando se env\u00eda un tipo de dato incorrecto en la URL (ej. texto en lugar de n\u00famero)
+    // Error cuando se envía un tipo de dato incorrecto en la URL (ej. texto en lugar de número)
     @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatchException(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {
-        return new ResponseEntity<>(ApiResponse.error("El par\u00e1metro '" + ex.getName() + "' tiene un valor inv\u00e1lido."), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(ApiResponse.error("El parámetro '" + ex.getName() + "' tiene un valor inválido."), HttpStatus.BAD_REQUEST);
     }
 
-    // Error cuando se usa un m\u00e9todo HTTP no soportado (ej. GET en vez de POST)
+    // Error cuando se usa un método HTTP no soportado (ej. GET en vez de POST)
     @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> handleHttpRequestMethodNotSupportedException(org.springframework.web.HttpRequestMethodNotSupportedException ex) {
-        return new ResponseEntity<>(ApiResponse.error("M\u00e9todo HTTP no soportado para esta ruta."), HttpStatus.METHOD_NOT_ALLOWED);
+        return new ResponseEntity<>(ApiResponse.error("Método HTTP no soportado para esta ruta."), HttpStatus.METHOD_NOT_ALLOWED);
     }
-    // Falta un par\u00e1metro obligatorio en la URL o Request
+
+    // Falta un parámetro obligatorio en la URL o Request
     @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponse<Void>> handleMissingServletRequestParameterException(org.springframework.web.bind.MissingServletRequestParameterException ex) {
-        return new ResponseEntity<>(ApiResponse.error("Falta el par\u00e1metro requerido: '" + ex.getParameterName() + "'."), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(ApiResponse.error("Falta el parámetro requerido: '" + ex.getParameterName() + "'."), HttpStatus.BAD_REQUEST);
     }
 
     // Tipo de contenido no soportado (ej. enviar XML en vez de JSON)
@@ -100,7 +118,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(ApiResponse.error("La ruta solicitada no existe."), HttpStatus.NOT_FOUND);
     }
 
-    // Tama\u00f1o m\u00e1ximo de archivo excedido (Para subida de im\u00e1genes/archivos)
+    // Tamaño máximo de archivo excedido (Para subida de imágenes/archivos)
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceededException(org.springframework.web.multipart.MaxUploadSizeExceededException ex) {
         return new ResponseEntity<>(ApiResponse.error("El archivo enviado es demasiado grande. El tamaño máximo permitido es 5MB."), HttpStatus.CONTENT_TOO_LARGE);
@@ -115,36 +133,37 @@ public class GlobalExceptionHandler {
     // Error de I/O al procesar archivos (lectura/escritura)
     @ExceptionHandler(java.io.IOException.class)
     public ResponseEntity<ApiResponse<Void>> handleIOException(java.io.IOException ex) {
-        ex.printStackTrace();
+        logger.error("Error de I/O procesando archivo", ex);
         return new ResponseEntity<>(ApiResponse.error("Error al procesar el archivo: " + ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    // Validaciones a nivel de m\u00e9todo (ej. @Min, @Max, @NotNull en par\u00e1metros sueltos)
+    // Validaciones a nivel de método (ej. @Min, @Max, @NotNull en parámetros sueltos)
     @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(jakarta.validation.ConstraintViolationException ex) {
         String errorMessage = ex.getConstraintViolations().stream()
                 .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .reduce((msg1, msg2) -> msg1 + ", " + msg2)
-                .orElse("Error de validaci\u00f3n");
-        return new ResponseEntity<>(ApiResponse.error("Datos inv\u00e1lidos: " + errorMessage), HttpStatus.BAD_REQUEST);
+                .orElse("Error de validación");
+        return new ResponseEntity<>(ApiResponse.error("Datos inválidos: " + errorMessage), HttpStatus.BAD_REQUEST);
     }
 
-    // Errores gen\u00e9ricos de Base de Datos que no sean de Integridad
+    // Errores genéricos de Base de Datos que no sean de Integridad
     @ExceptionHandler(org.springframework.dao.DataAccessException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataAccessException(org.springframework.dao.DataAccessException ex) {
-        ex.printStackTrace(); // Log del error real
-        return new ResponseEntity<>(ApiResponse.error("Ocurri\u00f3 un problema de comunicaci\u00f3n con la base de datos."), HttpStatus.INTERNAL_SERVER_ERROR);
+        logger.error("Error de acceso a base de datos", ex);
+        return new ResponseEntity<>(ApiResponse.error("Ocurrió un problema de comunicación con la base de datos."), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    // Error de NullPointerException (para evitar que se filtre informaci\u00f3n sensible)
+    // Error de NullPointerException (para evitar que se filtre información sensible)
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<ApiResponse<Void>> handleNullPointerException(NullPointerException ex) {
-        ex.printStackTrace(); // Log del error real
-        return new ResponseEntity<>(ApiResponse.error("Error interno del servidor. Un dato requerido lleg\u00f3 vac\u00edo inesperadamente."), HttpStatus.INTERNAL_SERVER_ERROR);
+        logger.error("NullPointerException inesperada", ex);
+        return new ResponseEntity<>(ApiResponse.error("Error interno del servidor. Un dato requerido llegó vacío inesperadamente."), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGlobalException(Exception ex, WebRequest request) {
-        ex.printStackTrace(); // \u00fatil para depurar el error real en la consola del backend
-        return new ResponseEntity<>(ApiResponse.error("Ocurri\u00f3 un error inesperado en el servidor. Por favor, intente m\u00e1s tarde."), HttpStatus.INTERNAL_SERVER_ERROR);
+        logger.error("Excepción no controlada en {}", request.getDescription(false), ex);
+        return new ResponseEntity<>(ApiResponse.error("Ocurrió un error inesperado en el servidor. Por favor, intente más tarde."), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

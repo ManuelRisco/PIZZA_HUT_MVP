@@ -33,6 +33,7 @@
               [attr.fetchpriority]="i === 0 ? 'high' : (i < 3 ? 'auto' : 'low')"
               decoding="async"
               class="item-image"
+              (error)="$any($event.target).src = '/combo1.webp'"
             >
             <div class="item-content">
               <div class="item-header">
@@ -453,6 +454,13 @@
             </tr>
           </tbody>
         </table>
+
+        @if (checkoutError) {
+          <div class="alert alert-danger mt-3 mb-2 p-3 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 border border-red-300 bg-red-50 text-red-800" role="alert" aria-live="assertive">
+            <i class="bi bi-exclamation-triangle-fill text-red-600 text-base shrink-0"></i>
+            <span>{{ checkoutError }}</span>
+          </div>
+        }
 
         <button 
           class="btn-primary" 

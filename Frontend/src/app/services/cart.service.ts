@@ -6,7 +6,7 @@ const STORAGE_KEY = 'pizza-hut-cart';
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
-  private readonly itemsSubject= new BehaviorSubject<CartItem[]>(this.loadItemsFromStorage());
+  private readonly itemsSubject = new BehaviorSubject<CartItem[]>(this.loadItemsFromStorage());
   readonly items$ = this.itemsSubject.asObservable();
 
   getItemsSnapshot(): CartItem[] {
@@ -35,11 +35,7 @@ export class CartService {
    */
   addItem(payload: AddToCartPayload): CartItem {
     const quantity = payload.quantity && payload.quantity > 0 ? payload.quantity : 1;
-    
-    // Si el precio ya viene calculado (con tamaño y extras), usarlo directamente
     const unitPrice = payload.pizza.price;
-    
-    // El ID ahora incluye extras para distinguir pizzas iguales con diferentes ingredientes
     const itemId = this.buildItemId(payload.pizza, payload.size, payload.extras);
 
     const items = this.getItemsSnapshot();
@@ -47,7 +43,14 @@ export class CartService {
 
     if (existingIndex >= 0) {
       const updated = { ...items[existingIndex] };
-      updated.quantity += quantity;
+      const nextQty = updated.quantity + quantity;
+      updated.quantity = payload.maxStock !== undefined ? Math.min(nextQty, payload.maxStock) : nextQty;
+      if (payload.maxStock !== undefined) {
+        updated.maxStock = payload.maxStock;
+      }
+      if (payload.pizza.imageUrl) {
+        updated.imageUrl = payload.pizza.imageUrl;
+      }
       items.splice(existingIndex, 1, updated);
       this.persist(items);
       return updated;
@@ -59,11 +62,12 @@ export class CartService {
       type: 'pizza',
       name: payload.pizza.name,
       size: payload.size,
-      sizeId: payload.sizeId, // Guardar el ID del tamaño
+      sizeId: payload.sizeId,
       quantity,
       unitPrice,
       imageUrl: payload.pizza.imageUrl,
-      extras: payload.extras || []
+      extras: payload.extras || [],
+      maxStock: payload.maxStock
     };
 
     items.push(newItem);
@@ -72,16 +76,31 @@ export class CartService {
   }
 
   /**
-   * Agrega un extra (bebida, postre, etc.) al carrito
+   * Agrega un extra (bebida, postre, etc.) al carrito conservando su imagen local y stock máximo
    */
-  addExtra(extraId: number, name: string, price: number, category: string, quantity: number = 1): CartItem {
+  addExtra(
+    extraId: number,
+    name: string,
+    price: number,
+    category: string,
+    quantity: number = 1,
+    imageUrl?: string,
+    maxStock?: number
+  ): CartItem {
     const itemId = `extra-${extraId}`;
     const items = this.getItemsSnapshot();
     const existingIndex = items.findIndex(item => item.id === itemId);
 
     if (existingIndex >= 0) {
       const updated = { ...items[existingIndex] };
-      updated.quantity += quantity;
+      const nextQty = updated.quantity + quantity;
+      updated.quantity = maxStock !== undefined ? Math.min(nextQty, maxStock) : nextQty;
+      if (imageUrl) {
+        updated.imageUrl = imageUrl;
+      }
+      if (maxStock !== undefined) {
+        updated.maxStock = maxStock;
+      }
       items.splice(existingIndex, 1, updated);
       this.persist(items);
       return updated;
@@ -92,11 +111,12 @@ export class CartService {
       extraId: extraId,
       type: 'extra',
       name: name,
-      size: '-', // Los extras no tienen tamaño
+      size: '-',
       quantity,
       unitPrice: price,
       category: category,
-      imageUrl: '/combo1.webp' // Imagen por defecto para extras
+      imageUrl: imageUrl || '/combo1.webp',
+      maxStock: maxStock
     };
 
     items.push(newItem);
@@ -119,7 +139,9 @@ export class CartService {
     if (parsedQuantity <= 0) {
       items.splice(index, 1);
     } else {
-      items[index] = { ...items[index], quantity: parsedQuantity };
+      const maxStock = items[index].maxStock;
+      const clamped = maxStock !== undefined && maxStock > 0 ? Math.min(parsedQuantity, maxStock) : parsedQuantity;
+      items[index] = { ...items[index], quantity: clamped };
     }
 
     this.persist(items);
@@ -138,18 +160,14 @@ export class CartService {
     return this.getTotals().itemsCount;
   }
 
-  /**
-   * Construye un ID único para el item del carrito.
-   * Incluye extras para diferenciar la misma pizza con diferentes ingredientes.
-   */
   private buildItemId(
-    pizza: { id?: number; name: string }, 
-    size: string, 
+    pizza: { id?: number; name: string },
+    size: string,
     extras?: string[]
   ): string {
     const baseId = pizza.id != null ? pizza.id.toString() : pizza.name.trim().toLowerCase().replace(/\s+/g, '-');
     const sizeKey = size.toLowerCase();
-    const extrasKey = (extras && extras.length > 0) ? extras.toSorted((a, b) => a.localeCompare(b)).join(',') : 'none';
+    const extrasKey = extras && extras.length > 0 ? extras.toSorted((a, b) => a.localeCompare(b)).join(',') : 'none';
     return `${baseId}-${sizeKey}-${extrasKey}`;
   }
 
@@ -168,7 +186,7 @@ export class CartService {
         return [];
       }
       return parsed.filter(item => item?.id && item?.name);
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -181,8 +199,7 @@ export class CartService {
 
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch (error) {
+    } catch {
     }
   }
 }
-

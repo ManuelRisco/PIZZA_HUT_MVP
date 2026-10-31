@@ -10,8 +10,10 @@ import com.example.models.Ingredient;
 import org.springframework.http.ResponseEntity;
 import com.example.dtos.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,6 +21,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/pizza-ingredients")
 @CrossOrigin(origins = "http://localhost:4200")
+@PreAuthorize("hasRole('ADMIN')")
 public class PizzaIngredientController {
 
     private static final String MSG_KEY = "message";
@@ -31,8 +34,11 @@ public class PizzaIngredientController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PizzaIngredient>>> listarPizzaIngredientes() {
-        return ResponseEntity.ok(ApiResponse.success(pizzaIngredientService.listarPizzaIngredientes()));
+    public ResponseEntity<ApiResponse<List<PizzaIngredientDTO>>> listarPizzaIngredientes() {
+        List<PizzaIngredientDTO> dtos = pizzaIngredientService.listarPizzaIngredientes().stream()
+                .map(PizzaIngredientDTO::new)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
     @GetMapping("/{pizzaId}/{ingredientId}")
@@ -40,7 +46,7 @@ public class PizzaIngredientController {
         PizzaIngredientId id = new PizzaIngredientId(pizzaId, ingredientId);
         Optional<PizzaIngredient> piOpt = pizzaIngredientService.obtenerPorId(id);
         if (piOpt.isPresent()) {
-            return ResponseEntity.ok(ApiResponse.success(piOpt.get()));
+            return ResponseEntity.ok(ApiResponse.success(new PizzaIngredientDTO(piOpt.get())));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(MSG_KEY, MSG_NOT_FOUND));
         }
@@ -50,19 +56,22 @@ public class PizzaIngredientController {
     public ResponseEntity<Object> crearPizzaIngrediente(@RequestBody PizzaIngredientDTO dto) {
         PizzaIngredient pizzaIngredient = new PizzaIngredient();
         pizzaIngredient.setId(new PizzaIngredientId(dto.getPizzaId(), dto.getIngredientId()));
-        
+
         Pizza pizza = new Pizza();
         pizza.setId(dto.getPizzaId());
         pizzaIngredient.setPizza(pizza);
-        
+
         Ingredient ingredient = new Ingredient();
         ingredient.setId(dto.getIngredientId());
         pizzaIngredient.setIngredient(ingredient);
-        
+
         pizzaIngredient.setIsDefault(dto.getIsDefault());
+        pizzaIngredient.setQuantity(dto.getQuantity() != null && dto.getQuantity().compareTo(BigDecimal.ZERO) > 0
+                ? dto.getQuantity()
+                : new BigDecimal("50.00"));
 
         PizzaIngredient nuevo = pizzaIngredientService.crearPizzaIngrediente(pizzaIngredient);
-        return ResponseEntity.ok(ApiResponse.success(nuevo));
+        return ResponseEntity.ok(ApiResponse.success(new PizzaIngredientDTO(nuevo)));
     }
 
     @PutMapping("/{pizzaId}/{ingredientId}")
@@ -71,11 +80,12 @@ public class PizzaIngredientController {
         PizzaIngredient pizzaIngredientActualizado = new PizzaIngredient();
         pizzaIngredientActualizado.setId(new PizzaIngredientId(pizzaId, ingredientId));
         pizzaIngredientActualizado.setIsDefault(dto.getIsDefault());
+        pizzaIngredientActualizado.setQuantity(dto.getQuantity());
 
         PizzaIngredientId id = new PizzaIngredientId(pizzaId, ingredientId);
         PizzaIngredient pi = pizzaIngredientService.actualizarPizzaIngrediente(id, pizzaIngredientActualizado);
         if (pi != null) {
-            return ResponseEntity.ok(ApiResponse.success(pi));
+            return ResponseEntity.ok(ApiResponse.success(new PizzaIngredientDTO(pi)));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(MSG_KEY, MSG_NOT_FOUND));
         }
@@ -93,12 +103,18 @@ public class PizzaIngredientController {
     }
 
     @GetMapping("/pizza/{pizzaId}")
-    public ResponseEntity<ApiResponse<List<PizzaIngredient>>> listarPorPizzaId(@PathVariable("pizzaId") Integer pizzaId) {
-        return ResponseEntity.ok(ApiResponse.success(pizzaIngredientService.listarPorPizzaId(pizzaId)));
+    public ResponseEntity<ApiResponse<List<PizzaIngredientDTO>>> listarPorPizzaId(@PathVariable("pizzaId") Integer pizzaId) {
+        List<PizzaIngredientDTO> dtos = pizzaIngredientService.listarPorPizzaId(pizzaId).stream()
+                .map(PizzaIngredientDTO::new)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 
     @GetMapping("/ingredient/{ingredientId}")
-    public ResponseEntity<ApiResponse<List<PizzaIngredient>>> listarPorIngredientId(@PathVariable("ingredientId") Integer ingredientId) {
-        return ResponseEntity.ok(ApiResponse.success(pizzaIngredientService.listarPorIngredientId(ingredientId)));
+    public ResponseEntity<ApiResponse<List<PizzaIngredientDTO>>> listarPorIngredientId(@PathVariable("ingredientId") Integer ingredientId) {
+        List<PizzaIngredientDTO> dtos = pizzaIngredientService.listarPorIngredientId(ingredientId).stream()
+                .map(PizzaIngredientDTO::new)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(dtos));
     }
 }

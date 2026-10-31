@@ -20,14 +20,16 @@ public class Order {
     @Column(name = "delivery_type")
     private DeliveryType deliveryType;
     private Integer paymentMethodId;
-    private Integer promotionId; // ID de promoci\u00f3n aplicada
+    private Integer promotionId; // ID de promoción aplicada
     private BigDecimal subtotal;
     private BigDecimal deliveryFee;
-    private BigDecimal discount; // Descuento aplicado por promoci\u00f3n
+    private BigDecimal discount; // Descuento aplicado por promoción
     private BigDecimal total;
     private String notes;
     @Column(name = "promo_code")
-    private String promoCode; // C\u00f3digo promocional aplicado
+    private String promoCode; // Código promocional aplicado
+    @Column(name = "stockSettled", length = 20)
+    private String stockSettled = "DEDUCTED";
     private LocalDateTime estimatedDelivery;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -74,136 +76,60 @@ public class Order {
     }
 
     // ==== Getters y Setters ====
-    public Integer getId() {
-        return id;
-    }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+    public Integer getUserId() { return userId; }
+    public void setUserId(Integer userId) { this.userId = userId; }
 
-    public Integer getUserId() {
-        return userId;
-    }
+    public Integer getAddressId() { return addressId; }
+    public void setAddressId(Integer addressId) { this.addressId = addressId; }
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
+    public OrderStatus getStatus() { return status; }
+    public void setStatus(OrderStatus status) { this.status = status; }
 
-    public Integer getAddressId() {
-        return addressId;
-    }
+    public DeliveryType getDeliveryType() { return deliveryType; }
+    public void setDeliveryType(DeliveryType deliveryType) { this.deliveryType = deliveryType; }
 
-    public void setAddressId(Integer addressId) {
-        this.addressId = addressId;
-    }
+    public Integer getPaymentMethodId() { return paymentMethodId; }
+    public void setPaymentMethodId(Integer paymentMethodId) { this.paymentMethodId = paymentMethodId; }
 
-    public OrderStatus getStatus() {
-        return status;
-    }
+    public Integer getPromotionId() { return promotionId; }
+    public void setPromotionId(Integer promotionId) { this.promotionId = promotionId; }
 
-    public void setStatus(OrderStatus status) {
-        this.status = status;
-    }
+    public BigDecimal getSubtotal() { return subtotal; }
+    public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
 
-    public DeliveryType getDeliveryType() {
-        return deliveryType;
-    }
+    public BigDecimal getDeliveryFee() { return deliveryFee; }
+    public void setDeliveryFee(BigDecimal deliveryFee) { this.deliveryFee = deliveryFee; }
 
-    public void setDeliveryType(DeliveryType deliveryType) {
-        this.deliveryType = deliveryType;
-    }
+    public BigDecimal getDiscount() { return discount; }
+    public void setDiscount(BigDecimal discount) { this.discount = discount; }
 
-    public Integer getPaymentMethodId() {
-        return paymentMethodId;
-    }
+    public BigDecimal getTotal() { return total; }
+    public void setTotal(BigDecimal total) { this.total = total; }
 
-    public void setPaymentMethodId(Integer paymentMethodId) {
-        this.paymentMethodId = paymentMethodId;
-    }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 
-    public Integer getPromotionId() {
-        return promotionId;
-    }
+    public String getPromoCode() { return promoCode; }
+    public void setPromoCode(String promoCode) { this.promoCode = promoCode; }
 
-    public void setPromotionId(Integer promotionId) {
-        this.promotionId = promotionId;
-    }
+    public String getStockSettled() { return stockSettled; }
+    public void setStockSettled(String stockSettled) { this.stockSettled = stockSettled; }
 
-    public BigDecimal getSubtotal() {
-        return subtotal;
-    }
+    public LocalDateTime getEstimatedDelivery() { return estimatedDelivery; }
+    public void setEstimatedDelivery(LocalDateTime estimatedDelivery) { this.estimatedDelivery = estimatedDelivery; }
 
-    public void setSubtotal(BigDecimal subtotal) {
-        this.subtotal = subtotal;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public BigDecimal getDeliveryFee() {
-        return deliveryFee;
-    }
-
-    public void setDeliveryFee(BigDecimal deliveryFee) {
-        this.deliveryFee = deliveryFee;
-    }
-
-    public BigDecimal getDiscount() {
-        return discount;
-    }
-
-    public void setDiscount(BigDecimal discount) {
-        this.discount = discount;
-    }
-
-    public BigDecimal getTotal() {
-        return total;
-    }
-
-    public void setTotal(BigDecimal total) {
-        this.total = total;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public String getPromoCode() {
-        return promoCode;
-    }
-
-    public void setPromoCode(String promoCode) {
-        this.promoCode = promoCode;
-    }
-
-    public LocalDateTime getEstimatedDelivery() {
-        return estimatedDelivery;
-    }
-
-    public void setEstimatedDelivery(LocalDateTime estimatedDelivery) {
-        this.estimatedDelivery = estimatedDelivery;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     @PrePersist
     protected void onCreate() {
+        if (stockSettled == null) stockSettled = "DEDUCTED";
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
@@ -213,4 +139,3 @@ public class Order {
         updatedAt = LocalDateTime.now();
     }
 }
-

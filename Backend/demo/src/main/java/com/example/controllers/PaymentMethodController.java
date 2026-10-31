@@ -19,7 +19,7 @@ import java.util.Optional;
 public class PaymentMethodController {
 
     private static final String MSG_KEY = "message";
-    private static final String MSG_NOT_FOUND = "MÃ©todo de pago no encontrado";
+    private static final String MSG_NOT_FOUND = "Método de pago no encontrado";
 
     private final PaymentMethodService paymentMethodService;
 
@@ -72,7 +72,7 @@ public class PaymentMethodController {
         try {
             if (paymentMethodService.existsByName(paymentMethodDTO.getName())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of(MSG_KEY, "El nombre del mÃ©todo de pago ya existe"));
+                        .body(Map.of(MSG_KEY, "El nombre del método de pago ya existe"));
             }
 
             PaymentMethod paymentMethod = new PaymentMethod();
@@ -85,7 +85,7 @@ public class PaymentMethodController {
             return ResponseEntity.ok(ApiResponse.success(new PaymentMethodDTO(nuevoMetodo)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of(MSG_KEY, e.getMessage()));
+                    .body(ApiResponse.error(e.getMessage() != null ? e.getMessage() : "Datos inválidos"));
         }
     }
 
@@ -108,7 +108,7 @@ public class PaymentMethodController {
                     .body(Map.of(MSG_KEY, MSG_NOT_FOUND));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of(MSG_KEY, e.getMessage()));
+                    .body(ApiResponse.error(e.getMessage() != null ? e.getMessage() : "Datos inválidos"));
         }
     }
 
@@ -117,19 +117,19 @@ public class PaymentMethodController {
         try {
             boolean eliminado = paymentMethodService.eliminarMetodoPago(id);
             if (eliminado) {
-                return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "MÃ©todo de pago eliminado correctamente")));
+                return ResponseEntity.ok(ApiResponse.success(Map.of(MSG_KEY, "Método de pago eliminado correctamente")));
             }
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of(MSG_KEY, MSG_NOT_FOUND));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of(MSG_KEY, e.getMessage()));
+                    .body(ApiResponse.error(e.getMessage() != null ? e.getMessage() : "No se pudo eliminar el método de pago"));
         }
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<Object> cambiarEstado(
-            @PathVariable("id") Integer id, 
+            @PathVariable("id") Integer id,
             @RequestParam("active") boolean active) {
         PaymentMethod paymentMethod = paymentMethodService.cambiarEstado(id, active);
         if (paymentMethod != null) {
@@ -139,4 +139,3 @@ public class PaymentMethodController {
                 .body(Map.of(MSG_KEY, MSG_NOT_FOUND));
     }
 }
-

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { UsuarioService } from '../../services/usuario.service';
 import { UsuarioDTO, UsuarioCreateDTO } from '../../models/usuario.interface';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-perfil-admin',
@@ -21,53 +22,81 @@ export class PerfilAdminComponent implements OnInit {
     phone: '',
     role: 'ADMIN'
   };
-  
+
   nuevaPassword: string = '';
   confirmarPassword: string = '';
-  
+
   showPassword = false;
   showConfirmPassword = false;
-  
+
   mostrarCambioPassword: boolean = false;
+  loadError: string = '';
   mensaje: string = '';
   tipoMensaje: 'success' | 'error' = 'success';
   cargando: boolean = false;
+  guardandoPerfil: boolean = false;
+  guardandoPassword: boolean = false;
 
   constructor(
     private readonly authService: AuthService,
-    private readonly usuarioService: UsuarioService
+    private readonly usuarioService: UsuarioService,
+    private readonly toastService: ToastService
   ) {}
 
   ngOnInit() {
     this.cargarDatosUsuario();
   }
 
+  recargar(): void {
+    this.cargarDatosUsuario();
+  }
+
+  reintentar(): void {
+    this.cargarDatosUsuario();
+  }
+
   cargarDatosUsuario() {
+    this.cargando = true;
+    this.loadError = '';
+
+    const currentUser = this.authService.getCurrentUser();
     const token = this.authService.getToken();
-    if (!token) {
-      this.mensaje = 'No se pudo cargar la información del usuario';
-      this.tipoMensaje = 'error';
+
+    if (!token && !currentUser) {
+      this.loadError = 'No se encontró una sesión activa de administrador.';
+      this.cargando = false;
       return;
     }
 
-    // Decodificar el token para obtener el ID
-    const tokenData = this.decodeToken(token);
-    if (!tokenData?.id) {
-      this.mensaje = 'Token inválido';
-      this.tipoMensaje = 'error';
+    // Usar datos locales primero como fallback instantáneo
+    if (currentUser) {
+      this.usuario = currentUser;
+      this.usuarioEditado = { ...currentUser };
+    }
+
+    const tokenData = token ? this.decodeToken(token) : null;
+    const userId = currentUser?.id || tokenData?.id;
+
+    if (!userId) {
+      this.cargando = false;
       return;
     }
 
-    // Obtener el usuario completo desde el backend
-    this.usuarioService.obtenerUsuarioPorId(tokenData.id).subscribe({
+    // Obtener datos frescos desde el backend
+    this.usuarioService.obtenerUsuarioPorId(userId).subscribe({
       next: (usuario) => {
         this.usuario = usuario;
         this.usuarioEditado = { ...usuario };
+        this.cargando = false;
       },
       error: (error) => {
-        this.mensaje = 'Error al cargar los datos del usuario';
-        this.tipoMensaje = 'error';
-        console.error('Error:', error);
+        console.error('Error al sincronizar perfil con backend:', error);
+        if (!this.usuario) {
+          this.loadError = error?.status === 0
+            ? 'No se pudo conectar con el servidor (Backend fuera de línea). Verifica el puerto 8089.'
+            : (error?.error?.message || 'Error al cargar los datos del perfil.');
+        }
+        this.cargando = false;
       }
     });
   }
@@ -76,116 +105,95 @@ export class PerfilAdminComponent implements OnInit {
     try {
       const payload = token.split('.')[1];
       return JSON.parse(atob(payload));
-    } catch (error) {
+    } catch {
       return null;
     }
   }
 
   actualizarDatos() {
-    if (!this.validarFormulario()) {
+    if (!this.validarFormulario() || this.guardandoPerfil) {
       return;
     }
 
     if (!this.usuarioEditado.id) {
-      this.tipoMensaje = 'error';
-      this.mensaje = 'No se puede actualizar: ID de usuario no válido';
+      this.mostrarNotificacion('No se puede actualizar: ID de usuario no válido', 'error');
       return;
     }
 
-    this.cargando = true;
-    this.mensaje = '';
+    this.guardandoPerfil = true;
 
     const datosActualizar: UsuarioCreateDTO = {
       email: this.usuarioEditado.email,
       name: this.usuarioEditado.name,
       phone: this.usuarioEditado.phone,
-      password: 'dummy_password_not_used', // NOSONAR El backend debería ignorar esto en PUT
+      password: 'dummy_password_not_used', // Ignorado en actualización
       role: this.usuarioEditado.role
     };
 
     this.usuarioService.actualizarPerfil(this.usuarioEditado.id, datosActualizar).subscribe({
       next: (response) => {
-        this.tipoMensaje = 'success';
-        this.mensaje = 'Datos actualizados correctamente';
-        
-        // Actualizar los datos locales
+        this.guardandoPerfil = false;
         this.usuario = response;
         this.usuarioEditado = { ...response };
-        
-        // Actualizar el AuthService para que se reflejen los cambios en toda la app (ej: navbar)
         this.authService.updateCurrentUser(response);
-        
-        this.cargando = false;
-        setTimeout(() => this.mensaje = '', 5000);
+        this.mostrarNotificacion('Datos de perfil actualizados correctamente', 'success');
       },
       error: (error) => {
-        this.tipoMensaje = 'error';
-        this.mensaje = 'Error al actualizar los datos: ' + (error.error?.message || error.message);
-        this.cargando = false;
-        console.error('Error completo:', error);
+        this.guardandoPerfil = false;
+        console.error('Error al actualizar perfil:', error);
+        this.mostrarNotificacion(error?.error?.message || 'Error al actualizar datos de perfil', 'error');
       }
     });
   }
 
   cambiarPassword() {
+    if (this.guardandoPassword) return;
+
     if (this.nuevaPassword !== this.confirmarPassword) {
-      this.tipoMensaje = 'error';
-      this.mensaje = 'Las contraseñas no coinciden';
+      this.mostrarNotificacion('Las contraseñas no coinciden', 'error');
       return;
     }
 
     if (this.nuevaPassword.length < 6) {
-      this.tipoMensaje = 'error';
-      this.mensaje = 'La contraseña debe tener al menos 6 caracteres';
+      this.mostrarNotificacion('La contraseña debe tener al menos 6 caracteres', 'error');
       return;
     }
 
     if (!this.usuarioEditado.id) {
-      this.tipoMensaje = 'error';
-      this.mensaje = 'No se puede cambiar la contraseña: ID de usuario no válido';
+      this.mostrarNotificacion('ID de usuario no válido', 'error');
       return;
     }
 
-    this.cargando = true;
-    this.mensaje = '';
+    this.guardandoPassword = true;
 
     this.usuarioService.cambiarPassword(this.usuarioEditado.id, { password: this.nuevaPassword }).subscribe({
-      next: (response) => {
-        this.tipoMensaje = 'success';
-        this.mensaje = 'Contraseña cambiada correctamente';
+      next: () => {
+        this.guardandoPassword = false;
         this.nuevaPassword = '';
         this.confirmarPassword = '';
         this.mostrarCambioPassword = false;
-        this.cargando = false;
-        
-        const currentUser = this.authService.getCurrentUser();
-        if (currentUser?.id === this.usuarioEditado.id) {
-          alert('Contraseña cambiada exitosamente. Por seguridad, debe iniciar sesión nuevamente con su nueva contraseña.');
+        this.toastService.showSuccess('Contraseña cambiada exitosamente. Redirigiendo a inicio de sesión...');
+        setTimeout(() => {
           this.authService.logout();
-        } else {
-          setTimeout(() => this.mensaje = '', 5000);
-        }
+        }, 1500);
       },
       error: (error) => {
-        this.tipoMensaje = 'error';
-        this.mensaje = 'Error al cambiar la contraseña: ' + (error.error?.message || error.message);
-        this.cargando = false;
-        console.error('Error completo:', error);
+        this.guardandoPassword = false;
+        console.error('Error al cambiar contraseña:', error);
+        this.mostrarNotificacion(error?.error?.message || 'Error al cambiar contraseña', 'error');
       }
     });
   }
 
   validarFormulario(): boolean {
-    if (!this.usuarioEditado.name || !this.usuarioEditado.email) {
-      this.tipoMensaje = 'error';
-      this.mensaje = 'El nombre y el email son obligatorios';
+    if (!this.usuarioEditado.name?.trim() || !this.usuarioEditado.email?.trim()) {
+      this.mostrarNotificacion('El nombre y el email son obligatorios', 'error');
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(this.usuarioEditado.email)) {
-      this.tipoMensaje = 'error';
-      this.mensaje = 'El email no es válido';
+      this.mostrarNotificacion('El correo electrónico ingresado no tiene un formato válido', 'error');
       return false;
     }
 
@@ -196,12 +204,20 @@ export class PerfilAdminComponent implements OnInit {
     this.mostrarCambioPassword = false;
     this.nuevaPassword = '';
     this.confirmarPassword = '';
-    this.mensaje = '';
   }
 
   cancelarEdicion() {
     this.cargarDatosUsuario();
-    this.mensaje = '';
+  }
+
+  private mostrarNotificacion(texto: string, tipo: 'success' | 'error'): void {
+    this.mensaje = texto;
+    this.tipoMensaje = tipo;
+    if (tipo === 'success') {
+      this.toastService.showSuccess(texto);
+      setTimeout(() => (this.mensaje = ''), 4000);
+    } else {
+      this.toastService.showError(texto);
+    }
   }
 }
-

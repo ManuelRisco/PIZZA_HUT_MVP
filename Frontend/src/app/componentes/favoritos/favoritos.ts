@@ -1,10 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { FavoriteService } from '../../services/favorite.service';
 import { AuthService } from '../../services/auth.service';
 import { PizzaService } from '../../services/pizza.service';
-import { CartService } from '../../services/cart.service';
+import { ImageOptimizerService } from '../../services/image-optimizer.service';
 import { PizzaDTO } from '../../models/pizza.interface';
 import { PaginationComponent } from '../pagination/pagination';
 
@@ -19,19 +21,20 @@ export class FavoritosComponent implements OnInit {
   pizzasFavoritas: PizzaDTO[] = [];
   pizzasFavoritasPaginadas: PizzaDTO[] = [];
   loading = false;
+  eliminandoId: number | null = null;
+  loadError = '';
   mensaje = '';
   esError = false;
   imagenesCargadas = new Set<number>();
-  private readonly imageCache= new Set<string>();
 
-  // Paginación
+  // Paginación (12 llena filas exactas en 1, 2, 3 y 4 columnas)
   currentPage = 1;
-  itemsPerPage = 10;
+  itemsPerPage = 12;
 
   private readonly favoriteService = inject(FavoriteService);
   private readonly authService = inject(AuthService);
   private readonly pizzaService = inject(PizzaService);
-  private readonly cartService = inject(CartService);
+  private readonly imageOptimizer = inject(ImageOptimizerService);
   private readonly router = inject(Router);
 
   ngOnInit(): void {
@@ -40,46 +43,35 @@ export class FavoritosComponent implements OnInit {
 
   cargarFavoritos(): void {
     const userId = this.authService.obtenerUsuarioId();
-    
+
     if (!userId) {
       this.router.navigate(['/join']);
       return;
     }
 
     this.loading = true;
+    this.loadError = '';
 
-    this.favoriteService.obtenerFavoritosPorUserId(userId).subscribe({
-      next: (favoritos) => {
-        // Obtener los detalles de cada pizza favorita
-        const pizzaIds = favoritos.map(f => f.pizzaId);
-        
-        if (pizzaIds.length === 0) {
-          this.pizzasFavoritas = [];
-          this.loading = false;
-          return;
+    forkJoin({
+      favoritos: this.favoriteService.obtenerFavoritosPorUserId(userId),
+      todasLasPizzas: this.pizzaService.listarPizzas()
+    })
+      .pipe(finalize(() => { this.loading = false; }))
+      .subscribe({
+        next: ({ favoritos, todasLasPizzas }) => {
+          const pizzaIds = new Set(favoritos.map(f => f.pizzaId));
+          this.pizzasFavoritas = pizzaIds.size === 0
+            ? []
+            : todasLasPizzas.filter(pizza => pizza.id !== undefined && pizzaIds.has(pizza.id));
+          this.aplicarPaginacion();
+        },
+        error: (error) => {
+          console.error('Error al cargar favoritos:', error);
+          this.loadError = error?.status === 0
+            ? 'No se pudo conectar con el servidor (Backend fuera de línea). Verifica tu conexión e inténtalo de nuevo.'
+            : (error?.error?.message || 'Error al cargar tus pizzas favoritas.');
         }
-
-        this.pizzaService.listarPizzas().subscribe({
-          next: (todasLasPizzas) => {
-            this.pizzasFavoritas = todasLasPizzas.filter(pizza => 
-              pizza.id && pizzaIds.includes(pizza.id)
-            );
-            this.loading = false;
-            this.aplicarPaginacion();
-          },
-          error: (error) => {
-            console.error('Error al cargar pizzas:', error);
-            this.mostrarMensaje('Error al cargar los detalles de las pizzas', true);
-            this.loading = false;
-          }
-        });
-      },
-      error: (error) => {
-        console.error('Error al cargar favoritos:', error);
-        this.mostrarMensaje('Error al cargar favoritos', true);
-        this.loading = false;
-      }
-    });
+      });
   }
 
   aplicarPaginacion(): void {
@@ -99,42 +91,49 @@ export class FavoritosComponent implements OnInit {
     this.aplicarPaginacion();
   }
 
+  onItemsPerPageChange(size: number): void {
+    this.itemsPerPage = size;
+    this.currentPage = 1;
+    this.aplicarPaginacion();
+  }
+
   eliminarFavorito(pizzaId: number): void {
+    if (this.eliminandoId !== null) return;
     const userId = this.authService.obtenerUsuarioId();
-    
     if (!userId) return;
 
     if (confirm('¿Deseas eliminar esta pizza de tus favoritos?')) {
-      this.favoriteService.eliminarFavorito(userId, pizzaId).subscribe({
-        next: () => {
-          this.mostrarMensaje('Pizza eliminada de favoritos', false);
-          this.cargarFavoritos(); // Recargar la lista
-        },
-        error: (error) => {
-          console.error('Error al eliminar favorito:', error);
-          this.mostrarMensaje('Error al eliminar de favoritos', true);
-        }
-      });
+      this.eliminandoId = pizzaId;
+      this.favoriteService.eliminarFavorito(userId, pizzaId)
+        .pipe(finalize(() => { this.eliminandoId = null; }))
+        .subscribe({
+          next: () => {
+            this.pizzasFavoritas = this.pizzasFavoritas.filter(p => p.id !== pizzaId);
+            this.aplicarPaginacion();
+            this.mostrarMensaje('Pizza eliminada de favoritos', false);
+          },
+          error: (error) => {
+            console.error('Error al eliminar favorito:', error);
+            this.mostrarMensaje('Error al eliminar de favoritos', true);
+          }
+        });
     }
   }
 
   verPizza(pizzaId: number): void {
-    this.router.navigate(['/menu'], { 
-      queryParams: { highlight: pizzaId }
-    });
+    if (pizzaId > 0) {
+      this.router.navigate(['/menu'], { queryParams: { highlight: pizzaId } });
+    } else {
+      this.router.navigate(['/menu']);
+    }
   }
 
   formatearPrecio(precio: number): string {
-    return `S/ ${precio.toFixed(2)}`;
+    return `S/ ${(precio ?? 0).toFixed(2)}`;
   }
 
-  // Optimización de imágenes
   getOptimizedImageUrl(url: string | undefined): string {
-    if (!url) return 'assets/pizza-placeholder.png';
-    
-    // Si la URL ya tiene parámetros, agregar con &, sino con ?
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}w=400&q=80&format=webp`;
+    return this.imageOptimizer.optimizeImageUrl(url, 'medium');
   }
 
   onImageLoad(pizzaId: number): void {
@@ -143,35 +142,16 @@ export class FavoritosComponent implements OnInit {
 
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    img.src = 'assets/pizza-placeholder.png';
-  }
-
-  isImageCached(url: string): boolean {
-    if (!url) return false;
-    
-    if (this.imageCache.has(url)) {
-      return true;
-    }
-    
-    // Verificar si la imagen está en caché del navegador
-    const img = new Image();
-    img.src = this.getOptimizedImageUrl(url);
-    
-    if (img.complete) {
-      this.imageCache.add(url);
-      return true;
-    }
-    
-    return false;
+    img.src = '/combo1.webp';
   }
 
   private mostrarMensaje(texto: string, esError = false): void {
     this.mensaje = texto;
     this.esError = esError;
-    
+
     setTimeout(() => {
       this.mensaje = '';
       this.esError = false;
-    }, 3000);
+    }, 3500);
   }
 }

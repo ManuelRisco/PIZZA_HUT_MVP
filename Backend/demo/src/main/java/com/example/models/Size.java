@@ -14,6 +14,12 @@ public class Size {
     private Integer id;
     private String name;
     private BigDecimal extraCost;
+    @Column(nullable = false, precision = 5, scale = 2)
+    private BigDecimal recipeMultiplier = BigDecimal.ONE;
+    @Column(nullable = false)
+    private Integer stockQuantity = 50;
+    @Column(nullable = false)
+    private Integer minStock = 10;
     private String description;
     private Integer displayOrder;
     private LocalDateTime createdAt;
@@ -62,6 +68,30 @@ public class Size {
         this.extraCost = extraCost;
     }
 
+    public BigDecimal getRecipeMultiplier() {
+        return recipeMultiplier;
+    }
+
+    public void setRecipeMultiplier(BigDecimal recipeMultiplier) {
+        this.recipeMultiplier = recipeMultiplier;
+    }
+
+    public Integer getStockQuantity() {
+        return stockQuantity != null ? stockQuantity : 0;
+    }
+
+    public void setStockQuantity(Integer stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+
+    public Integer getMinStock() {
+        return minStock != null ? minStock : 0;
+    }
+
+    public void setMinStock(Integer minStock) {
+        this.minStock = minStock;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -104,13 +134,24 @@ public class Size {
 
     @PrePersist
     protected void onCreate() {
+        if (recipeMultiplier == null || recipeMultiplier.compareTo(BigDecimal.ZERO) <= 0) {
+            recipeMultiplier = BigDecimal.ONE;
+        }
+        if (displayOrder == null) {
+            displayOrder = 1;
+        }
+        if (extraCost == null) {
+            extraCost = BigDecimal.ZERO;
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
+        if (recipeMultiplier == null || recipeMultiplier.compareTo(BigDecimal.ZERO) <= 0) {
+            recipeMultiplier = BigDecimal.ONE;
+        }
         updatedAt = LocalDateTime.now();
     }
 }
-

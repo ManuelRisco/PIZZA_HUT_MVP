@@ -1,5 +1,6 @@
 plugins {
 	id 'java'
+	id 'eclipse'
 	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'jacoco'
@@ -24,6 +25,17 @@ repositories {
 	mavenCentral()
 }
 
+sourceSets {
+	e2e {
+		java.srcDir 'src/e2e/java'
+	}
+}
+
+configurations {
+	e2eImplementation.extendsFrom testImplementation
+	e2eRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -41,6 +53,7 @@ dependencies {
 	testImplementation 'org.testcontainers:junit-jupiter:1.20.1'
 	testImplementation 'org.testcontainers:mysql:1.20.1'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	e2eImplementation 'org.seleniumhq.selenium:selenium-java:4.34.0'
 	compileOnly 'org.projectlombok:lombok:1.18.34'
     annotationProcessor 'org.projectlombok:lombok:1.18.34'
     testCompileOnly 'org.projectlombok:lombok:1.18.34'
@@ -51,10 +64,76 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 }
 
+tasks.register('e2e', Test) {
+	description = 'Pruebas end to end del frontend con Selenium'
+	group = 'verification'
+	testClassesDirs = sourceSets.e2e.output.classesDirs
+	classpath = sourceSets.e2e.runtimeClasspath
+	useJUnitPlatform()
+	outputs.upToDateWhen { false }
+	testLogging {
+		events 'started', 'passed', 'failed', 'skipped'
+		showStandardStreams = true
+		exceptionFormat = 'short'
+	}
+}
+
 // IMPORTANTE: La flag '-parameters' es REQUERIDA por Spring para resolver parámetros en request mappings
 tasks.withType(JavaCompile).configureEach {
 	options.compilerArgs.add('-parameters')
 	options.encoding = 'UTF-8'
+}
+
+// ===== Eclipse / VS Code Java Language Server (Buildship) =====
+eclipse {
+	synchronizationTasks 'compileJava', 'eclipseJdt'
+	classpath {
+		plusConfigurations += [configurations.e2eCompileClasspath, configurations.e2eRuntimeClasspath]
+		file {
+			whenMerged { cp ->
+				// Eliminar entradas duplicadas de código generado en bin/ creadas por Eclipse APT
+				cp.entries.removeAll { it.kind == 'src' && (it.path?.contains('bin/generated') || it.path?.startsWith('bin/')) }
+
+				def genPath = 'build/generated/sources/annotationProcessor/java/main'
+				def genDir = file(genPath)
+				if (!genDir.exists()) {
+					genDir.mkdirs()
+				}
+				def existing = cp.entries.find { it.kind == 'src' && it.path == genPath }
+				if (existing == null) {
+					def entry = new org.gradle.plugins.ide.eclipse.model.SourceFolder(genPath, null)
+					entry.entryAttributes['optional'] = 'true'
+					entry.entryAttributes['ignore_optional_problems'] = 'true'
+					cp.entries.add(entry)
+				} else {
+					existing.entryAttributes['optional'] = 'true'
+					existing.entryAttributes['ignore_optional_problems'] = 'true'
+				}
+
+				def e2eDir = file('src/e2e/java')
+				if (!e2eDir.exists()) {
+					e2eDir.mkdirs()
+				}
+				def e2eEntry = cp.entries.find { it.kind == 'src' && it.path == 'src/e2e/java' }
+				if (e2eEntry != null) {
+					e2eEntry.entryAttributes['optional'] = 'true'
+					e2eEntry.entryAttributes['ignore_optional_problems'] = 'true'
+				}
+			}
+		}
+	}
+	jdt {
+		file {
+			withProperties { props ->
+				props['org.eclipse.jdt.core.compiler.processAnnotations'] = 'disabled'
+				props['org.eclipse.jdt.core.compiler.annotation.nullanalysis'] = 'disabled'
+				props['org.eclipse.jdt.core.compiler.problem.unusedParameter'] = 'ignore'
+				props['org.eclipse.jdt.core.compiler.problem.unusedExceptionParameter'] = 'ignore'
+				props['org.eclipse.jdt.core.compiler.problem.missingSerialVersion'] = 'ignore'
+				props['org.eclipse.jdt.core.compiler.codegen.methodParameters'] = 'generate'
+			}
+		}
+	}
 }
 
 // ===== JaCoCo (Cobertura de Tests) =====

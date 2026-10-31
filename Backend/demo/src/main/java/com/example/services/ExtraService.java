@@ -7,6 +7,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +57,11 @@ public class ExtraService {
         if (extraRepository.existsByName(extra.getName())) {
             throw new IllegalArgumentException("Ya existe un extra con ese nombre");
         }
+        if (extra.getDisplayOrder() == null) extra.setDisplayOrder(0);
+        if (extra.getStockQuantity() == null) extra.setStockQuantity(0);
+        if (extra.getMinStock() == null) extra.setMinStock(5);
+        if (extra.getUnitCost() == null) extra.setUnitCost(BigDecimal.ZERO);
+        if (extra.getIsAvailable() == null) extra.setIsAvailable(true);
         return extraRepository.save(extra);
     }
 
@@ -70,13 +76,34 @@ public class ExtraService {
         }
 
         Extra extra = extraOpt.get();
-        extra.setName(extraActualizado.getName());
+        if (extraActualizado.getName() != null) {
+            extra.setName(extraActualizado.getName());
+        }
         extra.setDescription(extraActualizado.getDescription());
-        extra.setImageUrl(extraActualizado.getImageUrl());
-        extra.setPrice(extraActualizado.getPrice());
-        extra.setCategory(extraActualizado.getCategory());
-        extra.setIsAvailable(extraActualizado.getIsAvailable());
-        extra.setDisplayOrder(extraActualizado.getDisplayOrder());
+        if (extraActualizado.getImageUrl() != null) {
+            extra.setImageUrl(extraActualizado.getImageUrl());
+        }
+        if (extraActualizado.getPrice() != null) {
+            extra.setPrice(extraActualizado.getPrice());
+        }
+        if (extraActualizado.getCategory() != null) {
+            extra.setCategory(extraActualizado.getCategory());
+        }
+        if (extraActualizado.getIsAvailable() != null) {
+            extra.setIsAvailable(extraActualizado.getIsAvailable());
+        }
+        if (extraActualizado.getDisplayOrder() != null) {
+            extra.setDisplayOrder(extraActualizado.getDisplayOrder());
+        }
+        if (extraActualizado.getStockQuantity() != null) {
+            extra.setStockQuantity(extraActualizado.getStockQuantity());
+        }
+        if (extraActualizado.getMinStock() != null) {
+            extra.setMinStock(extraActualizado.getMinStock());
+        }
+        if (extraActualizado.getUnitCost() != null) {
+            extra.setUnitCost(extraActualizado.getUnitCost());
+        }
         extra.setUpdatedAt(LocalDateTime.now());
 
         return extraRepository.save(extra);
@@ -125,6 +152,3 @@ public class ExtraService {
         return extraRepository.existsByName(nombre);
     }
 }
-
-
-

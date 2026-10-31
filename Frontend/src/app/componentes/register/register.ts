@@ -1,9 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ValidatorFn, AbstractControl, ReactiveFormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { UsuarioService } from '../../services/usuario.service';
 import { UsuarioPatronesService } from '../../services/usuario-patrones.service';
+import { AuthService } from '../../services/auth.service';
 import { AccessibilityService } from '../../services/accessibility.service';
 import { UsuarioDTO, UsuarioCreateDTO } from '../../models/usuario.interface';
 
@@ -32,8 +33,10 @@ export class Register implements OnInit {
     private readonly formBuilder: FormBuilder,
     private readonly usuarioService: UsuarioService,
     private readonly usuarioPatronesService: UsuarioPatronesService,
+    private readonly authService: AuthService,
     private readonly cdr: ChangeDetectorRef,
-    private readonly accessibilityService: AccessibilityService
+    private readonly accessibilityService: AccessibilityService,
+    private readonly router: Router
   ) {
     this.registerForm = this.formBuilder.group({
       name: ['', [
@@ -108,16 +111,14 @@ export class Register implements OnInit {
 
   registrarConPatrones(formValue: any): void {
     const clienteData = {
-      email: formValue.email.trim(),
+      email: formValue.email.trim().toLowerCase(),
       password: formValue.password,
       name: formValue.name.trim(),
       phone: formValue.phone.trim()
     };
     this.usuarioPatronesService.crearCliente(clienteData).subscribe({
-      next: (response) => {
-        this.mostrarMensajeExito('Usuario registrado correctamente');
-        this.registerForm.reset();
-        this.loading = false;
+      next: () => {
+        this.confirmarRegistro();
       },
       error: (error) => {
         this.manejarErrorRegistro(error);
@@ -129,18 +130,32 @@ export class Register implements OnInit {
     const usuario: UsuarioCreateDTO = {
       name: formValue.name.trim(),
       phone: formValue.phone.trim(),
-      email: formValue.email.trim(),
+      email: formValue.email.trim().toLowerCase(),
       password: formValue.password,
       role: 'CUSTOMER'
     };
     this.usuarioService.crearUsuario(usuario).subscribe({
-      next: (response) => {
-        this.mostrarMensajeExito('Usuario registrado correctamente');
-        this.registerForm.reset();
-        this.loading = false;
+      next: () => {
+        this.confirmarRegistro();
       },
       error: (error) => {
         this.manejarErrorRegistro(error);
+      }
+    });
+  }
+
+  confirmarRegistro(): void {
+    const email = String(this.registerForm.value.email || '').trim().toLowerCase();
+    const password = String(this.registerForm.value.password || '');
+    this.mostrarMensajeExito('Usuario registrado correctamente');
+    this.loading = false;
+    this.authService.login(email, password).subscribe({
+      next: (response) => {
+        const destino = response?.usuario?.role === 'ADMIN' ? '/panel-admin' : '/menu';
+        this.router.navigate([destino]);
+      },
+      error: () => {
+        this.router.navigate(['/join'], { queryParams: { email } });
       }
     });
   }

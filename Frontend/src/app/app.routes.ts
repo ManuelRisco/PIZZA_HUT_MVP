@@ -23,10 +23,16 @@ export const routes: Routes = [
   { path: 'cliente/favoritos', loadComponent: () => import('./componentes/cliente-dashboard/cliente-dashboard').then(m => m.ClienteDashboardComponent), canActivate: [ClienteGuard], data: { vista: 'favoritos' } },
   { path: 'cliente/carrito', loadComponent: () => import('./componentes/carrito/carrito').then(m => m.CarritoComponent), canActivate: [ClienteGuard] },
   
-  // Rutas de Administrador
-  { path: 'admin/dashboard', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard] },
+  // Rutas de Administrador (protegidas con AdminGuard + Spring Security JWT)
+  { path: 'admin/dashboard', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard], data: { vista: 'dashboard' } },
   { path: 'panel-admin', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard] },
   { path: 'admin/perfil', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard], data: { vista: 'mi-perfil' } },
+  { path: 'admin/finanzas', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard], data: { vista: 'finanzas' } },
+  { path: 'admin/inventario', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard], data: { vista: 'inventario' } },
+  { path: 'admin/perdidas', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard], data: { vista: 'perdidas' } },
+  { path: 'admin/costos-produccion', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard], data: { vista: 'costos-produccion' } },
+  { path: 'admin/extras', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard], data: { vista: 'extras' } },
+  { path: 'admin/promociones', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard], data: { vista: 'promociones' } },
   { path: 'usuarios', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard], data: { vista: 'usuarios' } },
   { path: 'pizzas', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard], data: { vista: 'pizzas' } },
   { path: 'categorias', loadComponent: () => import('./componentes/panel-admin/panel-admin').then(m => m.PanelAdmin), canActivate: [AdminGuard], data: { vista: 'categorias' } },

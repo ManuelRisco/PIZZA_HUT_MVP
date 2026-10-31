@@ -1,6 +1,7 @@
-import { Component, signal, OnInit, OnDestroy, HostListener, Inject, PLATFORM_ID, inject } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { Component, signal, OnInit, OnDestroy, Inject, PLATFORM_ID, inject, NgZone } from '@angular/core';
+import { isPlatformBrowser, AsyncPipe, Location } from '@angular/common';
+import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { Subscription, filter } from 'rxjs';
 import { NavbarComponent } from './componentes/navbar/navbar';
 import { FooterComponent } from "./componentes/footer/footer";
 import { ToastComponent } from './componentes/toast/toast.component';
@@ -8,9 +9,26 @@ import { IdleTimeoutService } from './services/idle-timeout.service';
 import { AfkModalComponent } from './componentes/afk-modal/afk-modal.component';
 import { AccessibilityFabComponent } from './componentes/accessibility-fab/accessibility-fab';
 import { AccessibilityService } from './services/accessibility.service';
-import { AsyncPipe } from '@angular/common';
 
-@Component({    
+const PANEL_EXACT_PATHS = new Set<string>([
+  '/panel-admin',
+  '/usuarios',
+  '/pizzas',
+  '/categorias',
+  '/ingredientes',
+  '/sizes',
+  '/orders',
+  '/payments',
+  '/metodos-pago',
+  '/reviews',
+  '/cliente/dashboard',
+  '/cliente/perfil',
+  '/cliente/pedidos',
+  '/cliente/resenas',
+  '/cliente/favoritos'
+]);
+
+@Component({
   selector: 'app-root',
   standalone: true,
   imports: [
@@ -21,28 +39,72 @@ import { AsyncPipe } from '@angular/common';
     AccessibilityFabComponent,
     RouterOutlet,
     AsyncPipe
-],
+  ],
   templateUrl: './app.html',
   styleUrls: ['./app.css']
 })
-export class App implements OnInit, OnDestroy { 
+export class App implements OnInit, OnDestroy {
   protected readonly title = signal('pizzahut');
+  protected readonly isPanelView = signal(false);
+
   private observer: MutationObserver | null = null;
   private lastFocusedElement: HTMLElement | null = null;
+  private routerSub?: Subscription;
+  private removeLocationListener?: VoidFunction;
+
   private readonly idleTimeoutService = inject(IdleTimeoutService);
+  private readonly ngZone = inject(NgZone);
+  private readonly router = inject(Router);
+  private readonly location = inject(Location);
   public readonly accessibilityService = inject(AccessibilityService);
+
+  private readonly boundKeydownHandler = (event: KeyboardEvent) => {
+    if (event.key !== 'Escape' && event.key !== 'Tab') return;
+    this.manejarTecladoModalGlobal(event);
+  };
 
   constructor(@Inject(PLATFORM_ID) private readonly platformId: Object) {}
 
   ngOnInit() {
+    this.updatePanelViewFlag(this.location.path() || this.router.url);
+
+    this.routerSub = this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe((e) => {
+        this.updatePanelViewFlag(e.urlAfterRedirects || e.url);
+      });
+
+    this.removeLocationListener = this.location.onUrlChange((url) => {
+      this.updatePanelViewFlag(url);
+    });
+
     if (isPlatformBrowser(this.platformId)) {
-      this.setupModalObserver();
+      this.ngZone.runOutsideAngular(() => {
+        this.setupModalObserver();
+        document.addEventListener('keydown', this.boundKeydownHandler);
+      });
     }
   }
 
   ngOnDestroy() {
+    this.routerSub?.unsubscribe();
+    if (this.removeLocationListener) {
+      this.removeLocationListener();
+    }
     if (this.observer) {
       this.observer.disconnect();
+    }
+    if (isPlatformBrowser(this.platformId)) {
+      document.removeEventListener('keydown', this.boundKeydownHandler);
+    }
+  }
+
+  private updatePanelViewFlag(rawUrl: string): void {
+    const cleanPath = (rawUrl || '').split('?')[0].split('#')[0] || '/';
+    const normalized = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+    const isPanel = normalized.startsWith('/admin/') || PANEL_EXACT_PATHS.has(normalized);
+    if (this.isPanelView() !== isPanel) {
+      this.isPanelView.set(isPanel);
     }
   }
 
@@ -59,7 +121,7 @@ export class App implements OnInit, OnDestroy {
 
   private processAddedNodes(nodes: NodeList) {
     for (const node of Array.from(nodes)) {
-      if (node.nodeType === 1) { // Element node
+      if (node.nodeType === 1) {
         const element = node as HTMLElement;
         if (element.classList?.contains('modal') && element.classList?.contains('show')) {
           this.onModalOpened(element);
@@ -103,7 +165,6 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('document:keydown', ['$event'])
   manejarTecladoModalGlobal(event: KeyboardEvent): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
@@ -113,7 +174,7 @@ export class App implements OnInit, OnDestroy {
     const modalActivo = modales[modales.length - 1] as HTMLElement;
 
     if (event.key === 'Escape') {
-      this.closeModal(modalActivo);
+      this.ngZone.run(() => this.closeModal(modalActivo));
       return;
     }
 
@@ -135,7 +196,7 @@ export class App implements OnInit, OnDestroy {
   private handleTabKey(event: KeyboardEvent, modalActivo: HTMLElement) {
     const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
     const focusableElements = Array.from(modalActivo.querySelectorAll(focusableSelectors)) as HTMLElement[];
-    
+
     if (focusableElements.length === 0) return;
 
     const firstElement = focusableElements[0];
@@ -147,12 +208,12 @@ export class App implements OnInit, OnDestroy {
       return;
     }
 
-    if (event.shiftKey) { // Shift + Tab
+    if (event.shiftKey) {
       if (document.activeElement === firstElement) {
         lastElement.focus();
         event.preventDefault();
       }
-    } else if (document.activeElement === lastElement) { // Tab
+    } else if (document.activeElement === lastElement) {
       firstElement.focus();
       event.preventDefault();
     }

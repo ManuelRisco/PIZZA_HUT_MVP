@@ -1,5 +1,6 @@
 package com.example.config;
 
+import com.example.services.FileUploadService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -54,10 +55,13 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Servir archivos estáticos desde la carpeta uploads/
+        // Servir archivos estáticos desde la carpeta uploads/ usando URI absoluta
+        String uploadUri = FileUploadService.resolveUploadRoot(uploadDir).toUri().toString();
+        if (!uploadUri.endsWith("/")) {
+            uploadUri = uploadUri + "/";
+        }
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + uploadDir + "/")
+                .addResourceLocations(uploadUri)
                 .setCachePeriod(3600); // Cache de 1 hora
     }
 }
-

@@ -35,6 +35,15 @@ public class Extra {
     private Integer displayOrder = 0;
 
     @Column(nullable = false)
+    private Integer stockQuantity = 0;
+
+    @Column(nullable = false)
+    private Integer minStock = 5;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal unitCost = BigDecimal.ZERO;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
@@ -64,6 +73,11 @@ public class Extra {
 
     @PrePersist
     protected void onCreate() {
+        if (this.stockQuantity == null) this.stockQuantity = 0;
+        if (this.minStock == null) this.minStock = 5;
+        if (this.unitCost == null) this.unitCost = BigDecimal.ZERO;
+        if (this.displayOrder == null) this.displayOrder = 0;
+        if (this.isAvailable == null) this.isAvailable = true;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -136,6 +150,30 @@ public class Extra {
 
     public void setDisplayOrder(Integer displayOrder) {
         this.displayOrder = displayOrder;
+    }
+
+    public Integer getStockQuantity() {
+        return stockQuantity;
+    }
+
+    public void setStockQuantity(Integer stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+
+    public Integer getMinStock() {
+        return minStock;
+    }
+
+    public void setMinStock(Integer minStock) {
+        this.minStock = minStock;
+    }
+
+    public BigDecimal getUnitCost() {
+        return unitCost;
+    }
+
+    public void setUnitCost(BigDecimal unitCost) {
+        this.unitCost = unitCost;
     }
 
     public LocalDateTime getCreatedAt() {

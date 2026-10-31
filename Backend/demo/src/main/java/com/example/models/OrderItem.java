@@ -22,6 +22,10 @@ public class OrderItem {
     private BigDecimal unitPrice;
     private BigDecimal sizeExtra;
     private BigDecimal lineTotal;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal unitCost = BigDecimal.ZERO;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal lineCost = BigDecimal.ZERO;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -48,104 +52,53 @@ public class OrderItem {
     }
 
     // ==== Getters y Setters ====
-    public Integer getId() {
-        return id;
-    }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+    public Integer getOrderId() { return orderId; }
+    public void setOrderId(Integer orderId) { this.orderId = orderId; }
 
-    public Integer getOrderId() {
-        return orderId;
-    }
+    public Integer getPizzaId() { return pizzaId; }
+    public void setPizzaId(Integer pizzaId) { this.pizzaId = pizzaId; }
 
-    public void setOrderId(Integer orderId) {
-        this.orderId = orderId;
-    }
+    public Integer getExtraId() { return extraId; }
+    public void setExtraId(Integer extraId) { this.extraId = extraId; }
 
-    public Integer getPizzaId() {
-        return pizzaId;
-    }
+    public String getItemType() { return itemType; }
+    public void setItemType(String itemType) { this.itemType = itemType; }
 
-    public void setPizzaId(Integer pizzaId) {
-        this.pizzaId = pizzaId;
-    }
+    public Integer getSizeId() { return sizeId; }
+    public void setSizeId(Integer sizeId) { this.sizeId = sizeId; }
 
-    public Integer getExtraId() {
-        return extraId;
-    }
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
-    public void setExtraId(Integer extraId) {
-        this.extraId = extraId;
-    }
+    public BigDecimal getUnitPrice() { return unitPrice; }
+    public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
 
-    public String getItemType() {
-        return itemType;
-    }
+    public BigDecimal getSizeExtra() { return sizeExtra; }
+    public void setSizeExtra(BigDecimal sizeExtra) { this.sizeExtra = sizeExtra; }
 
-    public void setItemType(String itemType) {
-        this.itemType = itemType;
-    }
+    public BigDecimal getLineTotal() { return lineTotal; }
+    public void setLineTotal(BigDecimal lineTotal) { this.lineTotal = lineTotal; }
 
-    public Integer getSizeId() {
-        return sizeId;
-    }
+    public BigDecimal getUnitCost() { return unitCost; }
+    public void setUnitCost(BigDecimal unitCost) { this.unitCost = unitCost; }
 
-    public void setSizeId(Integer sizeId) {
-        this.sizeId = sizeId;
-    }
+    public BigDecimal getLineCost() { return lineCost; }
+    public void setLineCost(BigDecimal lineCost) { this.lineCost = lineCost; }
 
-    public Integer getQuantity() {
-        return quantity;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public BigDecimal getUnitPrice() {
-        return unitPrice;
-    }
-
-    public void setUnitPrice(BigDecimal unitPrice) {
-        this.unitPrice = unitPrice;
-    }
-
-    public BigDecimal getSizeExtra() {
-        return sizeExtra;
-    }
-
-    public void setSizeExtra(BigDecimal sizeExtra) {
-        this.sizeExtra = sizeExtra;
-    }
-
-    public BigDecimal getLineTotal() {
-        return lineTotal;
-    }
-
-    public void setLineTotal(BigDecimal lineTotal) {
-        this.lineTotal = lineTotal;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     @PrePersist
     protected void onCreate() {
+        if (sizeExtra == null) sizeExtra = BigDecimal.ZERO;
+        if (unitCost == null) unitCost = BigDecimal.ZERO;
+        if (lineCost == null) lineCost = BigDecimal.ZERO;
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
@@ -155,4 +108,3 @@ public class OrderItem {
         updatedAt = LocalDateTime.now();
     }
 }
-

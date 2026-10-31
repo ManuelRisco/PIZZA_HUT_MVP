@@ -1,226 +1,300 @@
-<div class="max-w-7xl mx-auto">
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
-    <div class="flex items-center gap-3">
-      <h2 class="text-2xl font-black text-gray-800">
-        <i class="bi bi-star-fill text-yellow-400 mr-2 drop-shadow-sm"></i> Gestión de Reseñas
+<div class="space-y-6 font-sans">
+  <!-- Executive v2 Header Card -->
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Feedback y Calidad</p>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">
+        {{ isAdmin ? 'Gestión y Moderación de Reseñas' : 'Mis Reseñas de Pedidos' }}
       </h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">Supervisa las calificaciones de clientes, opiniones de órdenes y visibilidad en el menú.</p>
     </div>
-    <span class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg shadow-sm flex items-center gap-2">
-      <i class="bi bi-chat-square-text-fill"></i>
-      {{ reviews.length }} reseñas
-    </span>
-  </div>
-
-  <!-- Mensajes de éxito y error -->
-  <div class="mb-6" *ngIf="mensaje">
-    <div class="px-4 py-3 rounded-lg flex items-center justify-between" 
-         [ngClass]="error ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'">
-      <div class="flex items-center gap-2">
-        <i class="bi" [ngClass]="error ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
-        {{ mensaje }}
-      </div>
-      <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" (click)="mensaje = ''">
-        <i class="bi bi-x-lg"></i>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        (click)="recargar()"
+        [disabled]="cargando"
+        class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise" [class.animate-spin]="cargando"></i> Actualizar
       </button>
     </div>
   </div>
 
-  <!-- Estadísticas de Reseñas -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
-      <h5 class="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
-        <i class="bi bi-bar-chart-fill text-indigo-500"></i>
-        Estadísticas de Reseñas
-      </h5>
+  <!-- Persistent Load Error / Backend Offline Banner -->
+  <div
+    *ngIf="loadError"
+    class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+    role="alert"
+  >
+    <div class="flex items-start sm:items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-wifi-off text-lg"></i>
+      </div>
+      <div>
+        <p class="text-sm font-black text-red-900 m-0">Error de conexión o carga de reseñas</p>
+        <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ loadError }}</p>
+      </div>
     </div>
-    <div class="p-6">
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
-        <!-- 5 Estrellas -->
-        <div class="p-4 border border-emerald-100 bg-emerald-50/30 rounded-xl transition-transform hover:-translate-y-1 hover:shadow-sm">
-          <div class="flex justify-center mb-2">
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-          </div>
-          <h3 class="text-2xl font-black text-emerald-600 mb-1">{{ getCountByRating(5) }}</h3>
-          <small class="text-emerald-800 font-bold text-xs uppercase tracking-wider">5 estrellas</small>
-        </div>
-        
-        <!-- 4 Estrellas -->
-        <div class="p-4 border border-blue-100 bg-blue-50/30 rounded-xl transition-transform hover:-translate-y-1 hover:shadow-sm">
-          <div class="flex justify-center mb-2">
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star text-gray-300 text-xl"></i>
-          </div>
-          <h3 class="text-2xl font-black text-blue-600 mb-1">{{ getCountByRating(4) }}</h3>
-          <small class="text-blue-800 font-bold text-xs uppercase tracking-wider">4 estrellas</small>
-        </div>
-        
-        <!-- 3 Estrellas -->
-        <div class="p-4 border border-indigo-100 bg-indigo-50/30 rounded-xl transition-transform hover:-translate-y-1 hover:shadow-sm">
-          <div class="flex justify-center mb-2">
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star text-gray-300 text-xl"></i>
-            <i class="bi bi-star text-gray-300 text-xl"></i>
-          </div>
-          <h3 class="text-2xl font-black text-indigo-600 mb-1">{{ getCountByRating(3) }}</h3>
-          <small class="text-indigo-800 font-bold text-xs uppercase tracking-wider">3 estrellas</small>
-        </div>
-        
-        <!-- 2 Estrellas -->
-        <div class="p-4 border border-amber-100 bg-amber-50/30 rounded-xl transition-transform hover:-translate-y-1 hover:shadow-sm">
-          <div class="flex justify-center mb-2">
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star text-gray-300 text-xl"></i>
-            <i class="bi bi-star text-gray-300 text-xl"></i>
-            <i class="bi bi-star text-gray-300 text-xl"></i>
-          </div>
-          <h3 class="text-2xl font-black text-amber-600 mb-1">{{ getCountByRating(2) }}</h3>
-          <small class="text-amber-800 font-bold text-xs uppercase tracking-wider">2 estrellas</small>
-        </div>
-        
-        <!-- 1 Estrella -->
-        <div class="p-4 border border-red-100 bg-red-50/30 rounded-xl transition-transform hover:-translate-y-1 hover:shadow-sm md:col-span-1 col-span-2">
-          <div class="flex justify-center mb-2">
-            <i class="bi bi-star-fill text-yellow-400 text-xl"></i>
-            <i class="bi bi-star text-gray-300 text-xl"></i>
-            <i class="bi bi-star text-gray-300 text-xl"></i>
-            <i class="bi bi-star text-gray-300 text-xl"></i>
-            <i class="bi bi-star text-gray-300 text-xl"></i>
-          </div>
-          <h3 class="text-2xl font-black text-red-600 mb-1">{{ getCountByRating(1) }}</h3>
-          <small class="text-red-800 font-bold text-xs uppercase tracking-wider">1 estrella</small>
+    <button
+      type="button"
+      (click)="reintentar()"
+      class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
+    >
+      <i class="bi bi-arrow-clockwise"></i> Reintentar
+    </button>
+  </div>
+
+  <!-- Mensajes de acción (éxito y error) -->
+  <div
+    *ngIf="mensaje"
+    class="px-4 py-3 rounded-2xl border flex justify-between items-center text-sm font-medium"
+    [ngClass]="error ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'"
+  >
+    <div class="flex items-center gap-2">
+      <i class="bi" [ngClass]="error ? 'bi-exclamation-triangle-fill text-red-600' : 'bi-check-circle-fill text-emerald-600'"></i>
+      <span>{{ mensaje }}</span>
+    </div>
+    <button type="button" (click)="mensaje = ''" class="hover:opacity-75 cursor-pointer">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <!-- Resumen de Calificaciones (5 estrellas a 1 estrella) -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <!-- Promedio General -->
+    <div class="bg-gray-900 text-white rounded-2xl p-4 flex flex-col justify-between col-span-2 sm:col-span-1">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Promedio</p>
+        <div class="flex items-baseline gap-2">
+          <p class="text-3xl font-black text-amber-400 m-0">{{ promedioRating | number:'1.1-1' }}</p>
+          <span class="text-xs text-gray-400">/ 5.0</span>
         </div>
       </div>
+      <p class="text-xs text-gray-400 m-0 mt-2">{{ todasLasReviews.length }} total</p>
+    </div>
+
+    <!-- 5 estrellas -->
+    <div
+      (click)="filtroRating = filtroRating === '5' ? 'TODOS' : '5'; onFiltroChange()"
+      class="bg-white rounded-2xl p-4 border transition-all cursor-pointer shadow-sm hover:border-emerald-300"
+      [ngClass]="filtroRating === '5' ? 'border-emerald-500 ring-2 ring-emerald-100' : 'border-gray-200'"
+    >
+      <div class="flex items-center gap-1 text-amber-400 text-xs mb-1">
+        <i class="bi bi-star-fill"></i><span class="font-bold text-gray-700 ml-1">5★</span>
+      </div>
+      <p class="text-2xl font-black text-emerald-600 m-0">{{ ratingCounts[5] }}</p>
+      <span class="text-[11px] text-gray-400 font-medium">Excelente</span>
+    </div>
+
+    <!-- 4 estrellas -->
+    <div
+      (click)="filtroRating = filtroRating === '4' ? 'TODOS' : '4'; onFiltroChange()"
+      class="bg-white rounded-2xl p-4 border transition-all cursor-pointer shadow-sm hover:border-blue-300"
+      [ngClass]="filtroRating === '4' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'"
+    >
+      <div class="flex items-center gap-1 text-amber-400 text-xs mb-1">
+        <i class="bi bi-star-fill"></i><span class="font-bold text-gray-700 ml-1">4★</span>
+      </div>
+      <p class="text-2xl font-black text-blue-600 m-0">{{ ratingCounts[4] }}</p>
+      <span class="text-[11px] text-gray-400 font-medium">Muy bueno</span>
+    </div>
+
+    <!-- 3 estrellas -->
+    <div
+      (click)="filtroRating = filtroRating === '3' ? 'TODOS' : '3'; onFiltroChange()"
+      class="bg-white rounded-2xl p-4 border transition-all cursor-pointer shadow-sm hover:border-indigo-300"
+      [ngClass]="filtroRating === '3' ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-gray-200'"
+    >
+      <div class="flex items-center gap-1 text-amber-400 text-xs mb-1">
+        <i class="bi bi-star-fill"></i><span class="font-bold text-gray-700 ml-1">3★</span>
+      </div>
+      <p class="text-2xl font-black text-indigo-600 m-0">{{ ratingCounts[3] }}</p>
+      <span class="text-[11px] text-gray-400 font-medium">Regular</span>
+    </div>
+
+    <!-- 2 estrellas -->
+    <div
+      (click)="filtroRating = filtroRating === '2' ? 'TODOS' : '2'; onFiltroChange()"
+      class="bg-white rounded-2xl p-4 border transition-all cursor-pointer shadow-sm hover:border-amber-300"
+      [ngClass]="filtroRating === '2' ? 'border-amber-500 ring-2 ring-amber-100' : 'border-gray-200'"
+    >
+      <div class="flex items-center gap-1 text-amber-400 text-xs mb-1">
+        <i class="bi bi-star-fill"></i><span class="font-bold text-gray-700 ml-1">2★</span>
+      </div>
+      <p class="text-2xl font-black text-amber-600 m-0">{{ ratingCounts[2] }}</p>
+      <span class="text-[11px] text-gray-400 font-medium">Bajo</span>
+    </div>
+
+    <!-- 1 estrella -->
+    <div
+      (click)="filtroRating = filtroRating === '1' ? 'TODOS' : '1'; onFiltroChange()"
+      class="bg-white rounded-2xl p-4 border transition-all cursor-pointer shadow-sm hover:border-red-300"
+      [ngClass]="filtroRating === '1' ? 'border-red-500 ring-2 ring-red-100' : 'border-gray-200'"
+    >
+      <div class="flex items-center gap-1 text-amber-400 text-xs mb-1">
+        <i class="bi bi-star-fill"></i><span class="font-bold text-gray-700 ml-1">1★</span>
+      </div>
+      <p class="text-2xl font-black text-red-600 m-0">{{ ratingCounts[1] }}</p>
+      <span class="text-[11px] text-gray-400 font-medium">Crítico</span>
     </div>
   </div>
 
-  <!-- Grid de reseñas -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-      <h5 class="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
-        <i class="bi bi-grid-fill text-gray-500"></i>
-        Todas las Reseñas
-      </h5>
+  <!-- Filter & Search Toolbar Card -->
+  <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3">
+    <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 flex-1">
+      <div class="relative w-full sm:w-64">
+        <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input
+          type="text"
+          [(ngModel)]="terminoBusqueda"
+          (input)="onFiltroChange()"
+          placeholder="Buscar comentario u orden..."
+          class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
+        />
+      </div>
+
+      <div class="flex items-center gap-2">
+        <select
+          [(ngModel)]="filtroRating"
+          (change)="onFiltroChange()"
+          class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-700 outline-none focus:bg-white focus:border-red-500"
+        >
+          <option value="TODOS">Todas las calificaciones</option>
+          <option value="5">Solo 5 estrellas</option>
+          <option value="4">Solo 4 estrellas</option>
+          <option value="3">Solo 3 estrellas</option>
+          <option value="2">Solo 2 estrellas</option>
+          <option value="1">Solo 1 estrella</option>
+        </select>
+
+        <select
+          *ngIf="isAdmin"
+          [(ngModel)]="filtroVisibilidad"
+          (change)="onFiltroChange()"
+          class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-700 outline-none focus:bg-white focus:border-red-500"
+        >
+          <option value="TODAS">Toda visibilidad</option>
+          <option value="ACTIVAS">Publicadas (Activas)</option>
+          <option value="OCULTAS">Ocultas (Moderadas)</option>
+        </select>
+      </div>
     </div>
-    
-    <div class="p-6">
-      <!-- Indicador de carga -->
-      <div *ngIf="cargando" class="flex flex-col items-center justify-center py-12">
-        <i class="bi bi-arrow-repeat animate-spin text-4xl text-indigo-600 mb-4"></i>
-        <p class="text-gray-500 font-medium text-lg">Cargando reseñas...</p>
-      </div>
 
-      <!-- Grid de reseñas -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" *ngIf="!cargando && reviews.length > 0">
-        <div class="bg-white border rounded-xl overflow-hidden transition-all hover:shadow-md flex flex-col h-full" 
-             *ngFor="let review of reviewsPaginados"
-             [ngClass]="{
-               'border-emerald-200': review.rating === 5,
-               'border-blue-200': review.rating === 4,
-               'border-indigo-200': review.rating === 3,
-               'border-amber-200': review.rating === 2,
-               'border-red-200': review.rating === 1,
-               'opacity-60 grayscale-[50%]': review.active === false
-             }">
-          
-          <!-- Header -->
-          <div class="px-5 py-4 border-b flex justify-between items-start gap-4"
-               [ngClass]="{
-                 'bg-emerald-50 border-emerald-100': review.rating === 5,
-                 'bg-blue-50 border-blue-100': review.rating === 4,
-                 'bg-indigo-50 border-indigo-100': review.rating === 3,
-                 'bg-amber-50 border-amber-100': review.rating === 2,
-                 'bg-red-50 border-red-100': review.rating === 1,
-                 'bg-gray-100 border-gray-200': review.active === false
-               }">
+    <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+      <span class="text-xs font-bold text-gray-500">
+        {{ reviews.length }} reseña{{ reviews.length === 1 ? '' : 's' }}
+      </span>
+      <button
+        *ngIf="terminoBusqueda || filtroRating !== 'TODOS' || filtroVisibilidad !== 'TODAS'"
+        type="button"
+        (click)="limpiarFiltros()"
+        class="text-xs font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
+      >
+        Limpiar filtros
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="cargando" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
+    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
+    <p class="text-sm font-bold text-gray-500 m-0">Cargando opiniones...</p>
+  </div>
+
+  <!-- Grid de Reseñas (12 items per page) -->
+  <div *ngIf="!cargando" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" *ngIf="reviews.length > 0">
+      <div
+        *ngFor="let review of reviewsPaginados; trackBy: trackByReviewId"
+        class="bg-white border rounded-2xl p-4 shadow-sm hover:border-gray-300 transition-all flex flex-col justify-between"
+        [ngClass]="review.active === false ? 'opacity-60 border-red-200 bg-red-50/10' : 'border-gray-200'"
+      >
+        <div class="space-y-3">
+          <!-- Top row: Usuario, Orden, Rating -->
+          <div class="flex items-start justify-between gap-2 border-b border-gray-100 pb-2.5">
             <div>
-              <div class="font-bold text-gray-900 flex items-center gap-2 mb-1">
-                <i class="bi bi-person-circle text-gray-500 text-lg"></i>
+              <p class="font-bold text-gray-900 text-sm m-0 flex items-center gap-1.5">
+                <i class="bi bi-person-circle text-gray-400"></i>
                 Usuario #{{ review.userId }}
-              </div>
-              <div class="text-xs font-bold text-gray-600 bg-white/60 px-2 py-0.5 rounded w-fit border border-gray-200">
-                <i class="bi bi-receipt"></i> Pedido #{{ review.orderId }}
-              </div>
+              </p>
+              <p class="text-[11px] text-gray-500 font-mono m-0 mt-0.5">Orden #{{ review.orderId }}</p>
             </div>
-            <div class="flex text-yellow-400 text-lg drop-shadow-sm bg-white/80 px-2 py-1 rounded-lg border border-white">
-              <i *ngFor="let estrella of getEstrellas(review.rating)"
-                 class="bi" [ngClass]="estrella === 'fa-star' ? 'bi-star-fill' : (estrella === 'fa-star-half-alt' ? 'bi-star-half' : 'bi-star text-gray-300')"></i>
+            <div class="flex items-center gap-0.5 text-amber-400 text-sm">
+              <i *ngFor="let active of getStarArray(review.rating)" class="bi" [ngClass]="active ? 'bi-star-fill' : 'bi-star text-gray-200'"></i>
             </div>
           </div>
-          
-          <!-- Body -->
-          <div class="p-5 flex-grow flex flex-col">
-            <div class="mb-4 flex-grow">
-              <div *ngIf="review.comment" class="relative">
-                <i class="bi bi-quote text-4xl text-gray-100 absolute -top-2 -left-2 z-0"></i>
-                <p class="text-gray-700 italic relative z-10 font-medium">
-                  "{{ review.comment }}"
-                </p>
-              </div>
-              <div *ngIf="!review.comment" class="flex items-center justify-center h-full min-h-[4rem]">
-                <p class="text-gray-400 italic text-sm flex items-center gap-2">
-                  <i class="bi bi-chat-square-text"></i> Sin comentario
-                </p>
-              </div>
-            </div>
-            
-            <div class="flex justify-between items-end mt-4 pt-4 border-t border-gray-100">
-              <div class="text-xs text-gray-500 font-medium flex items-center gap-1.5">
-                <i class="bi bi-calendar3"></i>
-                {{ review.createdAt | date: 'dd/MM/yyyy HH:mm' }}
-              </div>
-              <span *ngIf="review.active === false" class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider flex items-center gap-1">
-                <i class="bi bi-slash-circle"></i> Oculta
-              </span>
-            </div>
+
+          <!-- Comment body -->
+          <div>
+            <p class="text-xs text-gray-700 italic m-0 line-clamp-3" *ngIf="review.comment">
+              "{{ review.comment }}"
+            </p>
+            <p class="text-xs text-gray-400 italic m-0" *ngIf="!review.comment">
+              Sin comentario escrito
+            </p>
           </div>
-          
-          <!-- Footer Admin -->
-          <div class="px-5 py-3 bg-gray-50 border-t border-gray-100" *ngIf="isAdmin">
-            <button *ngIf="review.active !== false"
-                    class="w-full bg-white border border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
-                    (click)="desactivarReview(review.id!)"
-                    title="Desactivar reseña (ocultar)">
-              <i class="bi bi-eye-slash-fill"></i> Ocultar Reseña
+        </div>
+
+        <!-- Footer: Fecha y acciones -->
+        <div class="pt-3 border-t border-gray-100 mt-3 flex items-center justify-between text-xs">
+          <span class="text-gray-400 text-[11px] font-medium">
+            {{ review.createdAt | date:'dd/MM/yyyy HH:mm' }}
+          </span>
+
+          <div class="flex items-center gap-1.5" *ngIf="isAdmin">
+            <button
+              *ngIf="review.active !== false"
+              type="button"
+              (click)="desactivarReview(review.id!)"
+              [disabled]="procesandoId === review.id"
+              class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-amber-100 text-amber-800 text-[11px] font-bold transition-colors cursor-pointer"
+              title="Ocultar reseña"
+            >
+              <i class="bi bi-eye-slash"></i> Ocultar
             </button>
-            <button *ngIf="review.active === false"
-                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
-                    (click)="activarReview(review.id!)"
-                    title="Activar reseña (mostrar)">
-              <i class="bi bi-eye-fill"></i> Mostrar Reseña
+
+            <button
+              *ngIf="review.active === false"
+              type="button"
+              (click)="activarReview(review.id!)"
+              [disabled]="procesandoId === review.id"
+              class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold transition-colors cursor-pointer"
+              title="Publicar reseña"
+            >
+              <i class="bi bi-eye"></i> Publicar
+            </button>
+
+            <button
+              type="button"
+              (click)="eliminarReview(review.id!)"
+              [disabled]="procesandoId === review.id"
+              class="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer"
+              title="Eliminar permanentemente"
+            >
+              <i class="bi bi-trash-fill text-xs"></i>
             </button>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Estado vacío -->
-      <div class="col-span-full py-16 flex flex-col items-center justify-center text-center" *ngIf="!cargando && reviews.length === 0">
-        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
-          <i class="bi bi-star text-4xl"></i>
-        </div>
-        <h5 class="text-gray-800 font-bold text-xl mb-2">No hay reseñas para mostrar</h5>
-        <p class="text-gray-500 max-w-md">Las reseñas de los clientes aparecerán aquí cuando califiquen sus pedidos.</p>
-      </div>
+    <!-- Empty State -->
+    <div *ngIf="reviews.length === 0" class="py-16 text-center bg-white rounded-2xl border border-gray-200 shadow-sm">
+      <i class="bi bi-star text-3xl text-gray-300 block mb-2"></i>
+      <p class="font-bold text-gray-700 text-base m-0">No se encontraron reseñas</p>
+      <p class="text-xs text-gray-400 mt-1 mb-0">No hay opiniones que coincidan con los filtros aplicados.</p>
+    </div>
 
-      <!-- Paginación -->
-      <div class="mt-8 pt-6 border-t border-gray-100" *ngIf="reviews.length > 0 && !cargando">
-        <app-pagination
-          [currentPage]="currentPage"
-          [totalItems]="reviews.length"
-          [itemsPerPage]="itemsPerPage"
-          (pageChange)="onPageChange($event)">
-        </app-pagination>
-      </div>
+    <!-- Paginación -->
+    <div class="p-4 bg-white rounded-2xl border border-gray-200 shadow-sm" *ngIf="reviews.length > 0">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="reviews.length"
+        [itemsPerPage]="itemsPerPage"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
     </div>
   </div>
 </div>

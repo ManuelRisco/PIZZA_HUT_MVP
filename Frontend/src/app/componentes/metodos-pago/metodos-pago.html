@@ -1,288 +1,355 @@
-<div class="p-6 font-sans">
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 pb-4 border-b border-gray-200">
-    <div class="flex items-center gap-3">
-      <div class="w-12 h-12 rounded-xl bg-gray-900 flex items-center justify-center text-white shrink-0 shadow-sm">
-        <i class="bi bi-credit-card-fill text-xl"></i>
+<div class="space-y-6 font-sans">
+  <!-- Executive v2 Header Card -->
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Finanzas y Facturación</p>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Gestión de Métodos de Pago</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">Administra pasarelas y opciones de pago disponibles en el checkout para los clientes.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        (click)="recargar()"
+        [disabled]="loading"
+        class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise" [class.animate-spin]="loading"></i> Actualizar
+      </button>
+      <button
+        type="button"
+        (click)="abrirFormularioNuevo()"
+        class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-plus-lg"></i> Nuevo Método
+      </button>
+    </div>
+  </div>
+
+  <!-- Persistent Load Error / Backend Offline Banner -->
+  <div
+    *ngIf="loadError"
+    class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+    role="alert"
+  >
+    <div class="flex items-start sm:items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-wifi-off text-lg"></i>
       </div>
       <div>
-        <h2 class="text-2xl font-black text-gray-800 m-0">Gestión de Métodos de Pago</h2>
-        <p class="text-sm font-medium text-gray-500 m-0">Administra las formas de pago disponibles</p>
+        <p class="text-sm font-black text-red-900 m-0">Error de conexión o carga de métodos de pago</p>
+        <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ loadError }}</p>
       </div>
     </div>
-    <button class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-xl transition-all shadow-sm flex items-center gap-2 whitespace-nowrap" (click)="abrirFormularioNuevo()">
-      <i class="bi bi-plus-lg"></i>
-      <span>Nuevo Método</span>
+    <button
+      type="button"
+      (click)="reintentar()"
+      class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
+    >
+      <i class="bi bi-arrow-clockwise"></i> Reintentar
     </button>
   </div>
 
-  <!-- Mensajes de éxito/error -->
-  @if (mensajeExito) {
-    <div class="mb-6 px-5 py-4 rounded-xl flex items-center justify-between font-medium shadow-sm border bg-emerald-50 text-emerald-800 border-emerald-200">
-      <div class="flex items-center gap-3">
-        <i class="bi bi-check-circle-fill text-emerald-500 text-xl"></i>
-        <span>{{ mensajeExito }}</span>
-      </div>
-      <button type="button" class="text-emerald-600 hover:text-emerald-800 transition-colors" (click)="mensajeExito = ''">
-        <i class="bi bi-x-lg"></i>
-      </button>
+  <!-- Mensajes de éxito y error -->
+  <div
+    *ngIf="mensajeExito"
+    class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl flex justify-between items-center text-sm font-medium"
+  >
+    <div class="flex items-center gap-2">
+      <i class="bi bi-check-circle-fill text-emerald-600"></i>
+      <span>{{ mensajeExito }}</span>
     </div>
-  }
+    <button type="button" (click)="mensajeExito = ''" class="text-emerald-700 hover:text-emerald-900 cursor-pointer">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+  <div
+    *ngIf="mensajeError && !mostrarFormulario"
+    class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-2xl flex justify-between items-center text-sm font-medium"
+  >
+    <div class="flex items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill text-red-600"></i>
+      <span>{{ mensajeError }}</span>
+    </div>
+    <button type="button" (click)="mensajeError = ''" class="text-red-700 hover:text-red-900 cursor-pointer">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
 
-  @if (mensajeError) {
-    <div class="mb-6 px-5 py-4 rounded-xl flex items-center justify-between font-medium shadow-sm border bg-red-50 text-red-800 border-red-200">
-      <div class="flex items-center gap-3">
-        <i class="bi bi-exclamation-triangle-fill text-red-500 text-xl"></i>
-        <span>{{ mensajeError }}</span>
+  <!-- White KPI Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Métodos</p>
+        <p class="text-2xl font-black text-gray-900 m-0">{{ kpiTotalMetodos }}</p>
       </div>
-      <button type="button" class="text-red-600 hover:text-red-800 transition-colors" (click)="mensajeError = ''">
-        <i class="bi bi-x-lg"></i>
+      <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-credit-card-fill text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Activos en Checkout</p>
+        <p class="text-2xl font-black text-emerald-600 m-0">{{ kpiActivos }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-check-circle-fill text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">En Uso en Pedidos</p>
+        <p class="text-2xl font-black text-indigo-600 m-0">{{ kpiEnUso }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-lock-fill text-lg"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar Card -->
+  <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3">
+    <div class="relative w-full sm:w-72">
+      <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+      <input
+        type="text"
+        [(ngModel)]="terminoBusqueda"
+        (input)="onBusquedaChange()"
+        placeholder="Buscar método de pago..."
+        class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
+      />
+    </div>
+
+    <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+      <span class="text-xs font-bold text-gray-500">
+        {{ metodosPagoFiltrados.length }} método{{ metodosPagoFiltrados.length === 1 ? '' : 's' }}
+      </span>
+      <button
+        *ngIf="terminoBusqueda"
+        type="button"
+        (click)="terminoBusqueda = ''; onBusquedaChange()"
+        class="text-xs font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
+      >
+        Limpiar búsqueda
       </button>
     </div>
-  }
+  </div>
 
   <!-- Loading State -->
-  @if (loading) {
-    <div class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100 mb-8">
-      <div class="animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600 mb-4"></div>
-      <p class="text-gray-500 font-medium">Cargando los métodos de pago...</p>
-    </div>
-  }
+  <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
+    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
+    <p class="text-sm font-bold text-gray-500 m-0">Cargando métodos de pago...</p>
+  </div>
 
-  <!-- Tabla de métodos de pago -->
-  @if (!loading) {
-  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-8">
-    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-      <h5 class="text-lg font-bold text-gray-800 m-0 flex items-center gap-2">
-        <i class="bi bi-list-ul text-gray-400"></i>
-        Lista de Métodos ({{ metodosPago.length }})
-      </h5>
-    </div>
-    
+  <!-- Table View with Dark Header -->
+  <div *ngIf="!loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse min-w-[800px]">
+      <table class="w-full text-left border-collapse min-w-[760px]">
         <thead>
-          <tr class="bg-gray-900 text-white text-sm uppercase tracking-wider">
-            <th class="px-6 py-4 font-bold w-16">ID</th>
-            <th class="px-6 py-4 font-bold">Nombre</th>
-            <th class="px-6 py-4 font-bold">Descripción</th>
-            <th class="px-6 py-4 font-bold w-24">Orden</th>
-            <th class="px-6 py-4 font-bold w-32">Estado</th>
-            <th class="px-6 py-4 font-bold w-48">Creación</th>
-            <th class="px-6 py-4 font-bold text-center w-40">Acciones</th>
+          <tr class="bg-gray-900 text-white text-xs uppercase tracking-wider">
+            <th class="py-3.5 px-4 font-bold">ID</th>
+            <th class="py-3.5 px-4 font-bold">Nombre</th>
+            <th class="py-3.5 px-4 font-bold">Descripción</th>
+            <th class="py-3.5 px-4 font-bold text-center">Orden</th>
+            <th class="py-3.5 px-4 font-bold text-center">Estado</th>
+            <th class="py-3.5 px-4 font-bold text-right">Creación</th>
+            <th class="py-3.5 px-4 font-bold text-center">Acciones</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
-          @for (metodo of metodosPagoPaginados; track metodo.id) {
-            <tr class="hover:bg-gray-50 transition-colors group">
-              <td class="px-6 py-4 text-sm font-bold text-gray-500">{{ metodo.id }}</td>
-              <td class="px-6 py-4">
-                <span class="font-black text-gray-800">{{ metodo.name }}</span>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-500">
-                {{ metodo.description || '-' }}
-              </td>
-              <td class="px-6 py-4">
-                <span class="inline-flex items-center justify-center min-w-[2rem] h-8 px-2 rounded-lg bg-blue-50 text-blue-700 font-bold text-sm border border-blue-100 shadow-sm">
-                  {{ metodo.displayOrder }}
-                </span>
-              </td>
-              <td class="px-6 py-4">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm"
-                      [ngClass]="metodo.isActive ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-red-100 text-red-800 border border-red-200'">
-                  <span class="w-1.5 h-1.5 rounded-full" [ngClass]="metodo.isActive ? 'bg-emerald-500' : 'bg-red-500'"></span>
-                  {{ metodo.isActive ? 'Activo' : 'Inactivo' }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm font-medium text-gray-500">
-                {{ metodo.createdAt | date:'dd/MM/yyyy HH:mm' }}
-              </td>
-              <td class="px-6 py-4">
-                <div class="flex items-center justify-center gap-2 transition-opacity">
-                  <button class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors shadow-sm" 
-                          (click)="abrirFormularioEditar(metodo)" title="Editar">
-                    <i class="bi bi-pencil-square"></i>
-                  </button>
-                  <button class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors shadow-sm" 
-                          [ngClass]="metodo.isActive ? 'bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white'"
-                          (click)="cambiarEstado(metodo)" [title]="metodo.isActive ? 'Desactivar' : 'Activar'">
-                    <i class="bi" [ngClass]="metodo.isActive ? 'bi-toggle-on' : 'bi-toggle-off'"></i>
-                  </button>
-                  <button class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors shadow-sm" 
-                          [ngClass]="metodo.inUse ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-50 text-red-600 hover:bg-red-600 hover:text-white'"
-                          [disabled]="metodo.inUse"
-                          (click)="eliminarMetodoPago(metodo)" 
-                          [title]="metodo.inUse ? 'No se puede eliminar porque está en uso en pedidos' : 'Eliminar'">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          }
-          @if (metodosPago.length === 0) {
-            <tr>
-              <td colspan="7" class="px-6 py-16 text-center">
-                <div class="flex flex-col items-center justify-center text-gray-400">
-                  <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                    <i class="bi bi-credit-card text-4xl"></i>
-                  </div>
-                  <h5 class="text-lg font-bold text-gray-800 mb-1">No hay métodos de pago</h5>
-                  <p class="text-sm font-medium text-gray-500 max-w-sm">Haz clic en "Nuevo Método" para agregar opciones de pago al checkout.</p>
-                </div>
-              </td>
-            </tr>
-          }
+        <tbody class="divide-y divide-gray-100 text-sm">
+          <tr
+            *ngFor="let metodo of metodosPagoPaginados; trackBy: trackByMetodoId"
+            class="hover:bg-gray-50 transition-colors"
+          >
+            <td class="py-3 px-4 font-mono font-bold text-gray-800 text-xs">#{{ metodo.id }}</td>
+            <td class="py-3 px-4 font-bold text-gray-900">{{ metodo.name }}</td>
+            <td class="py-3 px-4 text-xs text-gray-500 max-w-xs truncate">{{ metodo.description || '-' }}</td>
+            <td class="py-3 px-4 text-center">
+              <span class="inline-flex items-center justify-center px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-bold text-xs">
+                {{ metodo.displayOrder }}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-center">
+              <span
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black uppercase"
+                [ngClass]="metodo.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'"
+              >
+                <span class="w-1.5 h-1.5 rounded-full" [ngClass]="metodo.isActive ? 'bg-emerald-500' : 'bg-red-500'"></span>
+                {{ metodo.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-right text-xs text-gray-500 font-medium">
+              {{ metodo.createdAt | date:'dd/MM/yyyy HH:mm' }}
+            </td>
+            <td class="py-3 px-4 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button
+                  type="button"
+                  (click)="abrirFormularioEditar(metodo)"
+                  class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors cursor-pointer"
+                  title="Editar Método"
+                >
+                  <i class="bi bi-pencil-fill text-xs"></i>
+                </button>
+                <button
+                  type="button"
+                  (click)="cambiarEstado(metodo)"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
+                  [ngClass]="metodo.isActive ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-400'"
+                  [title]="metodo.isActive ? 'Desactivar método' : 'Activar método'"
+                >
+                  <i class="bi" [ngClass]="metodo.isActive ? 'bi-toggle-on text-base' : 'bi-toggle-off text-base'"></i>
+                </button>
+                <button
+                  type="button"
+                  (click)="eliminarMetodoPago(metodo)"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
+                  [ngClass]="metodo.inUse ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-red-50 hover:bg-red-100 text-red-600'"
+                  [disabled]="metodo.inUse"
+                  [title]="metodo.inUse ? 'No se puede eliminar porque está en uso en órdenes' : 'Eliminar método'"
+                >
+                  <i class="bi bi-trash-fill text-xs"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="metodosPagoFiltrados.length === 0">
+            <td colspan="7" class="py-12 text-center text-gray-400">
+              <i class="bi bi-credit-card text-3xl text-gray-300 block mb-2"></i>
+              <p class="font-bold text-gray-600 text-sm m-0">No se encontraron métodos de pago</p>
+              <p class="text-xs text-gray-400 mt-1 mb-0">Modifica el término de búsqueda o crea uno nuevo.</p>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Paginación -->
-    @if (metodosPago.length > itemsPerPage) {
-      <div class="p-4 border-t border-gray-100 bg-gray-50">
-        <app-pagination 
-          [currentPage]="currentPage" 
-          [totalItems]="metodosPago.length" 
-          [itemsPerPage]="itemsPerPage"
-          (pageChange)="onPageChange($event)">
-        </app-pagination>
-      </div>
-    }
-  </div>
-  }
-
-  <!-- Información adicional -->
-  <div class="bg-blue-50 border border-blue-100 rounded-2xl p-6 shadow-sm flex items-start gap-4">
-    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-      <i class="bi bi-info-circle-fill text-xl"></i>
-    </div>
-    <div>
-      <h6 class="text-blue-900 font-bold mb-2">Información Importante</h6>
-      <ul class="text-blue-800 text-sm space-y-1 list-disc pl-4 marker:text-blue-400">
-        <li>Los métodos de pago activos estarán disponibles para los clientes en el checkout.</li>
-        <li>El orden de visualización determina cómo se muestran los métodos en el frontend.</li>
-        <li>No se pueden eliminar métodos de pago que estén asociados a órdenes existentes.</li>
-      </ul>
+    <div class="p-4 border-t border-gray-100" *ngIf="metodosPagoFiltrados.length > 0">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="metodosPagoFiltrados.length"
+        [itemsPerPage]="itemsPerPage"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
     </div>
   </div>
 </div>
 
-<!-- Modal para crear/editar método de pago -->
-@if (mostrarFormulario) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70 backdrop-blur-sm p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
-      
-      <div class="bg-gray-900 px-6 py-4 flex justify-between items-center text-white shrink-0">
-        <h5 class="text-lg font-bold flex items-center gap-2 m-0">
-          <i class="bi" [ngClass]="modoEdicion ? 'bi-pencil-square text-blue-400' : 'bi-plus-circle-fill text-emerald-400'"></i>
-          {{ modoEdicion ? 'Editar Método de Pago' : 'Nuevo Método de Pago' }}
-        </h5>
-        <button type="button" class="text-gray-400 hover:text-white transition-colors" (click)="cerrarFormulario()">
-          <i class="bi bi-x-lg text-xl"></i>
-        </button>
-      </div>
-      
-      <div class="p-6 overflow-y-auto">
-        <form (ngSubmit)="guardarMetodoPago()">
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-            
-            <div class="md:col-span-6 space-y-2">
-              <label for="name" class="block text-sm font-bold text-gray-700 uppercase tracking-wider">
-                Nombre <span class="text-red-500">*</span>
-              </label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                  <i class="bi bi-tag-fill"></i>
-                </div>
-                <input 
-                  type="text" 
-                  class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 font-medium rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
-                  [ngClass]="{'border-red-500 focus:ring-red-500 focus:border-red-500': mensajeAdvertenciaNombre}"
-                  id="name" 
-                  [(ngModel)]="formulario.name" 
-                  name="name"
-                  placeholder="Ej: Efectivo, Tarjeta, Yape"
-                  (input)="validarNombre()"
-                  required>
-              </div>
-              @if (mensajeAdvertenciaNombre) {
-                <p class="text-xs font-bold text-red-500 mt-1 flex items-center gap-1">
-                  <i class="bi bi-exclamation-triangle-fill"></i> {{ mensajeAdvertenciaNombre }}
-                </p>
-              }
-            </div>
+<!-- Modal Crear / Editar Método de Pago -->
+<div
+  class="fixed inset-0 z-[6000] !mt-0 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+  *ngIf="mostrarFormulario"
+>
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90dvh] flex flex-col overflow-hidden">
+    <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center shrink-0">
+      <h5 class="text-lg font-black m-0 flex items-center gap-2">
+        <i class="bi text-red-500" [ngClass]="modoEdicion ? 'bi-pencil-fill' : 'bi-plus-circle-fill'"></i>
+        {{ modoEdicion ? 'Editar Método de Pago' : 'Nuevo Método de Pago' }}
+      </h5>
+      <button type="button" class="text-gray-400 hover:text-white transition-colors cursor-pointer" (click)="cerrarFormulario()">
+        <i class="bi bi-x-lg text-xl"></i>
+      </button>
+    </div>
 
-            <div class="md:col-span-3 space-y-2">
-              <label for="displayOrder" class="block text-sm font-bold text-gray-700 uppercase tracking-wider">
-                Orden
-              </label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                  <i class="bi bi-sort-numeric-down"></i>
-                </div>
-                <input 
-                  type="number" 
-                  class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 font-medium rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
-                  [ngClass]="{'border-red-500 focus:ring-red-500 focus:border-red-500': mensajeAdvertenciaOrden}"
-                  id="displayOrder" 
-                  [(ngModel)]="formulario.displayOrder" 
-                  name="displayOrder"
-                  (input)="validarDisplayOrder()"
-                  min="0">
-              </div>
-              @if (mensajeAdvertenciaOrden) {
-                <p class="text-xs font-bold text-red-500 mt-1 flex items-center gap-1">
-                  <i class="bi bi-exclamation-triangle-fill"></i> {{ mensajeAdvertenciaOrden }}
-                </p>
-              }
-            </div>
+    <form (ngSubmit)="guardarMetodoPago()" class="flex flex-col flex-1 overflow-hidden">
+      <div class="p-6 overflow-y-auto flex-1 space-y-4">
+        <div *ngIf="mensajeError" class="bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-xl text-xs font-semibold">
+          {{ mensajeError }}
+        </div>
 
-            <div class="md:col-span-3 space-y-2 flex flex-col justify-end">
-              <span class="block text-sm font-bold text-gray-700 uppercase tracking-wider">
-                Estado
-              </span>
-              <button type="button" class="w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors border shadow-sm"
-                      [ngClass]="formulario.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'"
-                      (click)="formulario.isActive = !formulario.isActive">
-                <i class="bi" [ngClass]="formulario.isActive ? 'bi-toggle-on text-emerald-500 text-xl' : 'bi-toggle-off text-xl'"></i>
-                {{ formulario.isActive ? 'Activo' : 'Inactivo' }}
-              </button>
-            </div>
+        <div>
+          <label for="name" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+            Nombre <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            [(ngModel)]="formulario.name"
+            name="name"
+            placeholder="Ej: Efectivo, Tarjeta, Yape, Plin"
+            (input)="validarNombre()"
+            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            [ngClass]="{'border-red-500 bg-red-50': mensajeAdvertenciaNombre}"
+            required
+          />
+          <p *ngIf="mensajeAdvertenciaNombre" class="text-xs font-bold text-red-500 mt-1 mb-0 flex items-center gap-1">
+            <i class="bi bi-exclamation-triangle-fill"></i> {{ mensajeAdvertenciaNombre }}
+          </p>
+        </div>
 
-            <div class="md:col-span-12 space-y-2">
-              <label for="description" class="block text-sm font-bold text-gray-700 uppercase tracking-wider">
-                Descripción
-              </label>
-              <div class="relative">
-                <textarea 
-                  class="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 font-medium rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[100px] resize-y" 
-                  id="description" 
-                  [(ngModel)]="formulario.description" 
-                  name="description"
-                  placeholder="Instrucciones o descripción del método de pago..."></textarea>
-              </div>
-            </div>
-            
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="displayOrder" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+              Orden de Visualización
+            </label>
+            <input
+              type="number"
+              id="displayOrder"
+              [(ngModel)]="formulario.displayOrder"
+              name="displayOrder"
+              (input)="validarDisplayOrder()"
+              min="0"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+              [ngClass]="{'border-red-500 bg-red-50': mensajeAdvertenciaOrden}"
+            />
+            <p *ngIf="mensajeAdvertenciaOrden" class="text-xs font-bold text-red-500 mt-1 mb-0 flex items-center gap-1">
+              <i class="bi bi-exclamation-triangle-fill"></i> {{ mensajeAdvertenciaOrden }}
+            </p>
           </div>
-        </form>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+              Estado Activo
+            </label>
+            <button
+              type="button"
+              (click)="formulario.isActive = !formulario.isActive"
+              class="w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 border transition-colors cursor-pointer"
+              [ngClass]="formulario.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-600 border-gray-200'"
+            >
+              <i class="bi" [ngClass]="formulario.isActive ? 'bi-toggle-on text-emerald-500 text-lg' : 'bi-toggle-off text-lg'"></i>
+              {{ formulario.isActive ? 'Activo en Checkout' : 'Desactivado' }}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label for="description" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+            Descripción o Instrucciones
+          </label>
+          <textarea
+            id="description"
+            [(ngModel)]="formulario.description"
+            name="description"
+            rows="3"
+            placeholder="Instrucciones breves que verá el cliente al seleccionar este medio de pago..."
+            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+          ></textarea>
+        </div>
       </div>
-      
-      <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
-        <button 
-          type="button" 
-          class="bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold py-2.5 px-5 rounded-xl transition-colors flex items-center gap-2 shadow-sm" 
-          (click)="cerrarFormulario()">
+
+      <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3 shrink-0">
+        <button
+          type="button"
+          class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl text-sm transition-colors cursor-pointer"
+          (click)="cerrarFormulario()"
+          [disabled]="guardando"
+        >
           Cancelar
         </button>
-        <button 
-          type="button" 
-          class="bg-gray-900 hover:bg-black text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed" 
-          (click)="guardarMetodoPago()"
-          [disabled]="!puedeGuardar()">
-          <i class="bi bi-save"></i>
-          Guardar Método
+        <button
+          type="submit"
+          class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+          [disabled]="!puedeGuardar()"
+        >
+          <i class="bi" [ngClass]="guardando ? 'bi-arrow-repeat animate-spin' : 'bi-save'"></i>
+          {{ modoEdicion ? 'Actualizar' : 'Crear' }} Método
         </button>
       </div>
-      
-    </div>
+    </form>
   </div>
-}
+</div>

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.PostConstruct;
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -44,10 +45,31 @@ public class FileUploadService {
 
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
+    /**
+     * Resuelve el directorio raíz de uploads independientemente de si la aplicación
+     * se inicia desde Backend/demo (gradlew bootRun) o desde la raíz del monorepo (IDE Run).
+     */
+    public static Path resolveUploadRoot(String uploadDir) {
+        String dir = (uploadDir == null || uploadDir.isBlank()) ? "uploads" : uploadDir.trim();
+        Path configured = Paths.get(dir);
+        if (configured.isAbsolute()) {
+            return configured.normalize();
+        }
+        if ("uploads".equals(dir)) {
+            if (Files.exists(Paths.get("Backend", "demo", "build.gradle"))) {
+                return Paths.get("Backend", "demo", dir).toAbsolutePath().normalize();
+            }
+            if (Files.exists(Paths.get("demo", "build.gradle"))) {
+                return Paths.get("demo", dir).toAbsolutePath().normalize();
+            }
+        }
+        return configured.toAbsolutePath().normalize();
+    }
+
     @PostConstruct
     public void init() {
         try {
-            Path uploadPath = Paths.get(uploadDir);
+            Path uploadPath = resolveUploadRoot(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
@@ -85,7 +107,7 @@ public class FileUploadService {
         // Validar tamaño
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new FileUploadException(
-                "El archivo excede el tamaño máximo permitido (5MB). Tamaño actual: " 
+                "El archivo excede el tamaño máximo permitido (5MB). Tamaño actual: "
                 + String.format("%.2f MB", file.getSize() / (1024.0 * 1024.0))
             );
         }
@@ -102,8 +124,9 @@ public class FileUploadService {
             String uniqueFilename = UUID.randomUUID().toString() + extension;
 
             // Rutas de destino
-            Path targetDir = Paths.get(uploadDir, subdirectory);
+            Path targetDir = resolveUploadRoot(uploadDir).resolve(subdirectory);
             Path thumbDir = targetDir.resolve("thumbs");
+            Files.createDirectories(thumbDir);
             Path targetPath = targetDir.resolve(uniqueFilename);
             Path thumbPath = thumbDir.resolve(uniqueFilename);
 
@@ -120,8 +143,11 @@ public class FileUploadService {
                 BufferedImage thumbnail = resizeImage(originalImage, thumbnailWidth, thumbnailHeight);
                 writeImage(thumbnail, formatName, thumbPath);
             } else {
-                // Si no se pudo leer como imagen (ej. WebP sin soporte), guardar original
-                Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+                // Si no se pudo leer como imagen (ej. WebP sin decodificador ImageIO), guardar original y thumbnail
+                try (var in = file.getInputStream()) {
+                    Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                }
+                Files.copy(targetPath, thumbPath, StandardCopyOption.REPLACE_EXISTING);
             }
 
             // Retornar URL relativa
@@ -150,13 +176,13 @@ public class FileUploadService {
         double heightRatio = (double) targetHeight / origHeight;
         double ratio = Math.min(widthRatio, heightRatio);
 
-        int newWidth = (int) (origWidth * ratio);
-        int newHeight = (int) (origHeight * ratio);
+        int newWidth = Math.max(1, (int) (origWidth * ratio));
+        int newHeight = Math.max(1, (int) (origHeight * ratio));
 
-        // Crear imagen redimensionada con alta calidad
-        BufferedImage resized = new BufferedImage(newWidth, newHeight, 
-            original.getType() != 0 ? original.getType() : BufferedImage.TYPE_INT_RGB);
-        
+        // Crear imagen redimensionada con tipo compatible con ImageIO
+        int imageType = original.getColorModel().hasAlpha() ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
+        BufferedImage resized = new BufferedImage(newWidth, newHeight, imageType);
+
         Graphics2D g2d = resized.createGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -172,9 +198,9 @@ public class FileUploadService {
      * Útil para generar imágenes de tamaño fijo.
      */
     public BufferedImage resizeImageExact(BufferedImage original, int width, int height) {
-        BufferedImage resized = new BufferedImage(width, height,
-            original.getType() != 0 ? original.getType() : BufferedImage.TYPE_INT_RGB);
-        
+        int imageType = original.getColorModel().hasAlpha() ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
+        BufferedImage resized = new BufferedImage(Math.max(1, width), Math.max(1, height), imageType);
+
         Graphics2D g2d = resized.createGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -192,11 +218,15 @@ public class FileUploadService {
         if (fileUrl == null || !fileUrl.startsWith("/uploads/")) {
             return false;
         }
-        
+
         try {
-            // Convertir URL a path del sistema
+            // Convertir URL a path del sistema validando path traversal
             String relativePath = fileUrl.substring("/uploads/".length());
-            Path filePath = Paths.get(uploadDir, relativePath);
+            Path rootPath = resolveUploadRoot(uploadDir);
+            Path filePath = rootPath.resolve(relativePath).normalize();
+            if (!filePath.startsWith(rootPath)) {
+                return false;
+            }
             boolean mainDeleted = Files.deleteIfExists(filePath);
 
             // Intentar eliminar thumbnail también
@@ -242,12 +272,30 @@ public class FileUploadService {
     }
 
     private void writeImage(BufferedImage image, String formatName, Path path) throws IOException {
+        BufferedImage targetImage = image;
+        if ("jpg".equalsIgnoreCase(formatName) && image.getColorModel().hasAlpha()) {
+            targetImage = toRgbImage(image);
+        }
+        boolean written;
         try (OutputStream os = Files.newOutputStream(path)) {
-            boolean written = ImageIO.write(image, formatName, os);
-            if (!written) {
-                // Si el formato no está soportado (ej. webp), guardar como jpg
-                ImageIO.write(image, "jpg", os);
+            written = ImageIO.write(targetImage, formatName, os);
+        }
+        if (!written) {
+            // Si el formato no está soportado (ej. webp), guardar como jpg RGB
+            BufferedImage rgbImage = targetImage.getColorModel().hasAlpha() ? toRgbImage(targetImage) : targetImage;
+            try (OutputStream fallbackOs = Files.newOutputStream(path)) {
+                ImageIO.write(rgbImage, "jpg", fallbackOs);
             }
         }
+    }
+
+    private BufferedImage toRgbImage(BufferedImage source) {
+        BufferedImage rgb = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = rgb.createGraphics();
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, source.getWidth(), source.getHeight());
+        g.drawImage(source, 0, 0, null);
+        g.dispose();
+        return rgb;
     }
 }

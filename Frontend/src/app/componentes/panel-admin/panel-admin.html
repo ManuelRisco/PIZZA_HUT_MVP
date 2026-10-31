@@ -1,172 +1,332 @@
-<main class="flex h-[calc(100vh-116px)] bg-gray-50 overflow-hidden font-sans" aria-label="Panel de administración">
-  <!-- Sidebar -->
+<div class="flex flex-1 min-h-0 bg-gray-50 overflow-hidden font-sans" role="region" aria-label="Panel de administración">
   <!-- Overlay for mobile sidebar -->
-  <div *ngIf="!sidebarCollapsed" class="fixed inset-0 bg-black/50 z-40 md:hidden" (click)="toggleSidebar()"></div>
+  <div
+    *ngIf="!sidebarCollapsed"
+    class="fixed inset-0 bg-black/60 backdrop-blur-2xs z-[5400] md:hidden"
+    (click)="toggleSidebar()"
+  ></div>
 
+  <!-- Sidebar -->
   <aside
-    class="bg-black text-white flex flex-col transition-all duration-300 z-50 h-full fixed md:relative"
+    class="bg-black text-white flex flex-col transition-all duration-300 z-[5500] md:z-20 fixed inset-y-0 left-0 md:static md:h-full shrink-0"
     [ngClass]="{
       'w-[260px] translate-x-0': !sidebarCollapsed,
       'w-[260px] -translate-x-full md:translate-x-0 md:w-[80px]': sidebarCollapsed
     }"
-    aria-label="Menú de navegación"
+    aria-label="Menú de administración"
   >
     <!-- Header Sidebar -->
-    <div class="flex items-center gap-3 p-4 border-b border-gray-800">
+    <div class="flex items-center justify-between gap-3 p-4 border-b border-gray-800 shrink-0">
+      <div class="flex items-center gap-3 overflow-hidden">
+        <button
+          type="button"
+          class="text-gray-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-gray-900 cursor-pointer"
+          (click)="toggleSidebar()"
+          [attr.aria-label]="sidebarCollapsed ? 'Expandir menú' : 'Contraer menú'"
+          [attr.aria-expanded]="!sidebarCollapsed"
+        >
+          <i class="bi bi-list text-2xl" aria-hidden="true"></i>
+        </button>
+        <h5
+          class="text-red-600 font-black text-lg mb-0 tracking-wider whitespace-nowrap overflow-hidden"
+          *ngIf="!sidebarCollapsed"
+          id="admin-panel-title"
+        >
+          PANEL ADMIN
+        </h5>
+      </div>
       <button
-        class="text-gray-400 hover:text-white transition-colors"
+        *ngIf="!sidebarCollapsed"
+        type="button"
+        class="md:hidden text-gray-400 hover:text-white p-1"
         (click)="toggleSidebar()"
-        [attr.aria-label]="sidebarCollapsed ? 'Expandir menú' : 'Contraer menú'"
-        [attr.aria-expanded]="!sidebarCollapsed"
+        aria-label="Cerrar menú lateral"
       >
-        <i class="bi bi-list text-2xl" aria-hidden="true"></i>
+        <i class="bi bi-x-lg text-base"></i>
       </button>
-      <h5 class="text-red-600 font-black text-xl mb-0 tracking-wider whitespace-nowrap overflow-hidden" *ngIf="!sidebarCollapsed" id="admin-panel-title">
-        PANEL ADMIN
-      </h5>
     </div>
 
     <!-- Navigation Menu -->
     <nav class="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-1 sidebar-scroll" aria-label="Opciones de administración">
-      <!-- Nav Items -->
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-         [ngClass]="vistaActual === 'dashboard' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'dashboard' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Dashboard' : ''"
          (click)="cambiarVista('dashboard')">
-        <i class="bi bi-grid-fill text-lg min-w-[24px]"></i>
+        <i class="bi bi-grid-fill text-lg min-w-[24px] text-center"></i>
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Dashboard</span>
       </a>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-         [ngClass]="vistaActual === 'usuarios' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+      <!-- Finanzas, Stock y Producción -->
+      <div *ngIf="!sidebarCollapsed" class="pt-3 pb-1 px-3 text-[10px] font-black uppercase tracking-widest text-gray-500">
+        Finanzas, Stock y Costos
+      </div>
+
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'finanzas' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Pérdidas y Ganancias' : ''"
+         (click)="cambiarVista('finanzas')">
+        <i class="bi bi-graph-up-arrow text-lg min-w-[24px] text-center"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Pérdidas y Ganancias</span>
+      </a>
+
+      <a class="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm relative"
+         [ngClass]="vistaActual === 'inventario' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Stock e Inventario' : ''"
+         (click)="cambiarVista('inventario')">
+        <div class="flex items-center gap-3 overflow-hidden">
+          <i class="bi bi-boxes text-lg min-w-[24px] text-center"></i>
+          <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Stock e Inventario</span>
+        </div>
+        <span
+          *ngIf="!sidebarCollapsed && alertasStockTotal > 0"
+          class="px-2 py-0.5 rounded-full text-[10px] font-black"
+          [ngClass]="vistaActual === 'inventario' ? 'bg-white text-red-600' : 'bg-amber-500 text-black'"
+        >
+          {{ alertasStockTotal }}
+        </span>
+        <span
+          *ngIf="sidebarCollapsed && alertasStockTotal > 0"
+          class="w-2.5 h-2.5 rounded-full bg-amber-400 absolute top-2 right-2"
+        ></span>
+      </a>
+
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'perdidas' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Pérdidas de Productos' : ''"
+         (click)="cambiarVista('perdidas')">
+        <i class="bi bi-exclamation-octagon text-lg min-w-[24px] text-center"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Pérdidas de Productos</span>
+      </a>
+
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'costos-produccion' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Costos de Producción' : ''"
+         (click)="cambiarVista('costos-produccion')">
+        <i class="bi bi-calculator text-lg min-w-[24px] text-center"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Costos de Producción</span>
+      </a>
+
+      <!-- Catálogo y Operaciones -->
+      <div *ngIf="!sidebarCollapsed" class="pt-3 pb-1 px-3 text-[10px] font-black uppercase tracking-widest text-gray-500">
+        Catálogo y Operaciones
+      </div>
+
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'usuarios' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Usuarios' : ''"
          (click)="cambiarVista('usuarios')">
-        <i class="bi bi-people text-lg min-w-[24px]"></i>
+        <i class="bi bi-people text-lg min-w-[24px] text-center"></i>
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Usuarios</span>
       </a>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-         [ngClass]="vistaActual === 'pizzas' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'pizzas' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Pizzas y Recetas' : ''"
          (click)="cambiarVista('pizzas')">
-        <i class="bi bi-pie-chart text-lg min-w-[24px]"></i>
-        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Pizzas</span>
+        <i class="bi bi-pie-chart text-lg min-w-[24px] text-center"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Pizzas y Recetas</span>
       </a>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-         [ngClass]="vistaActual === 'categorias' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'categorias' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Categorías' : ''"
          (click)="cambiarVista('categorias')">
-        <i class="bi bi-tags text-lg min-w-[24px]"></i>
+        <i class="bi bi-tags text-lg min-w-[24px] text-center"></i>
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Categorías</span>
       </a>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-         [ngClass]="vistaActual === 'ingredientes' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'ingredientes' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Ingredientes' : ''"
          (click)="cambiarVista('ingredientes')">
-        <i class="bi bi-droplet text-lg min-w-[24px]"></i>
+        <i class="bi bi-droplet text-lg min-w-[24px] text-center"></i>
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Ingredientes</span>
       </a>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-         [ngClass]="vistaActual === 'sizes' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'sizes' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Tamaños' : ''"
          (click)="cambiarVista('sizes')">
-        <i class="bi bi-rulers text-lg min-w-[24px]"></i>
+        <i class="bi bi-rulers text-lg min-w-[24px] text-center"></i>
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Tamaños</span>
       </a>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-         [ngClass]="vistaActual === 'extras' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'extras' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Extras' : ''"
          (click)="cambiarVista('extras')">
-        <i class="bi bi-plus-square text-lg min-w-[24px]"></i>
+        <i class="bi bi-plus-square text-lg min-w-[24px] text-center"></i>
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Extras</span>
       </a>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-         [ngClass]="vistaActual === 'promociones' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'promociones' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Promociones' : ''"
          (click)="cambiarVista('promociones')">
-        <i class="bi bi-tag text-lg min-w-[24px]"></i>
+        <i class="bi bi-tag text-lg min-w-[24px] text-center"></i>
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Promociones</span>
       </a>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-         [ngClass]="vistaActual === 'orders' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'orders' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Pedidos' : ''"
          (click)="cambiarVista('orders')">
-        <i class="bi bi-receipt text-lg min-w-[24px]"></i>
+        <i class="bi bi-receipt text-lg min-w-[24px] text-center"></i>
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Pedidos</span>
       </a>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-         [ngClass]="vistaActual === 'payments' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'payments' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Pagos' : ''"
          (click)="cambiarVista('payments')">
-        <i class="bi bi-cash-coin text-lg min-w-[24px]"></i>
+        <i class="bi bi-cash-coin text-lg min-w-[24px] text-center"></i>
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Pagos</span>
       </a>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-         [ngClass]="vistaActual === 'metodos-pago' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'metodos-pago' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Métodos de Pago' : ''"
          (click)="cambiarVista('metodos-pago')">
-        <i class="bi bi-credit-card-fill text-lg min-w-[24px]"></i>
+        <i class="bi bi-credit-card-fill text-lg min-w-[24px] text-center"></i>
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Métodos de Pago</span>
       </a>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-         [ngClass]="vistaActual === 'reviews' ? 'bg-red-600 text-white font-semibold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'reviews' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Reseñas' : ''"
          (click)="cambiarVista('reviews')">
-        <i class="bi bi-star text-lg min-w-[24px]"></i>
+        <i class="bi bi-star text-lg min-w-[24px] text-center"></i>
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Reseñas</span>
       </a>
     </nav>
 
     <!-- User Profile & Logout (Bottom) -->
-    <div class="border-t border-gray-800 p-4">
-      <div class="flex items-center gap-3 cursor-pointer hover:bg-gray-800 p-2 rounded-lg transition-colors"
-           (click)="cambiarVista('mi-perfil')" *ngIf="getCurrentUser()">
-        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center font-bold text-white shadow overflow-hidden">
-          <img *ngIf="false" src="perfil.jpg" class="w-full h-full object-cover"> <!-- Simulación de avatar -->
-          <span *ngIf="true">{{ getCurrentUser()?.name?.charAt(0)?.toUpperCase() || 'A' }}</span>
+    <div class="border-t border-gray-800 p-3 shrink-0">
+      <div
+        class="flex items-center gap-3 cursor-pointer p-2 rounded-xl transition-colors"
+        [ngClass]="vistaActual === 'mi-perfil' ? 'bg-gray-800' : 'hover:bg-gray-800'"
+        (click)="cambiarVista('mi-perfil')"
+        *ngIf="currentUser"
+      >
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center font-black text-white text-sm shadow shrink-0">
+          <span>{{ currentUserInitial }}</span>
         </div>
         <div *ngIf="!sidebarCollapsed" class="flex-1 overflow-hidden">
-          <p class="text-sm font-bold text-white truncate">{{ getCurrentUser()?.name || 'Administrador' }}</p>
-          <p class="text-xs text-gray-400 uppercase tracking-wider">{{ getCurrentUser()?.role || 'ADMINISTRADOR' }}</p>
+          <p class="text-sm font-bold text-white truncate m-0">{{ currentUser?.name || 'Administrador' }}</p>
+          <p class="text-[11px] text-gray-400 uppercase tracking-wider m-0">{{ currentUser?.role || 'ADMIN' }}</p>
         </div>
       </div>
-      <button class="w-full mt-3 flex items-center gap-3 text-red-500 hover:text-red-400 hover:bg-gray-800 p-2 rounded-lg transition-colors"
-              (click)="cerrarSesion()">
-        <i class="bi bi-box-arrow-left text-lg min-w-[24px]"></i>
-        <span *ngIf="!sidebarCollapsed" class="font-medium">Cerrar Sesión</span>
+      <button
+        type="button"
+        class="w-full mt-2 flex items-center gap-3 text-red-500 hover:text-red-400 hover:bg-gray-800 p-2 rounded-xl transition-colors text-sm cursor-pointer"
+        (click)="cerrarSesion()"
+      >
+        <i class="bi bi-box-arrow-left text-lg min-w-[24px] text-center"></i>
+        <span *ngIf="!sidebarCollapsed" class="font-bold">Cerrar Sesión</span>
       </button>
     </div>
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 flex flex-col overflow-hidden relative min-w-0">
-    
-    <!-- Mobile Header -->
-    <div class="md:hidden flex items-center justify-start gap-4 bg-white border-b border-gray-200 p-4 shrink-0">
-      <button class="text-gray-800 focus:outline-none flex items-center" (click)="toggleSidebar()">
-        <i class="bi bi-list text-2xl"></i>
-      </button>
-      <h2 class="font-bold text-red-600 text-lg mb-0">Panel Admin</h2>
+  <section class="flex-1 flex flex-col min-h-0 overflow-hidden relative min-w-0">
+    <!-- Mobile Sub-Header -->
+    <div class="md:hidden flex items-center justify-between gap-3 bg-white border-b border-gray-200 px-4 py-3 shrink-0">
+      <div class="flex items-center gap-3 min-w-0">
+        <button
+          type="button"
+          class="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 flex items-center justify-center shrink-0 transition-colors"
+          (click)="toggleSidebar()"
+          aria-label="Abrir menú del panel"
+        >
+          <i class="bi bi-list text-xl"></i>
+        </button>
+        <div class="min-w-0">
+          <p class="text-[10px] font-black uppercase tracking-widest text-red-600 m-0 leading-none">Panel Admin</p>
+          <h2 class="font-black text-gray-900 text-sm truncate m-0 mt-0.5">{{ getVistaTituloActual() }}</h2>
+        </div>
+      </div>
+      <span
+        *ngIf="alertasStockTotal > 0"
+        (click)="cambiarVista('inventario')"
+        class="px-2.5 py-1 rounded-full text-[11px] font-black bg-amber-100 text-amber-800 shrink-0 cursor-pointer"
+      >
+        <i class="bi bi-exclamation-triangle-fill mr-1"></i>{{ alertasStockTotal }}
+      </span>
     </div>
 
     <!-- Scrollable Content -->
-    <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 min-w-0 w-full">
+    <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 min-w-0 w-full">
       <!-- Vista Dashboard HOME -->
       <div *ngIf="vistaActual === 'dashboard'" class="max-w-7xl mx-auto space-y-6">
-        
+        <!-- Executive v2 Header Card -->
+        <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel Ejecutivo</p>
+            <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Resumen General de Operaciones</h2>
+            <p class="text-sm text-gray-500 mt-1 mb-0">Métricas en tiempo real de ventas, pedidos activos, almacén y satisfacción</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              (click)="cargarEstadisticas(true)"
+              [disabled]="loadingDashboard"
+              class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer"
+            >
+              <i class="bi bi-arrow-clockwise" [class.animate-spin]="loadingDashboard"></i>
+              Actualizar
+            </button>
+            <button
+              type="button"
+              (click)="descargarReporte()"
+              [disabled]="exportandoExcel || loadingDashboard"
+              class="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+            >
+              <i class="bi" [ngClass]="exportandoExcel ? 'bi-arrow-repeat animate-spin' : 'bi-file-earmark-excel'"></i>
+              {{ exportandoExcel ? 'Exportando...' : 'Reporte Excel' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner persistente de Error / Servidor Caído -->
+        <div
+          *ngIf="errorDashboard"
+          class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+          role="alert"
+        >
+          <div class="flex items-start sm:items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+              <i class="bi bi-wifi-off text-lg"></i>
+            </div>
+            <div>
+              <p class="text-sm font-black text-red-900 m-0">No se pudo conectar con el servidor</p>
+              <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ errorDashboard }}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            (click)="cargarEstadisticas(true)"
+            class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
+          >
+            <i class="bi bi-arrow-clockwise"></i> Reintentar
+          </button>
+        </div>
+
         <!-- ==================== KPI CARDS ROW ==================== -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- Ventas Hoy -->
           <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group">
             <div class="flex items-center justify-between mb-3">
               <div class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <i class="bi bi-cash-stack text-emerald-600 text-xl"></i>
               </div>
-              <div class="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full"
-                   [ngClass]="pedidosHoy > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-400'">
+              <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+                   [ngClass]="pedidosHoy > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'">
                 <i class="bi bi-bag-check text-[10px]"></i>
                 {{ pedidosHoy }} hoy
               </div>
             </div>
             <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Ventas Hoy</p>
-            <p class="text-2xl font-black text-gray-900">S/ {{ ventasHoy | number:'1.2-2' }}</p>
+            <p class="text-2xl font-black text-gray-900 m-0">S/ {{ ventasHoy | number:'1.2-2' }}</p>
           </div>
 
           <!-- Pedidos Pendientes -->
@@ -176,26 +336,26 @@
               <div class="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <i class="bi bi-clock-history text-amber-600 text-xl"></i>
               </div>
-              <div class="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full"
-                   [ngClass]="pedidosPendientes > 0 ? 'bg-amber-50 text-amber-600 animate-pulse' : 'bg-gray-100 text-gray-400'">
+              <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+                   [ngClass]="pedidosPendientes > 0 ? 'bg-amber-50 text-amber-700 animate-pulse' : 'bg-gray-100 text-gray-500'">
                 <i class="bi bi-exclamation-circle text-[10px]"></i>
-                Requieren atención
+                En atención
               </div>
             </div>
             <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pedidos Pendientes</p>
-            <p class="text-2xl font-black" [ngClass]="pedidosPendientes > 0 ? 'text-amber-600' : 'text-gray-900'">{{ pedidosPendientes }}</p>
+            <p class="text-2xl font-black m-0" [ngClass]="pedidosPendientes > 0 ? 'text-amber-600' : 'text-gray-900'">{{ pedidosPendientes }}</p>
           </div>
 
           <!-- Total Clientes -->
           <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
                (click)="cambiarVista('usuarios')">
             <div class="flex items-center justify-between mb-3">
-              <div class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <i class="bi bi-people-fill text-blue-600 text-xl"></i>
+              <div class="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <i class="bi bi-people-fill text-red-600 text-xl"></i>
               </div>
             </div>
             <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Clientes</p>
-            <p class="text-2xl font-black text-gray-900">{{ totalClientes }}</p>
+            <p class="text-2xl font-black text-gray-900 m-0">{{ totalClientes }}</p>
           </div>
 
           <!-- Rating Promedio -->
@@ -205,174 +365,251 @@
               <div class="w-11 h-11 rounded-xl bg-yellow-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <i class="bi bi-star-fill text-yellow-500 text-xl"></i>
               </div>
-              <div class="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-yellow-50 text-yellow-600">
+              <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-700">
                 {{ totalReviews }} reseñas
               </div>
             </div>
             <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Rating Promedio</p>
-            <p class="text-2xl font-black text-gray-900">
+            <p class="text-2xl font-black text-gray-900 m-0">
               {{ ratingPromedio | number:'1.1-1' }}
               <span class="text-sm font-bold text-gray-400">/ 5</span>
             </p>
           </div>
         </div>
 
+        <!-- ==================== ACCESOS RÁPIDOS: FINANZAS, STOCK Y PRODUCCIÓN ==================== -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <button
+            type="button"
+            (click)="cambiarVista('finanzas')"
+            class="text-left bg-gray-900 text-white rounded-2xl p-5 shadow-sm hover:bg-black transition-all group cursor-pointer"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="bi bi-graph-up-arrow text-white text-lg"></i>
+              </div>
+              <i class="bi bi-arrow-up-right text-gray-400 group-hover:text-white"></i>
+            </div>
+            <p class="text-sm font-black m-0">Pérdidas y Ganancias</p>
+            <p class="text-xs text-gray-400 mt-1 mb-0">Estado de resultados (P&amp;L), COGS y utilidad neta</p>
+          </button>
+
+          <button
+            type="button"
+            (click)="cambiarVista('inventario')"
+            class="text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 transition-all group cursor-pointer"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="bi bi-boxes text-lg"></i>
+              </div>
+              <span
+                *ngIf="alertasStockTotal > 0"
+                class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800"
+              >
+                {{ alertasStockTotal }} alertas
+              </span>
+            </div>
+            <p class="text-sm font-black text-gray-900 m-0">Stock e Inventario</p>
+            <p class="text-xs text-gray-500 mt-1 mb-0">Almacén valorizado: S/ {{ valorAlmacenTotal | number:'1.2-2' }}</p>
+          </button>
+
+          <button
+            type="button"
+            (click)="cambiarVista('perdidas')"
+            class="text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 transition-all group cursor-pointer"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="bi bi-exclamation-octagon-fill text-lg"></i>
+              </div>
+              <i class="bi bi-arrow-up-right text-gray-400 group-hover:text-red-600"></i>
+            </div>
+            <p class="text-sm font-black text-gray-900 m-0">Pérdidas de Productos</p>
+            <p class="text-xs text-gray-500 mt-1 mb-0">Registro y control económico de mermas</p>
+          </button>
+
+          <button
+            type="button"
+            (click)="cambiarVista('costos-produccion')"
+            class="text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 transition-all group cursor-pointer"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-gray-100 text-gray-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="bi bi-calculator-fill text-lg"></i>
+              </div>
+              <i class="bi bi-arrow-up-right text-gray-400 group-hover:text-red-600"></i>
+            </div>
+            <p class="text-sm font-black text-gray-900 m-0">Costos de Producción</p>
+            <p class="text-xs text-gray-500 mt-1 mb-0">Recetas, márgenes y simulador de lotes</p>
+          </button>
+        </div>
+
         <!-- ==================== CHARTS ROW ==================== -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Gráfico Ventas Semanales -->
-          <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col">
-            <div class="flex justify-between items-start mb-6">
+          <div class="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col">
+            <div class="flex flex-wrap justify-between items-start gap-3 mb-6">
               <div>
-                <h3 class="text-xl font-bold text-black">Ventas Semanales</h3>
-                <p class="text-sm text-gray-500">Ingresos de los últimos 7 días</p>
+                <h3 class="text-lg sm:text-xl font-black text-gray-900 m-0">Ventas Semanales</h3>
+                <p class="text-sm text-gray-500 m-0 mt-0.5">Ingresos entregados en los últimos 7 días</p>
               </div>
-              <div class="text-right">
-                <p class="text-2xl font-black text-black">S/ {{ ventasSemanaTotal | number:'1.2-2' }}</p>
-                <div class="flex items-center justify-end gap-1 mt-1">
+              <div class="text-left sm:text-right">
+                <p class="text-2xl font-black text-gray-900 m-0">S/ {{ ventasSemanaTotal | number:'1.2-2' }}</p>
+                <div class="flex items-center sm:justify-end gap-1 mt-1">
                   <i class="bi text-xs"
-                     [ngClass]="cambioSemanal >= 0 ? 'bi-arrow-up-short text-emerald-500' : 'bi-arrow-down-short text-red-500'"></i>
+                     [ngClass]="cambioSemanal >= 0 ? 'bi-arrow-up-short text-emerald-600' : 'bi-arrow-down-short text-red-600'"></i>
                   <span class="text-xs font-bold"
-                        [ngClass]="cambioSemanal >= 0 ? 'text-emerald-500' : 'text-red-500'">
+                        [ngClass]="cambioSemanal >= 0 ? 'text-emerald-600' : 'text-red-600'">
                     {{ cambioSemanal >= 0 ? '+' : '' }}{{ cambioSemanal | number:'1.1-1' }}%
                   </span>
                   <span class="text-xs text-gray-400">vs semana anterior</span>
                 </div>
               </div>
             </div>
-            <!-- Barras del gráfico CSS puro -->
-            <div class="flex-1 flex items-end justify-between gap-3 mt-2 pt-4 border-t border-gray-100 min-h-[200px]">
-              <div *ngFor="let dia of ventasSemanales" 
-                   class="w-full flex flex-col items-center gap-2 h-full justify-end group relative"
-                   [ngClass]="{'cursor-pointer hover:scale-105 transition-transform': dia.pedidos && dia.pedidos.length > 0}"
-                   (click)="verPedidosDelDia(dia)">
-                <div class="w-full rounded-lg transition-all duration-500"
-                     [ngClass]="dia.porcentaje === 100 ? 'bg-gradient-to-t from-red-700 to-red-500 shadow-[0_0_20px_rgba(220,38,38,0.3)]' : 'bg-gray-100 group-hover:bg-gray-200'"
-                     [style.height.%]="dia.porcentaje"></div>
-                <span class="text-[11px] font-bold" [ngClass]="dia.porcentaje === 100 ? 'text-black' : 'text-gray-400'">{{ dia.dia }}</span>
-                <!-- Tooltip -->
-                <div class="absolute -top-10 bg-gray-900 text-white text-[11px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-lg">
-                  S/ {{ dia.total | number:'1.2-2' }} · {{ dia.pedidos?.length || 0 }} pedidos
+
+            <div class="flex-1 flex items-end justify-between gap-2 sm:gap-3 mt-2 pt-4 border-t border-gray-100 min-h-[200px]">
+              <div
+                *ngFor="let dia of ventasSemanales; trackBy: trackByDia"
+                class="w-full flex flex-col items-center gap-2 h-full justify-end group relative"
+                [ngClass]="{'cursor-pointer hover:scale-105 transition-transform': dia.pedidos && dia.pedidos.length > 0}"
+                (click)="verPedidosDelDia(dia)"
+              >
+                <div
+                  class="w-full rounded-lg transition-all duration-500"
+                  [ngClass]="dia.porcentaje === 100 ? 'bg-gradient-to-t from-red-700 to-red-500 shadow-[0_0_20px_rgba(220,38,38,0.25)]' : 'bg-gray-100 group-hover:bg-gray-200'"
+                  [style.height.%]="dia.porcentaje"
+                ></div>
+                <span class="text-[11px] font-bold" [ngClass]="dia.porcentaje === 100 ? 'text-gray-900' : 'text-gray-400'">{{ dia.dia }}</span>
+                <div class="absolute -top-10 bg-gray-900 text-white text-[11px] px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-lg">
+                  S/ {{ dia.total | number:'1.2-2' }} · {{ dia.pedidos?.length || 0 }} ped.
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Más Vendidos (Top 5) -->
-          <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col">
+          <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col">
             <div class="flex justify-between items-center mb-5">
               <div>
-                <h3 class="text-xl font-bold text-black">Más Vendidos</h3>
-                <p class="text-sm text-gray-500">Ranking de productos</p>
+                <h3 class="text-lg sm:text-xl font-black text-gray-900 m-0">Más Vendidos</h3>
+                <p class="text-sm text-gray-500 m-0 mt-0.5">Ranking de productos</p>
               </div>
-              <span class="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-full">TOP 5</span>
+              <span class="text-xs font-black text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">TOP 5</span>
             </div>
-            
+
             <div class="space-y-4 flex-1">
-              <div class="flex items-center gap-3" *ngFor="let producto of masVendidos; let i = index">
-                <!-- Rank badge -->
+              <div class="flex items-center gap-3" *ngFor="let producto of masVendidos; let i = index; trackBy: trackByProducto">
                 <div class="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center font-black text-sm"
                      [ngClass]="{
                        'bg-yellow-100 text-yellow-700': i === 0,
-                       'bg-gray-100 text-gray-500': i === 1,
+                       'bg-gray-100 text-gray-600': i === 1,
                        'bg-orange-50 text-orange-600': i === 2,
                        'bg-gray-50 text-gray-400': i > 2
                      }">
                   {{ i + 1 }}
                 </div>
-                <!-- Product info -->
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center justify-between mb-1">
-                    <h4 class="font-bold text-black text-sm truncate">{{ producto.nombre }}</h4>
+                    <h4 class="font-bold text-gray-900 text-sm truncate m-0">{{ producto.nombre }}</h4>
                     <span class="font-bold text-red-600 text-sm shrink-0 ml-2">S/ {{ producto.precio | number:'1.2-2' }}</span>
                   </div>
-                  <!-- Progress bar -->
                   <div class="w-full bg-gray-100 rounded-full h-1.5">
                     <div class="h-1.5 rounded-full transition-all duration-700"
-                         [ngClass]="i === 0 ? 'bg-red-500' : 'bg-gray-300'"
+                         [ngClass]="i === 0 ? 'bg-red-600' : 'bg-gray-300'"
                          [style.width.%]="producto.porcentaje"></div>
                   </div>
-                  <p class="text-[11px] text-gray-400 mt-1 font-medium">{{ producto.cantidad }} vendidos · S/ {{ producto.ingresos | number:'1.2-2' }}</p>
+                  <p class="text-[11px] text-gray-400 mt-1 mb-0 font-medium">{{ producto.cantidad }} vendidos · S/ {{ producto.ingresos | number:'1.2-2' }}</p>
                 </div>
               </div>
-              <div *ngIf="masVendidos.length === 0" class="text-center text-gray-400 py-8 text-sm">
+              <div *ngIf="!loadingDashboard && !errorDashboard && masVendidos.length === 0" class="text-center text-gray-400 py-8 text-sm">
                 <i class="bi bi-box-seam text-3xl block mb-2"></i>
                 No hay ventas registradas
               </div>
             </div>
 
-            <button class="w-full mt-5 py-2.5 px-4 border-2 border-gray-800 text-black rounded-xl font-bold hover:bg-gray-800 hover:text-white transition-colors text-sm" (click)="cambiarVista('pizzas')">
-              Ver todo el menú
+            <button
+              type="button"
+              class="w-full mt-5 py-2.5 px-4 bg-gray-900 hover:bg-black text-white rounded-xl font-bold transition-colors text-sm cursor-pointer"
+              (click)="cambiarVista('pizzas')"
+            >
+              Ver todo el catálogo
             </button>
           </div>
         </div>
 
         <!-- ==================== PEDIDOS RECIENTES ==================== -->
-        <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-          <div class="flex justify-between items-center mb-6">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="p-5 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 class="text-xl font-bold text-black">Pedidos Recientes</h3>
-              <p class="text-sm text-gray-500">Últimas órdenes registradas</p>
+              <h3 class="text-lg sm:text-xl font-black text-gray-900 m-0">Pedidos Recientes</h3>
+              <p class="text-sm text-gray-500 m-0 mt-0.5">Últimas 5 órdenes registradas en el sistema</p>
             </div>
-            <div class="flex items-center gap-3">
-              <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm transition-colors" (click)="cambiarVista('orders')">
-                Ver todos
-              </button>
-              <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors shadow-md flex items-center gap-2" (click)="descargarReporte()">
-                <i class="bi bi-download"></i>
-                Reporte Excel
-              </button>
-            </div>
+            <button
+              type="button"
+              class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl text-sm transition-colors self-start sm:self-auto cursor-pointer"
+              (click)="cambiarVista('orders')"
+            >
+              Ver todos los pedidos
+            </button>
           </div>
 
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[800px]">
+            <table class="w-full text-left border-collapse min-w-[720px]">
               <thead>
-                <tr class="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wider">
-                  <th class="py-3 px-4 rounded-l-lg font-semibold">ID Pedido</th>
-                  <th class="py-3 px-4 font-semibold">Cliente</th>
-                  <th class="py-3 px-4 font-semibold">Producto</th>
-                  <th class="py-3 px-4 font-semibold">Estado</th>
-                  <th class="py-3 px-4 font-semibold">Total</th>
-                  <th class="py-3 px-4 font-semibold">Fecha</th>
-                  <th class="py-3 px-4 text-center rounded-r-lg font-semibold">Acciones</th>
+                <tr class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-4">ID Pedido</th>
+                  <th class="py-3.5 px-4">Cliente</th>
+                  <th class="py-3.5 px-4">Producto Principal</th>
+                  <th class="py-3.5 px-4">Estado</th>
+                  <th class="py-3.5 px-4">Total</th>
+                  <th class="py-3.5 px-4">Fecha</th>
+                  <th class="py-3.5 px-4 text-center">Acciones</th>
                 </tr>
               </thead>
-              <tbody class="text-sm divide-y divide-gray-50">
-                <tr class="hover:bg-gray-50 transition-colors" *ngFor="let pedido of pedidosRecientes">
-                  <td class="py-4 px-4 font-bold text-black">#PH-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
-                  <td class="py-4 px-4">
+              <tbody class="text-sm divide-y divide-gray-100">
+                <tr class="hover:bg-gray-50 transition-colors" *ngFor="let pedido of pedidosRecientes; trackBy: trackByPedido">
+                  <td class="py-3.5 px-4 font-black text-gray-900">#PH-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
+                  <td class="py-3.5 px-4">
                     <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs shrink-0">
+                      <div class="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center font-bold text-xs shrink-0">
                         {{ pedido.userName ? pedido.userName.charAt(0).toUpperCase() : 'U' }}
                       </div>
-                      <span class="font-medium text-gray-700">{{ pedido.userName || 'Usuario Anónimo' }}</span>
+                      <span class="font-semibold text-gray-800 truncate max-w-[180px]">{{ pedido.userName || 'Usuario Anónimo' }}</span>
                     </div>
                   </td>
-                  <td class="py-4 px-4 text-gray-600 font-medium">
+                  <td class="py-3.5 px-4 text-gray-600 font-medium">
                     {{ pedido.items?.length ? pedido.items![0].quantity + 'x ' + (pedido.items![0].pizzaName || pedido.items![0].extraName) : 'Sin items' }}
-                    <span *ngIf="(pedido.items?.length || 0) > 1" class="text-xs text-gray-400">... y más</span>
+                    <span *ngIf="(pedido.items?.length || 0) > 1" class="text-xs text-gray-400"> (+{{ (pedido.items?.length || 1) - 1 }})</span>
                   </td>
-                  <td class="py-4 px-4">
-                    <span class="px-3 py-1 rounded-full text-[10px] font-black tracking-wider"
+                  <td class="py-3.5 px-4">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider"
                           [ngClass]="{
-                            'bg-amber-100 text-amber-700': pedido.status === 'PENDING' || pedido.status === 'PREPARING',
-                            'bg-blue-100 text-blue-700': pedido.status === 'CONFIRMED' || pedido.status === 'OUT_FOR_DELIVERY' || pedido.status === 'IN_DELIVERY',
-                            'bg-emerald-100 text-emerald-700': pedido.status === 'DELIVERED',
-                            'bg-red-100 text-red-700': pedido.status === 'CANCELLED'
+                            'bg-amber-100 text-amber-800': pedido.status === 'PENDING' || pedido.status === 'PREPARING',
+                            'bg-blue-100 text-blue-800': pedido.status === 'CONFIRMED' || pedido.status === 'OUT_FOR_DELIVERY' || pedido.status === 'IN_DELIVERY',
+                            'bg-emerald-100 text-emerald-800': pedido.status === 'DELIVERED',
+                            'bg-red-100 text-red-800': pedido.status === 'CANCELLED'
                           }">
                       {{ pedido.status }}
                     </span>
                   </td>
-                  <td class="py-4 px-4 font-black text-black">S/ {{ pedido.total | number:'1.2-2' }}</td>
-                  <td class="py-4 px-4 text-gray-400 text-xs">
+                  <td class="py-3.5 px-4 font-black text-gray-900">S/ {{ pedido.total | number:'1.2-2' }}</td>
+                  <td class="py-3.5 px-4 text-gray-500 text-xs whitespace-nowrap">
                     {{ pedido.createdAt | date:'dd/MM/yy HH:mm' }}
                   </td>
-                  <td class="py-4 px-4 text-center">
-                    <button class="text-gray-400 hover:text-red-600 transition-colors" (click)="cambiarVista('orders')"><i class="bi bi-eye text-lg"></i></button>
+                  <td class="py-3.5 px-4 text-center">
+                    <button
+                      type="button"
+                      class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 inline-flex items-center justify-center transition-colors cursor-pointer"
+                      (click)="cambiarVista('orders')"
+                      title="Ir a gestión de pedidos"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
                   </td>
                 </tr>
-                <tr *ngIf="pedidosRecientes.length === 0">
-                  <td colspan="7" class="py-8 text-center text-gray-400">
+                <tr *ngIf="!loadingDashboard && !errorDashboard && pedidosRecientes.length === 0">
+                  <td colspan="7" class="py-10 text-center text-gray-400">
                     <i class="bi bi-inbox text-3xl block mb-2"></i>
                     No hay pedidos recientes
                   </td>
@@ -381,11 +618,14 @@
             </table>
           </div>
         </div>
-
       </div>
 
-      <!-- Rutas reales (Componentes de Angular) -->
+      <!-- Módulos del Panel Admin -->
       <div class="max-w-7xl mx-auto" *ngIf="vistaActual !== 'dashboard'">
+        <div *ngIf="vistaActual === 'finanzas'"><app-finanzas-dashboard></app-finanzas-dashboard></div>
+        <div *ngIf="vistaActual === 'inventario'"><app-inventario></app-inventario></div>
+        <div *ngIf="vistaActual === 'perdidas'"><app-perdidas></app-perdidas></div>
+        <div *ngIf="vistaActual === 'costos-produccion'"><app-costos-produccion></app-costos-produccion></div>
         <div *ngIf="vistaActual === 'usuarios'"><app-usuarios></app-usuarios></div>
         <div *ngIf="vistaActual === 'pizzas'"><app-pizzas></app-pizzas></div>
         <div *ngIf="vistaActual === 'categorias'"><app-categorias></app-categorias></div>
@@ -399,74 +639,86 @@
         <div *ngIf="vistaActual === 'reviews'"><app-reviews></app-reviews></div>
         <div *ngIf="vistaActual === 'mi-perfil'"><app-perfil-admin></app-perfil-admin></div>
       </div>
-      
     </div>
-  </main>
+  </section>
 
-<!-- Modal de Pedidos del Día Seleccionado -->
-<div *ngIf="diaSeleccionado" class="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-  <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl animate-fade-in-up">
-    <!-- Header -->
-    <div class="flex justify-between items-center p-6 border-b border-gray-100">
-      <div>
-        <h3 class="text-2xl font-black text-black">Ventas: {{ diaSeleccionado.dia }}</h3>
-        <p class="text-gray-500 text-sm mt-1">{{ diaSeleccionado.fecha | date:'longDate' }}</p>
-      </div>
-      <button (click)="cerrarModalPedidosDia()" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-black transition-colors">
-        <i class="bi bi-x-lg text-lg"></i>
-      </button>
-    </div>
-    
-    <!-- Body -->
-    <div class="p-6 overflow-y-auto flex-1 bg-gray-50">
-      <div class="grid grid-cols-3 gap-4 mb-6">
-        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-          <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total Entregado</p>
-          <p class="text-2xl font-black text-emerald-600">S/ {{ diaSeleccionado.total | number:'1.2-2' }}</p>
+  <!-- Modal de Pedidos del Día Seleccionado -->
+  <div
+    *ngIf="diaSeleccionado"
+    class="fixed inset-0 bg-black/60 z-[6000] flex items-center justify-center p-4 backdrop-blur-xs"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden animate-fade-in-up">
+      <div class="flex justify-between items-center px-6 py-4 bg-gray-900 text-white shrink-0">
+        <div>
+          <p class="text-[10px] font-black uppercase tracking-widest text-red-400 m-0">Detalle Diario</p>
+          <h3 class="text-lg sm:text-xl font-black text-white m-0">Ventas: {{ diaSeleccionado.dia }} ({{ diaSeleccionado.fecha | date:'dd/MM/yyyy' }})</h3>
         </div>
-        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-          <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Nº de Pedidos</p>
-          <p class="text-2xl font-black text-black">{{ diaSeleccionado.pedidos.length }}</p>
-        </div>
-        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-          <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Ticket Promedio</p>
-          <p class="text-2xl font-black text-black">S/ {{ (diaSeleccionado.total / diaSeleccionado.pedidos.length) | number:'1.2-2' }}</p>
-        </div>
+        <button
+          type="button"
+          (click)="cerrarModalPedidosDia()"
+          class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors cursor-pointer"
+          aria-label="Cerrar modal"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
 
-      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm whitespace-nowrap">
-            <thead class="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
-              <tr>
-                <th class="px-6 py-4">ID Pedido</th>
-                <th class="px-6 py-4">Hora</th>
-                <th class="px-6 py-4">Cliente</th>
-                <th class="px-6 py-4 text-right">Monto</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              <tr *ngFor="let pedido of diaSeleccionado.pedidos" class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4">
-                  <span class="font-bold text-black">#PH-{{ pedido.id?.toString()?.padStart(4, '0') }}</span>
-                </td>
-                <td class="px-6 py-4 text-gray-600">
-                  {{ pedido.createdAt | date:'shortTime' }}
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs shrink-0">
-                      {{ pedido.userName ? pedido.userName.charAt(0).toUpperCase() : 'U' }}
+      <div class="p-4 sm:p-6 overflow-y-auto flex-1 bg-gray-50 space-y-5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs">
+            <p class="text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Total Entregado</p>
+            <p class="text-xl sm:text-2xl font-black text-emerald-600 m-0">S/ {{ diaSeleccionado.total | number:'1.2-2' }}</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs">
+            <p class="text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Nº de Pedidos</p>
+            <p class="text-xl sm:text-2xl font-black text-gray-900 m-0">{{ diaSeleccionado.pedidos.length }}</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs">
+            <p class="text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Ticket Promedio</p>
+            <p class="text-xl sm:text-2xl font-black text-gray-900 m-0">S/ {{ (diaSeleccionado.total / diaSeleccionado.pedidos.length) | number:'1.2-2' }}</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+              <thead class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                <tr>
+                  <th class="px-5 py-3.5">ID Pedido</th>
+                  <th class="px-5 py-3.5">Hora</th>
+                  <th class="px-5 py-3.5">Cliente</th>
+                  <th class="px-5 py-3.5 text-right">Monto</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr *ngFor="let pedido of diaModalPedidosPaginados; trackBy: trackByPedido" class="hover:bg-gray-50 transition-colors">
+                  <td class="px-5 py-3.5 font-black text-gray-900">#PH-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
+                  <td class="px-5 py-3.5 text-gray-600">{{ pedido.createdAt | date:'shortTime' }}</td>
+                  <td class="px-5 py-3.5">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-7 h-7 rounded-full bg-red-50 text-red-600 flex items-center justify-center font-bold text-xs shrink-0">
+                        {{ pedido.userName ? pedido.userName.charAt(0).toUpperCase() : 'U' }}
+                      </div>
+                      <span class="font-medium text-gray-800">{{ pedido.userName || 'Usuario Anónimo' }}</span>
                     </div>
-                    <span class="font-medium text-gray-700">{{ pedido.userName || 'Usuario Anónimo' }}</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4 text-right">
-                  <span class="font-black text-black">S/ {{ pedido.total | number:'1.2-2' }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  </td>
+                  <td class="px-5 py-3.5 text-right font-black text-gray-900">S/ {{ pedido.total | number:'1.2-2' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="diaSeleccionado.pedidos.length > 0" class="px-5 py-3 border-t border-gray-100 bg-white">
+            <app-pagination
+              [currentPage]="diaModalPage"
+              [totalItems]="diaSeleccionado.pedidos.length"
+              [itemsPerPage]="diaModalPerPage"
+              [pageSizeOptions]="[10, 25, 50]"
+              (pageChange)="onDiaModalPageChange($event)"
+              (itemsPerPageChange)="onDiaModalPerPageChange($event)"
+            ></app-pagination>
+          </div>
         </div>
       </div>
     </div>

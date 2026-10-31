@@ -1,11 +1,11 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
 import { Order } from '../../services/order.service';
-import { OrderDTO, OrderCompleteDTO } from '../../models/admin.interface';
+import { OrderCompleteDTO, ReviewDTO } from '../../models/admin.interface';
 import { AuthService } from '../../services/auth.service';
 import { Review } from '../../services/review.service';
-import { ReviewDTO } from '../../models/admin.interface';
 import { PaginationComponent } from '../pagination/pagination';
 
 @Component({
@@ -21,20 +21,26 @@ export class ClientePedidosComponent implements OnInit {
   ordersPaginados: OrderCompleteDTO[] = [];
   currentPage: number = 1;
   itemsPerPage: number = 10;
+
   selectedOrder: OrderCompleteDTO | null = null;
   selectedOrderItems: any[] = [];
   loading: boolean = true;
+  loadingItems: boolean = false;
+  guardandoReview: boolean = false;
+  loadError: string = '';
+
   mensaje: string = '';
   error: boolean = false;
   showModal: boolean = false;
   showReviewModal: boolean = false;
-  
+
+  busqueda: string = '';
   filtroDeliveryType: string = 'TODOS';
   filtroEstado: string = 'TODOS';
-  
-  estados = ['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
 
-  // Para el modal de reseña
+  estados = ['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
+  readonly stars = [1, 2, 3, 4, 5];
+
   nuevaReview: ReviewDTO = {
     orderId: 0,
     userId: 0,
@@ -43,7 +49,7 @@ export class ClientePedidosComponent implements OnInit {
   };
   orderParaReview: OrderCompleteDTO | null = null;
   pedidosConReview: Set<number> = new Set();
-  reviewsDelUsuario: Map<number, ReviewDTO> = new Map(); // Mapeo orderId -> ReviewDTO
+  reviewsDelUsuario: Map<number, ReviewDTO> = new Map();
   editandoReview: boolean = false;
 
   constructor(
@@ -53,6 +59,10 @@ export class ClientePedidosComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.cargarTodo();
+  }
+
+  cargarTodo(): void {
     this.cargarPedidos();
     this.cargarReviewsDelUsuario();
   }
@@ -62,63 +72,67 @@ export class ClientePedidosComponent implements OnInit {
     if (currentUser?.id) {
       this.reviewService.obtenerPorUsuario(currentUser.id).subscribe({
         next: (reviews) => {
-          // Guardar los IDs de pedidos que ya tienen reseña
           this.pedidosConReview = new Set(reviews.map(r => r.orderId));
-          // Guardar las reseñas completas en un mapa
           this.reviewsDelUsuario = new Map(reviews.map(r => [r.orderId, r]));
         },
-        error: (err) => {
-          console.error('Error al cargar reseñas:', err);
-        }
+        error: () => {}
       });
     }
   }
 
   cargarPedidos(): void {
     this.loading = true;
+    this.loadError = '';
     const currentUser = this.authService.getCurrentUser();
-    
+
     if (!currentUser?.id) {
-      this.mostrarMensaje('Error: Usuario no autenticado', true);
+      this.loadError = 'Usuario no autenticado. Por favor inicia sesión nuevamente.';
       this.loading = false;
       return;
     }
 
-    // Obtener todos los pedidos completos y filtrar los del usuario
-    this.orderService.obtenerTodosCompletos().subscribe({
-      next: (data) => {
-        // Filtrar solo los pedidos del usuario actual
-        this.orders = data
-          .filter(order => order.userId === currentUser.id)
-          .toSorted((a, b) => {
-            return new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime();
-          });
-        this.aplicarFiltro();
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error al cargar pedidos:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
-        this.mostrarMensaje('Error al cargar los pedidos', true);
-        this.loading = false;
-      }
-    });
+    this.orderService.obtenerTodosCompletos()
+      .pipe(finalize(() => { this.loading = false; }))
+      .subscribe({
+        next: (data) => {
+          this.orders = (data || [])
+            .filter(order => order.userId === currentUser.id)
+            .toSorted((a, b) => {
+              const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+              const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+              return tB - tA;
+            });
+          this.aplicarFiltro();
+        },
+        error: (err) => {
+          console.error('Error al cargar pedidos:', err);
+          this.loadError = err?.status === 0
+            ? 'No se pudo conectar con el servidor (Backend fuera de línea). Verifica tu conexión e inténtalo de nuevo.'
+            : (err?.error?.message || 'Error al cargar el historial de pedidos.');
+        }
+      });
   }
 
   aplicarFiltro(): void {
+    const term = this.busqueda.trim().toLowerCase();
     let resultado = this.orders;
-    
-    // Filtrar por estado
+
     if (this.filtroEstado !== 'TODOS') {
       resultado = resultado.filter(o => o.status === this.filtroEstado);
     }
-    
-    // Filtrar por tipo de delivery
+
     if (this.filtroDeliveryType !== 'TODOS') {
       resultado = resultado.filter(o => o.deliveryType === this.filtroDeliveryType);
     }
-    
+
+    if (term) {
+      resultado = resultado.filter(o => {
+        const idStr = `#${o.id} #ph-${o.id?.toString().padStart(4, '0')}`.toLowerCase();
+        const addr = `${o.addressLine1 || ''} ${o.addressDistrict || ''}`.toLowerCase();
+        return idStr.includes(term) || addr.includes(term);
+      });
+    }
+
     this.filteredOrders = resultado;
     this.aplicarPaginacion();
   }
@@ -140,26 +154,30 @@ export class ClientePedidosComponent implements OnInit {
     this.aplicarPaginacion();
   }
 
+  onItemsPerPageChange(size: number): void {
+    this.itemsPerPage = size;
+    this.currentPage = 1;
+    this.aplicarPaginacion();
+  }
+
   verDetalles(order: OrderCompleteDTO): void {
     this.selectedOrder = order;
-    
-    // Cargar items del pedido
+    this.selectedOrderItems = order.items || [];
+    this.showModal = true;
+    this.enfocarPrimerElementoModal();
+
     if (order.id) {
-      this.orderService.obtenerItemsCompletos(order.id).subscribe({
-        next: (items) => {
-          this.selectedOrderItems = items;
-          this.showModal = true;
-          this.enfocarPrimerElementoModal();
-        },
-        error: (err) => {
-          console.error('Error al cargar items:', err);
-          this.showModal = true; // Mostrar modal aunque no se carguen los items
-          this.enfocarPrimerElementoModal();
-        }
-      });
-    } else {
-      this.showModal = true;
-      this.enfocarPrimerElementoModal();
+      this.loadingItems = true;
+      this.orderService.obtenerItemsCompletos(order.id)
+        .pipe(finalize(() => { this.loadingItems = false; }))
+        .subscribe({
+          next: (items) => {
+            this.selectedOrderItems = items;
+          },
+          error: (err) => {
+            console.error('Error al cargar items:', err);
+          }
+        });
     }
   }
 
@@ -170,12 +188,6 @@ export class ClientePedidosComponent implements OnInit {
     this.devolverFocoElementoAnterior();
   }
 
-  // Los clientes NO pueden cambiar el estado de sus pedidos
-  cambiarEstado(order: OrderCompleteDTO, nuevoEstado: string): void {
-    // Este método está aquí para compatibilidad con el template pero no hace nada
-    // Solo los administradores pueden cambiar estados
-  }
-
   esPickup(order: OrderCompleteDTO): boolean {
     return order.deliveryType === 'PICKUP';
   }
@@ -184,24 +196,8 @@ export class ClientePedidosComponent implements OnInit {
     return order.deliveryType === 'DELIVERY';
   }
 
-  getBadgeClass(status: string): string {
-    const statusClasses: { [key: string]: string } = {
-      'PENDING': 'bg-warning text-dark',
-      'CONFIRMED': 'bg-info',
-      'PREPARING': 'bg-primary',
-      'OUT_FOR_DELIVERY': 'bg-secondary',
-      'DELIVERED': 'bg-success',
-      'CANCELLED': 'bg-danger'
-    };
-    return statusClasses[status] || 'bg-secondary';
-  }
-
-  getStatusBadgeClass(status: string): string {
-    return this.getBadgeClass(status);
-  }
-
   getEstadoTexto(status: string): string {
-    const statusLabels: { [key: string]: string } = {
+    const statusLabels: Record<string, string> = {
       'PENDING': 'Pendiente',
       'CONFIRMED': 'Confirmado',
       'PREPARING': 'Preparando',
@@ -212,16 +208,8 @@ export class ClientePedidosComponent implements OnInit {
     return statusLabels[status] || status;
   }
 
-  getStatusLabel(status: string): string {
-    return this.getEstadoTexto(status);
-  }
-
   getDeliveryTypeLabel(type: string): string {
-    return type === 'PICKUP' ? 'ðŸª Recojo en tienda' : 'ðŸ›µ Delivery';
-  }
-
-  getDeliveryTypeBadge(type: string): string {
-    return type === 'PICKUP' ? 'badge bg-secondary' : 'badge bg-info';
+    return type === 'PICKUP' ? 'Recojo en tienda' : 'Delivery';
   }
 
   mostrarMensaje(mensaje: string, esError: boolean = false): void {
@@ -229,20 +217,9 @@ export class ClientePedidosComponent implements OnInit {
     this.error = esError;
     setTimeout(() => {
       this.mensaje = '';
-    }, 5000);
+    }, 4500);
   }
 
-  formatDate(date: string): string {
-    return new Date(date).toLocaleString('es-PE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
-  // Métodos para reseñas
   abrirModalReview(order: OrderCompleteDTO): void {
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser?.id) {
@@ -302,6 +279,7 @@ export class ClientePedidosComponent implements OnInit {
   }
 
   guardarReview(): void {
+    if (this.guardandoReview) return;
     if (!this.nuevaReview.comment || this.nuevaReview.comment.trim() === '') {
       this.mostrarMensaje('Por favor escribe un comentario', true);
       return;
@@ -315,32 +293,38 @@ export class ClientePedidosComponent implements OnInit {
   }
 
   private actualizarReview(): void {
-    this.reviewService.actualizar(this.nuevaReview.id as number, this.nuevaReview).subscribe({
-      next: () => {
-        this.mostrarMensaje('¡Reseña actualizada exitosamente!');
-        this.reviewsDelUsuario.set(this.nuevaReview.orderId, this.nuevaReview);
-        this.cerrarModalReview();
-      },
-      error: (err) => {
-        console.error('Error al actualizar reseña:', err);
-        this.mostrarMensaje('Error al actualizar la reseña', true);
-      }
-    });
+    this.guardandoReview = true;
+    this.reviewService.actualizar(this.nuevaReview.id as number, this.nuevaReview)
+      .pipe(finalize(() => { this.guardandoReview = false; }))
+      .subscribe({
+        next: () => {
+          this.mostrarMensaje('¡Reseña actualizada exitosamente!');
+          this.reviewsDelUsuario.set(this.nuevaReview.orderId, { ...this.nuevaReview });
+          this.cerrarModalReview();
+        },
+        error: (err) => {
+          console.error('Error al actualizar reseña:', err);
+          this.mostrarMensaje(err?.error?.message || 'Error al actualizar la reseña', true);
+        }
+      });
   }
 
   private crearNuevaReview(): void {
-    this.reviewService.crear(this.nuevaReview).subscribe({
-      next: (reviewCreada) => {
-        this.mostrarMensaje('¡Reseña enviada exitosamente!');
-        this.pedidosConReview.add(this.nuevaReview.orderId);
-        this.reviewsDelUsuario.set(this.nuevaReview.orderId, reviewCreada);
-        this.cerrarModalReview();
-      },
-      error: (err) => {
-        console.error('Error al guardar reseña:', err);
-        this.mostrarMensaje('Error al enviar la reseña', true);
-      }
-    });
+    this.guardandoReview = true;
+    this.reviewService.crear(this.nuevaReview)
+      .pipe(finalize(() => { this.guardandoReview = false; }))
+      .subscribe({
+        next: (reviewCreada) => {
+          this.mostrarMensaje('¡Reseña enviada exitosamente!');
+          this.pedidosConReview.add(this.nuevaReview.orderId);
+          this.reviewsDelUsuario.set(this.nuevaReview.orderId, reviewCreada);
+          this.cerrarModalReview();
+        },
+        error: (err) => {
+          console.error('Error al guardar reseña:', err);
+          this.mostrarMensaje(err?.error?.message || 'Error al enviar la reseña', true);
+        }
+      });
   }
 
   puedeDejarReview(order: OrderCompleteDTO): boolean {
@@ -352,6 +336,7 @@ export class ClientePedidosComponent implements OnInit {
   }
 
   eliminarReview(order: OrderCompleteDTO): void {
+    if (this.guardandoReview) return;
     const reviewExistente = this.reviewsDelUsuario.get(order.id || 0);
     if (!reviewExistente?.id) {
       this.mostrarMensaje('No se encontró la reseña', true);
@@ -359,33 +344,37 @@ export class ClientePedidosComponent implements OnInit {
     }
 
     if (confirm('¿Estás seguro de que deseas eliminar esta reseña?')) {
-      this.reviewService.eliminar(reviewExistente.id).subscribe({
-        next: () => {
-          this.mostrarMensaje('Reseña eliminada exitosamente');
-          this.pedidosConReview.delete(order.id || 0);
-          this.reviewsDelUsuario.delete(order.id || 0);
-        },
-        error: (err) => {
-          console.error('Error al eliminar reseña:', err);
-          this.mostrarMensaje('Error al eliminar la reseña', true);
-        }
-      });
+      this.guardandoReview = true;
+      this.reviewService.eliminar(reviewExistente.id)
+        .pipe(finalize(() => { this.guardandoReview = false; }))
+        .subscribe({
+          next: () => {
+            this.mostrarMensaje('Reseña eliminada exitosamente');
+            this.pedidosConReview.delete(order.id || 0);
+            this.reviewsDelUsuario.delete(order.id || 0);
+            this.cerrarModalReview();
+          },
+          error: (err) => {
+            console.error('Error al eliminar reseña:', err);
+            this.mostrarMensaje(err?.error?.message || 'Error al eliminar la reseña', true);
+          }
+        });
     }
   }
 
-  // ACCESIBILIDAD: Control de Foco (Focus Trap)
+  trackByOrder(index: number, order: OrderCompleteDTO): number {
+    return order.id ?? index;
+  }
+
+  trackByItem(index: number, item: any): number {
+    return item.id ?? index;
+  }
+
   private elementoPrevioAlModal: HTMLElement | null = null;
 
   private enfocarPrimerElementoModal(): void {
     if (typeof document !== 'undefined') {
       this.elementoPrevioAlModal = document.activeElement as HTMLElement;
-      setTimeout(() => {
-        const modales = document.querySelectorAll('.modal.show');
-        if (modales.length > 0) {
-          const modalActivo = modales[modales.length - 1] as HTMLElement;
-          modalActivo.focus();
-        }
-      }, 100);
     }
   }
 
@@ -394,56 +383,16 @@ export class ClientePedidosComponent implements OnInit {
       setTimeout(() => {
         this.elementoPrevioAlModal?.focus();
         this.elementoPrevioAlModal = null;
-      }, 100);
+      }, 80);
     }
   }
 
   @HostListener('document:keydown', ['$event'])
   manejarTecladoModal(event: KeyboardEvent): void {
-    if (!this.showModal && !this.showReviewModal) {
-      return;
-    }
-
+    if (!this.showModal && !this.showReviewModal) return;
     if (event.key === 'Escape') {
-      this.cerrarModal();
-      this.cerrarModalReview();
-      return;
-    }
-
-    if (event.key === 'Tab') {
-      this.manejarTabModal(event);
-    }
-  }
-
-  private manejarTabModal(event: KeyboardEvent): void {
-    const modales = document.querySelectorAll('.modal.show');
-    if (modales.length === 0) return;
-    
-    const modalActivo = modales[modales.length - 1] as HTMLElement;
-    const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-    const focusableElements = Array.from(modalActivo.querySelectorAll(focusableSelectors)) as HTMLElement[];
-    
-    if (focusableElements.length === 0) return;
-
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-
-    if (!modalActivo.contains(document.activeElement)) {
-      firstElement.focus();
-      event.preventDefault();
-      return;
-    }
-
-    if (event.shiftKey) { // Shift + Tab
-      if (document.activeElement === firstElement) {
-        lastElement.focus();
-        event.preventDefault();
-      }
-    } else if (document.activeElement === lastElement) { // Solo Tab
-      firstElement.focus();
-      event.preventDefault();
+      if (this.showReviewModal) this.cerrarModalReview();
+      else if (this.showModal) this.cerrarModal();
     }
   }
 }
-
-

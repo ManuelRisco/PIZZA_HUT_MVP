@@ -1,0 +1,763 @@
+<div class="space-y-6 font-sans">
+  <!-- Executive v2 Header Card -->
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <div class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1 flex items-center gap-1.5">
+        <i class="bi bi-boxes"></i>
+        <span>Control de Almacén y Kardex</span>
+      </div>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Stock e Inventario</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">
+        Supervisa existencias de ingredientes y extras, alertas de reposición, valoración a costo directo y movimientos del Kardex.
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        [disabled]="loading"
+        (click)="recargarTodo()"
+        class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 disabled:opacity-60 cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise" [ngClass]="{ 'animate-spin': loading || loadingMovements }"></i>
+        <span>Actualizar</span>
+      </button>
+
+      <button
+        type="button"
+        [disabled]="!hasLoadedOnce && !!errorMessage"
+        (click)="abrirModalOperacion('ADJUST')"
+        class="border border-gray-300 bg-white hover:bg-gray-900 hover:text-white hover:border-gray-900 text-gray-800 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+      >
+        <i class="bi bi-sliders"></i>
+        <span>Ajuste Físico</span>
+      </button>
+
+      <button
+        type="button"
+        [disabled]="!hasLoadedOnce && !!errorMessage"
+        (click)="abrirModalOperacion('RESTOCK')"
+        class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+      >
+        <i class="bi bi-plus-circle-fill"></i>
+        <span>Reabastecer Stock</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Persistent Error / Backend-Offline Banner -->
+  <div
+    *ngIf="errorMessage"
+    class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+    role="alert"
+  >
+    <div class="flex items-start sm:items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-wifi-off text-lg"></i>
+      </div>
+      <div>
+        <p class="text-sm font-black text-red-900 m-0">No se pudo sincronizar la información</p>
+        <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ errorMessage }}</p>
+      </div>
+    </div>
+    <button
+      type="button"
+      (click)="reintentarCarga()"
+      class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
+    >
+      <i class="bi bi-arrow-clockwise"></i> Reintentar
+    </button>
+  </div>
+
+  <!-- Loading Initial State -->
+  <div
+    *ngIf="loading && !hasLoadedOnce"
+    class="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center"
+  >
+    <div class="w-10 h-10 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin mx-auto mb-3"></div>
+    <p class="text-sm font-bold text-gray-600 m-0">Sincronizando almacén, existencias y Kardex...</p>
+  </div>
+
+  <ng-container *ngIf="hasLoadedOnce">
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <!-- Valor Total -->
+      <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <i class="bi bi-safe2-fill text-lg"></i>
+          </div>
+          <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+            Costo Directo
+          </span>
+        </div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Valor Total Almacén</p>
+        <p class="text-2xl font-black text-gray-900 mt-1 mb-0">S/ {{ summary.totalInventoryValue | number:'1.2-2' }}</p>
+      </div>
+
+      <!-- Valor Insumos -->
+      <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <i class="bi bi-droplet-half text-lg"></i>
+          </div>
+          <span class="text-xs font-bold text-gray-500">{{ summary.totalIngredients }} insumos</span>
+        </div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Valor en Ingredientes</p>
+        <p class="text-xl font-black text-gray-900 mt-1 mb-0">S/ {{ summary.ingredientsInventoryValue | number:'1.2-2' }}</p>
+      </div>
+
+      <!-- Valor Extras -->
+      <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <i class="bi bi-cup-straw text-lg"></i>
+          </div>
+          <span class="text-xs font-bold text-gray-500">{{ summary.totalExtras }} extras</span>
+        </div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Valor en Extras</p>
+        <p class="text-xl font-black text-gray-900 mt-1 mb-0">S/ {{ summary.extrasInventoryValue | number:'1.2-2' }}</p>
+      </div>
+
+      <!-- Stock Bajo -->
+      <div
+        class="bg-white rounded-2xl p-5 border shadow-sm cursor-pointer transition-all"
+        [ngClass]="summary.lowStockCount > 0 ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200'"
+        (click)="activeTab = 'alertas'"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+            <i class="bi bi-exclamation-triangle-fill text-lg"></i>
+          </div>
+          <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+            Reponer pronto
+          </span>
+        </div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Alertas Stock Bajo</p>
+        <p class="text-2xl font-black mt-1 mb-0" [ngClass]="summary.lowStockCount > 0 ? 'text-amber-600' : 'text-gray-900'">
+          {{ summary.lowStockCount }}
+        </p>
+      </div>
+
+      <!-- Agotados -->
+      <div
+        class="bg-white rounded-2xl p-5 border shadow-sm cursor-pointer transition-all"
+        [ngClass]="summary.outOfStockCount > 0 ? 'border-red-200 bg-red-50/30' : 'border-gray-200'"
+        (click)="activeTab = 'alertas'"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+            <i class="bi bi-x-octagon-fill text-lg"></i>
+          </div>
+          <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+            Crítico
+          </span>
+        </div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Productos Agotados</p>
+        <p class="text-2xl font-black mt-1 mb-0" [ngClass]="summary.outOfStockCount > 0 ? 'text-red-600' : 'text-gray-900'">
+          {{ summary.outOfStockCount }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="flex flex-wrap border-b border-gray-200 bg-gray-50/70 px-4 pt-3 gap-2">
+        <button
+          type="button"
+          (click)="activeTab = 'alertas'"
+          class="px-4 py-2.5 rounded-t-xl font-bold text-sm transition-colors flex items-center gap-2 border-b-2 cursor-pointer"
+          [ngClass]="
+            activeTab === 'alertas'
+              ? 'bg-white text-red-600 border-red-600 shadow-sm'
+              : 'text-gray-500 hover:text-gray-800 border-transparent'
+          "
+        >
+          <i class="bi bi-bell-fill"></i>
+          <span>Alertas de Stock</span>
+          <span
+            class="text-xs px-2 py-0.5 rounded-full font-black"
+            [ngClass]="summary.alerts.length > 0 ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'"
+          >
+            {{ summary.alerts.length }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab = 'existencias'"
+          class="px-4 py-2.5 rounded-t-xl font-bold text-sm transition-colors flex items-center gap-2 border-b-2 cursor-pointer"
+          [ngClass]="
+            activeTab === 'existencias'
+              ? 'bg-white text-red-600 border-red-600 shadow-sm'
+              : 'text-gray-500 hover:text-gray-800 border-transparent'
+          "
+        >
+          <i class="bi bi-clipboard-data-fill"></i>
+          <span>Existencias Valorizadas</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 font-bold">
+            {{ unifiedStock.length }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab = 'kardex'"
+          class="px-4 py-2.5 rounded-t-xl font-bold text-sm transition-colors flex items-center gap-2 border-b-2 cursor-pointer"
+          [ngClass]="
+            activeTab === 'kardex'
+              ? 'bg-white text-red-600 border-red-600 shadow-sm'
+              : 'text-gray-500 hover:text-gray-800 border-transparent'
+          "
+        >
+          <i class="bi bi-journal-text"></i>
+          <span>Kardex de Movimientos</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 font-bold">
+            {{ movements.length }}
+          </span>
+        </button>
+      </div>
+
+      <!-- ==================== TAB 1: ALERTAS ==================== -->
+      <div *ngIf="activeTab === 'alertas'" class="p-5 sm:p-6 space-y-4">
+        <div
+          *ngIf="!loading && !errorMessage && summary.alerts.length === 0"
+          class="py-12 text-center"
+        >
+          <div class="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+            <i class="bi bi-check2-circle text-3xl"></i>
+          </div>
+          <h3 class="text-lg font-black text-gray-900 m-0">Todo el inventario está en niveles óptimos</h3>
+          <p class="text-sm text-gray-500 mt-1 mb-0">
+            Ningún ingrediente ni extra se encuentra por debajo de su stock mínimo.
+          </p>
+        </div>
+
+        <div
+          *ngIf="summary.alerts.length > 0"
+          class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden"
+        >
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[780px]">
+              <thead>
+                <tr class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-4 font-bold">Tipo</th>
+                  <th class="py-3.5 px-4 font-bold">Insumo / Producto</th>
+                  <th class="py-3.5 px-4 font-bold text-right">Stock Actual</th>
+                  <th class="py-3.5 px-4 font-bold text-right">Stock Mínimo</th>
+                  <th class="py-3.5 px-4 font-bold text-right">Costo Unitario</th>
+                  <th class="py-3.5 px-4 font-bold text-center">Estado</th>
+                  <th class="py-3.5 px-4 font-bold text-center">Acción Rápida</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 text-sm">
+                <tr
+                  *ngFor="let alert of paginatedAlertsList; trackBy: trackByAlert"
+                  class="hover:bg-gray-50 transition-colors"
+                >
+                  <td class="py-3.5 px-4">
+                    <span
+                      class="px-2.5 py-1 rounded-lg text-[11px] font-black uppercase"
+                      [ngClass]="alert.itemType === 'INGREDIENT' ? 'bg-blue-50 text-blue-700' : 'bg-indigo-50 text-indigo-700'"
+                    >
+                      {{ alert.itemType === 'INGREDIENT' ? 'Ingrediente' : 'Extra' }}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 font-bold text-gray-900">{{ alert.name }}</td>
+                  <td class="py-3.5 px-4 text-right font-black" [ngClass]="alert.status === 'OUT_OF_STOCK' ? 'text-red-600' : 'text-amber-600'">
+                    {{ alert.stockQuantity | number:'1.0-2' }} {{ alert.unit }}
+                  </td>
+                  <td class="py-3.5 px-4 text-right text-gray-600 font-medium">
+                    {{ alert.minStock | number:'1.0-2' }} {{ alert.unit }}
+                  </td>
+                  <td class="py-3.5 px-4 text-right text-gray-700 font-semibold">
+                    S/ {{ alert.unitCost | number:'1.2-4' }} / {{ alert.unit }}
+                  </td>
+                  <td class="py-3.5 px-4 text-center">
+                    <span
+                      class="px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase"
+                      [ngClass]="
+                        alert.status === 'OUT_OF_STOCK'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-amber-100 text-amber-800'
+                      "
+                    >
+                      {{ alert.status === 'OUT_OF_STOCK' ? 'AGOTADO' : 'STOCK BAJO' }}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 text-center">
+                    <div class="flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        (click)="abrirDesdeAlerta(alert, 'RESTOCK')"
+                        class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Reabastecer</span>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="abrirDesdeAlerta(alert, 'ADJUST')"
+                        class="px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-100 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+                        title="Ajustar conteo físico"
+                      >
+                        <i class="bi bi-sliders"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <app-pagination
+          *ngIf="summary.alerts.length > 0"
+          [currentPage]="alertsPage"
+          [totalItems]="summary.alerts.length"
+          [itemsPerPage]="alertsPerPage"
+          [pageSizeOptions]="[10, 25, 50]"
+          (pageChange)="onAlertsPageChange($event)"
+          (itemsPerPageChange)="onAlertsPerPageChange($event)"
+        ></app-pagination>
+      </div>
+
+      <!-- ==================== TAB 2: EXISTENCIAS VALORIZADAS ==================== -->
+      <div *ngIf="activeTab === 'existencias'" class="p-5 sm:p-6 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="relative">
+            <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input
+              type="text"
+              [(ngModel)]="stockSearch"
+              (ngModelChange)="onStockFilterChange()"
+              placeholder="Buscar ingrediente o extra..."
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+          </div>
+
+          <select
+            [(ngModel)]="stockTypeFilter"
+            (ngModelChange)="onStockFilterChange()"
+            class="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            <option value="TODOS">Todos los tipos (Insumos y Extras)</option>
+            <option value="INGREDIENT">Solo Ingredientes / Insumos</option>
+            <option value="EXTRA">Solo Extras (Bebidas, Postres, Entradas)</option>
+          </select>
+
+          <select
+            [(ngModel)]="stockStatusFilter"
+            (ngModelChange)="onStockFilterChange()"
+            class="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            <option value="TODOS">Todos los estados de stock</option>
+            <option value="OK">Stock Óptimo</option>
+            <option value="LOW_STOCK">Stock Bajo</option>
+            <option value="OUT_OF_STOCK">Agotados</option>
+          </select>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[880px]">
+              <thead>
+                <tr class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-4 font-bold">Tipo</th>
+                  <th class="py-3.5 px-4 font-bold">Item</th>
+                  <th class="py-3.5 px-4 font-bold text-right">Stock Actual</th>
+                  <th class="py-3.5 px-4 font-bold text-right">Mínimo</th>
+                  <th class="py-3.5 px-4 font-bold text-right">Costo Directo Unit.</th>
+                  <th class="py-3.5 px-4 font-bold text-right">Valorizado Total</th>
+                  <th class="py-3.5 px-4 font-bold text-center">Estado</th>
+                  <th class="py-3.5 px-4 font-bold text-center">Operaciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 text-sm">
+                <tr
+                  *ngFor="let row of paginatedStockList; trackBy: trackByStockRow"
+                  class="hover:bg-gray-50 transition-colors"
+                >
+                  <td class="py-3 px-4">
+                    <span
+                      class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase"
+                      [ngClass]="row.itemType === 'INGREDIENT' ? 'bg-blue-50 text-blue-700' : 'bg-indigo-50 text-indigo-700'"
+                    >
+                      {{ row.itemType === 'INGREDIENT' ? 'Insumo' : 'Extra' }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <p class="font-bold text-gray-900 m-0">{{ row.name }}</p>
+                    <p class="text-xs text-gray-400 m-0 mt-0.5">{{ row.categoryLabel }}</p>
+                  </td>
+                  <td class="py-3 px-4 text-right font-black text-gray-900">
+                    {{ row.stockQuantity | number:'1.0-2' }} <span class="text-xs font-semibold text-gray-500">{{ row.unit }}</span>
+                  </td>
+                  <td class="py-3 px-4 text-right text-gray-500">
+                    {{ row.minStock | number:'1.0-2' }} {{ row.unit }}
+                  </td>
+                  <td class="py-3 px-4 text-right text-gray-700 font-medium">
+                    S/ {{ row.unitCost | number:'1.2-4' }}
+                  </td>
+                  <td class="py-3 px-4 text-right font-bold text-emerald-700">
+                    S/ {{ row.totalValue | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span
+                      class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase"
+                      [ngClass]="{
+                        'bg-emerald-100 text-emerald-700': row.status === 'OK',
+                        'bg-amber-100 text-amber-800': row.status === 'LOW_STOCK',
+                        'bg-red-100 text-red-700': row.status === 'OUT_OF_STOCK'
+                      }"
+                    >
+                      {{ row.status === 'OK' ? 'ÓPTIMO' : row.status === 'LOW_STOCK' ? 'STOCK BAJO' : 'AGOTADO' }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                      <button
+                        type="button"
+                        (click)="abrirDesdeFilaStock(row, 'RESTOCK')"
+                        class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer"
+                        title="Reabastecer stock"
+                      >
+                        <i class="bi bi-plus-lg"></i> Entrada
+                      </button>
+                      <button
+                        type="button"
+                        (click)="abrirDesdeFilaStock(row, 'ADJUST')"
+                        class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-colors cursor-pointer"
+                        title="Ajuste de conteo físico"
+                      >
+                        <i class="bi bi-sliders"></i> Ajuste
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="!loading && !errorMessage && filteredStockList.length === 0">
+                  <td colspan="8" class="py-8 text-center text-gray-400">
+                    No se encontraron items con los filtros aplicados.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <app-pagination
+          *ngIf="filteredStockList.length > 0"
+          [currentPage]="stockPage"
+          [totalItems]="filteredStockList.length"
+          [itemsPerPage]="stockPerPage"
+          [pageSizeOptions]="[10, 25, 50]"
+          (pageChange)="onStockPageChange($event)"
+          (itemsPerPageChange)="onStockPerPageChange($event)"
+        ></app-pagination>
+      </div>
+
+      <!-- ==================== TAB 3: KARDEX DE MOVIMIENTOS ==================== -->
+      <div *ngIf="activeTab === 'kardex'" class="p-5 sm:p-6 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div class="relative md:col-span-2">
+            <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input
+              type="text"
+              [(ngModel)]="kardexSearch"
+              (ngModelChange)="onKardexSearchChange()"
+              placeholder="Buscar por producto, motivo o usuario..."
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+          </div>
+
+          <select
+            [(ngModel)]="kardexItemType"
+            (ngModelChange)="cargarMovimientos()"
+            class="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            <option value="TODOS">Todos los items</option>
+            <option value="INGREDIENT">Ingredientes / Insumos</option>
+            <option value="EXTRA">Extras</option>
+          </select>
+
+          <select
+            [(ngModel)]="kardexMovementType"
+            (ngModelChange)="cargarMovimientos()"
+            class="px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            <option value="TODOS">Todos los movimientos</option>
+            <option value="PURCHASE">Compras / Entradas</option>
+            <option value="SALE">Ventas (Pedidos)</option>
+            <option value="LOSS">Mermas / Pérdidas</option>
+            <option value="ADJUSTMENT">Ajustes Físicos</option>
+            <option value="RETURN">Devoluciones</option>
+          </select>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[960px]">
+              <thead>
+                <tr class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-4 font-bold">Fecha / Hora</th>
+                  <th class="py-3.5 px-4 font-bold">Producto</th>
+                  <th class="py-3.5 px-4 font-bold text-center">Movimiento</th>
+                  <th class="py-3.5 px-4 font-bold text-right">Variación</th>
+                  <th class="py-3.5 px-4 font-bold text-center">Saldo (Antes → Después)</th>
+                  <th class="py-3.5 px-4 font-bold text-right">Costo Total</th>
+                  <th class="py-3.5 px-4 font-bold">Motivo / Referencia</th>
+                  <th class="py-3.5 px-4 font-bold">Responsable</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 text-sm">
+                <tr
+                  *ngFor="let mov of paginatedMovementsList; trackBy: trackByMovement"
+                  class="hover:bg-gray-50 transition-colors"
+                >
+                  <td class="py-3 px-4 text-xs text-gray-500 whitespace-nowrap">
+                    {{ mov.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-gray-900">{{ mov.itemName || 'Item' }}</div>
+                    <span class="text-[10px] font-bold uppercase text-gray-400">
+                      {{ mov.itemType === 'INGREDIENT' ? 'Insumo' : 'Extra' }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span
+                      class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase whitespace-nowrap"
+                      [ngClass]="getMovementBadgeClass(mov.movementType)"
+                    >
+                      {{ getMovementLabel(mov.movementType) }}
+                    </span>
+                  </td>
+                  <td
+                    class="py-3 px-4 text-right font-black whitespace-nowrap"
+                    [ngClass]="mov.quantity >= 0 ? 'text-emerald-600' : 'text-red-600'"
+                  >
+                    {{ mov.quantity > 0 ? '+' : '' }}{{ mov.quantity | number:'1.0-2' }} {{ mov.unit }}
+                  </td>
+                  <td class="py-3 px-4 text-center text-xs font-semibold text-gray-600 whitespace-nowrap">
+                    {{ mov.previousStock | number:'1.0-2' }}
+                    <i class="bi bi-arrow-right mx-1 text-gray-400"></i>
+                    <span class="font-black text-gray-900">{{ mov.newStock | number:'1.0-2' }} {{ mov.unit }}</span>
+                  </td>
+                  <td class="py-3 px-4 text-right font-bold text-gray-800 whitespace-nowrap">
+                    S/ {{ mov.totalCost | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-4 text-xs text-gray-600 max-w-[240px]">
+                    <p class="truncate m-0" [title]="mov.reason || ''">{{ mov.reason || 'Sin observación' }}</p>
+                    <span *ngIf="mov.referenceType" class="text-[10px] text-gray-400 font-semibold">
+                      Ref: {{ mov.referenceType }} {{ mov.referenceId ? '#' + mov.referenceId : '' }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-xs font-medium text-gray-600 whitespace-nowrap">
+                    {{ mov.userName || 'Sistema' }}
+                  </td>
+                </tr>
+                <tr *ngIf="!loading && !loadingMovements && !errorMessage && filteredMovementsList.length === 0">
+                  <td colspan="8" class="py-10 text-center text-gray-400">
+                    No hay movimientos registrados para los filtros seleccionados.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <app-pagination
+          *ngIf="filteredMovementsList.length > 0"
+          [currentPage]="kardexPage"
+          [totalItems]="filteredMovementsList.length"
+          [itemsPerPage]="kardexPerPage"
+          [pageSizeOptions]="[10, 25, 50]"
+          (pageChange)="onKardexPageChange($event)"
+          (itemsPerPageChange)="onKardexPerPageChange($event)"
+        ></app-pagination>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<!-- ==================== MODAL DE OPERACIÓN DE INVENTARIO ==================== -->
+<div
+  *ngIf="showOperationModal"
+  class="fixed inset-0 z-[6000] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+>
+  <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90dvh] flex flex-col overflow-hidden">
+    <!-- Modal Header -->
+    <div class="bg-gray-900 text-white px-5 sm:px-6 py-4 flex items-center justify-between shrink-0">
+      <div>
+        <h3 class="text-lg font-black m-0">
+          {{ operationMode === 'RESTOCK' ? 'Reabastecer Stock (Entrada)' : 'Ajuste Físico de Inventario' }}
+        </h3>
+        <p class="text-xs text-gray-400 mt-0.5 mb-0">
+          {{
+            operationMode === 'RESTOCK'
+              ? 'Suma unidades o gramos al stock actual y registra compra en Kardex'
+              : 'Establece el nuevo conteo físico exacto en almacén'
+          }}
+        </p>
+      </div>
+      <button
+        type="button"
+        [disabled]="savingOperation"
+        (click)="cerrarModalOperacion()"
+        class="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center shrink-0 cursor-pointer"
+      >
+        <i class="bi bi-x-lg text-sm"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+      <!-- Selector de Modo -->
+      <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl">
+        <button
+          type="button"
+          (click)="operationMode = 'RESTOCK'; onChangeOperationItem()"
+          class="py-2 rounded-lg text-xs font-black uppercase transition-colors cursor-pointer"
+          [ngClass]="operationMode === 'RESTOCK' ? 'bg-red-600 text-white shadow' : 'text-gray-600 hover:text-gray-900'"
+        >
+          <i class="bi bi-plus-circle mr-1"></i> Entrada / Compra
+        </button>
+        <button
+          type="button"
+          (click)="operationMode = 'ADJUST'; onChangeOperationItem()"
+          class="py-2 rounded-lg text-xs font-black uppercase transition-colors cursor-pointer"
+          [ngClass]="operationMode === 'ADJUST' ? 'bg-gray-900 text-white shadow' : 'text-gray-600 hover:text-gray-900'"
+        >
+          <i class="bi bi-sliders mr-1"></i> Conteo Físico
+        </button>
+      </div>
+
+      <!-- Tipo de Item -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tipo de Producto</label>
+          <select
+            [(ngModel)]="operationForm.itemType"
+            (ngModelChange)="onChangeOperationItemType()"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            <option value="INGREDIENT">Ingrediente / Insumo</option>
+            <option value="EXTRA">Extra (Bebida / Postre / Entrada)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Seleccionar Item</label>
+          <select
+            *ngIf="operationForm.itemType === 'INGREDIENT'"
+            [(ngModel)]="operationForm.itemId"
+            (ngModelChange)="onChangeOperationItem()"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            <option *ngFor="let ing of ingredientes; trackBy: trackByIngredient" [ngValue]="ing.id">
+              {{ ing.name }} ({{ ing.stockQuantity | number:'1.0-2' }} {{ ing.unit || 'g' }})
+            </option>
+          </select>
+
+          <select
+            *ngIf="operationForm.itemType === 'EXTRA'"
+            [(ngModel)]="operationForm.itemId"
+            (ngModelChange)="onChangeOperationItem()"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            <option *ngFor="let ext of extras; trackBy: trackByExtra" [ngValue]="ext.id">
+              {{ ext.name }} ({{ ext.stockQuantity || 0 }} und)
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Resumen en vivo -->
+      <div *ngIf="selectedCatalogItem as item" class="bg-gray-50 border border-gray-200 rounded-xl p-3.5 flex items-center justify-between gap-2">
+        <div>
+          <p class="text-xs text-gray-500 font-semibold m-0">Stock actual en almacén</p>
+          <p class="text-base font-black text-gray-900 m-0 mt-0.5">{{ item.stockQuantity | number:'1.0-2' }} {{ item.unit }}</p>
+        </div>
+        <i class="bi bi-arrow-right text-gray-400 text-lg shrink-0"></i>
+        <div class="text-right">
+          <p class="text-xs text-gray-500 font-semibold m-0">Stock resultante estimado</p>
+          <p class="text-base font-black text-emerald-600 m-0 mt-0.5">
+            {{ projectedStockAfterOperation | number:'1.0-2' }} {{ item.unit }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Cantidad + Costo Unitario + Stock Mínimo -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">
+            {{ operationMode === 'RESTOCK' ? 'Cantidad a ingresar' : 'Nuevo stock físico' }}
+            <span *ngIf="selectedCatalogItem">({{ selectedCatalogItem.unit }})</span>
+          </label>
+          <input
+            type="number"
+            min="0"
+            [step]="operationForm.itemType === 'EXTRA' ? '1' : '0.01'"
+            [(ngModel)]="operationForm.quantity"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Costo Directo Unit. (S/)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.0001"
+            [(ngModel)]="operationForm.unitCost"
+            placeholder="Opcional"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Stock Mínimo Alerta</label>
+          <input
+            type="number"
+            min="0"
+            [step]="operationForm.itemType === 'EXTRA' ? '1' : '0.01'"
+            [(ngModel)]="operationForm.minStock"
+            placeholder="Opcional"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+        </div>
+      </div>
+
+      <!-- Motivo -->
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Motivo / Guía / Observación</label>
+        <input
+          type="text"
+          [(ngModel)]="operationForm.reason"
+          placeholder="Ej: Compra factura F001-245 / Conteo semanal de almacén"
+          class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+        />
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-5 sm:px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end gap-3 shrink-0">
+      <button
+        type="button"
+        [disabled]="savingOperation"
+        (click)="cerrarModalOperacion()"
+        class="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-100 disabled:opacity-50 cursor-pointer"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        [disabled]="savingOperation"
+        (click)="guardarOperacion()"
+        class="px-5 py-2 rounded-xl text-white font-bold text-sm shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
+        [ngClass]="operationMode === 'RESTOCK' ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-900 hover:bg-black'"
+      >
+        {{ savingOperation ? 'Guardando...' : operationMode === 'RESTOCK' ? 'Confirmar Entrada' : 'Aplicar Ajuste' }}
+      </button>
+    </div>
+  </div>
+</div>

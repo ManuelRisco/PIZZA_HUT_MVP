@@ -13,7 +13,10 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface PizzaMapper {
 
+    @Mapping(source = "category.id", target = "categoryId")
     @Mapping(source = "category.name", target = "categoryName")
+    @Mapping(target = "ingredients", ignore = true)
+    @Mapping(target = "recipe", ignore = true)
     PizzaDTO toDto(Pizza pizza);
 
     @Mapping(source = "categoryId", target = "category.id")

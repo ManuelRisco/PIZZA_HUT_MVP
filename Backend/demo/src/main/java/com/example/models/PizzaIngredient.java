@@ -2,6 +2,7 @@ package com.example.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -25,13 +26,16 @@ public class PizzaIngredient {
     @Column(nullable = false)
     private boolean isDefault = true;
 
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal quantity = new BigDecimal("50.00");
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // Constructor vac\u00edo
+    // Constructor vacío
     public PizzaIngredient() {}
 
-    // Constructor completo
+    // Constructor original preservado por compatibilidad
     public PizzaIngredient(PizzaIngredientId id, Pizza pizza, Ingredient ingredient, boolean isDefault, LocalDateTime createdAt) {
         this.id = id;
         this.pizza = pizza;
@@ -73,6 +77,14 @@ public class PizzaIngredient {
         this.isDefault = isDefault;
     }
 
+    public BigDecimal getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(BigDecimal quantity) {
+        this.quantity = quantity;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -84,5 +96,8 @@ public class PizzaIngredient {
     @PrePersist
     protected void onCreate() {
         if (this.createdAt == null) this.createdAt = LocalDateTime.now();
+        if (this.quantity == null || this.quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            this.quantity = new BigDecimal("50.00");
+        }
     }
 }

@@ -48,3 +48,6 @@ Thumbs.db
 
 # SonarQube
 .scannerwork/
+
+# Entorno Python que quedó de la suite anterior
+e2e/.venv/

@@ -51,12 +51,12 @@ class UsuarioServiceTest {
     void testCrearUsuarioExitoso() {
         when(usuarioRepository.existsByEmail(anyString())).thenReturn(false);
         when(usuarioRepository.existsByName(anyString())).thenReturn(false);
-        when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioTest);
+        when(usuarioRepository.saveAndFlush(any(Usuario.class))).thenReturn(usuarioTest);
 
         String resultado = usuarioService.registrarUsuario(usuarioTest);
 
         assertEquals("¡Acabas de registrarte con éxito!", resultado);
-        verify(usuarioRepository, times(1)).save(usuarioTest);
+        verify(usuarioRepository, times(1)).saveAndFlush(usuarioTest);
     }
 
     @Test

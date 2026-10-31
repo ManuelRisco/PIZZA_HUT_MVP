@@ -1,11 +1,15 @@
 /* Dashboard Layout - Minimal CSS since we use Tailwind */
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow: hidden;
 }
 
-/* Scrollbar personalizado para nav y main content */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -13,12 +17,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.5); /* tailwind gray-400 with opacity */
+  background: rgba(156, 163, 175, 0.5);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(107, 114, 128, 0.8); /* tailwind gray-500 */
+  background: rgba(107, 114, 128, 0.8);
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb {

@@ -1,0 +1,634 @@
+<div class="space-y-6 font-sans">
+  <!-- Executive v2 Header Card -->
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Finanzas, Stock y Costos</p>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Pérdidas de Productos y Mermas</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">
+        Control económico y trazabilidad de mermas por vencimiento, daño, error en cocina y pedidos cancelados
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        [disabled]="loading"
+        (click)="cargarPerdidas()"
+        class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise" [ngClass]="{ 'animate-spin': loading }"></i>
+        <span>Actualizar</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="abrirModalNueva()"
+        class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-plus-lg"></i>
+        <span>Registrar Pérdida</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Persistent Error / Backend-Offline Banner -->
+  <div
+    *ngIf="errorMessage"
+    class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+    role="alert"
+  >
+    <div class="flex items-start sm:items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-wifi-off text-lg"></i>
+      </div>
+      <div>
+        <p class="text-sm font-black text-red-900 m-0">No se pudo sincronizar la información</p>
+        <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ errorMessage }}</p>
+      </div>
+    </div>
+    <button
+      type="button"
+      (click)="cargarPerdidas()"
+      class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
+    >
+      <i class="bi bi-arrow-clockwise"></i> Reintentar
+    </button>
+  </div>
+
+  <!-- KPI Summary Row -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- Pérdida Económica Total -->
+    <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
+          <i class="bi bi-graph-down-arrow text-xl"></i>
+        </div>
+        <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-red-50 text-red-700">
+          Impacto P&amp;L
+        </span>
+      </div>
+      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pérdida Económica Total</p>
+      <p class="text-2xl font-black text-red-600 m-0">S/ {{ totalLossCostFiltered | number:'1.2-2' }}</p>
+    </div>
+
+    <!-- Total Registros -->
+    <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-11 h-11 rounded-xl bg-gray-100 text-gray-800 flex items-center justify-center">
+          <i class="bi bi-clipboard2-x-fill text-xl"></i>
+        </div>
+        <span class="text-xs font-bold text-gray-400">Historial filtrado</span>
+      </div>
+      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Incidentes / Mermas</p>
+      <p class="text-2xl font-black text-gray-900 m-0">{{ filteredLosses.length }}</p>
+    </div>
+
+    <!-- Mayor Causa de Pérdida -->
+    <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm sm:col-span-2 lg:col-span-1">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+          <i class="bi bi-exclamation-diamond-fill text-xl"></i>
+        </div>
+        <span
+          *ngIf="topLossCause"
+          class="text-xs font-black px-2.5 py-1 rounded-full bg-amber-50 text-amber-800"
+        >
+          {{ topLossCause.percentage | number:'1.0-1' }}% del total
+        </span>
+      </div>
+      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Mayor Causa de Pérdida</p>
+      <p class="text-base font-black text-gray-900 m-0 truncate">
+        {{ topLossCause ? topLossCause.label : 'Sin pérdidas registradas' }}
+      </p>
+      <p *ngIf="topLossCause" class="text-xs font-bold text-red-600 mt-1 mb-0">
+        S/ {{ topLossCause.totalCost | number:'1.2-2' }} ({{ topLossCause.count }} registros)
+      </p>
+    </div>
+  </div>
+
+  <!-- Desglose por Categoría (Tarjetas Interactivas) -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+    <button
+      type="button"
+      *ngFor="let stat of categoryStats; trackBy: trackByCategoryStat"
+      (click)="filtrarPorCategoriaRapida(stat.code)"
+      class="text-left bg-white rounded-2xl p-4 border transition-all shadow-sm hover:shadow-md cursor-pointer"
+      [ngClass]="filterCategory === stat.code ? 'border-red-600 ring-2 ring-red-100' : 'border-gray-200'"
+    >
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold px-2 py-0.5 rounded-full" [ngClass]="stat.badgeClass">
+          {{ stat.count }} incidentes
+        </span>
+        <i class="bi text-lg text-gray-400" [ngClass]="stat.icon"></i>
+      </div>
+      <p class="text-xs font-bold text-gray-700 line-clamp-1 mb-1">{{ stat.label }}</p>
+      <p class="text-lg font-black text-gray-900 m-0">S/ {{ stat.totalCost | number:'1.2-2' }}</p>
+      <div class="w-full bg-gray-100 rounded-full h-1.5 mt-2 overflow-hidden">
+        <div class="h-full rounded-full transition-all" [ngClass]="stat.barClass" [style.width.%]="stat.percentage"></div>
+      </div>
+    </button>
+  </div>
+
+  <!-- Toolbar de Filtros -->
+  <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col md:flex-row flex-wrap items-stretch md:items-center justify-between gap-3">
+    <!-- Buscador -->
+    <div class="relative flex-1 min-w-[220px]">
+      <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="currentPage = 1; recalcularVista()"
+        placeholder="Buscar por producto, motivo o usuario..."
+        class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
+      />
+    </div>
+
+    <!-- Selects de Filtros -->
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Filtro Tipo Item -->
+      <select
+        [(ngModel)]="filterItemType"
+        (ngModelChange)="cargarPerdidas()"
+        class="px-3 py-2 rounded-xl border border-gray-200 text-xs sm:text-sm font-semibold bg-gray-50 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none cursor-pointer"
+      >
+        <option value="TODOS">Todos los tipos</option>
+        <option value="INGREDIENT">Ingredientes</option>
+        <option value="EXTRA">Extras</option>
+        <option value="PIZZA">Pizzas Preparadas</option>
+      </select>
+
+      <!-- Filtro Causa -->
+      <select
+        [(ngModel)]="filterCategory"
+        (ngModelChange)="cargarPerdidas()"
+        class="px-3 py-2 rounded-xl border border-gray-200 text-xs sm:text-sm font-semibold bg-gray-50 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none cursor-pointer"
+      >
+        <option value="TODOS">Todas las causas</option>
+        <option value="EXPIRED">Vencimiento</option>
+        <option value="DAMAGED">Daño / Deterioro</option>
+        <option value="KITCHEN_ERROR">Error en Cocina</option>
+        <option value="CANCELLED_ORDER">Pedido Cancelado</option>
+        <option value="OTHER">Otras</option>
+      </select>
+
+      <!-- Fechas -->
+      <div class="flex items-center gap-1.5">
+        <input
+          type="date"
+          [(ngModel)]="filterStartDate"
+          (ngModelChange)="currentPage = 1; recalcularVista()"
+          class="px-2.5 py-1.5 rounded-xl border border-gray-200 text-xs bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20"
+        />
+        <span class="text-gray-400 text-xs">—</span>
+        <input
+          type="date"
+          [(ngModel)]="filterEndDate"
+          (ngModelChange)="currentPage = 1; recalcularVista()"
+          class="px-2.5 py-1.5 rounded-xl border border-gray-200 text-xs bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20"
+        />
+      </div>
+
+      <button
+        type="button"
+        (click)="limpiarFiltros()"
+        class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+        title="Restablecer filtros"
+      >
+        Limpiar
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="bg-white rounded-2xl border border-gray-200 p-16 flex flex-col items-center justify-center shadow-sm">
+    <div class="animate-spin rounded-full h-11 w-11 border-4 border-red-100 border-t-red-600 mb-4"></div>
+    <p class="text-gray-500 font-medium text-sm m-0">Cargando registros de pérdidas...</p>
+  </div>
+
+  <!-- Tabla de Mermas Registradas -->
+  <div *ngIf="!loading && !errorMessage" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse min-w-[850px]">
+        <thead>
+          <tr class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
+            <th class="py-3.5 px-4">Fecha / ID</th>
+            <th class="py-3.5 px-4">Tipo</th>
+            <th class="py-3.5 px-4">Producto Afectado</th>
+            <th class="py-3.5 px-4">Causa / Categoría</th>
+            <th class="py-3.5 px-4 text-center">Cantidad</th>
+            <th class="py-3.5 px-4 text-right">Costo Total</th>
+            <th class="py-3.5 px-4">Motivo / Responsable</th>
+            <th class="py-3.5 px-4 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm divide-y divide-gray-100">
+          <tr *ngFor="let loss of paginatedLosses; trackBy: trackByLoss" class="hover:bg-gray-50/70 transition-colors">
+            <!-- Fecha e ID -->
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              <span class="font-black text-gray-900 block">#MER-{{ loss.id }}</span>
+              <span class="text-xs text-gray-500">
+                {{ loss.lossDate ? (loss.lossDate | date:'dd/MM/yy HH:mm') : '—' }}
+              </span>
+            </td>
+
+            <!-- Tipo de Item -->
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              <span
+                class="px-2.5 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1.5"
+                [ngClass]="{
+                  'bg-emerald-50 text-emerald-800 border border-emerald-200': loss.itemType === 'INGREDIENT',
+                  'bg-blue-50 text-blue-800 border border-blue-200': loss.itemType === 'EXTRA',
+                  'bg-red-50 text-red-800 border border-red-200': loss.itemType === 'PIZZA'
+                }"
+              >
+                <i
+                  class="bi text-xs"
+                  [ngClass]="{
+                    'bi-droplet-fill': loss.itemType === 'INGREDIENT',
+                    'bi-cup-straw': loss.itemType === 'EXTRA',
+                    'bi-pie-chart-fill': loss.itemType === 'PIZZA'
+                  }"
+                ></i>
+                {{
+                  loss.itemType === 'INGREDIENT'
+                    ? 'Ingrediente'
+                    : loss.itemType === 'EXTRA'
+                    ? 'Extra'
+                    : 'Pizza Preparada'
+                }}
+              </span>
+            </td>
+
+            <!-- Producto -->
+            <td class="py-3.5 px-4">
+              <span class="font-bold text-gray-900 block">{{ loss.itemName }}</span>
+              <span *ngIf="loss.orderId" class="text-xs text-purple-700 font-bold inline-flex items-center gap-1">
+                <i class="bi bi-receipt"></i> Pedido #PH-{{ loss.orderId }}
+              </span>
+            </td>
+
+            <!-- Causa -->
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold" [ngClass]="getCategoryBadgeClass(loss.category)">
+                {{ getCategoryLabel(loss.category) }}
+              </span>
+            </td>
+
+            <!-- Cantidad -->
+            <td class="py-3.5 px-4 text-center whitespace-nowrap">
+              <span class="font-black text-gray-900">
+                {{ loss.quantity | number:'1.0-2' }}
+              </span>
+              <span class="text-xs text-gray-500 font-bold ml-1">{{ loss.unit }}</span>
+            </td>
+
+            <!-- Costo -->
+            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+              <span class="font-black text-red-600 block text-base">
+                S/ {{ loss.totalLossCost | number:'1.2-2' }}
+              </span>
+              <span class="text-[11px] text-gray-400 block font-medium">
+                (S/ {{ loss.unitCost | number:'1.2-4' }}/{{ loss.unit }})
+              </span>
+            </td>
+
+            <!-- Motivo / Reportado por -->
+            <td class="py-3.5 px-4 max-w-xs">
+              <p class="text-xs text-gray-700 font-medium m-0 line-clamp-2">
+                {{ loss.reason || 'Sin justificación detallada' }}
+              </p>
+              <span class="text-[11px] text-gray-400 block mt-0.5">
+                Por: {{ loss.reportedByName || 'Sistema' }}
+              </span>
+            </td>
+
+            <!-- Acciones -->
+            <td class="py-3.5 px-4 text-center whitespace-nowrap">
+              <div class="inline-flex items-center gap-1.5">
+                <button
+                  type="button"
+                  (click)="abrirModalEditar(loss)"
+                  class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 inline-flex items-center justify-center transition-colors cursor-pointer"
+                  title="Editar causa o justificación"
+                >
+                  <i class="bi bi-pencil-fill text-xs"></i>
+                </button>
+                <button
+                  type="button"
+                  (click)="confirmarEliminar(loss)"
+                  class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 inline-flex items-center justify-center transition-colors cursor-pointer"
+                  title="Eliminar registro"
+                >
+                  <i class="bi bi-trash3-fill text-xs"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Estado Vacío -->
+          <tr *ngIf="filteredLosses.length === 0">
+            <td colspan="8" class="py-14 text-center text-gray-400">
+              <i class="bi bi-shield-check text-4xl block mb-2 text-emerald-500"></i>
+              <p class="text-base font-bold text-gray-800 m-0">No se encontraron registros de pérdidas</p>
+              <p class="text-xs text-gray-500 mt-1 mb-0">No hay mermas en el período seleccionado con los filtros aplicados.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    <div class="px-5 py-3.5 border-t border-gray-100 bg-white" *ngIf="filteredLosses.length > 0">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="filteredLosses.length"
+        [itemsPerPage]="itemsPerPage"
+        [pageSizeOptions]="[10, 25, 50]"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL REGISTRAR / EDITAR PÉRDIDA ==================== -->
+<div
+  *ngIf="showModal"
+  class="fixed inset-0 bg-black/60 z-[6000] flex items-center justify-center p-4 backdrop-blur-xs"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden animate-fade-in-up">
+    <!-- Header Modal -->
+    <div class="px-6 py-4 bg-gray-900 text-white flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white">
+          <i class="bi" [ngClass]="editingLoss ? 'bi-pencil-square' : 'bi-exclamation-octagon-fill'"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-black text-white m-0">
+            {{ editingLoss ? 'Editar Pérdida #MER-' + editingLoss.id : 'Registrar Pérdida / Merma' }}
+          </h3>
+          <p class="text-xs text-gray-400 m-0">
+            {{ editingLoss ? 'Modifica la causa y motivo del registro' : 'Afectará costos P&L y opcionalmente el stock disponible' }}
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="cerrarModal()"
+        class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white flex items-center justify-center cursor-pointer"
+      >
+        <i class="bi bi-x-lg text-sm"></i>
+      </button>
+    </div>
+
+    <!-- Body Modal -->
+    <div class="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+      <ng-container *ngIf="!editingLoss">
+        <!-- Selector Tipo de Item -->
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1.5">Tipo de Elemento Afectado</label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button
+              type="button"
+              (click)="form.itemType = 'INGREDIENT'; onChangeFormItemType()"
+              class="py-2.5 px-3 rounded-xl border text-xs font-black uppercase transition-all cursor-pointer"
+              [ngClass]="form.itemType === 'INGREDIENT' ? 'border-red-600 bg-red-50 text-red-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'"
+            >
+              <i class="bi bi-droplet-fill mr-1"></i> Ingrediente
+            </button>
+            <button
+              type="button"
+              (click)="form.itemType = 'EXTRA'; onChangeFormItemType()"
+              class="py-2.5 px-3 rounded-xl border text-xs font-black uppercase transition-all cursor-pointer"
+              [ngClass]="form.itemType === 'EXTRA' ? 'border-red-600 bg-red-50 text-red-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'"
+            >
+              <i class="bi bi-cup-straw mr-1"></i> Extra
+            </button>
+            <button
+              type="button"
+              (click)="form.itemType = 'PIZZA'; onChangeFormItemType()"
+              class="py-2.5 px-3 rounded-xl border text-xs font-black uppercase transition-all cursor-pointer"
+              [ngClass]="form.itemType === 'PIZZA' ? 'border-red-600 bg-red-50 text-red-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'"
+            >
+              <i class="bi bi-pie-chart-fill mr-1"></i> Pizza Preparada
+            </button>
+          </div>
+        </div>
+
+        <!-- Selector según tipo -->
+        <div *ngIf="form.itemType === 'INGREDIENT'">
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Ingrediente / Insumo</label>
+          <select
+            [(ngModel)]="form.ingredientId"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+          >
+            <option *ngFor="let ing of ingredientes" [ngValue]="ing.id">
+              {{ ing.name }} — Stock: {{ ing.stockQuantity | number:'1.0-2' }} {{ ing.unit || 'g' }} (S/ {{ ing.unitCost | number:'1.2-4' }}/{{ ing.unit || 'g' }})
+            </option>
+          </select>
+        </div>
+
+        <div *ngIf="form.itemType === 'EXTRA'">
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Producto Extra</label>
+          <select
+            [(ngModel)]="form.extraId"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+          >
+            <option *ngFor="let ext of extras" [ngValue]="ext.id">
+              {{ ext.name }} — Stock: {{ ext.stockQuantity || 0 }} und (Costo: S/ {{ ext.unitCost | number:'1.2-2' }})
+            </option>
+          </select>
+        </div>
+
+        <div *ngIf="form.itemType === 'PIZZA'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Pizza</label>
+            <select
+              [(ngModel)]="form.pizzaId"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+            >
+              <option *ngFor="let piz of pizzas" [ngValue]="piz.id">
+                {{ piz.name }} (Base: S/ {{ piz.productionCost | number:'1.2-2' }})
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tamaño Preparado</label>
+            <select
+              [(ngModel)]="form.sizeId"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+            >
+              <option *ngFor="let sz of sizes" [ngValue]="sz.id">
+                {{ sz.name }} (Receta x{{ (sz.recipeMultiplier || 1) | number:'1.2-2' }})
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Cantidad y Estimación de Costo en Vivo -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">
+              Cantidad Perdida ({{ selectedUnitLabel }})
+            </label>
+            <input
+              type="number"
+              min="0.01"
+              [step]="form.itemType === 'INGREDIENT' ? '0.01' : '1'"
+              [(ngModel)]="form.quantity"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-black focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+            <p class="text-[11px] text-gray-500 mt-1 mb-0">{{ selectedCurrentStockInfo }}</p>
+          </div>
+
+          <div class="bg-red-50 border border-red-100 rounded-xl p-3.5">
+            <span class="text-[10px] font-black uppercase tracking-wider text-red-500">Costo Directo Estimado</span>
+            <p class="text-2xl font-black text-red-600 mt-0.5 mb-0">
+              S/ {{ estimatedTotalLossCost | number:'1.2-2' }}
+            </p>
+            <p class="text-[11px] text-red-700/80 m-0 mt-0.5">
+              Unitario: S/ {{ estimatedUnitDirectCost | number:'1.2-4' }} / {{ selectedUnitLabel }}
+            </p>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Categoría y Fecha -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Categoría / Causa</label>
+          <select
+            [(ngModel)]="form.category"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+          >
+            <option value="EXPIRED">Vencimiento / Caducidad</option>
+            <option value="DAMAGED">Daño / Rotura de Envase</option>
+            <option value="KITCHEN_ERROR">Error en Cocina / Horno</option>
+            <option value="CANCELLED_ORDER">Pedido Cancelado en Preparación</option>
+            <option value="OTHER">Otras Mermas</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Fecha y Hora</label>
+          <input
+            type="datetime-local"
+            [(ngModel)]="form.lossDate"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+        </div>
+      </div>
+
+      <!-- Motivo -->
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descripción / Justificación</label>
+        <textarea
+          rows="2"
+          [(ngModel)]="form.reason"
+          placeholder="Ej: Lote vencido al cierre de turno / Pizza quemada en horno #2..."
+          class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+        ></textarea>
+      </div>
+
+      <!-- Checkbox descontar stock -->
+      <label
+        *ngIf="!editingLoss"
+        class="flex items-start gap-3 p-3.5 rounded-xl bg-gray-50 border border-gray-200 cursor-pointer"
+      >
+        <input
+          type="checkbox"
+          [(ngModel)]="form.deductStock"
+          class="mt-0.5 w-4 h-4 accent-red-600 rounded"
+        />
+        <div>
+          <span class="text-sm font-bold text-gray-900 block">
+            Descontar automáticamente del stock actual en almacén
+          </span>
+          <span class="text-xs text-gray-500">
+            {{
+              form.itemType === 'PIZZA'
+                ? 'Descontará cada ingrediente de la receta multiplicado por el tamaño elegido y registrará salida LOSS en Kardex.'
+                : 'Reducirá el stock disponible y creará el movimiento LOSS en Kardex.'
+            }}
+          </span>
+        </div>
+      </label>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3 shrink-0">
+      <button
+        type="button"
+        (click)="cerrarModal()"
+        class="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-100 cursor-pointer"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        [disabled]="saving"
+        (click)="guardarPerdida()"
+        class="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm shadow-md transition-colors disabled:opacity-50 cursor-pointer"
+      >
+        {{ saving ? 'Guardando...' : editingLoss ? 'Guardar Cambios' : 'Registrar Pérdida' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL CONFIRMAR ELIMINACIÓN ==================== -->
+<div
+  *ngIf="lossToDelete"
+  class="fixed inset-0 bg-black/60 z-[6000] flex items-center justify-center p-4 backdrop-blur-xs"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-fade-in-up">
+    <div class="p-6 space-y-4">
+      <div class="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
+        <i class="bi bi-trash3-fill text-xl"></i>
+      </div>
+      <div>
+        <h3 class="text-lg font-black text-gray-900 m-0">¿Eliminar registro de pérdida?</h3>
+        <p class="text-sm text-gray-500 mt-1 mb-0">
+          Se eliminará la merma de <strong class="text-gray-800">{{ lossToDelete.itemName }}</strong>
+          por <strong class="text-red-600">S/ {{ lossToDelete.totalLossCost | number:'1.2-2' }}</strong>.
+        </p>
+      </div>
+
+      <label
+        *ngIf="!lossToDelete.orderId && (lossToDelete.itemType === 'INGREDIENT' || lossToDelete.itemType === 'EXTRA')"
+        class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 cursor-pointer"
+      >
+        <input
+          type="checkbox"
+          [(ngModel)]="restoreStockOnDelete"
+          class="mt-0.5 w-4 h-4 accent-emerald-600"
+        />
+        <span class="text-xs font-semibold text-emerald-900">
+          Restaurar {{ lossToDelete.quantity | number:'1.0-2' }} {{ lossToDelete.unit }} al stock de almacén (registra devolución en Kardex)
+        </span>
+      </label>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          (click)="cancelarEliminar()"
+          class="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-100 cursor-pointer"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          [disabled]="deleting"
+          (click)="ejecutarEliminar()"
+          class="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm shadow-md disabled:opacity-50 cursor-pointer"
+        >
+          {{ deleting ? 'Eliminando...' : 'Sí, Eliminar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

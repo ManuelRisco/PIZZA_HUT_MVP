@@ -4,6 +4,8 @@ import com.example.services.OrderService;
 import com.example.services.PromotionService;
 import com.example.services.PaymentService;
 import com.example.services.CheckoutService;
+import com.example.services.InventoryService;
+import com.example.services.ProductLossService;
 import com.example.dtos.OrderDTO;
 import com.example.dtos.OrderCompleteDTO;
 import com.example.dtos.CheckoutRequestDTO;
@@ -48,20 +50,31 @@ public class OrderController {
     private final JdbcTemplate jdbcTemplate;
     private final SecurityUtils securityUtils;
     private final PaymentService paymentService;
+    private final InventoryService inventoryService;
+    private final ProductLossService productLossService;
 
-    public OrderController(OrderService orderService, CheckoutService checkoutService, PromotionService promotionService, JdbcTemplate jdbcTemplate, SecurityUtils securityUtils, PaymentService paymentService) {
+    public OrderController(OrderService orderService,
+                           CheckoutService checkoutService,
+                           PromotionService promotionService,
+                           JdbcTemplate jdbcTemplate,
+                           SecurityUtils securityUtils,
+                           PaymentService paymentService,
+                           InventoryService inventoryService,
+                           ProductLossService productLossService) {
         this.orderService = orderService;
         this.checkoutService = checkoutService;
         this.promotionService = promotionService;
         this.jdbcTemplate = jdbcTemplate;
         this.securityUtils = securityUtils;
         this.paymentService = paymentService;
+        this.inventoryService = inventoryService;
+        this.productLossService = productLossService;
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<OrderDTO>>> listarOrders() {
         List<Order> orders;
-        
+
         if (securityUtils.isAdmin()) {
             orders = orderService.listarOrders();
         } else {
@@ -71,7 +84,7 @@ public class OrderController {
             }
             orders = orderService.obtenerPorUserId(userId);
         }
-        
+
         List<OrderDTO> ordersDTO = orders.stream()
             .map(OrderDTO::new)
             .toList();
@@ -81,14 +94,14 @@ public class OrderController {
     @GetMapping("/{id}")
     public ResponseEntity<Object> obtenerOrderPorId(@PathVariable("id") Integer id) {
         Optional<Order> orderOpt = orderService.obtenerPorId(id);
-        
+
         if (orderOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of(MSG_KEY, "Order no encontrado"));
         }
-        
+
         Order order = orderOpt.get();
-        
+
         if (!securityUtils.isAdmin()) {
             Integer currentUserId = securityUtils.getCurrentUserId();
             if (currentUserId == null || !order.getUserId().equals(currentUserId)) {
@@ -96,7 +109,7 @@ public class OrderController {
                     .body(Map.of(MSG_KEY, "No tienes permiso para ver este pedido"));
             }
         }
-        
+
         OrderDTO orderDTO = new OrderDTO(order);
         return ResponseEntity.ok(ApiResponse.success(orderDTO));
     }
@@ -110,7 +123,7 @@ public class OrderController {
                     .body(Map.of(MSG_KEY, "No tienes permiso para ver estos pedidos"));
             }
         }
-        
+
         List<Order> orders = orderService.obtenerPorUserId(userId);
         List<OrderDTO> ordersDTO = orders.stream()
             .map(OrderDTO::new)
@@ -148,26 +161,26 @@ public class OrderController {
                 orderDTO.setUserId(currentUserId);
             }
 
-            Order.DeliveryType deliveryType = Order.DeliveryType.DELIVERY; 
+            Order.DeliveryType deliveryType = Order.DeliveryType.DELIVERY;
             if (orderDTO.getDeliveryType() != null) {
                 deliveryType = Order.DeliveryType.valueOf(orderDTO.getDeliveryType().toUpperCase());
             }
-            
+
             if (deliveryType == Order.DeliveryType.DELIVERY && orderDTO.getAddressId() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of(MSG_KEY, "La direcciÃ³n es requerida para entregas a domicilio"));
+                    .body(Map.of(MSG_KEY, "La dirección es requerida para entregas a domicilio"));
             }
-            
+
             BigDecimal deliveryFee = orderDTO.getDeliveryFee();
             if (deliveryType == Order.DeliveryType.PICKUP) {
                 deliveryFee = BigDecimal.ZERO;
             }
-            
+
             BigDecimal discount = BigDecimal.ZERO;
             String promoCode = orderDTO.getPromoCode();
             Integer promotionId = null;
             com.example.models.Promotion promotionAUsar = resolveValidPromotion(promoCode, orderDTO.getUserId());
-            
+
             if (promotionAUsar != null) {
                 discount = promotionService.calcularDescuento(promotionAUsar, orderDTO.getSubtotal());
                 promoCode = promotionAUsar.getCode();
@@ -175,7 +188,7 @@ public class OrderController {
             } else {
                 promoCode = null;
             }
-            
+
             Order order = new Order();
             order.setUserId(orderDTO.getUserId());
             order.setAddressId(orderDTO.getAddressId());
@@ -189,13 +202,14 @@ public class OrderController {
             order.setPromoCode(promoCode);
             order.setPromotionId(promotionId);
             order.setNotes(orderDTO.getNotes());
-            order.setEstimatedDelivery(orderDTO.getEstimatedDelivery() != null ? 
+            order.setStockSettled("DEDUCTED");
+            order.setEstimatedDelivery(orderDTO.getEstimatedDelivery() != null ?
                 orderDTO.getEstimatedDelivery() : LocalDateTime.now().plusMinutes(45));
-            
+
             Order orderCreado = orderService.crearOrder(order);
-            
+
             incrementarUsoPromocionSafely(promotionAUsar);
-            
+
             return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(new OrderDTO(orderCreado), "Creado exitosamente"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
@@ -246,6 +260,8 @@ public class OrderController {
             Order orderCreado = checkoutService.checkout(req);
             return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(new OrderDTO(orderCreado), "Pedido procesado exitosamente"));
+        } catch (com.example.exceptions.InsufficientStockException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
         }
@@ -258,7 +274,7 @@ public class OrderController {
             if (orderDTO.getDeliveryType() != null) {
                 deliveryType = Order.DeliveryType.valueOf(orderDTO.getDeliveryType().toUpperCase());
             }
-            
+
             Order order = new Order();
             order.setUserId(orderDTO.getUserId());
             order.setAddressId(orderDTO.getAddressId());
@@ -270,7 +286,7 @@ public class OrderController {
             order.setTotal(orderDTO.getTotal());
             order.setNotes(orderDTO.getNotes());
             order.setEstimatedDelivery(orderDTO.getEstimatedDelivery());
-            
+
             Order orderActualizado = orderService.actualizarOrder(id, order);
             return ResponseEntity.ok(ApiResponse.success(new OrderDTO(orderActualizado)));
         } catch (Exception e) {
@@ -292,16 +308,31 @@ public class OrderController {
             }
 
             Order order = orderOpt.get();
+            Order.OrderStatus previousStatus = order.getStatus();
             Order.OrderStatus newStatus = Order.OrderStatus.valueOf(nuevoEstado.toUpperCase());
+
+            if (newStatus == Order.OrderStatus.CANCELLED
+                    && previousStatus != Order.OrderStatus.CANCELLED
+                    && "DEDUCTED".equalsIgnoreCase(order.getStockSettled())) {
+                Integer currentUserId = securityUtils.getCurrentUserId();
+                if (previousStatus == Order.OrderStatus.PENDING || previousStatus == Order.OrderStatus.CONFIRMED) {
+                    inventoryService.returnOrderStock(order, currentUserId);
+                    order.setStockSettled("RETURNED");
+                } else if (previousStatus == Order.OrderStatus.PREPARING || previousStatus == Order.OrderStatus.OUT_FOR_DELIVERY) {
+                    productLossService.recordCancelledOrderLoss(order, currentUserId);
+                    order.setStockSettled("LOSS_RECORDED");
+                }
+            }
+
             order.setStatus(newStatus);
             Order orderActualizado = orderService.actualizarOrder(id, order);
-            
+
             Optional<Payment> paymentOpt = paymentService.obtenerPorOrderId(id);
             if (paymentOpt.isPresent()) {
                 Payment payment = paymentOpt.get();
                 if (newStatus == Order.OrderStatus.PENDING) {
                     payment.setStatus(Payment.PaymentStatus.PENDING);
-                } else if (newStatus == Order.OrderStatus.CONFIRMED || newStatus == Order.OrderStatus.PREPARING || 
+                } else if (newStatus == Order.OrderStatus.CONFIRMED || newStatus == Order.OrderStatus.PREPARING ||
                            newStatus == Order.OrderStatus.OUT_FOR_DELIVERY || newStatus == Order.OrderStatus.DELIVERED) {
                     payment.setStatus(Payment.PaymentStatus.PAID);
                 } else if (newStatus == Order.OrderStatus.CANCELLED) {
@@ -309,11 +340,12 @@ public class OrderController {
                 }
                 paymentService.actualizarPayment(payment.getId(), payment);
             }
-            
+
             return ResponseEntity.ok(ApiResponse.success(new OrderDTO(orderActualizado)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(MSG_KEY, "Estado invÃ¡lido: " + payload.get(STATUS_KEY)));
+            return ResponseEntity.badRequest().body(Map.of(MSG_KEY, "Estado inválido: " + payload.get(STATUS_KEY)));
         } catch (Exception e) {
+            logger.error("Error al cambiar estado del pedido #{}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(MSG_KEY, "Error al actualizar el estado"));
         }
     }
@@ -327,7 +359,7 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(MSG_KEY, e.getMessage()));
         }
     }
-    
+
     @GetMapping("/complete")
     public ResponseEntity<ApiResponse<List<OrderCompleteDTO>>> listarOrdersCompletos() {
         Integer currentUserId = null;
@@ -337,21 +369,21 @@ public class OrderController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
         }
-        
+
         List<OrderCompleteDTO> orders = fetchOrders(currentUserId);
         if (orders.isEmpty()) {
             return ResponseEntity.ok(ApiResponse.success(orders));
         }
-        
-        List<Integer> orderIds = orders.stream().map(o -> o.getId()).toList();
+
+        List<Integer> orderIds = orders.stream().map(OrderCompleteDTO::getId).toList();
         Map<Integer, List<OrderCompleteDTO.OrderItemCompleteDTO>> itemsByOrder = new HashMap<>();
         List<Integer> allPizzaItemIds = new ArrayList<>();
-        
+
         fetchOrderItems(orderIds, itemsByOrder, allPizzaItemIds);
         Map<Integer, List<String>> extrasMap = fetchItemExtras(allPizzaItemIds);
-        
+
         assembleOrders(orders, itemsByOrder, extrasMap);
-        
+
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
 
@@ -368,10 +400,10 @@ public class OrderController {
             """ + (currentUserId != null ? "WHERE o.userId = ? " : "") + """
             ORDER BY o.createdAt DESC LIMIT 100
             """;
-        
+
         List<Object> queryArgs = new ArrayList<>();
         if (currentUserId != null) queryArgs.add(currentUserId);
-        
+
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             OrderCompleteDTO dto = new OrderCompleteDTO();
             dto.setId(rs.getInt("order_id"));
@@ -395,7 +427,7 @@ public class OrderController {
             dto.setTotal(rs.getBigDecimal("total"));
             dto.setNotes(rs.getString("notes"));
             dto.setEstimatedDelivery(rs.getTimestamp("estimatedDelivery") != null ? rs.getTimestamp("estimatedDelivery").toLocalDateTime() : null);
-            dto.setCreatedAt(rs.getTimestamp("order_date").toLocalDateTime());
+            dto.setCreatedAt(rs.getTimestamp("order_date") != null ? rs.getTimestamp("order_date").toLocalDateTime() : null);
             return dto;
         }, queryArgs.toArray());
     }
@@ -403,7 +435,7 @@ public class OrderController {
     private void fetchOrderItems(List<Integer> orderIds, Map<Integer, List<OrderCompleteDTO.OrderItemCompleteDTO>> itemsByOrder, List<Integer> allPizzaItemIds) {
         String itemPlaceholders = orderIds.stream().map(id -> "?").collect(Collectors.joining(","));
         String itemSql = "SELECT oi.orderId, oi.id, oi.pizzaId, oi.extraId, oi.item_type, p.name AS pizza_name, e.name AS extra_name, oi.sizeId, s.name AS size_name, oi.quantity, oi.unitPrice, oi.lineTotal FROM order_items oi LEFT JOIN pizzas p ON oi.pizzaId = p.id LEFT JOIN extras e ON oi.extraId = e.id LEFT JOIN sizes s ON oi.sizeId = s.id WHERE oi.orderId IN (" + itemPlaceholders + ") ORDER BY oi.id";
-        
+
         jdbcTemplate.query(itemSql, (rs) -> {
             int orderId = rs.getInt("orderId");
             OrderCompleteDTO.OrderItemCompleteDTO item = new OrderCompleteDTO.OrderItemCompleteDTO();
@@ -456,11 +488,11 @@ public class OrderController {
         String sql = "SELECT ingredientName FROM order_item_extras WHERE orderItemId = ? ORDER BY id";
         return jdbcTemplate.query(sql, (rs, rowNum) -> rs.getString("ingredientName"), orderItemId);
     }
-    
+
     @GetMapping("/{id}/items")
     public ResponseEntity<ApiResponse<List<OrderCompleteDTO.OrderItemCompleteDTO>>> obtenerItemsCompletos(@PathVariable("id") Integer id) {
         String sql = "SELECT oi.id, oi.pizzaId, oi.extraId, oi.item_type, p.name AS pizza_name, e.name AS extra_name, oi.sizeId, s.name AS size_name, oi.quantity, oi.unitPrice, oi.lineTotal FROM order_items oi LEFT JOIN pizzas p ON oi.pizzaId = p.id LEFT JOIN extras e ON oi.extraId = e.id LEFT JOIN sizes s ON oi.sizeId = s.id WHERE oi.orderId = ? ORDER BY oi.id";
-        
+
         List<OrderCompleteDTO.OrderItemCompleteDTO> items = jdbcTemplate.query(sql, (rs, rowNum) -> {
             OrderCompleteDTO.OrderItemCompleteDTO item = new OrderCompleteDTO.OrderItemCompleteDTO();
             item.setId(rs.getInt("id"));
@@ -469,7 +501,7 @@ public class OrderController {
             if (ITEM_TYPE_EXTRA.equals(itemType)) {
                 item.setExtraId(rs.getObject(FIELD_EXTRA_ID) != null ? rs.getInt(FIELD_EXTRA_ID) : null);
                 item.setExtraName(rs.getString(FIELD_EXTRA_NAME));
-                item.setPizzaName(rs.getString(FIELD_EXTRA_NAME)); 
+                item.setPizzaName(rs.getString(FIELD_EXTRA_NAME));
             } else {
                 item.setPizzaId(rs.getObject(FIELD_PIZZA_ID) != null ? rs.getInt(FIELD_PIZZA_ID) : null);
                 item.setPizzaName(rs.getString("pizza_name"));
@@ -482,8 +514,7 @@ public class OrderController {
             item.setLineTotal(rs.getBigDecimal("lineTotal"));
             return item;
         }, id);
-        
+
         return ResponseEntity.ok(ApiResponse.success(items));
     }
 }
-

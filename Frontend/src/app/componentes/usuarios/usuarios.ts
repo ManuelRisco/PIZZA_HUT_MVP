@@ -14,13 +14,15 @@ import { AuditLog } from '../../models/audit-log.model';
 import { SessionLogService } from '../../services/session-log.service';
 import { AuditLogService } from '../../services/audit-log.service';
 
+export type FiltroUsuario = 'todos' | 'admins' | 'clientes' | 'activos' | 'inactivos' | 'admins-activos';
+
 @Component({
   selector: 'app-usuarios',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    ReactiveFormsModule, 
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
     PaginationComponent
   ],
@@ -28,32 +30,58 @@ import { AuditLogService } from '../../services/audit-log.service';
   styleUrl: './usuarios.css'
 })
 export class Usuarios implements OnInit, OnDestroy {
+  todosLosUsuarios: UsuarioDTO[] = [];
   usuarios: UsuarioDTO[] = [];
   usuariosPaginados: UsuarioDTO[] = [];
   currentPage: number = 1;
   itemsPerPage: number = 10;
+
+  // Búsqueda y filtros locales (0ms)
+  busqueda: string = '';
+  filtroActivo: FiltroUsuario = 'todos';
+
+  // KPIs precomputados
+  kpiTotal: number = 0;
+  kpiClientes: number = 0;
+  kpiAdmins: number = 0;
+  kpiActivos: number = 0;
+
   usuarioForm: FormGroup;
   editMode = false;
   selectedUsuarioId?: number;
   showForm = false;
   loading: boolean = true;
+  guardando: boolean = false;
+  procesandoId: number | null = null;
+  loadError: string = '';
   error = '';
   success = '';
-  filtroActivo: 'todos' | 'admins' | 'activos' | 'admins-activos' = 'todos';
-  
+
   // Variables para mostrar/ocultar contraseñas
   showPassword = false;
   showConfirmPassword = false;
 
   // Variables para la modal de creación/edición
   mostrarModal: boolean = false;
-  
+
   // Variables para Logs del Sistema
   showLogsModal: boolean = false;
   activeLogTab: 'sesiones' | 'auditoria' = 'sesiones';
   sesionesActivas: SessionLog[] = [];
+  sesionesPaginadas: SessionLog[] = [];
+  sesionesPage: number = 1;
+  sesionesPerPage: number = 10;
+
   auditLogs: AuditLog[] = [];
+  auditLogsFiltrados: AuditLog[] = [];
+  auditLogsPaginados: AuditLog[] = [];
+  logsBusqueda: string = '';
+  logsPage: number = 1;
+  logsPerPage: number = 10;
+
   loadingLogs: boolean = false;
+  logsError: string = '';
+  cerrandoSesionToken: string | null = null;
 
   private subscriptions: Subscription[] = [];
 
@@ -70,7 +98,7 @@ export class Usuarios implements OnInit, OnDestroy {
     this.usuarioForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
       name: ['', [
-        Validators.required, 
+        Validators.required,
         Validators.minLength(4),
         Validators.maxLength(50),
         Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/)
@@ -80,7 +108,7 @@ export class Usuarios implements OnInit, OnDestroy {
       ]],
       role: ['CUSTOMER', Validators.required],
       password: ['', [
-        Validators.required, 
+        Validators.required,
         Validators.minLength(6),
         Validators.maxLength(20),
         Validators.pattern(/^(?=.*[A-Z])(?=.*\d).+$/)
@@ -103,7 +131,7 @@ export class Usuarios implements OnInit, OnDestroy {
     // Limpiar suscripciones anteriores
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.subscriptions = [];
-    
+
     // Validar nombre en tiempo real
     const nameSub = this.usuarioForm.get('name')?.valueChanges.subscribe(value => {
       if (value?.trim()) {
@@ -149,130 +177,158 @@ export class Usuarios implements OnInit, OnDestroy {
   passwordsMatchValidator: ValidatorFn = (form: AbstractControl) => {
     const password = form.get('password')?.value;
     const confirm = form.get('confirmPassword')?.value;
-    
-    
     return password === confirm ? null : { passwordMismatch: true };
   };
 
+  recargar(): void {
+    this.cargarUsuarios();
+  }
+
+  reintentar(): void {
+    this.cargarUsuarios();
+  }
+
   cargarUsuarios(): void {
     this.loading = true;
+    this.loadError = '';
     this.limpiarMensajes();
-    
-    // Aplicar filtro según el seleccionado (Specification Pattern)
-    this.aplicarFiltro();
+
+    this.usuarioService.listarUsuarios().subscribe({
+      next: (usuarios) => {
+        this.todosLosUsuarios = [...(usuarios || [])];
+        this.recalcularKPIs();
+        this.aplicarFiltroLocal();
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error al cargar usuarios:', err);
+        this.loadError = err?.status === 0
+          ? 'No se pudo conectar con el servidor. Verifique que el backend esté en ejecución.'
+          : (err?.error?.message || 'No se pudo cargar la lista de usuarios.');
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private recalcularKPIs(): void {
+    const lista = this.todosLosUsuarios;
+    this.kpiTotal = lista.length;
+    let clientes = 0;
+    let admins = 0;
+    let activos = 0;
+
+    for (const u of lista) {
+      if (u.role === 'ADMIN') {
+        admins++;
+      } else {
+        clientes++;
+      }
+      if (this.estaActivo(u)) {
+        activos++;
+      }
+    }
+
+    this.kpiClientes = clientes;
+    this.kpiAdmins = admins;
+    this.kpiActivos = activos;
   }
 
   /**
-   * Aplica el filtro seleccionado usando Specification Pattern
+   * Aplica filtro de rol/estado y búsqueda de texto localmente en 0ms sin peticiones HTTP
    */
-  aplicarFiltro(): void {
-    this.loading = true;
-    
+  aplicarFiltroLocal(): void {
+    let resultado = this.todosLosUsuarios;
+
     switch (this.filtroActivo) {
       case 'admins':
-        this.cargarAdministradores();
+        resultado = resultado.filter(u => u.role === 'ADMIN');
+        break;
+      case 'clientes':
+        resultado = resultado.filter(u => u.role !== 'ADMIN');
         break;
       case 'activos':
-        this.cargarUsuariosActivos();
+        resultado = resultado.filter(u => this.estaActivo(u));
+        break;
+      case 'inactivos':
+        resultado = resultado.filter(u => !this.estaActivo(u));
         break;
       case 'admins-activos':
-        this.cargarAdministradoresActivos();
+        resultado = resultado.filter(u => u.role === 'ADMIN' && this.estaActivo(u));
         break;
       default:
-        this.cargarTodosLosUsuarios();
+        break;
     }
+
+    const term = this.busqueda.trim().toLowerCase();
+    if (term) {
+      resultado = resultado.filter(u =>
+        (u.name || '').toLowerCase().includes(term) ||
+        (u.email || '').toLowerCase().includes(term) ||
+        (u.phone || '').toLowerCase().includes(term) ||
+        String(u.id ?? '').includes(term)
+      );
+    }
+
+    this.usuarios = resultado;
+    this.aplicarPaginacion();
   }
 
   /**
-   * Carga todos los usuarios (sin filtro)
+   * Aplica el filtro seleccionado (compatibilidad local inmediata)
    */
+  aplicarFiltro(): void {
+    if (this.todosLosUsuarios.length === 0 && !this.loadError) {
+      this.cargarUsuarios();
+      return;
+    }
+    this.aplicarFiltroLocal();
+  }
+
   cargarTodosLosUsuarios(): void {
-    this.usuarioService.listarUsuarios().subscribe({
-      next: (usuarios) => {
-        this.usuarios = [...usuarios];
-        this.aplicarPaginacion();
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error al cargar usuarios:', error);
-        this.mostrarMensajeError('Error al cargar los usuarios');
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
+    this.filtroActivo = 'todos';
+    this.cargarUsuarios();
   }
 
-  /**
-   * Carga solo administradores (filtrado local)
-   */
   cargarAdministradores(): void {
-    this.usuarioService.listarUsuarios().subscribe({
-      next: (usuarios) => {
-        this.usuarios = usuarios.filter(u => u.role === 'ADMIN');
-        this.aplicarPaginacion();
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error al cargar administradores:', error);
-        this.mostrarMensajeError('Error al cargar administradores');
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
+    this.filtroActivo = 'admins';
+    this.aplicarFiltro();
   }
 
-  /**
-   * Carga solo usuarios activos (filtrado local)
-   */
   cargarUsuariosActivos(): void {
-    this.usuarioService.listarUsuarios().subscribe({
-      next: (usuarios) => {
-        this.usuarios = usuarios.filter(u => this.estaActivo(u));
-        this.aplicarPaginacion();
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error al cargar usuarios activos:', error);
-        this.mostrarMensajeError('Error al cargar usuarios activos');
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
+    this.filtroActivo = 'activos';
+    this.aplicarFiltro();
   }
 
-  /**
-   * Carga administradores activos (filtrado local)
-   */
   cargarAdministradoresActivos(): void {
-    this.usuarioService.listarUsuarios().subscribe({
-      next: (usuarios) => {
-        this.usuarios = usuarios.filter(u => u.role === 'ADMIN' && this.estaActivo(u));
-        this.aplicarPaginacion();
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error al cargar administradores activos:', error);
-        this.mostrarMensajeError('Error al cargar administradores activos');
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  /**
-   * Cambia el filtro activo y recarga los usuarios
-   */
-  cambiarFiltro(filtro: 'todos' | 'admins' | 'activos' | 'admins-activos'): void {
-    this.filtroActivo = filtro;
+    this.filtroActivo = 'admins-activos';
     this.aplicarFiltro();
   }
 
   /**
-   * Aplica paginación a los usuarios
+   * Cambia el filtro activo localmente en 0ms
+   */
+  cambiarFiltro(filtro: FiltroUsuario): void {
+    this.filtroActivo = filtro;
+    this.currentPage = 1;
+    this.aplicarFiltroLocal();
+  }
+
+  onBusquedaChange(): void {
+    this.currentPage = 1;
+    this.aplicarFiltroLocal();
+  }
+
+  limpiarFiltros(): void {
+    this.busqueda = '';
+    this.filtroActivo = 'todos';
+    this.currentPage = 1;
+    this.aplicarFiltroLocal();
+  }
+
+  /**
+   * Aplica paginación a los usuarios filtrados
    */
   aplicarPaginacion(): void {
     const totalPages = Math.ceil(this.usuarios.length / this.itemsPerPage);
@@ -281,7 +337,7 @@ export class Usuarios implements OnInit, OnDestroy {
     } else if (this.currentPage < 1) {
       this.currentPage = 1;
     }
-    
+
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
     this.usuariosPaginados = this.usuarios.slice(startIndex, endIndex);
@@ -295,121 +351,28 @@ export class Usuarios implements OnInit, OnDestroy {
     this.aplicarPaginacion();
   }
 
+  onItemsPerPageChange(size: number): void {
+    this.itemsPerPage = size;
+    this.currentPage = 1;
+    this.aplicarPaginacion();
+  }
+
   recargarListaSinLoading(): void {
-    // Aplicar el filtro activo en lugar de cargar todos los usuarios
-    this.aplicarFiltroSinLoading();
-  }
-
-  /**
-   * Aplica el filtro activo sin mostrar el indicador de carga
-   */
-  aplicarFiltroSinLoading(): void {
-    switch (this.filtroActivo) {
-      case 'admins':
-        this.cargarAdministradoresSinLoading();
-        break;
-      case 'activos':
-        this.cargarUsuariosActivosSinLoading();
-        break;
-      case 'admins-activos':
-        this.cargarAdministradoresActivosSinLoading();
-        break;
-      default:
-        this.cargarTodosLosUsuariosSinLoading();
-    }
-  }
-
-  /**
-   * Carga todos los usuarios sin indicador de loading
-   */
-  cargarTodosLosUsuariosSinLoading(): void {
     this.usuarioService.listarUsuarios().subscribe({
       next: (usuarios) => {
-        this.usuarios = [...usuarios];
-        this.aplicarPaginacion();
+        this.todosLosUsuarios = [...(usuarios || [])];
+        this.loadError = '';
+        this.recalcularKPIs();
+        this.aplicarFiltroLocal();
         this.loading = false;
-        this.cdr.detectChanges();
-        setTimeout(() => {
-          this.cdr.markForCheck();
-        }, 10);
-      },
-      error: (error) => {
-        console.error('Error al recargar usuarios:', error);
-        this.mostrarMensajeError('Error al recargar los usuarios');
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  /**
-   * Carga administradores sin indicador de loading (filtrado local)
-   */
-  cargarAdministradoresSinLoading(): void {
-    this.usuarioService.listarUsuarios().subscribe({
-      next: (usuarios) => {
-        this.usuarios = usuarios.filter(u => u.role === 'ADMIN');
-        this.aplicarPaginacion();
-        this.loading = false;
-        this.cdr.detectChanges();
-        setTimeout(() => {
-          this.cdr.markForCheck();
-        }, 10);
-      },
-      error: (error) => {
-        console.error('Error al recargar administradores:', error);
-        this.mostrarMensajeError('Error al recargar administradores');
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  /**
-   * Carga usuarios activos sin indicador de loading (filtrado local)
-   */
-  cargarUsuariosActivosSinLoading(): void {
-    this.usuarioService.listarUsuarios().subscribe({
-      next: (usuarios) => {
-        this.usuarios = usuarios.filter(u => this.estaActivo(u));
-        this.aplicarPaginacion();
-        this.loading = false;
-        this.cdr.detectChanges();
-        setTimeout(() => {
-          this.cdr.markForCheck();
-        }, 10);
-      },
-      error: (error) => {
-        console.error('Error al recargar usuarios activos:', error);
-        this.mostrarMensajeError('Error al recargar usuarios activos');
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  /**
-   * Carga administradores activos sin indicador de loading (filtrado local)
-   */
-  cargarAdministradoresActivosSinLoading(): void {
-    this.usuarioService.listarUsuarios().subscribe({
-      next: (usuarios) => {
-        this.usuarios = usuarios.filter(u => u.role === 'ADMIN' && this.estaActivo(u));
-        this.aplicarPaginacion();
-        this.loading = false;
-        this.cdr.detectChanges();
-        setTimeout(() => {
-          this.cdr.markForCheck();
-        }, 10);
-      },
-      error: (error) => {
-        console.error('Error al recargar administradores activos:', error);
-        this.mostrarMensajeError('Error al recargar administradores activos');
-        this.loading = false;
+        this.procesandoId = null;
         this.cdr.detectChanges();
       },
-      complete: () => {
+      error: (err) => {
+        console.error('Error al recargar usuarios:', err);
+        this.mostrarMensajeError('Error al sincronizar la lista de usuarios');
         this.loading = false;
+        this.procesandoId = null;
         this.cdr.detectChanges();
       }
     });
@@ -418,10 +381,12 @@ export class Usuarios implements OnInit, OnDestroy {
   abrirFormulario(): void {
     this.showForm = true;
     this.editMode = false;
+    this.showPassword = false;
+    this.showConfirmPassword = false;
     this.usuarioForm.reset();
     this.usuarioForm.patchValue({ role: 'CUSTOMER' });
     this.selectedUsuarioId = undefined;
-    
+
     // Asegurar que todos los campos estén habilitados
     this.usuarioForm.get('email')?.enable();
     this.usuarioForm.get('name')?.enable();
@@ -429,7 +394,7 @@ export class Usuarios implements OnInit, OnDestroy {
     this.usuarioForm.get('role')?.enable();
     this.usuarioForm.get('password')?.enable();
     this.usuarioForm.get('confirmPassword')?.enable();
-    
+
     this.setupFormValidators();
     this.limpiarMensajes();
   }
@@ -444,18 +409,18 @@ export class Usuarios implements OnInit, OnDestroy {
       phone: usuario.phone,
       role: usuario.role
     });
-    
+
     // Asegurar que todos los campos estén habilitados para edición
     this.usuarioForm.get('email')?.enable();
     this.usuarioForm.get('name')?.enable();
     this.usuarioForm.get('phone')?.enable();
     this.usuarioForm.get('role')?.enable();
-    
+
     // Deshabilitar el campo de rol si es el usuario actual
     if (this.esUsuarioActual(usuario.email)) {
       this.usuarioForm.get('role')?.disable();
     }
-    
+
     this.setupFormValidatorsForEdit();
     this.limpiarMensajes();
   }
@@ -463,9 +428,10 @@ export class Usuarios implements OnInit, OnDestroy {
   cancelar(): void {
     this.showForm = false;
     this.editMode = false;
+    this.guardando = false;
     this.selectedUsuarioId = undefined;
     this.usuarioForm.reset();
-    
+
     // Habilitar todos los campos al cancelar
     this.usuarioForm.get('email')?.enable();
     this.usuarioForm.get('name')?.enable();
@@ -473,7 +439,7 @@ export class Usuarios implements OnInit, OnDestroy {
     this.usuarioForm.get('role')?.enable();
     this.usuarioForm.get('password')?.enable();
     this.usuarioForm.get('confirmPassword')?.enable();
-    
+
     this.limpiarMensajes();
   }
 
@@ -482,16 +448,19 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   guardarUsuario(): void {
+    if (this.guardando) return;
+
     const isValidForCreation = !this.editMode && this.usuarioForm.valid;
-    
+
     let isValidForEdit = false;
     if (this.editMode) {
       const emailValid = this.usuarioForm.get('email')?.valid ?? false;
       const nameValid = this.usuarioForm.get('name')?.valid ?? false;
+      const phoneValid = this.usuarioForm.get('phone')?.valid ?? true;
       const roleDisabled = this.usuarioForm.get('role')?.disabled ?? false;
       const roleValid = this.usuarioForm.get('role')?.valid ?? false;
-      
-      isValidForEdit = emailValid && nameValid && (roleDisabled || roleValid);
+
+      isValidForEdit = emailValid && nameValid && phoneValid && (roleDisabled || roleValid);
     }
 
     if (!(isValidForCreation || isValidForEdit)) {
@@ -499,7 +468,7 @@ export class Usuarios implements OnInit, OnDestroy {
       this.usuarioForm.markAllAsTouched();
       return;
     }
-    
+
     if (this.verificarNombreDuplicado()) {
       this.mostrarMensajeError('Ya existe un usuario con ese nombre');
       return;
@@ -510,17 +479,19 @@ export class Usuarios implements OnInit, OnDestroy {
       return;
     }
 
+    const fuente = this.todosLosUsuarios.length > 0 ? this.todosLosUsuarios : this.usuarios;
+
     if (this.editMode && this.selectedUsuarioId && this.esUsuarioActualPorId(this.selectedUsuarioId)) {
       const formValue = this.usuarioForm.getRawValue();
-      const usuarioOriginal = this.usuarios.find(u => u.id === this.selectedUsuarioId);
-      
+      const usuarioOriginal = fuente.find(u => u.id === this.selectedUsuarioId);
+
       if (usuarioOriginal && formValue.role !== usuarioOriginal.role) {
-        this.mostrarMensajeError('ðŸš« Por seguridad, no puedes cambiar tu propio rol mientras estás logueado');
+        this.mostrarMensajeError('Por seguridad, no puedes cambiar tu propio rol mientras estás logueado');
         return;
       }
     }
 
-    this.loading = true;
+    this.guardando = true;
     this.limpiarMensajes();
 
     if (this.editMode && this.selectedUsuarioId) {
@@ -532,37 +503,39 @@ export class Usuarios implements OnInit, OnDestroy {
 
   private actualizarUsuarioExistente(): void {
     const formValue = this.usuarioForm.getRawValue();
-    const usuarioOriginal = this.usuarios.find(u => u.id === this.selectedUsuarioId);
-    
+    const fuente = this.todosLosUsuarios.length > 0 ? this.todosLosUsuarios : this.usuarios;
+    const usuarioOriginal = fuente.find(u => u.id === this.selectedUsuarioId);
+
     const usuarioActualizar: UsuarioCreateDTO = {
       email: formValue.email.trim(),
       name: formValue.name.trim(),
       phone: formValue.phone ? formValue.phone.trim() : '',
       password: formValue.password || '',
-      role: this.usuarioForm.get('role')?.disabled ? 
-            (usuarioOriginal?.role || 'CUSTOMER') : 
-            formValue.role
+      role: this.usuarioForm.get('role')?.disabled
+        ? (usuarioOriginal?.role || 'CUSTOMER')
+        : formValue.role
     };
-    
-    this.usuarioService.actualizarUsuario(this.selectedUsuarioId as number, usuarioActualizar).subscribe({
+
+    const editedId = this.selectedUsuarioId as number;
+
+    this.usuarioService.actualizarUsuario(editedId, usuarioActualizar).subscribe({
       next: (usuarioActualizado) => {
-        this.mostrarMensajeExito('Usuario actualizado correctamente');
+        this.guardando = false;
         this.cancelar();
-        
+        this.mostrarMensajeExito('Usuario actualizado correctamente');
+
         const currentUserId = this.authService.obtenerUsuarioId();
-        if (currentUserId && currentUserId === this.selectedUsuarioId) {
+        if (currentUserId && currentUserId === editedId) {
           this.authService.updateCurrentUser(usuarioActualizado);
         }
-        
+
         this.recargarListaSinLoading();
       },
-      error: (error) => {
-        console.error('Error al actualizar usuario:', error);
-        this.mostrarMensajeError(error.error?.message || 'Error al actualizar el usuario');
-        this.loading = false;
-      },
-      complete: () => {
-        this.loading = false;
+      error: (err) => {
+        console.error('Error al actualizar usuario:', err);
+        this.mostrarMensajeError(err?.error?.message || 'Error al actualizar el usuario');
+        this.guardando = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -570,57 +543,53 @@ export class Usuarios implements OnInit, OnDestroy {
   private crearNuevoUsuario(): void {
     const formValue = this.usuarioForm.getRawValue();
     const usuarioCrear: UsuarioCreateDTO = {
-      email: formValue.email,
-      name: formValue.name,
-      phone: formValue.phone || '',
+      email: formValue.email.trim(),
+      name: formValue.name.trim(),
+      phone: formValue.phone ? formValue.phone.trim() : '',
       role: formValue.role,
       password: formValue.password
     };
-    
+
     this.usuarioService.crearUsuario(usuarioCrear).subscribe({
-      next: (response) => {
-        this.mostrarMensajeExito('Usuario creado correctamente');
+      next: () => {
+        this.guardando = false;
         this.cancelar();
+        this.mostrarMensajeExito('Usuario creado correctamente');
         this.recargarListaSinLoading();
       },
-      error: (error) => {
-        console.error('Error al crear usuario:', error);
-        this.mostrarMensajeError(error.error?.message || 'Error al crear el usuario');
-        this.loading = false;
-      },
-      complete: () => {
-        this.loading = false;
+      error: (err) => {
+        console.error('Error al crear usuario:', err);
+        this.mostrarMensajeError(err?.error?.message || 'Error al crear el usuario');
+        this.guardando = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
   eliminarUsuario(id: number, email: string): void {
+    if (this.procesandoId === id) return;
+
     // Verificar si es el usuario actual usando el token
     const userInfo = this.authService.getUserInfo();
     if (userInfo?.email === email) {
-      this.mostrarMensajeError('ðŸš« Por seguridad, no puedes eliminar tu propio usuario mientras estás logueado como administrador');
+      this.mostrarMensajeError('Por seguridad, no puedes eliminar tu propio usuario mientras estás logueado como administrador');
       return;
     }
 
     if (confirm(`¿Está seguro de que desea eliminar el usuario "${email}"?`)) {
-      this.loading = true;
+      this.procesandoId = id;
       this.limpiarMensajes();
-      
+
       this.usuarioService.eliminarUsuario(id).subscribe({
-        next: (response) => {
+        next: () => {
           this.mostrarMensajeExito('Usuario eliminado correctamente');
-          
-          // Recargar la lista desde el servidor para mantener sincronización
           this.recargarListaSinLoading();
         },
-        error: (error) => {
-          console.error('Error al eliminar usuario:', error);
-          this.mostrarMensajeError(error.error?.message || 'Error al eliminar el usuario');
-          this.loading = false;
-        },
-        complete: () => {
-          // Asegurar que siempre se termine el loading
-          this.loading = false;
+        error: (err) => {
+          console.error('Error al eliminar usuario:', err);
+          this.mostrarMensajeError(err?.error?.message || 'Error al eliminar el usuario');
+          this.procesandoId = null;
+          this.cdr.detectChanges();
         }
       });
     }
@@ -630,25 +599,28 @@ export class Usuarios implements OnInit, OnDestroy {
    * Inactiva un usuario (Soft Delete)
    */
   inactivarUsuario(id: number, email: string): void {
+    if (this.procesandoId === id) return;
+
     const userInfo = this.authService.getUserInfo();
     if (userInfo?.email === email) {
-      this.mostrarMensajeError('ðŸš« No puedes inactivar tu propio usuario');
+      this.mostrarMensajeError('No puedes inactivar tu propio usuario');
       return;
     }
 
     if (confirm(`¿Desea inactivar el usuario "${email}"?\n\nEl usuario no será eliminado, solo marcado como inactivo.`)) {
-      this.loading = true;
+      this.procesandoId = id;
       this.limpiarMensajes();
-      
+
       this.usuarioService.inactivarUsuario(id).subscribe({
-        next: (response) => {
-          this.mostrarMensajeExito('âœ… Usuario inactivado correctamente');
+        next: () => {
+          this.mostrarMensajeExito('Usuario inactivado correctamente');
           this.recargarListaSinLoading();
         },
-        error: (error) => {
-          console.error('Error al inactivar usuario:', error);
-          this.mostrarMensajeError(error.error?.message || 'Error al inactivar el usuario');
-          this.loading = false;
+        error: (err) => {
+          console.error('Error al inactivar usuario:', err);
+          this.mostrarMensajeError(err?.error?.message || 'Error al inactivar el usuario');
+          this.procesandoId = null;
+          this.cdr.detectChanges();
         }
       });
     }
@@ -658,19 +630,22 @@ export class Usuarios implements OnInit, OnDestroy {
    * Reactiva un usuario previamente inactivado
    */
   reactivarUsuario(id: number, email: string): void {
+    if (this.procesandoId === id) return;
+
     if (confirm(`¿Desea reactivar el usuario "${email}"?`)) {
-      this.loading = true;
+      this.procesandoId = id;
       this.limpiarMensajes();
-      
+
       this.usuarioService.reactivarUsuario(id).subscribe({
-        next: (response) => {
-          this.mostrarMensajeExito('âœ… Usuario reactivado correctamente');
+        next: () => {
+          this.mostrarMensajeExito('Usuario reactivado correctamente');
           this.recargarListaSinLoading();
         },
-        error: (error) => {
-          console.error('Error al reactivar usuario:', error);
-          this.mostrarMensajeError(error.error?.message || 'Error al reactivar el usuario');
-          this.loading = false;
+        error: (err) => {
+          console.error('Error al reactivar usuario:', err);
+          this.mostrarMensajeError(err?.error?.message || 'Error al reactivar el usuario');
+          this.procesandoId = null;
+          this.cdr.detectChanges();
         }
       });
     }
@@ -686,7 +661,7 @@ export class Usuarios implements OnInit, OnDestroy {
   private setupFormValidators(): void {
     // Para crear nuevo usuario, contraseña es requerida con patrón
     this.usuarioForm.get('password')?.setValidators([
-      Validators.required, 
+      Validators.required,
       Validators.minLength(6),
       Validators.maxLength(20),
       Validators.pattern(/^(?=.*[A-Z])(?=.*\d).+$/)
@@ -701,11 +676,11 @@ export class Usuarios implements OnInit, OnDestroy {
     this.usuarioForm.get('password')?.clearValidators();
     this.usuarioForm.get('confirmPassword')?.clearValidators();
     this.usuarioForm.clearValidators();
-    
+
     // Mantener validaciones básicas
     this.usuarioForm.get('email')?.setValidators([Validators.required, Validators.email]);
     this.usuarioForm.get('name')?.setValidators([
-      Validators.required, 
+      Validators.required,
       Validators.minLength(4),
       Validators.maxLength(50),
       Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/)
@@ -714,7 +689,7 @@ export class Usuarios implements OnInit, OnDestroy {
       Validators.pattern(/^[0-9]{9}$/)
     ]);
     this.usuarioForm.get('role')?.setValidators(Validators.required);
-    
+
     this.usuarioForm.updateValueAndValidity();
   }
 
@@ -726,11 +701,11 @@ export class Usuarios implements OnInit, OnDestroy {
   mostrarMensajeExito(mensaje: string): void {
     this.success = mensaje;
     this.error = '';
-    
-    // Limpiar el mensaje después de 3 segundos
+
     setTimeout(() => {
       this.success = '';
-    }, 3000);
+      this.cdr.markForCheck();
+    }, 3500);
   }
 
   mostrarMensajeError(mensaje: string): void {
@@ -749,57 +724,47 @@ export class Usuarios implements OnInit, OnDestroy {
 
   esUsuarioActualPorId(id?: number): boolean {
     if (!id) return false;
-    const usuario = this.usuarios.find(u => u.id === id);
+    const fuente = this.todosLosUsuarios.length > 0 ? this.todosLosUsuarios : this.usuarios;
+    const usuario = fuente.find(u => u.id === id);
     if (!usuario) return false;
-    
+
     const userInfo = this.authService.getUserInfo();
     return userInfo ? usuario.email === userInfo.email : false;
   }
 
   verificarNombreDuplicado(): boolean {
     const nombreFormulario = this.usuarioForm.get('name')?.value?.trim().toLowerCase();
-    
     if (!nombreFormulario) {
-      return false; // Si no hay nombre, no hay duplicado
+      return false;
     }
 
-    // Filtrar usuarios con el mismo nombre (ignorando mayúsculas/minúsculas)
-    const usuariosConMismoNombre = this.usuarios.filter(usuario => {
-      // En modo edición, ignorar el usuario actual
+    const fuente = this.todosLosUsuarios.length > 0 ? this.todosLosUsuarios : this.usuarios;
+    return fuente.some(usuario => {
       if (this.editMode && usuario.id === this.selectedUsuarioId) {
         return false;
       }
-      
       return usuario.name?.trim().toLowerCase() === nombreFormulario;
     });
-
-    return usuariosConMismoNombre.length > 0;
   }
 
   verificarEmailDuplicado(): boolean {
     const emailFormulario = this.usuarioForm.get('email')?.value?.trim().toLowerCase();
-    
     if (!emailFormulario) {
-      return false; // Si no hay email, no hay duplicado
+      return false;
     }
 
-    // Filtrar usuarios con el mismo email (ignorando mayúsculas/minúsculas)
-    const usuariosConMismoEmail = this.usuarios.filter(usuario => {
-      // En modo edición, ignorar el usuario actual
+    const fuente = this.todosLosUsuarios.length > 0 ? this.todosLosUsuarios : this.usuarios;
+    return fuente.some(usuario => {
       if (this.editMode && usuario.id === this.selectedUsuarioId) {
         return false;
       }
-      
       return usuario.email?.trim().toLowerCase() === emailFormulario;
     });
-
-    return usuariosConMismoEmail.length > 0;
   }
 
   esCampoProtegido(campo: string): boolean {
-    // Verificar si el campo debería estar protegido para el usuario actual
     if (this.editMode && this.selectedUsuarioId && this.esUsuarioActualPorId(this.selectedUsuarioId)) {
-      return campo === 'role'; // Solo el rol está protegido para el usuario actual
+      return campo === 'role';
     }
     return false;
   }
@@ -819,25 +784,25 @@ export class Usuarios implements OnInit, OnDestroy {
   // Métodos para formateo de fechas
   formatearFechaRelativa(fecha: string | null | undefined): string {
     if (!fecha) return '-';
-    
+
     const fechaDate = new Date(fecha);
     const ahora = new Date();
     const diffMs = ahora.getTime() - fechaDate.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHoras = Math.floor(diffMs / 3600000);
     const diffDias = Math.floor(diffMs / 86400000);
-    
+
     if (diffMins < 1) return 'Hace unos segundos';
     if (diffMins < 60) return `Hace ${diffMins} min`;
     if (diffHoras < 24) return `Hace ${diffHoras}h`;
     if (diffDias < 7) return `Hace ${diffDias} día${diffDias > 1 ? 's' : ''}`;
-    
+
     return fechaDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
   }
 
   formatearFechaCompleta(fecha: string | null | undefined): string {
     if (!fecha) return '-';
-    
+
     const fechaDate = new Date(fecha);
     return fechaDate.toLocaleString('es-ES', {
       day: '2-digit',
@@ -850,7 +815,7 @@ export class Usuarios implements OnInit, OnDestroy {
 
   formatearFechaHora(fecha: string | null | undefined): string {
     if (!fecha) return '-';
-    
+
     const fechaDate = new Date(fecha);
     return fechaDate.toLocaleString('es-ES', {
       day: '2-digit',
@@ -862,10 +827,10 @@ export class Usuarios implements OnInit, OnDestroy {
 
   esCuentaBloqueada(usuario: UsuarioDTO): boolean {
     if (!usuario.lockedUntil) return false;
-    
+
     const lockedUntil = new Date(usuario.lockedUntil);
     const ahora = new Date();
-    
+
     return lockedUntil > ahora;
   }
 
@@ -875,30 +840,41 @@ export class Usuarios implements OnInit, OnDestroy {
 
   abrirModalLogs(): void {
     this.showLogsModal = true;
+    this.sesionesPage = 1;
+    this.logsPage = 1;
+    this.logsBusqueda = '';
     this.cargarLogs();
   }
 
   cerrarModalLogs(): void {
     this.showLogsModal = false;
+    this.logsError = '';
   }
 
   cambiarLogTab(tab: 'sesiones' | 'auditoria'): void {
     this.activeLogTab = tab;
+    this.logsError = '';
     this.cargarLogs();
   }
 
   cargarLogs(): void {
     this.loadingLogs = true;
+    this.logsError = '';
+
     if (this.activeLogTab === 'sesiones') {
       this.subscriptions.push(
         this.sessionLogService.listarSesionesActivas().subscribe({
           next: (data) => {
-            this.sesionesActivas = data;
+            this.sesionesActivas = data || [];
+            this.aplicarPaginacionSesiones();
             this.loadingLogs = false;
             this.cdr.detectChanges();
           },
-          error: (error) => {
-            this.mostrarMensajeError('Error al cargar sesiones activas');
+          error: (err) => {
+            console.error('Error al cargar sesiones activas:', err);
+            this.logsError = err?.status === 0
+              ? 'No se pudo conectar con el servidor para obtener las sesiones activas.'
+              : (err?.error?.message || 'Error al cargar las sesiones activas.');
             this.loadingLogs = false;
             this.cdr.detectChanges();
           }
@@ -908,12 +884,16 @@ export class Usuarios implements OnInit, OnDestroy {
       this.subscriptions.push(
         this.auditLogService.listarRecientes(24).subscribe({
           next: (data) => {
-            this.auditLogs = data;
+            this.auditLogs = data || [];
+            this.filtrarAuditLogs();
             this.loadingLogs = false;
             this.cdr.detectChanges();
           },
-          error: (error) => {
-            this.mostrarMensajeError('Error al cargar registro de auditoría');
+          error: (err) => {
+            console.error('Error al cargar auditoría:', err);
+            this.logsError = err?.status === 0
+              ? 'No se pudo conectar con el servidor para obtener el registro de auditoría.'
+              : (err?.error?.message || 'Error al cargar el registro de auditoría.');
             this.loadingLogs = false;
             this.cdr.detectChanges();
           }
@@ -922,27 +902,116 @@ export class Usuarios implements OnInit, OnDestroy {
     }
   }
 
+  reintentarLogs(): void {
+    this.cargarLogs();
+  }
+
+  aplicarPaginacionSesiones(): void {
+    const totalPages = Math.ceil(this.sesionesActivas.length / this.sesionesPerPage);
+    if (this.sesionesPage > totalPages && totalPages > 0) {
+      this.sesionesPage = totalPages;
+    } else if (this.sesionesPage < 1) {
+      this.sesionesPage = 1;
+    }
+    const start = (this.sesionesPage - 1) * this.sesionesPerPage;
+    this.sesionesPaginadas = this.sesionesActivas.slice(start, start + this.sesionesPerPage);
+  }
+
+  onSesionesPageChange(page: number): void {
+    this.sesionesPage = page;
+    this.aplicarPaginacionSesiones();
+  }
+
+  onSesionesPerPageChange(size: number): void {
+    this.sesionesPerPage = size;
+    this.sesionesPage = 1;
+    this.aplicarPaginacionSesiones();
+  }
+
+  filtrarAuditLogs(): void {
+    const term = this.logsBusqueda.trim().toLowerCase();
+    if (!term) {
+      this.auditLogsFiltrados = this.auditLogs;
+    } else {
+      this.auditLogsFiltrados = this.auditLogs.filter(log => {
+        const extraEndpoint = String((log as any).endpoint ?? (log as any).ipAddress ?? '').toLowerCase();
+        return (
+          (log.actionType || '').toLowerCase().includes(term) ||
+          (log.userName || '').toLowerCase().includes(term) ||
+          (log.entityType || '').toLowerCase().includes(term) ||
+          (log.description || '').toLowerCase().includes(term) ||
+          String(log.userId ?? '').includes(term) ||
+          String(log.entityId ?? '').includes(term) ||
+          extraEndpoint.includes(term)
+        );
+      });
+    }
+    this.aplicarPaginacionLogs();
+  }
+
+  onLogsBusquedaChange(): void {
+    this.logsPage = 1;
+    this.filtrarAuditLogs();
+  }
+
+  aplicarPaginacionLogs(): void {
+    const totalPages = Math.ceil(this.auditLogsFiltrados.length / this.logsPerPage);
+    if (this.logsPage > totalPages && totalPages > 0) {
+      this.logsPage = totalPages;
+    } else if (this.logsPage < 1) {
+      this.logsPage = 1;
+    }
+    const start = (this.logsPage - 1) * this.logsPerPage;
+    this.auditLogsPaginados = this.auditLogsFiltrados.slice(start, start + this.logsPerPage);
+  }
+
+  onLogsPageChange(page: number): void {
+    this.logsPage = page;
+    this.aplicarPaginacionLogs();
+  }
+
+  onLogsPerPageChange(size: number): void {
+    this.logsPerPage = size;
+    this.logsPage = 1;
+    this.aplicarPaginacionLogs();
+  }
+
   forzarCierreSesion(token: string | undefined): void {
-    if (!token) return;
+    if (!token || this.cerrandoSesionToken === token) return;
     if (confirm('¿Está seguro de forzar el cierre de esta sesión? El usuario será desconectado inmediatamente.')) {
+      this.cerrandoSesionToken = token;
       this.subscriptions.push(
         this.sessionLogService.cerrarSesionExterna(token).subscribe({
           next: () => {
+            this.cerrandoSesionToken = null;
             this.mostrarMensajeExito('Sesión cerrada remotamente.');
             this.cargarLogs();
-            
+
             // Si el admin cierra su propia sesión actual, desconectarlo inmediatamente
             const currentToken = this.authService.getToken();
             if (token === currentToken) {
               this.authService.logout();
             }
           },
-          error: (error) => {
-            this.mostrarMensajeError('Error al cerrar sesión remotamente.');
+          error: () => {
+            this.cerrandoSesionToken = null;
+            this.logsError = 'No se pudo cerrar la sesión seleccionada.';
+            this.cdr.detectChanges();
           }
         })
       );
     }
   }
-}
 
+  trackByUsuario(index: number, usuario: UsuarioDTO): number | string {
+    return usuario.id ?? usuario.email ?? index;
+  }
+
+  trackBySession(index: number, session: SessionLog): number | string {
+    return session.sessionToken ?? (session as any).id ?? index;
+  }
+
+  trackByAuditLog(index: number, log: AuditLog): number | string {
+    return (log as any).id ?? `${log.createdAt}-${log.actionType}-${index}`;
+  }
+}

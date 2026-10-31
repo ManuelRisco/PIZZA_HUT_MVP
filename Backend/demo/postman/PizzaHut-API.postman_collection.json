@@ -1,0 +1,429 @@
+{
+  "info": {
+    "name": "Pizza Hut API",
+    "description": "Pruebas automatizadas de la API. Ejecutar con: npx newman run postman/PizzaHut-API.postman_collection.json",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8089" },
+    { "key": "email", "value": "" },
+    { "key": "password", "value": "Pizza1" },
+    { "key": "nombre", "value": "" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Registrar cliente",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const marca = Date.now().toString().slice(-8);",
+                  "pm.collectionVariables.set('email', 'e' + marca + '@t.co');",
+                  "pm.collectionVariables.set('password', 'Pizza1');",
+                  "pm.collectionVariables.set('nombre', 'Cliente ' + marca);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('El registro responde 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('El registro fue exitoso', function () {",
+                  "    pm.expect(body.success).to.eql(true);",
+                  "    pm.expect(body.message).to.include('xito');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{nombre}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"phone\": \"9{{$timestamp}}\",\n  \"role\": \"CUSTOMER\"\n}"
+            },
+            "url": "{{baseUrl}}/api/registro"
+          }
+        },
+        {
+          "name": "Login con correo no registrado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('Informa que el usuario no existe', function () {",
+                  "    pm.expect(body.success).to.eql(false);",
+                  "    pm.expect(body.message).to.include('no encontrado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"noesta@t.co\",\n  \"password\": \"Pizza1\"\n}"
+            },
+            "url": "{{baseUrl}}/api/ingresar"
+          }
+        },
+        {
+          "name": "Login con contraseña incorrecta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rechaza la contraseña', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 401]);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('El mensaje indica contraseña incorrecta', function () {",
+                  "    pm.expect(body.success).to.eql(false);",
+                  "    pm.expect(body.message.toLowerCase()).to.include('contrase');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"Pizza9\"\n}"
+            },
+            "url": "{{baseUrl}}/api/ingresar"
+          }
+        },
+        {
+          "name": "Login correcto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('El login responde 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve token y rol de cliente', function () {",
+                  "    pm.expect(body.success).to.eql(true);",
+                  "    pm.expect(body.data.token).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.data.usuario.email).to.eql(pm.collectionVariables.get('email'));",
+                  "    pm.expect(body.data.usuario.role).to.eql('CUSTOMER');",
+                  "    pm.collectionVariables.set('token', body.data.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/ingresar"
+          }
+        },
+        {
+          "name": "Perfil autenticado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('El perfil responde 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('El perfil es el cliente recién creado', function () {",
+                  "    pm.expect(body.success).to.eql(true);",
+                  "    pm.expect(body.data.email).to.eql(pm.collectionVariables.get('email'));",
+                  "    pm.expect(body.data.name).to.eql(pm.collectionVariables.get('nombre'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/usuarios/me"
+          }
+        },
+        {
+          "name": "Perfil sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Sin token no entra al perfil', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/usuarios/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catálogo",
+      "item": [
+        {
+          "name": "Listar pizzas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('El menú responde 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('Incluye la Margarita', function () {",
+                  "    pm.expect(body.success).to.eql(true);",
+                  "    pm.expect(body.data).to.be.an('array').that.is.not.empty;",
+                  "    const nombres = body.data.map(function (pizza) { return pizza.name; });",
+                  "    pm.expect(nombres).to.include('Margarita');",
+                  "    pm.collectionVariables.set('pizzaId', body.data[0].id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/pizzas"
+          }
+        },
+        {
+          "name": "Pizza por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('La pizza existe', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.success).to.eql(true);",
+                  "    pm.expect(body.data.id).to.eql(pm.collectionVariables.get('pizzaId'));",
+                  "    pm.expect(body.data.name).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.data.price).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/pizzas/{{pizzaId}}"
+          }
+        },
+        {
+          "name": "Pizza inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "    pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/pizzas/99999"
+          }
+        },
+        {
+          "name": "Categorías, tamaños, extras y promociones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('El catálogo público responde 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.success).to.eql(true);",
+                  "    pm.expect(body.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories"
+          }
+        },
+        {
+          "name": "Tamaños",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Hay tamaños publicados', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.success).to.eql(true);",
+                  "    const nombres = body.data.map(function (item) { return item.name; });",
+                  "    pm.expect(nombres).to.include('Personal');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/sizes"
+          }
+        },
+        {
+          "name": "Extras",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Los extras responden 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/extras" }
+        },
+        {
+          "name": "Promociones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Las promociones responden 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/promociones" }
+        }
+      ]
+    },
+    {
+      "name": "Permisos",
+      "item": [
+        {
+          "name": "Cliente no puede crear pizzas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Un cliente no crea pizzas', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pizza de prueba\",\n  \"price\": 10,\n  \"categoryId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/pizzas"
+          }
+        },
+        {
+          "name": "Crear pizza sin sesión",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Sin sesión no crea pizzas', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pizza anonima\",\n  \"price\": 10,\n  \"categoryId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/pizzas"
+          }
+        }
+      ]
+    }
+  ]
+}

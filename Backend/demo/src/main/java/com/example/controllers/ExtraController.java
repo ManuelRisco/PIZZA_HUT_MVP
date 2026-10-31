@@ -6,8 +6,10 @@ import com.example.services.ExtraService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.example.dtos.ApiResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,8 +18,6 @@ import java.util.Optional;
 @RequestMapping("/api/extras")
 @CrossOrigin(origins = "http://localhost:4200")
 public class ExtraController {
-
-    private static final String MSG_ERROR_KEY = "error";
 
     private final ExtraService extraService;
 
@@ -69,65 +69,70 @@ public class ExtraController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Object> crear(@RequestBody ExtraDTO extraDTO) {
         try {
-            Extra extra = new Extra();
-            extra.setName(extraDTO.getName());
-            extra.setDescription(extraDTO.getDescription());
-            extra.setImageUrl(extraDTO.getImageUrl());
-            extra.setPrice(extraDTO.getPrice());
-            if (extraDTO.getCategory() != null) {
-                extra.setCategory(Extra.ExtraCategory.valueOf(extraDTO.getCategory()));
-            }
-            extra.setIsAvailable(extraDTO.getIsAvailable());
+            Extra extra = mapFromDto(extraDTO);
             Extra nuevoExtra = extraService.crearExtra(extra);
             return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(new ExtraDTO(nuevoExtra), "Creado exitosamente"));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(MSG_ERROR_KEY, e.getMessage()));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage() != null ? e.getMessage() : "Datos de extra inválidos"));
         }
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Object> actualizar(@PathVariable("id") Integer id, @RequestBody ExtraDTO extraDTO) {
         try {
-            Extra extra = new Extra();
-            extra.setName(extraDTO.getName());
-            extra.setDescription(extraDTO.getDescription());
-            extra.setImageUrl(extraDTO.getImageUrl());
-            extra.setPrice(extraDTO.getPrice());
-            if (extraDTO.getCategory() != null) {
-                extra.setCategory(Extra.ExtraCategory.valueOf(extraDTO.getCategory()));
-            }
-            extra.setIsAvailable(extraDTO.getIsAvailable());
+            Extra extra = mapFromDto(extraDTO);
             Extra extraActualizado = extraService.actualizarExtra(id, extra);
             return ResponseEntity.ok(ApiResponse.success(new ExtraDTO(extraActualizado)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(MSG_ERROR_KEY, e.getMessage()));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage() != null ? e.getMessage() : "Datos de extra inválidos"));
         }
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Object> eliminar(@PathVariable("id") Integer id) {
         try {
             extraService.eliminarExtra(id);
             return ResponseEntity.ok().body(Map.of("message", "Extra eliminado correctamente", "id", id));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(MSG_ERROR_KEY, e.getMessage()));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage() != null ? e.getMessage() : "Datos de extra inválidos"));
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(MSG_ERROR_KEY, "Error al eliminar extra: " + e.getMessage()));
+                .body(ApiResponse.error("Error al eliminar extra: " + e.getMessage()));
         }
     }
 
     @PatchMapping("/{id}/disponibilidad")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Object> cambiarDisponibilidad(@PathVariable("id") Integer id) {
         try {
             Extra extraActualizado = extraService.cambiarDisponibilidad(id);
             return ResponseEntity.ok(ApiResponse.success(new ExtraDTO(extraActualizado)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(MSG_ERROR_KEY, e.getMessage()));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage() != null ? e.getMessage() : "Datos de extra inválidos"));
         }
+    }
+
+    private Extra mapFromDto(ExtraDTO extraDTO) {
+        Extra extra = new Extra();
+        extra.setName(extraDTO.getName());
+        extra.setDescription(extraDTO.getDescription());
+        extra.setImageUrl(extraDTO.getImageUrl());
+        extra.setPrice(extraDTO.getPrice());
+        if (extraDTO.getCategory() != null) {
+            extra.setCategory(Extra.ExtraCategory.valueOf(extraDTO.getCategory()));
+        }
+        extra.setIsAvailable(extraDTO.getIsAvailable() != null ? extraDTO.getIsAvailable() : true);
+        extra.setDisplayOrder(extraDTO.getDisplayOrder() != null ? extraDTO.getDisplayOrder() : 0);
+        extra.setStockQuantity(extraDTO.getStockQuantity() != null ? extraDTO.getStockQuantity() : 0);
+        extra.setMinStock(extraDTO.getMinStock() != null ? extraDTO.getMinStock() : 5);
+        extra.setUnitCost(extraDTO.getUnitCost() != null ? extraDTO.getUnitCost() : BigDecimal.ZERO);
+        return extra;
     }
 }

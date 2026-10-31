@@ -22,7 +22,6 @@
 
   <!-- Filtros y Buscador -->
   <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
-    
     <div class="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
       @for (cat of categorias; track cat.value) {
         <button 
@@ -69,14 +68,28 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
       @for (extra of extrasFiltrados; track extra.id) {
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col relative group"
-             [ngClass]="!extra.isAvailable ? 'opacity-75 grayscale-[0.5]' : ''">
+             [ngClass]="esAgotado(extra) ? 'opacity-75 grayscale-[0.5]' : ''">
           
+          <!-- Stock Badge -->
+          @if (extra.stockQuantity !== undefined) {
+            <div class="absolute top-3 right-3 z-20">
+              @if (esAgotado(extra)) {
+                <span class="bg-gray-900 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow">Agotado</span>
+              } @else if (extra.lowStock) {
+                <span class="bg-amber-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow">¡Quedan {{ extra.stockQuantity }}!</span>
+              } @else {
+                <span class="bg-emerald-600/90 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow">Stock: {{ extra.stockQuantity }}</span>
+              }
+            </div>
+          }
+
           <!-- Imagen -->
-          <div class="h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
-            @if (extra.imageUrl) {
-              <img [src]="extra.imageUrl" [alt]="extra.name"
+          <div class="h-44 bg-gray-50 flex items-center justify-center overflow-hidden">
+            @if (extra.imageUrl && !extra.imageError) {
+              <img [src]="getImageUrl(extra.imageUrl)" [alt]="extra.name"
                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                   loading="lazy">
+                   loading="lazy"
+                   (error)="extra.imageError = true">
             } @else {
               <div class="flex flex-col items-center justify-center text-gray-300">
                 <i class="bi text-4xl" [ngClass]="obtenerIconoCategoria(extra.category || '')"></i>
@@ -114,9 +127,9 @@
 
               <button 
                 class="px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
-                [ngClass]="extra.isAvailable ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm' : 'bg-gray-200 text-gray-500 cursor-not-allowed'"
+                [ngClass]="!esAgotado(extra) ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm' : 'bg-gray-200 text-gray-500 cursor-not-allowed'"
                 (click)="agregarAlCarrito(extra)"
-                [disabled]="!extra.isAvailable">
+                [disabled]="esAgotado(extra)">
                 <i class="bi bi-cart-plus-fill text-lg"></i>
                 <span class="hidden sm:inline">Agregar</span>
               </button>
@@ -124,10 +137,10 @@
           </div>
 
           <!-- Overlay No Disponible -->
-          @if (!extra.isAvailable) {
+          @if (esAgotado(extra)) {
             <div class="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-20">
               <span class="bg-red-600 text-white font-bold px-4 py-2 rounded-xl transform -rotate-12 shadow-lg border-2 border-white">
-                No disponible
+                Agotado
               </span>
             </div>
           }

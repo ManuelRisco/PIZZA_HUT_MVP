@@ -1,93 +1,221 @@
-<div class="max-w-7xl mx-auto">
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
-    <div class="flex items-center gap-3">
-      <h2 class="text-2xl font-black text-gray-800">
-        <i class="bi bi-rulers text-red-600 mr-2"></i> Gestión de Tamaños
-      </h2>
+<div class="space-y-6 font-sans">
+  <!-- Executive v2 Header Card -->
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Catálogo y Operaciones</p>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Gestión de Tamaños y Recetas</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">Configura los tamaños comerciales de pizza, recargos de venta y multiplicadores de insumos.</p>
     </div>
-    <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition-colors shadow-sm" 
-            (click)="abrirModal()" *ngIf="!showModal">
-      <i class="bi bi-plus-lg font-bold"></i> Nuevo Tamaño
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        (click)="recargar()"
+        [disabled]="loading"
+        class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise" [class.animate-spin]="loading"></i> Actualizar
+      </button>
+      <button
+        type="button"
+        (click)="abrirNuevo()"
+        class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-plus-lg"></i> Nuevo Tamaño
+      </button>
+    </div>
+  </div>
+
+  <!-- Persistent Load Error / Backend Offline Banner -->
+  <div
+    *ngIf="loadError"
+    class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+    role="alert"
+  >
+    <div class="flex items-start sm:items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-wifi-off text-lg"></i>
+      </div>
+      <div>
+        <p class="text-sm font-black text-red-900 m-0">Error de conexión o carga de tamaños</p>
+        <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ loadError }}</p>
+      </div>
+    </div>
+    <button
+      type="button"
+      (click)="reintentar()"
+      class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
+    >
+      <i class="bi bi-arrow-clockwise"></i> Reintentar
     </button>
   </div>
 
-  <!-- Mensajes de éxito y error -->
-  <div class="mb-6" *ngIf="mensaje">
-    <div class="px-4 py-3 rounded-lg flex items-center justify-between" 
-         [ngClass]="error ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'">
-      <div class="flex items-center gap-2">
-        <i class="bi" [ngClass]="error ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
-        {{ mensaje }}
+  <!-- Mensajes de acción (éxito y error) -->
+  <div
+    *ngIf="mensaje"
+    class="px-4 py-3 rounded-2xl border flex justify-between items-center text-sm font-medium"
+    [ngClass]="error ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'"
+  >
+    <div class="flex items-center gap-2">
+      <i class="bi" [ngClass]="error ? 'bi-exclamation-triangle-fill text-red-600' : 'bi-check-circle-fill text-emerald-600'"></i>
+      <span>{{ mensaje }}</span>
+    </div>
+    <button type="button" (click)="mensaje = ''" class="hover:opacity-75 cursor-pointer">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <!-- White KPI Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Tamaños</p>
+        <p class="text-2xl font-black text-gray-900 m-0">{{ kpiTotalSizes }}</p>
       </div>
-      <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" (click)="mensaje = ''">
-        <i class="bi bi-x-lg"></i>
+      <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-rulers text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Masas en Bodega</p>
+        <p class="text-2xl font-black text-amber-600 m-0">{{ kpiTotalDough }} und</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-box-seam text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Multiplicador Promedio</p>
+        <p class="text-2xl font-black text-indigo-600 m-0">{{ kpiAvgMultiplier | number:'1.2-2' }}x</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-sliders text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Costo Extra Promedio</p>
+        <p class="text-2xl font-black text-emerald-600 m-0">+S/ {{ kpiAvgExtraCost | number:'1.2-2' }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-currency-dollar text-lg"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar Card -->
+  <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3">
+    <div class="relative w-full sm:w-72">
+      <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+      <input
+        type="text"
+        [(ngModel)]="terminoBusqueda"
+        (input)="onBusquedaChange()"
+        placeholder="Buscar tamaño o descripción..."
+        class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
+      />
+    </div>
+
+    <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+      <span class="text-xs font-bold text-gray-500">
+        {{ sizesFiltrados.length }} tamaño{{ sizesFiltrados.length === 1 ? '' : 's' }}
+      </span>
+      <button
+        *ngIf="terminoBusqueda"
+        type="button"
+        (click)="terminoBusqueda = ''; onBusquedaChange()"
+        class="text-xs font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
+      >
+        Limpiar búsqueda
       </button>
     </div>
   </div>
 
   <!-- Loading State -->
-  @if (loading) {
-    <div class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
-      <div class="animate-spin rounded-full h-12 w-12 border-4 border-red-200 border-t-red-600 mb-4"></div>
-      <p class="text-gray-500 font-medium">Cargando la lista de tamaños...</p>
-    </div>
-  }
+  <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
+    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
+    <p class="text-sm font-bold text-gray-500 m-0">Cargando tamaños de pizza...</p>
+  </div>
 
-  <!-- Tabla de tamaños -->
-  @if (!loading) {
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-      <h5 class="text-lg font-bold text-gray-800 m-0">Lista de Tamaños ({{ sizes.length }})</h5>
-    </div>
-    
+  <!-- Table View with Dark Header -->
+  <div *ngIf="!loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse min-w-[800px]">
+      <table class="w-full text-left border-collapse min-w-[760px]">
         <thead>
-          <tr class="bg-gray-900 text-white text-sm uppercase tracking-wider">
-            <th class="px-6 py-4 font-bold rounded-tl-lg">ID</th>
-            <th class="px-6 py-4 font-bold">Nombre</th>
-            <th class="px-6 py-4 font-bold">Costo Extra</th>
-            <th class="px-6 py-4 font-bold">Descripción</th>
-            <th class="px-6 py-4 font-bold text-center">Orden</th>
-            <th class="px-6 py-4 font-bold text-center rounded-tr-lg">Acciones</th>
+          <tr class="bg-gray-900 text-white text-xs uppercase tracking-wider">
+            <th class="py-3.5 px-4 font-bold">ID</th>
+            <th class="py-3.5 px-4 font-bold">Tamaño</th>
+            <th class="py-3.5 px-4 font-bold text-right">Recargo Venta</th>
+            <th class="py-3.5 px-4 font-bold text-center">Stock Masas (Compartido)</th>
+            <th class="py-3.5 px-4 font-bold text-center">Multiplicador Receta</th>
+            <th class="py-3.5 px-4 font-bold">Descripción</th>
+            <th class="py-3.5 px-4 font-bold text-center">Orden</th>
+            <th class="py-3.5 px-4 font-bold text-center">Acciones</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100 text-gray-700">
-          <tr class="hover:bg-gray-50 transition-colors" *ngFor="let size of sizesPaginados">
-            <td class="px-6 py-4 font-mono text-sm text-gray-500">#{{ size.id }}</td>
-            <td class="px-6 py-4 font-bold text-gray-800">{{ size.name }}</td>
-            <td class="px-6 py-4">
-              <span class="text-emerald-600 font-black">S/ {{ size.extraCost | number:'1.2-2' }}</span>
+        <tbody class="divide-y divide-gray-100 text-sm">
+          <tr
+            *ngFor="let size of sizesPaginados; trackBy: trackBySizeId"
+            class="hover:bg-gray-50 transition-colors"
+          >
+            <td class="py-3 px-4 font-mono text-xs text-gray-400">#{{ size.id }}</td>
+            <td class="py-3 px-4 font-bold text-gray-900">{{ size.name }}</td>
+            <td class="py-3 px-4 text-right">
+              <span class="text-emerald-600 font-black">+S/ {{ size.extraCost | number:'1.2-2' }}</span>
             </td>
-            <td class="px-6 py-4 text-sm text-gray-500">{{ size.description || '-' }}</td>
-            <td class="px-6 py-4 text-center">
-              <span class="bg-blue-50 text-blue-600 font-bold px-2.5 py-1 rounded-md border border-blue-100 text-xs">
+            <td class="py-3 px-4 text-center">
+              <div class="inline-flex flex-col items-center">
+                <span
+                  class="font-black px-2.5 py-0.5 rounded-full text-xs flex items-center gap-1"
+                  [ngClass]="(size.stockQuantity ?? 0) <= 0 ? 'bg-red-50 text-red-700 border border-red-200' : ((size.stockQuantity ?? 0) <= (size.minStock ?? 10) ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200')"
+                >
+                  <i class="bi" [ngClass]="(size.stockQuantity ?? 0) <= 0 ? 'bi-x-circle-fill' : ((size.stockQuantity ?? 0) <= (size.minStock ?? 10) ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill')"></i>
+                  {{ size.stockQuantity ?? 0 }} masas
+                </span>
+                <span class="text-[10px] text-gray-400 mt-0.5">Mín: {{ size.minStock ?? 10 }}</span>
+              </div>
+            </td>
+            <td class="py-3 px-4 text-center">
+              <span class="bg-indigo-50 text-indigo-700 font-black px-2.5 py-1 rounded-full border border-indigo-100 text-xs">
+                {{ (size.recipeMultiplier || 1) | number:'1.2-2' }}x insumos
+              </span>
+            </td>
+            <td class="py-3 px-4 text-xs text-gray-500 max-w-xs truncate">{{ size.description || '-' }}</td>
+            <td class="py-3 px-4 text-center">
+              <span class="bg-gray-100 text-gray-700 font-bold px-2 py-0.5 rounded text-xs">
                 {{ size.displayOrder }}
               </span>
             </td>
-            <td class="px-6 py-4">
-              <div class="flex gap-2 justify-center">
-                <button type="button" class="bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-700 font-bold w-8 h-8 rounded-lg text-sm transition-colors flex items-center justify-center" 
-                        (click)="abrirModal(size)" title="Editar tamaño">
-                  <i class="bi bi-pencil-fill"></i>
+            <td class="py-3 px-4 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button
+                  type="button"
+                  (click)="abrirModal(size)"
+                  class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors cursor-pointer"
+                  title="Editar tamaño"
+                >
+                  <i class="bi bi-pencil-fill text-xs"></i>
                 </button>
-                <button type="button" class="bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold w-8 h-8 rounded-lg text-sm transition-colors flex items-center justify-center" 
-                        (click)="eliminar(size.id!)" title="Eliminar tamaño">
-                  <i class="bi bi-trash-fill"></i>
+                <button
+                  type="button"
+                  (click)="eliminar(size.id!)"
+                  class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer"
+                  title="Eliminar tamaño"
+                >
+                  <i class="bi bi-trash-fill text-xs"></i>
                 </button>
               </div>
             </td>
           </tr>
-          <tr *ngIf="sizes.length === 0">
-            <td colspan="6" class="px-6 py-16 text-center">
-              <div class="flex flex-col items-center">
-                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
-                  <i class="bi bi-rulers text-3xl"></i>
-                </div>
-                <h5 class="text-gray-800 font-bold text-lg mb-1">No hay tamaños registrados</h5>
-                <p class="text-gray-500 text-sm">Haz clic en "Nuevo Tamaño" para agregar el primero.</p>
-              </div>
+          <tr *ngIf="sizesFiltrados.length === 0">
+            <td colspan="8" class="py-12 text-center text-gray-400">
+              <i class="bi bi-rulers text-3xl text-gray-300 block mb-2"></i>
+              <p class="font-bold text-gray-600 text-sm m-0">No se encontraron tamaños</p>
+              <p class="text-xs text-gray-400 mt-1 mb-0">Modifica el término de búsqueda o crea un nuevo tamaño.</p>
             </td>
           </tr>
         </tbody>
@@ -95,83 +223,155 @@
     </div>
 
     <!-- Paginación -->
-    <div class="p-6 border-t border-gray-100" *ngIf="sizes.length > 0">
-      <app-pagination 
-        [currentPage]="currentPage" 
-        [totalItems]="sizes.length" 
+    <div class="p-4 border-t border-gray-100" *ngIf="sizesFiltrados.length > 0">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="sizesFiltrados.length"
         [itemsPerPage]="itemsPerPage"
-        (pageChange)="onPageChange($event)">
-      </app-pagination>
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
     </div>
   </div>
-  }
 </div>
 
-<!-- Modal -->
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" *ngIf="showModal">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col">
-    <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center">
-      <h5 class="text-xl font-bold m-0 flex items-center gap-2">
-        <i class="bi" [ngClass]="isEditing ? 'bi-pencil-fill' : 'bi-plus-circle-fill'"></i>
-        {{ isEditing ? 'Editar' : 'Nuevo' }} Tamaño
+<!-- Modal Crear / Editar Tamaño -->
+<div
+  class="fixed inset-0 z-[6000] !mt-0 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+  *ngIf="showModal"
+>
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90dvh] flex flex-col overflow-hidden">
+    <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center shrink-0">
+      <h5 class="text-lg font-black m-0 flex items-center gap-2">
+        <i class="bi text-red-500" [ngClass]="isEditing ? 'bi-pencil-fill' : 'bi-plus-circle-fill'"></i>
+        {{ isEditing ? 'Editar Tamaño' : 'Nuevo Tamaño' }}
       </h5>
-      <button class="text-gray-400 hover:text-white transition-colors" (click)="cerrarModal()">
+      <button type="button" class="text-gray-400 hover:text-white transition-colors cursor-pointer" (click)="cerrarModal()">
         <i class="bi bi-x-lg text-xl"></i>
       </button>
     </div>
-    
-    <div class="p-6">
-      <form>
-        <div class="mb-5">
-          <span class="block text-sm font-bold text-gray-700 mb-1">
-            Nombre *
-          </span>
-          <input type="text" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all" 
-                 [(ngModel)]="selectedSize.name" name="name" 
-                 placeholder="Ej: Grande, Mediana, Personal" required>
+
+    <div class="p-6 overflow-y-auto flex-1 space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nombre *</label>
+        <input
+          type="text"
+          class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+          [(ngModel)]="selectedSize.name"
+          name="name"
+          placeholder="Ej: Grande, Mediana, Personal, Familiar"
+          required
+        />
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Recargo Venta (S/) *</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            [(ngModel)]="selectedSize.extraCost"
+            name="extraCost"
+            placeholder="0.00"
+            required
+          />
         </div>
-        
-        <div class="mb-5">
-          <span class="block text-sm font-bold text-gray-700 mb-1">
-            Costo Extra (S/) *
-          </span>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span class="text-gray-500 sm:text-sm">S/</span>
-            </div>
-            <input type="number" class="w-full pl-8 pr-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all" 
-                   [(ngModel)]="selectedSize.extraCost" name="extraCost" 
-                   min="0" step="0.01" placeholder="0.00" required>
-          </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Multiplicador Receta *</label>
+          <input
+            type="number"
+            min="0.1"
+            step="0.1"
+            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            [(ngModel)]="selectedSize.recipeMultiplier"
+            name="recipeMultiplier"
+            placeholder="1.00"
+            required
+          />
         </div>
-        
-        <div class="mb-5">
-          <span class="block text-sm font-bold text-gray-700 mb-1">
-            Descripción
-          </span>
-          <textarea class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all" 
-                    [(ngModel)]="selectedSize.description" name="description" 
-                    rows="2" placeholder="Descripción opcional del tamaño"></textarea>
+      </div>
+      <p class="text-xs text-gray-500 -mt-2">
+        Escala el consumo de insumos y costeo directo (ej. Personal = 1.0x, Mediana = 1.5x, Grande = 2.0x).
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Stock de Masas / Bases *</label>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            [(ngModel)]="selectedSize.stockQuantity"
+            name="stockQuantity"
+            placeholder="50"
+            required
+          />
         </div>
-        
-        <div class="mb-2">
-          <span class="block text-sm font-bold text-gray-700 mb-1">
-            Orden de Visualización
-          </span>
-          <input type="number" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all" 
-                 [(ngModel)]="selectedSize.displayOrder" name="displayOrder" 
-                 min="0" placeholder="Orden en el que aparecerá">
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Stock Mínimo (Alerta) *</label>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            [(ngModel)]="selectedSize.minStock"
+            name="minStock"
+            placeholder="10"
+            required
+          />
         </div>
-      </form>
+      </div>
+      <p class="text-xs text-emerald-700 bg-emerald-50 p-2 rounded-lg border border-emerald-100 -mt-2">
+        <i class="bi bi-info-circle-fill"></i> Stock compartido: todas las pizzas (Pepperoni, Hawaiana, Suprema, etc.) de este tamaño consumen y descuentan de esta misma bodega de masas.
+      </p>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Descripción</label>
+        <textarea
+          rows="2"
+          class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+          [(ngModel)]="selectedSize.description"
+          name="description"
+          placeholder="Descripción opcional (diámetro, porciones, etc.)"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Orden de Visualización</label>
+        <input
+          type="number"
+          min="0"
+          class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+          [(ngModel)]="selectedSize.displayOrder"
+          name="displayOrder"
+          placeholder="1"
+        />
+      </div>
     </div>
-    
-    <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-      <button type="button" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg transition-colors" (click)="cerrarModal()">
+
+    <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3 shrink-0">
+      <button
+        type="button"
+        class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl text-sm transition-colors cursor-pointer"
+        (click)="cerrarModal()"
+        [disabled]="guardando"
+      >
         Cancelar
       </button>
-      <button type="button" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg flex items-center gap-2 transition-colors" (click)="guardar()">
-        <i class="bi bi-save"></i>
-        Guardar
+      <button
+        type="button"
+        class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+        (click)="guardar()"
+        [disabled]="guardando"
+      >
+        <i class="bi" [ngClass]="guardando ? 'bi-arrow-repeat animate-spin' : 'bi-save'"></i>
+        {{ isEditing ? 'Actualizar' : 'Crear' }}
       </button>
     </div>
   </div>

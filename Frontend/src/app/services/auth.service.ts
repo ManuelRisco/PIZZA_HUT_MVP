@@ -84,28 +84,22 @@ export class AuthService {
     localStorage.setItem('token', authResponse.token);
     localStorage.setItem('refreshToken', authResponse.refreshToken);
 
-    // Extraer información del token para validar
-    const tokenData = this.getTokenData();
-
-    // Verificar que los datos del token coincidan con la respuesta
-    if (tokenData && authResponse.usuario &&
-        tokenData.email === authResponse.usuario.email &&
-        tokenData.role === authResponse.usuario.role &&
-        tokenData.name === authResponse.usuario.name) {
-
-      // Solo almacenar si los datos coinciden (seguridad adicional)
-      this.currentUserSubject.next({
-        id: authResponse.usuario.id,
-        email: authResponse.usuario.email,
-        name: authResponse.usuario.name,
-        role: authResponse.usuario.role,
-        phone: authResponse.usuario.phone
-      });
-    } else {
-      // Si los datos no coinciden, limpiar todo
+    const usuario = authResponse.usuario;
+    if (!usuario) {
       this.logout();
-      throw new Error('Token data mismatch - potential security issue');
+      throw new Error('Respuesta de login sin usuario');
     }
+
+    // La sesión sale de la respuesta del servidor. Comparar el JWT con
+    // atob() fallaba en payloads base64url y el login mostraba
+    // "Error de conexión" aunque la contraseña fuera correcta.
+    this.currentUserSubject.next({
+      id: usuario.id,
+      email: usuario.email,
+      name: usuario.name,
+      role: usuario.role,
+      phone: usuario.phone
+    });
   }
 
   logout(): void {
@@ -274,7 +268,9 @@ export class AuthService {
   private decodeToken(token: string): any {
     try {
       const payload = token.split('.')[1];
-      return JSON.parse(atob(payload));
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+      return JSON.parse(atob(padded));
     } catch (error) {
       return null;
     }

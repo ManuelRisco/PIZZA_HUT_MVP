@@ -45,6 +45,12 @@ build/
 !.vscode/extensions.json
 .history/
 .idea/
+**/.project
+**/.classpath
+**/.settings/
+**/.factorypath
+**/.apt_generated/
+Backend/demo/bin/
 *.suo
 *.sln
 *.sw?

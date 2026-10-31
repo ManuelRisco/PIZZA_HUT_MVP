@@ -1,274 +1,486 @@
-<div class="max-w-7xl mx-auto">
-  <div class="flex justify-between items-center mb-6">
-    <div class="flex items-center gap-3">
-      <h2 class="text-2xl font-black text-gray-800">
-        <i class="bi bi-tag-fill text-red-600 mr-2"></i> Gestión de Promociones
-      </h2>
+<div class="space-y-6 font-sans">
+  <!-- Executive v2 Header Card -->
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Marketing y Campañas</p>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Gestión de Promociones y Descuentos</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">Configura cupones comerciales, descuentos porcentuales, combos cerrados y vigencias temporales.</p>
     </div>
-    <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition-colors shadow-sm" 
-            (click)="abrirFormulario()" *ngIf="!showForm">
-      <i class="bi bi-plus-lg font-bold"></i> Nueva Promoción
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        (click)="recargar()"
+        [disabled]="loading"
+        class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise" [class.animate-spin]="loading"></i> Actualizar
+      </button>
+      <button
+        type="button"
+        (click)="abrirNuevo()"
+        class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-plus-lg"></i> Nueva Promoción
+      </button>
+    </div>
+  </div>
+
+  <!-- Persistent Load Error / Backend Offline Banner -->
+  <div
+    *ngIf="loadError"
+    class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+    role="alert"
+  >
+    <div class="flex items-start sm:items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-wifi-off text-lg"></i>
+      </div>
+      <div>
+        <p class="text-sm font-black text-red-900 m-0">Error de conexión o carga de promociones</p>
+        <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ loadError }}</p>
+      </div>
+    </div>
+    <button
+      type="button"
+      (click)="reintentar()"
+      class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
+    >
+      <i class="bi bi-arrow-clockwise"></i> Reintentar
     </button>
   </div>
 
-  <!-- Filtros -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-col sm:flex-row items-center gap-4" *ngIf="!showForm">
-    <span class="font-bold text-gray-700 whitespace-nowrap"><i class="bi bi-funnel text-gray-400 mr-2"></i>Estado:</span>
-    <div class="flex flex-wrap gap-2">
-      <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border" 
-              [ngClass]="filtroEstado === 'TODOS' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'" 
-              (click)="cambiarFiltro('TODOS')">
-        <i class="bi bi-grid mr-1"></i> Todas
-      </button>
-      <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border" 
-              [ngClass]="filtroEstado === 'ACTIVAS' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'" 
-              (click)="cambiarFiltro('ACTIVAS')">
-        <i class="bi bi-check-circle mr-1"></i> Activas
-      </button>
-      <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border" 
-              [ngClass]="filtroEstado === 'INACTIVAS' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'" 
-              (click)="cambiarFiltro('INACTIVAS')">
-        <i class="bi bi-x-circle mr-1"></i> Inactivas
+  <!-- Mensajes de acción (éxito y error) -->
+  <div
+    *ngIf="success"
+    class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl flex justify-between items-center text-sm font-medium"
+  >
+    <div class="flex items-center gap-2">
+      <i class="bi bi-check-circle-fill text-emerald-600"></i>
+      <span>{{ success }}</span>
+    </div>
+    <button type="button" (click)="success = ''" class="text-emerald-700 hover:text-emerald-900 cursor-pointer">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+  <div
+    *ngIf="error && !showForm"
+    class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-2xl flex justify-between items-center text-sm font-medium"
+  >
+    <div class="flex items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill text-red-600"></i>
+      <span>{{ error }}</span>
+    </div>
+    <button type="button" (click)="error = ''" class="text-red-700 hover:text-red-900 cursor-pointer">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <!-- White KPI Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Promociones</p>
+        <p class="text-2xl font-black text-gray-900 m-0">{{ kpiTotalPromociones }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-tag-fill text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Activas y Vigentes</p>
+        <p class="text-2xl font-black text-emerald-600 m-0">{{ kpiActivas }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-check-circle-fill text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Inactivas / Caducadas</p>
+        <p class="text-2xl font-black text-amber-600 m-0">{{ kpiInactivas }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-clock-history text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Con Límite de Usos</p>
+        <p class="text-2xl font-black text-indigo-600 m-0">{{ kpiConLimiteUso }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-shield-lock-fill text-lg"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar Card -->
+  <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3">
+    <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 flex-1">
+      <div class="relative w-full sm:w-64">
+        <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input
+          type="text"
+          [(ngModel)]="terminoBusqueda"
+          (input)="onBusquedaChange()"
+          placeholder="Buscar por código o nombre..."
+          class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all uppercase"
+        />
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          (click)="cambiarFiltro('TODOS')"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+          [ngClass]="filtroEstado === 'TODOS' ? 'bg-gray-900 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'"
+        >
+          Todas
+        </button>
+        <button
+          type="button"
+          (click)="cambiarFiltro('ACTIVAS')"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+          [ngClass]="filtroEstado === 'ACTIVAS' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800'"
+        >
+          <i class="bi bi-check-circle-fill"></i>
+          Activas
+        </button>
+        <button
+          type="button"
+          (click)="cambiarFiltro('INACTIVAS')"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+          [ngClass]="filtroEstado === 'INACTIVAS' ? 'bg-gray-900 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'"
+        >
+          <i class="bi bi-x-circle-fill"></i>
+          Inactivas
+        </button>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+      <span class="text-xs font-bold text-gray-500">
+        {{ promociones.length }} promoción{{ promociones.length === 1 ? '' : 'es' }}
+      </span>
+      <button
+        *ngIf="terminoBusqueda || filtroEstado !== 'TODOS'"
+        type="button"
+        (click)="limpiarFiltros()"
+        class="text-xs font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
+      >
+        Limpiar filtros
       </button>
     </div>
   </div>
 
-  <!-- Mensajes -->
-  <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2" *ngIf="success">
-    <i class="bi bi-check-circle-fill"></i> {{ success }}
-  </div>
-  <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2" *ngIf="error">
-    <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
-  </div>
-  
   <!-- Loading State -->
-  @if (loading) {
-    <div class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
-      <div class="animate-spin rounded-full h-12 w-12 border-4 border-red-200 border-t-red-600 mb-4"></div>
-      <p class="text-gray-500 font-medium">Cargando las promociones...</p>
-    </div>
-  }
-
-  <!-- Formulario -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6" *ngIf="showForm">
-    <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
-      <h5 class="text-xl font-bold text-gray-800">
-        <i class="bi bi-pencil-fill text-red-600 mr-2"></i> {{ editMode ? 'Editar Promoción' : 'Nueva Promoción' }}
-      </h5>
-      <button class="text-gray-400 hover:text-red-600 transition-colors" (click)="cancelar()">
-        <i class="bi bi-x-lg text-xl"></i>
-      </button>
-    </div>
-
-    <form [formGroup]="promocionForm" (ngSubmit)="guardarPromocion()" class="space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div>
-          <label for="code" class="block text-sm font-bold text-gray-700 mb-1">Código *</label>
-          <input id="code" type="text" formControlName="code" placeholder="SUMMER2025" style="text-transform: uppercase;"
-                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all uppercase font-mono"
-                 [ngClass]="promocionForm.get('code')?.invalid && promocionForm.get('code')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
-        </div>
-
-        <div class="lg:col-span-2">
-          <label for="name" class="block text-sm font-bold text-gray-700 mb-1">Nombre *</label>
-          <input id="name" type="text" formControlName="name" placeholder="Verano 2025"
-                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
-                 [ngClass]="promocionForm.get('name')?.invalid && promocionForm.get('name')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
-        </div>
-
-        <div class="md:col-span-2 lg:col-span-3">
-          <label for="description" class="block text-sm font-bold text-gray-700 mb-1">Descripción</label>
-          <textarea id="description" formControlName="description" rows="2" placeholder="Detalles de la promoción..."
-                    class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"></textarea>
-        </div>
-
-        <div>
-          <label for="discountType" class="block text-sm font-bold text-gray-700 mb-1">Tipo de Descuento *</label>
-          <select id="discountType" formControlName="discountType"
-                  class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
-            <option *ngFor="let tipo of tiposDescuento" [value]="tipo.value">{{ tipo.label }}</option>
-          </select>
-        </div>
-
-        <div *ngIf="promocionForm.value.discountType !== 'BUNDLE'">
-          <label for="discountValue" class="block text-sm font-bold text-gray-700 mb-1">Valor de Descuento *</label>
-          <input id="discountValue" type="number" step="0.01" formControlName="discountValue"
-                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
-                 [ngClass]="promocionForm.get('discountValue')?.invalid && promocionForm.get('discountValue')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
-        </div>
-
-        <div *ngIf="promocionForm.value.discountType === 'BUNDLE'">
-          <label for="finalPrice" class="block text-sm font-bold text-gray-700 mb-1">Precio Final (S/) *</label>
-          <input id="finalPrice" type="number" step="0.01" formControlName="finalPrice"
-                 class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
-        </div>
-
-        <div>
-          <label for="minPurchase" class="block text-sm font-bold text-gray-700 mb-1">Compra Mínima (S/)</label>
-          <input id="minPurchase" type="number" step="0.01" formControlName="minPurchase"
-                 class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
-        </div>
-
-        <div *ngIf="promocionForm.value.discountType === 'PERCENTAGE'">
-          <label for="maxDiscount" class="block text-sm font-bold text-gray-700 mb-1">Descuento Máximo (S/)</label>
-          <input id="maxDiscount" type="number" step="0.01" formControlName="maxDiscount"
-                 class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
-        </div>
-
-        <div>
-          <label for="startDate" class="block text-sm font-bold text-gray-700 mb-1">Fecha Inicio *</label>
-          <input id="startDate" type="date" formControlName="startDate"
-                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
-                 [ngClass]="promocionForm.get('startDate')?.invalid && promocionForm.get('startDate')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
-        </div>
-
-        <div>
-          <label for="endDate" class="block text-sm font-bold text-gray-700 mb-1">Fecha Fin *</label>
-          <input id="endDate" type="date" formControlName="endDate"
-                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
-                 [ngClass]="promocionForm.get('endDate')?.invalid && promocionForm.get('endDate')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
-        </div>
-
-        <div>
-          <label for="usageLimit" class="block text-sm font-bold text-gray-700 mb-1">Límite de Usos</label>
-          <input id="usageLimit" type="number" formControlName="usageLimit" placeholder="Ilimitado si está vacío"
-                 class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
-        </div>
-
-        <div>
-          <label for="applicableTo" class="block text-sm font-bold text-gray-700 mb-1">Aplicable a *</label>
-          <select id="applicableTo" formControlName="applicableTo"
-                  class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
-            <option *ngFor="let app of aplicableTo" [value]="app.value">{{ app.label }}</option>
-          </select>
-        </div>
-
-        <div class="md:col-span-2 lg:col-span-3">
-          <label class="flex items-center gap-3 cursor-pointer p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
-            <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
-              <input type="checkbox" formControlName="isActive" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in-out" [ngStyle]="{'transform': promocionForm.get('isActive')?.value ? 'translateX(100%)' : 'translateX(0)', 'border-color': promocionForm.get('isActive')?.value ? '#10B981' : '#E5E7EB'}"/>
-              <span class="toggle-label block overflow-hidden h-5 rounded-full cursor-pointer transition-colors duration-200 ease-in-out" [ngClass]="promocionForm.get('isActive')?.value ? 'bg-emerald-500' : 'bg-gray-300'"></span>
-            </div>
-            <div>
-              <span class="block text-sm font-bold text-gray-700">Activar promoción</span>
-              <span class="block text-xs text-gray-500">Los clientes podrán utilizar este código promocional si está activo</span>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
-        <button type="button" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg transition-colors" (click)="cancelar()">
-          Cancelar
-        </button>
-        <button type="submit" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="promocionForm.invalid || loading">
-          <i class="bi bi-save"></i>
-          {{ editMode ? 'Actualizar' : 'Crear' }}
-        </button>
-      </div>
-    </form>
+  <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
+    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
+    <p class="text-sm font-bold text-gray-500 m-0">Cargando promociones...</p>
   </div>
 
-  <!-- Tabla -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" *ngIf="!showForm && !loading">
-    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-      <h5 class="text-lg font-bold text-gray-800 m-0">Lista de Promociones ({{ promociones.length }})</h5>
-    </div>
-    
+  <!-- Table View with Dark Header -->
+  <div *ngIf="!loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse min-w-[1000px]">
+      <table class="w-full text-left border-collapse min-w-[900px]">
         <thead>
-          <tr class="bg-gray-900 text-white text-sm uppercase tracking-wider">
-            <th class="px-6 py-4 font-bold rounded-tl-lg">Código</th>
-            <th class="px-6 py-4 font-bold">Nombre</th>
-            <th class="px-6 py-4 font-bold">Tipo</th>
-            <th class="px-6 py-4 font-bold text-right">Valor</th>
-            <th class="px-6 py-4 font-bold">Vigencia</th>
-            <th class="px-6 py-4 font-bold text-center">Usos</th>
-            <th class="px-6 py-4 font-bold text-center">Estado</th>
-            <th class="px-6 py-4 font-bold text-center rounded-tr-lg">Acciones</th>
+          <tr class="bg-gray-900 text-white text-xs uppercase tracking-wider">
+            <th class="py-3.5 px-4 font-bold">Código</th>
+            <th class="py-3.5 px-4 font-bold">Nombre</th>
+            <th class="py-3.5 px-4 font-bold">Tipo</th>
+            <th class="py-3.5 px-4 font-bold text-right">Beneficio</th>
+            <th class="py-3.5 px-4 font-bold">Vigencia</th>
+            <th class="py-3.5 px-4 font-bold text-center">Usos</th>
+            <th class="py-3.5 px-4 font-bold text-center">Estado</th>
+            <th class="py-3.5 px-4 font-bold text-center">Acciones</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100 text-gray-700">
-          <tr class="hover:bg-gray-50 transition-colors" *ngFor="let promo of promocionesPaginadas" [ngClass]="{'opacity-60': !esVigente(promo)}">
-            <td class="px-6 py-4">
-              <span class="inline-block bg-blue-50 border border-blue-200 text-blue-700 font-mono font-bold px-2 py-1 rounded tracking-widest text-sm uppercase">
+        <tbody class="divide-y divide-gray-100 text-sm">
+          <tr
+            *ngFor="let promo of promocionesPaginadas; trackBy: trackByPromoId"
+            class="hover:bg-gray-50 transition-colors"
+            [ngClass]="{'opacity-60': !esVigente(promo)}"
+          >
+            <td class="py-3 px-4">
+              <span class="inline-block bg-blue-50 border border-blue-200 text-blue-700 font-mono font-black px-2.5 py-1 rounded-lg text-xs uppercase tracking-wider">
                 {{ promo.code }}
               </span>
             </td>
-            <td class="px-6 py-4">
-              <div class="font-bold text-gray-800">{{ promo.name }}</div>
-              <div class="text-xs text-gray-500 line-clamp-1" *ngIf="promo.description">{{ promo.description }}</div>
+            <td class="py-3 px-4">
+              <p class="font-bold text-gray-900 m-0">{{ promo.name }}</p>
+              <p class="text-xs text-gray-500 m-0 truncate max-w-[220px]" *ngIf="promo.description">{{ promo.description }}</p>
             </td>
-            <td class="px-6 py-4">
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200" [ngSwitch]="promo.discountType">
+            <td class="py-3 px-4">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200" [ngSwitch]="promo.discountType">
                 <span *ngSwitchCase="'PERCENTAGE'"><i class="bi bi-percent"></i> Porcentaje</span>
                 <span *ngSwitchCase="'FIXED_AMOUNT'"><i class="bi bi-currency-dollar"></i> Monto Fijo</span>
                 <span *ngSwitchCase="'BUNDLE'"><i class="bi bi-box-seam"></i> Precio Final</span>
               </span>
             </td>
-            <td class="px-6 py-4 text-right">
-              <span class="text-emerald-600 font-black text-lg" *ngIf="promo.discountType === 'PERCENTAGE'">{{ promo.discountValue }}%</span>
-              <span class="text-emerald-600 font-black text-lg" *ngIf="promo.discountType === 'FIXED_AMOUNT'">S/ {{ promo.discountValue }}</span>
-              <span class="text-emerald-600 font-black text-lg" *ngIf="promo.discountType === 'BUNDLE'">S/ {{ promo.finalPrice }}</span>
+            <td class="py-3 px-4 text-right">
+              <span class="text-emerald-600 font-black text-base" *ngIf="promo.discountType === 'PERCENTAGE'">{{ promo.discountValue }}%</span>
+              <span class="text-emerald-600 font-black text-base" *ngIf="promo.discountType === 'FIXED_AMOUNT'">S/ {{ promo.discountValue | number:'1.2-2' }}</span>
+              <span class="text-emerald-600 font-black text-base" *ngIf="promo.discountType === 'BUNDLE'">S/ {{ promo.finalPrice | number:'1.2-2' }}</span>
             </td>
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-2 text-xs font-medium text-gray-600">
-                <span class="whitespace-nowrap">{{ formatearFecha(promo.startDate) }}</span>
-                <i class="bi bi-arrow-right text-gray-400"></i>
-                <span class="whitespace-nowrap" [ngClass]="{'text-red-500 font-bold': !esVigente(promo)}">{{ formatearFecha(promo.endDate) }}</span>
+            <td class="py-3 px-4">
+              <div class="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
+                <span>{{ obtenerFechasPromo(promo.id).start }}</span>
+                <i class="bi bi-arrow-right text-gray-400 text-[10px]"></i>
+                <span [ngClass]="{'text-red-600 font-bold': !esVigente(promo)}">{{ obtenerFechasPromo(promo.id).end }}</span>
               </div>
             </td>
-            <td class="px-6 py-4 text-center">
-              <span class="bg-amber-50 text-amber-700 font-bold px-2 py-1 rounded-md text-xs border border-amber-200 whitespace-nowrap">
+            <td class="py-3 px-4 text-center">
+              <span class="bg-amber-50 text-amber-800 font-bold px-2.5 py-1 rounded-lg text-xs border border-amber-200 whitespace-nowrap">
                 {{ promo.usageCount || 0 }}
                 <span *ngIf="promo.usageLimit">/ {{ promo.usageLimit }}</span>
                 <span *ngIf="!promo.usageLimit">/ &infin;</span>
               </span>
             </td>
-            <td class="px-6 py-4 text-center">
-              <button class="inline-flex items-center justify-center font-bold px-3 py-1.5 rounded-lg text-xs transition-colors border"
-                      [ngClass]="esVigente(promo) ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'"
-                      (click)="toggleActivar(promo)">
-                <i class="bi mr-1.5" [ngClass]="esVigente(promo) ? 'bi-check-circle-fill' : 'bi-x-circle'"></i>
+            <td class="py-3 px-4 text-center">
+              <button
+                type="button"
+                (click)="toggleActivar(promo)"
+                class="inline-flex items-center gap-1.5 font-bold px-3 py-1 rounded-xl text-xs transition-colors cursor-pointer border"
+                [ngClass]="esVigente(promo) ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'"
+              >
+                <i class="bi" [ngClass]="esVigente(promo) ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
                 {{ esVigente(promo) ? 'Activa' : 'Inactiva' }}
               </button>
             </td>
-            <td class="px-6 py-4">
-              <div class="flex gap-2 justify-center">
-                <button class="bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-700 font-bold w-8 h-8 rounded-lg text-sm transition-colors flex items-center justify-center" 
-                        (click)="editarPromocion(promo)" title="Editar">
-                  <i class="bi bi-pencil-fill"></i>
+            <td class="py-3 px-4 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button
+                  type="button"
+                  (click)="editarPromocion(promo)"
+                  class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors cursor-pointer"
+                  title="Editar Promoción"
+                >
+                  <i class="bi bi-pencil-fill text-xs"></i>
                 </button>
-                <button class="bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold w-8 h-8 rounded-lg text-sm transition-colors flex items-center justify-center" 
-                        (click)="eliminarPromocion(promo.id!)" title="Eliminar">
-                  <i class="bi bi-trash-fill"></i>
+                <button
+                  type="button"
+                  (click)="eliminarPromocion(promo.id!)"
+                  class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer"
+                  title="Eliminar Promoción"
+                >
+                  <i class="bi bi-trash-fill text-xs"></i>
                 </button>
               </div>
             </td>
           </tr>
           <tr *ngIf="promociones.length === 0">
-            <td colspan="8" class="px-6 py-16 text-center">
-              <div class="flex flex-col items-center">
-                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
-                  <i class="bi bi-tags text-3xl"></i>
-                </div>
-                <h5 class="text-gray-800 font-bold text-lg mb-1">No hay promociones registradas</h5>
-                <p class="text-gray-500 text-sm">Haz clic en "Nueva Promoción" para agregar la primera.</p>
-              </div>
+            <td colspan="8" class="py-12 text-center text-gray-400">
+              <i class="bi bi-tags text-3xl text-gray-300 block mb-2"></i>
+              <p class="font-bold text-gray-600 text-sm m-0">No se encontraron promociones</p>
+              <p class="text-xs text-gray-400 mt-1 mb-0">Modifica el filtro de estado o búsqueda.</p>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <div class="p-6 border-t border-gray-100" *ngIf="promociones.length > 0">
+    <!-- Paginación -->
+    <div class="p-4 border-t border-gray-100" *ngIf="promociones.length > 0">
       <app-pagination
         [currentPage]="currentPage"
         [totalItems]="promociones.length"
         [itemsPerPage]="itemsPerPage"
-        (pageChange)="onPageChange($event)">
-      </app-pagination>
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
     </div>
+  </div>
+</div>
+
+<!-- Modal Crear / Editar Promoción -->
+<div
+  class="fixed inset-0 z-[6000] !mt-0 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+  *ngIf="showForm"
+>
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90dvh] flex flex-col overflow-hidden">
+    <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center shrink-0">
+      <h5 class="text-lg font-black m-0 flex items-center gap-2">
+        <i class="bi text-red-500" [ngClass]="editMode ? 'bi-pencil-fill' : 'bi-plus-circle-fill'"></i>
+        {{ editMode ? 'Editar Promoción' : 'Nueva Promoción' }}
+      </h5>
+      <button type="button" class="text-gray-400 hover:text-white transition-colors cursor-pointer" (click)="cancelar()">
+        <i class="bi bi-x-lg text-xl"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="promocionForm" (ngSubmit)="guardarPromocion()" class="flex flex-col flex-1 overflow-hidden">
+      <div class="p-6 overflow-y-auto flex-1 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Código *</label>
+            <input
+              type="text"
+              formControlName="code"
+              placeholder="VERANO2025"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm font-mono uppercase focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            />
+          </div>
+
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nombre Comercial *</label>
+            <input
+              type="text"
+              formControlName="name"
+              placeholder="Ej: Descuento Verano 20%"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Descripción</label>
+          <textarea
+            rows="2"
+            formControlName="description"
+            placeholder="Términos y condiciones o detalles de la promoción"
+            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+          ></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tipo de Descuento *</label>
+            <select
+              formControlName="discountType"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            >
+              <option *ngFor="let tipo of tiposDescuento" [value]="tipo.value">{{ tipo.label }}</option>
+            </select>
+          </div>
+
+          <div *ngIf="promocionForm.value.discountType !== 'BUNDLE'">
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Valor de Descuento *</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              formControlName="discountValue"
+              placeholder="0.00"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            />
+          </div>
+
+          <div *ngIf="promocionForm.value.discountType === 'BUNDLE'">
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Precio Final del Combo (S/) *</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              formControlName="finalPrice"
+              placeholder="0.00"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Compra Mínima (S/)</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              formControlName="minPurchase"
+              placeholder="0.00"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            />
+          </div>
+
+          <div *ngIf="promocionForm.value.discountType === 'PERCENTAGE'">
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Descuento Máximo (S/)</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              formControlName="maxDiscount"
+              placeholder="0.00"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Límite de Usos</label>
+            <input
+              type="number"
+              min="1"
+              formControlName="usageLimit"
+              placeholder="Ilimitado si está vacío"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Fecha Inicio *</label>
+            <input
+              type="date"
+              formControlName="startDate"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Fecha Fin *</label>
+            <input
+              type="date"
+              formControlName="endDate"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Aplicable a *</label>
+          <select
+            formControlName="applicableTo"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+          >
+            <option *ngFor="let app of aplicableTo" [value]="app.value">{{ app.label }}</option>
+          </select>
+        </div>
+
+        <label class="flex items-center gap-3 cursor-pointer p-3.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors">
+          <input
+            type="checkbox"
+            formControlName="isActive"
+            class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+          />
+          <div>
+            <span class="block text-sm font-bold text-gray-800">Campaña Activa</span>
+            <span class="block text-xs text-gray-500">Permite que los clientes ingresen este cupón en el checkout</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3 shrink-0">
+        <button
+          type="button"
+          class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl text-sm transition-colors cursor-pointer"
+          (click)="cancelar()"
+          [disabled]="guardando"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+          [disabled]="promocionForm.invalid || guardando"
+        >
+          <i class="bi" [ngClass]="guardando ? 'bi-arrow-repeat animate-spin' : 'bi-save'"></i>
+          {{ editMode ? 'Actualizar' : 'Crear' }} Promoción
+        </button>
+      </div>
+    </form>
   </div>
 </div>

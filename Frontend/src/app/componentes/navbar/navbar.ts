@@ -203,16 +203,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   navegarA(ruta: string) {
     this.mostrarMenuUsuario = false;
     this.isMobileMenuOpen = false;
-
-    // Si es la ruta de perfil del admin, navegar al panel y cambiar vista
-    if (ruta === '/admin/perfil') {
-      this.router.navigate(['/admin/dashboard']).then(() => {
-        // Emitir evento o llamar método del panel admin para cambiar a vista 'mi-perfil'
-        // Por ahora navegamos al dashboard y el admin puede hacer clic en "Mi Perfil" en el sidebar
-      });
-    } else {
-      this.router.navigate([ruta]);
-    }
+    this.router.navigate([ruta]);
   }
 
   getIniciales(): string {
@@ -254,7 +245,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   getIdiomaActualFlag(): string {
     const idioma = this.idiomas.find(i => i.code === this.idiomaActual);
-    return idioma ? idioma.flag : 'ðŸ‡ªðŸ‡¸';
+    return idioma ? idioma.flag : '🇪🇸';
   }
 }
-

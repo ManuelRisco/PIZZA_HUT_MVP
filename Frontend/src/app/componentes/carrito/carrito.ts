@@ -250,6 +250,10 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   incrementar(item: CartItem): void {
+    if (item.maxStock !== undefined && item.maxStock > 0 && item.quantity >= item.maxStock) {
+      this.toastService.showError(`Stock máximo disponible alcanzado (${item.maxStock})`);
+      return;
+    }
     this.cartService.updateQuantity(item.id, item.quantity + 1);
     this.accessibility.announceQuantityChange(item.quantity + 1, item.name);
     if (this.promoApplied) this.quitarPromocion();

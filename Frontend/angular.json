@@ -18,6 +18,10 @@
               "zone.js"
             ],
             "tsConfig": "tsconfig.app.json",
+            "allowedCommonJsDependencies": [
+              "exceljs",
+              "file-saver"
+            ],
             "assets": [
               {
                 "glob": "**/*",

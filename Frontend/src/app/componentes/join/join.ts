@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { LoginDTO } from '../../models/usuario.interface';
 
@@ -37,21 +37,22 @@ export class Join {
   serverError = false;
   showPassword = false;
 
-  constructor(private readonly authService: AuthService, private readonly router: Router) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly router: Router,
+    private readonly route: ActivatedRoute
+  ) {
+    const email = this.route.snapshot.queryParamMap.get('email');
+    if (email) {
+      this.usuario.email = email;
+    }
+  }
 
-  // Validar formato de email
+  // Mismo criterio que el registro y que el backend: un correo válido, hasta 255.
   isValidEmail(email: string): boolean {
-    // Validar formato básico
-    const emailRegex = /^[\w.-]+@[\w.-]+\.\w+$/i;
-    if (!emailRegex.test(email)) return false;
-
-    // Extraer la parte local (antes del @)
-    const localPart = email.split('@')[0];
-
-    // Validar longitud: mínimo 2 caracteres (local), máximo 30 total
-    if (localPart.length < 2 || email.length > 31) return false;
-
-    return true;
+    const value = email.trim();
+    const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    return emailRegex.test(value) && value.length <= 255;
   }
 
   // Validar contraseña (mínimo 6, máximo 20 caracteres)
@@ -69,8 +70,8 @@ export class Join {
       errors.push({ field: 'email', message: 'Complete el campo correo electrónico.', code: 'CP02' });
       this.fieldErrors['email'] = 'Correo electrónico requerido';
     } else if (!this.isValidEmail(this.usuario.email)) {
-      errors.push({ field: 'email', message: 'Ingrese un correo electrónico válido (2-20 caracteres).', code: 'CP03' });
-      this.fieldErrors['email'] = 'Formato inválido: mínimo 2 caracteres, máximo 20 total (ej: usuario@dominio.com)';
+      errors.push({ field: 'email', message: 'Ingrese un correo electrónico válido.', code: 'CP03' });
+      this.fieldErrors['email'] = 'Ingrese un correo electrónico válido';
     }
     // Validar contraseña
     if (!this.usuario.password || this.usuario.password.trim() === '') {
@@ -86,6 +87,15 @@ export class Join {
 
   onLogin(event: Event) {
     event.preventDefault();
+    const form = event.target as HTMLFormElement;
+    const emailInput = form.querySelector<HTMLInputElement>('#email');
+    const passwordInput = form.querySelector<HTMLInputElement>('#password');
+    if (emailInput?.value) {
+      this.usuario.email = emailInput.value;
+    }
+    if (passwordInput?.value) {
+      this.usuario.password = passwordInput.value;
+    }
     this.loginError = '';
     this.serverError = false;
     this.fieldErrors = {};

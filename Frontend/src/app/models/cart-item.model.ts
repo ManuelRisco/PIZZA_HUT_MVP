@@ -16,6 +16,7 @@ export interface CartItem {
   /** IDs de ingredientes extras seleccionados */
   extras?: string[];
   category?: string; // Categoría del extra (BEBIDA, POSTRE, etc.)
+  maxStock?: number; // Stock máximo disponible al momento de agregar
 }
 
 export interface CartTotals {
@@ -32,4 +33,5 @@ export interface AddToCartPayload {
   quantity?: number;
   /** IDs de ingredientes extras seleccionados */
   extras?: string[];
+  maxStock?: number;
 }

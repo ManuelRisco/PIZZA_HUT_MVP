@@ -25,6 +25,24 @@ public class Ingredient {
     @Column(name = "isAvailable", nullable = false)
     private boolean isAvailable = true;
 
+    @Column(nullable = false, length = 20)
+    private String unit = "g";
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal stockQuantity = BigDecimal.ZERO;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal minStock = BigDecimal.ZERO;
+
+    @Column(nullable = false, precision = 10, scale = 4)
+    private BigDecimal unitCost = BigDecimal.ZERO;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal extraPortionQuantity = new BigDecimal("50.00");
+
+    @Column(nullable = false)
+    private boolean allowAsExtra = true;
+
     @Column(nullable = false)
     @JsonIgnore // Ocultar metadatos internos
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -40,12 +58,12 @@ public class Ingredient {
     @JsonIgnore
     private List<PizzaIngredient> pizzaIngredients;
 
-    // Constructor vac\u00edo
+    // Constructor vacío
     public Ingredient() {
     }
 
-    // Constructor completo
-    public Ingredient(Integer id, String name, java.math.BigDecimal extraCost, boolean isAvailable,
+    // Constructor completo original preservado por compatibilidad
+    public Ingredient(Integer id, String name, BigDecimal extraCost, boolean isAvailable,
             LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt,
             List<PizzaIngredient> pizzaIngredients) {
         this.id = id;
@@ -75,11 +93,11 @@ public class Ingredient {
         this.name = name;
     }
 
-    public java.math.BigDecimal getExtraCost() {
+    public BigDecimal getExtraCost() {
         return extraCost;
     }
 
-    public void setExtraCost(java.math.BigDecimal extraCost) {
+    public void setExtraCost(BigDecimal extraCost) {
         this.extraCost = extraCost;
     }
 
@@ -89,6 +107,54 @@ public class Ingredient {
 
     public void setAvailable(boolean available) {
         this.isAvailable = available;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public BigDecimal getStockQuantity() {
+        return stockQuantity;
+    }
+
+    public void setStockQuantity(BigDecimal stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+
+    public BigDecimal getMinStock() {
+        return minStock;
+    }
+
+    public void setMinStock(BigDecimal minStock) {
+        this.minStock = minStock;
+    }
+
+    public BigDecimal getUnitCost() {
+        return unitCost;
+    }
+
+    public void setUnitCost(BigDecimal unitCost) {
+        this.unitCost = unitCost;
+    }
+
+    public BigDecimal getExtraPortionQuantity() {
+        return extraPortionQuantity;
+    }
+
+    public void setExtraPortionQuantity(BigDecimal extraPortionQuantity) {
+        this.extraPortionQuantity = extraPortionQuantity;
+    }
+
+    public boolean isAllowAsExtra() {
+        return allowAsExtra;
+    }
+
+    public void setAllowAsExtra(boolean allowAsExtra) {
+        this.allowAsExtra = allowAsExtra;
     }
 
     public LocalDateTime getCreatedAt() {

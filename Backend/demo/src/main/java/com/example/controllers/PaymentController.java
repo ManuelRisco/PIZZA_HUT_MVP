@@ -22,7 +22,7 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:4200")
 public class PaymentController {
 
-    private static final String MSG_NOT_FOUND = "Payment no encontrado";
+    private static final String MSG_NOT_FOUND = "Pago no encontrado";
 
     private final PaymentService paymentService;
     private final OrderService orderService;
@@ -78,7 +78,7 @@ public class PaymentController {
     @GetMapping("/order/{orderId}")
     public ResponseEntity<ApiResponse<PaymentDTO>> getPaymentByOrderId(@PathVariable("orderId") Integer orderId) {
         Payment payment = paymentService.obtenerPorOrderId(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment no encontrado para este pedido"));
+                .orElseThrow(() -> new ResourceNotFoundException("Pago no encontrado para este pedido"));
 
         validarAccesoAPago(payment);
 
@@ -95,16 +95,15 @@ public class PaymentController {
         try {
             payment.setStatus(Payment.PaymentStatus.valueOf(paymentDTO.getStatus()));
         } catch (IllegalArgumentException | NullPointerException e) {
-            throw new BadRequestException("Estado de pago invÃ¡lido");
+            throw new BadRequestException("Estado de pago inválido");
         }
 
         payment.setTransactionId(paymentDTO.getTransactionId());
 
-        // El controller de admin puede crear pagos, pero si es CUSTOMER, validamos IDOR
         validarAccesoAPago(payment);
 
         Payment paymentCreado = paymentService.crearPayment(payment);
-        return new ResponseEntity<>(ApiResponse.success(new PaymentDTO(paymentCreado), "Payment creado con Ã©xito"),
+        return new ResponseEntity<>(ApiResponse.success(new PaymentDTO(paymentCreado), "Pago creado con éxito"),
                 HttpStatus.CREATED);
     }
 
@@ -119,7 +118,7 @@ public class PaymentController {
         try {
             payment.setStatus(Payment.PaymentStatus.valueOf(paymentDTO.getStatus()));
         } catch (IllegalArgumentException | NullPointerException e) {
-            throw new BadRequestException("Estado de pago invÃ¡lido");
+            throw new BadRequestException("Estado de pago inválido");
         }
 
         payment.setTransactionId(paymentDTO.getTransactionId());
@@ -129,14 +128,14 @@ public class PaymentController {
             throw new ResourceNotFoundException(MSG_NOT_FOUND);
         }
         return ResponseEntity
-                .ok(ApiResponse.success(new PaymentDTO(paymentActualizado), "Payment actualizado con Ã©xito"));
+                .ok(ApiResponse.success(new PaymentDTO(paymentActualizado), "Pago actualizado con éxito"));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deletePayment(@PathVariable("id") Integer id) {
         try {
             paymentService.eliminarPayment(id);
-            return ResponseEntity.ok(ApiResponse.success(null, "Payment eliminado correctamente"));
+            return ResponseEntity.ok(ApiResponse.success(null, "Pago eliminado correctamente"));
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -144,4 +143,3 @@ public class PaymentController {
         }
     }
 }
-

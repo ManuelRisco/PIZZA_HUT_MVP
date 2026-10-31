@@ -1,14 +1,13 @@
 import { Component, OnInit, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { PizzaService } from '../../services/pizza.service';
 import { PizzaDTO } from '../../models/pizza.interface';
 import { CartService } from '../../services/cart.service';
 import { Size } from '../../services/size.service';
 import { IngredientService } from '../../services/ingredient.service';
-import { PizzaPatronesService } from '../../services/pizza-patrones.service';
 import { ImageCacheService } from '../../services/image-cache.service';
 import { ImageOptimizerService } from '../../services/image-optimizer.service';
 import { FavoriteService } from '../../services/favorite.service';
@@ -17,8 +16,6 @@ import { AccessibilityService } from '../../services/accessibility.service';
 import { ToastService } from '../../services/toast.service';
 import { TranslateService } from '../../services/translate.service';
 import { SizeDTO, IngredientDTO } from '../../models/admin.interface';
-
-import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-menu',
@@ -59,7 +56,6 @@ export class MenuComponent implements OnInit, AfterViewInit {
   private readonly cartService = inject(CartService);
   private readonly sizeService = inject(Size);
   private readonly ingredientService = inject(IngredientService);
-  private readonly pizzaPatronesService = inject(PizzaPatronesService);
   private readonly imageCacheService = inject(ImageCacheService);
   private readonly imageOptimizer = inject(ImageOptimizerService);
   private readonly favoriteService = inject(FavoriteService);
@@ -69,42 +65,44 @@ export class MenuComponent implements OnInit, AfterViewInit {
   private readonly translateService = inject(TranslateService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  
+
   private readonly el = inject(ElementRef);
   private scrollObserver?: IntersectionObserver;
-  
+
   @ViewChild('searchInput', { static: false }) searchInput?: ElementRef;
 
   ngOnInit(): void {
     this.cargarDatosIniciales();
     this.verificarAutenticacion();
     this.manejarHighlight();
-    
-    // Announce menu is ready for screen readers
+
     this.accessibility.announce('Menú de pizzas cargado. Usa la búsqueda para filtrar pizzas');
   }
 
   ngAfterViewInit(): void {
-    this.scrollObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('opacity-100', 'translate-y-0');
-          entry.target.classList.remove('opacity-0', 'translate-y-12');
-          this.scrollObserver?.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    this.scrollObserver = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('opacity-100', 'translate-y-0');
+            entry.target.classList.remove('opacity-0', 'translate-y-12');
+            this.scrollObserver?.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
     this.setupScrollAnimations();
   }
 
   private setupScrollAnimations(): void {
     if (!this.scrollObserver) return;
-    
+
     setTimeout(() => {
       this.el.nativeElement.querySelectorAll('.animate-on-scroll').forEach((elem: any) => {
         this.scrollObserver?.observe(elem);
       });
-    }, 200); // Dar un poco de tiempo para que Angular renderice el @for
+    }, 200);
   }
 
   verificarAutenticacion(): void {
@@ -119,15 +117,13 @@ export class MenuComponent implements OnInit, AfterViewInit {
 
   cargarFavoritos(): void {
     if (!this.currentUserId) return;
-    
+
     this.favoriteService.obtenerFavoritosPorUserId(this.currentUserId).subscribe({
-      next: (favoritos) => {
+      next: favoritos => {
         this.favoritosPizzaIds = new Set(favoritos.map(f => f.pizzaId));
-        
-        // Aplicar ordenamiento por favoritos
         this.aplicarOrdenamientoFavoritos();
       },
-      error: (error) => {
+      error: error => {
         console.error('Error al cargar favoritos:', error);
       }
     });
@@ -138,7 +134,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
   }
 
   toggleFavorito(pizzaId: number, event: Event): void {
-    event.stopPropagation(); // Evitar que se active el click del contenedor
+    event.stopPropagation();
 
     if (!this.isLoggedIn) {
       this.toastService.showError('Debes iniciar sesión para agregar favoritos');
@@ -154,34 +150,28 @@ export class MenuComponent implements OnInit, AfterViewInit {
     const pizzaName = this.pizzas.find(p => p.id === pizzaId)?.name || 'Pizza';
 
     if (esFav) {
-      // Eliminar de favoritos
       this.favoriteService.eliminarFavorito(this.currentUserId, pizzaId).subscribe({
         next: () => {
           this.favoritosPizzaIds.delete(pizzaId);
           this.toastService.showSuccess('Eliminado de favoritos');
           this.accessibility.announceRemovedFromFavorites(pizzaName);
-          
-          // Reordenar después de eliminar favorito
           this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzasFiltradas]);
         },
-        error: (error) => {
+        error: error => {
           console.error('Error al eliminar favorito:', error);
           this.toastService.showError('Error al eliminar de favoritos');
           this.accessibility.announceError('No se pudo eliminar de favoritos');
         }
       });
     } else {
-      // Agregar a favoritos
       this.favoriteService.agregarFavorito(this.currentUserId, pizzaId).subscribe({
         next: () => {
           this.favoritosPizzaIds.add(pizzaId);
           this.toastService.showSuccess('Agregado a favoritos');
           this.accessibility.announceAddedToFavorites(pizzaName);
-          
-          // Reordenar después de agregar favorito
           this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzasFiltradas]);
         },
-        error: (error) => {
+        error: error => {
           console.error('Error al agregar favorito:', error);
           this.toastService.showError('Error al agregar a favoritos');
           this.accessibility.announceError('No se pudo agregar a favoritos');
@@ -192,100 +182,76 @@ export class MenuComponent implements OnInit, AfterViewInit {
 
   cargarDatosIniciales(): void {
     this.loading = true;
-    
-    // Cargar pizzas, tamaños e ingredientes en paralelo
+
     forkJoin({
       pizzas: this.pizzaService.listarPizzas(),
       sizes: this.sizeService.obtenerTodos(),
       ingredientes: this.ingredientService.obtenerDisponibles()
     }).subscribe({
-      next: (response) => {
-        // Pizzas
+      next: response => {
         const pizzasDisponibles = response.pizzas.filter(pizza => pizza.isAvailable);
         this.pizzas = pizzasDisponibles.length > 0 ? pizzasDisponibles : response.pizzas;
-        this.pizzasFiltradas = [...this.pizzas]; // Inicializar pizzas filtradas
-        
-        // Tamaños
-        this.tamanosDisponibles = response.sizes.toSorted((a, b) => 
-          (a.displayOrder || 0) - (b.displayOrder || 0)
+        this.pizzasFiltradas = [...this.pizzas];
+
+        this.tamanosDisponibles = response.sizes.toSorted(
+          (a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)
         );
-        
-        // Ingredientes
-        this.ingredientesDisponibles = response.ingredientes.filter(ing => ing.isAvailable);
-        
+
+        this.ingredientesDisponibles = response.ingredientes.filter(ing => ing.isAvailable && !ing.outOfStock);
+
         this.loading = false;
-        
-        // Pre-cargar imágenes en segundo plano
         this.precargarImagenes();
-        
-        // Aplicar ordenamiento por favoritos si ya se cargaron
         this.aplicarOrdenamientoFavoritos();
-        
-        // Setup animations for newly loaded pizzas
         this.setupScrollAnimations();
-        
-        // Retraducir elementos dinámicos
+
         setTimeout(() => {
           this.translateService.retranslate();
         }, 300);
       },
-      error: (error) => {
+      error: error => {
         console.error('Error al cargar datos:', error);
         this.error = 'Error al cargar el menú';
         this.loading = false;
       }
     });
   }
-  
-  /**
-   * Pre-carga todas las imágenes del menú en segundo plano (versiones optimizadas)
-   */
+
   private precargarImagenes(): void {
     const imageUrls = this.pizzas
       .map(p => p.imageUrl)
-      .filter(url => url?.trim() !== '') as string[];
-    
-    // Optimizar las URLs antes de pre-cargar
-    const optimizedUrls = imageUrls.map(url => 
-      this.imageOptimizer.optimizeImageUrl(url, 'medium')
-    );
-    
-    // Pre-cargar en segundo plano sin bloquear la UI
-    this.imageCacheService.preloadImages(optimizedUrls).then(() => {
-    }).catch(error => {
-    });
+      .filter(url => url && url.trim() !== '') as string[];
+
+    const optimizedUrls = imageUrls.map(url => this.imageOptimizer.optimizeImageUrl(url, 'medium'));
+
+    this.imageCacheService
+      .preloadImages(optimizedUrls)
+      .then(() => {})
+      .catch(() => {});
   }
-  
-  /**
-   * Verifica si una imagen ya está en caché (versión optimizada)
-   */
+
   isImageCached(imageUrl: string | undefined): boolean {
     if (!imageUrl) return false;
     const optimizedUrl = this.imageOptimizer.optimizeImageUrl(imageUrl, 'medium');
     return this.imageCacheService.isImageCached(optimizedUrl);
   }
 
-  /**
-   * Filtra las pizzas según el término de búsqueda y ordena favoritos primero
-   */
   filtrarPizzas(): void {
     const termino = this.searchTerm.toLowerCase().trim();
-    
+
     let pizzasFiltradas: PizzaDTO[];
-    
+
     if (!termino) {
       pizzasFiltradas = [...this.pizzas];
     } else {
-      pizzasFiltradas = this.pizzas.filter(pizza => 
-        pizza.name.toLowerCase().includes(termino) ||
-        (pizza.description?.toLowerCase().includes(termino))
+      pizzasFiltradas = this.pizzas.filter(
+        pizza =>
+          pizza.name.toLowerCase().includes(termino) ||
+          pizza.description?.toLowerCase().includes(termino)
       );
     }
 
-    // Ordenar: favoritos primero
     this.pizzasFiltradas = this.ordenarPorFavoritos(pizzasFiltradas);
-    
-    // Announce search results for accessibility
+
     if (termino) {
       const resultCount = this.pizzasFiltradas.length;
       if (resultCount > 0) {
@@ -296,51 +262,35 @@ export class MenuComponent implements OnInit, AfterViewInit {
         this.accessibility.announce('No se encontraron pizzas con ese criterio de búsqueda');
       }
     }
-    
-    // Setup animations for filtered pizzas
+
     this.setupScrollAnimations();
   }
 
-  /**
-   * Ordena las pizzas poniendo los favoritos primero
-   */
   private ordenarPorFavoritos(pizzas: PizzaDTO[]): PizzaDTO[] {
     return pizzas.toSorted((a, b) => {
       const aEsFavorito = this.esFavorito(a.id || 0);
       const bEsFavorito = this.esFavorito(b.id || 0);
-      
-      // Si ambos son favoritos o ambos no lo son, mantener orden original
       if (aEsFavorito === bEsFavorito) {
         return 0;
       }
-      
-      // Los favoritos van primero
       return aEsFavorito ? -1 : 1;
     });
   }
 
-  /**
-   * Aplica el ordenamiento por favoritos solo si las pizzas ya están cargadas
-   */
   private aplicarOrdenamientoFavoritos(): void {
     if (this.pizzas.length > 0) {
       this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzasFiltradas]);
     }
   }
 
-  /**
-   * Maneja el parámetro de highlight para iluminar una pizza específica
-   */
   private manejarHighlight(): void {
     this.route.queryParams.subscribe(params => {
       const highlightId = params['highlight'];
       if (highlightId) {
         this.pizzaHighlightId = +highlightId;
-        // Scroll suave después de que las pizzas se hayan cargado
         setTimeout(() => {
           this.scrollToPizza(this.pizzaHighlightId!);
         }, 500);
-        // Remover highlight después de unos segundos
         setTimeout(() => {
           this.pizzaHighlightId = null;
         }, 3000);
@@ -348,83 +298,58 @@ export class MenuComponent implements OnInit, AfterViewInit {
     });
   }
 
-  /**
-   * Hace scroll suave hacia una pizza específica
-   */
   private scrollToPizza(pizzaId: number): void {
     const pizzaElement = document.getElementById(`pizza-${pizzaId}`);
     if (pizzaElement) {
-      pizzaElement.scrollIntoView({ 
-        behavior: 'smooth', 
+      pizzaElement.scrollIntoView({
+        behavior: 'smooth',
         block: 'center',
         inline: 'nearest'
       });
     }
   }
 
-  /**
-   * Limpia el buscador y reaplica ordenamiento
-   */
   limpiarBuscador(): void {
     this.searchTerm = '';
     this.pizzasFiltradas = this.ordenarPorFavoritos([...this.pizzas]);
     this.accessibility.announce('Búsqueda borrada. Mostrando todas las pizzas disponibles');
-    
-    // Set focus back to search input
+
     setTimeout(() => {
       this.searchInput?.nativeElement?.focus();
     }, 100);
   }
 
-  /**
-   * Obtiene la URL optimizada de una imagen
-   */
   getOptimizedImageUrl(imageUrl: string | undefined): string {
     return this.imageOptimizer.optimizeImageUrl(imageUrl, 'medium');
   }
 
-  cargarPizzasDisponibles(): void {
-    this.loading = true;
-    this.pizzaService.listarPizzas().subscribe({
-      next: (pizzas) => {
-        // Filtrar solo las pizzas disponibles (temporal: mostrar todas si no hay disponibles)
-        const pizzasDisponibles = pizzas.filter(pizza => pizza.isAvailable);
-        this.pizzas = pizzasDisponibles.length > 0 ? pizzasDisponibles : pizzas;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error al cargar pizzas:', error);
-        this.error = 'Error al cargar las pizzas';
-        this.loading = false;
-      }
-    });
+  /**
+   * Retorna el stock de masa disponible para el tamaño seleccionado.
+   * Todas las pizzas comparten el stock de masa por tamaño.
+   */
+  getStockParaTamano(pizza: PizzaDTO | undefined, tamano?: SizeDTO): number {
+    if (!pizza) return 0;
+    if (!pizza.isAvailable || pizza.outOfStock) return 0;
+    if (tamano && tamano.stockQuantity !== undefined) {
+      return Math.max(0, tamano.stockQuantity);
+    }
+    return pizza.availableStock !== undefined ? Math.max(0, pizza.availableStock) : 0;
   }
 
-  cargarTamanos(): void {
-    this.sizeService.obtenerTodos().subscribe({
-      next: (sizes) => {
-        this.tamanosDisponibles = sizes.toSorted((a, b) => 
-          (a.displayOrder || 0) - (b.displayOrder || 0)
-        );
-      },
-      error: (error) => {
-        console.error('Error al cargar tamaños:', error);
-      }
-    });
-  }
-
-  cargarIngredientes(): void {
-    this.ingredientService.obtenerDisponibles().subscribe({
-      next: (ingredientes) => {
-        this.ingredientesDisponibles = ingredientes.filter(ing => ing.isAvailable);
-      },
-      error: (error) => {
-        console.error('Error al cargar ingredientes:', error);
-      }
-    });
+  esPizzaAgotada(pizza: PizzaDTO): boolean {
+    if (!pizza.isAvailable || pizza.outOfStock) return true;
+    if (pizza.availableStock !== undefined && pizza.availableStock <= 0) return true;
+    if (this.tamanosDisponibles.length > 0 && this.tamanosDisponibles.every(t => (t.stockQuantity ?? 0) <= 0)) {
+      return true;
+    }
+    return false;
   }
 
   abrirModalAgregarRapido(pizza: PizzaDTO): void {
+    if (this.esPizzaAgotada(pizza)) {
+      this.toastService.showError('Esta pizza se encuentra agotada por falta de stock');
+      return;
+    }
     this.pizzaSeleccionada = pizza;
     this.tamanoSeleccionado = undefined;
     this.mostrarModalRapido = true;
@@ -444,18 +369,24 @@ export class MenuComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    const maxStock = this.getStockParaTamano(this.pizzaSeleccionada, this.tamanoSeleccionado);
+    if (maxStock <= 0) {
+      this.toastService.showError('No hay suficiente stock para el tamaño seleccionado');
+      return;
+    }
+
     try {
-      // Calcular precio simple: base + tamaño extra
       const precioTotal = this.pizzaSeleccionada.price + (this.tamanoSeleccionado.extraCost || 0);
-      
+
       this.cartService.addItem({
         pizza: {
           ...this.pizzaSeleccionada,
           price: precioTotal
         },
         size: this.tamanoSeleccionado.name,
-        sizeId: this.tamanoSeleccionado.id, // Agregar el ID del tamaño
-        quantity: 1
+        sizeId: this.tamanoSeleccionado.id,
+        quantity: 1,
+        maxStock
       });
 
       this.toastService.showSuccess(`${this.pizzaSeleccionada.name} agregado al carrito`);
@@ -469,6 +400,10 @@ export class MenuComponent implements OnInit, AfterViewInit {
   }
 
   abrirModalPersonalizacion(pizza: PizzaDTO): void {
+    if (this.esPizzaAgotada(pizza)) {
+      this.toastService.showError('Esta pizza se encuentra agotada por falta de stock');
+      return;
+    }
     this.pizzaSeleccionada = pizza;
     this.tamanoSeleccionado = undefined;
     this.extrasSeleccionados = [];
@@ -487,6 +422,10 @@ export class MenuComponent implements OnInit, AfterViewInit {
   }
 
   seleccionarTamano(tamano: SizeDTO): void {
+    if (this.getStockParaTamano(this.pizzaSeleccionada, tamano) <= 0) {
+      this.toastService.showError(`Stock insuficiente para tamaño ${tamano.name}`);
+      return;
+    }
     this.tamanoSeleccionado = tamano;
     this.calcularPrecio();
   }
@@ -504,16 +443,14 @@ export class MenuComponent implements OnInit, AfterViewInit {
   calcularPrecio(): void {
     if (!this.pizzaSeleccionada) return;
 
-    // Precio base de la pizza (sin modificaciones)
     const precioBasePizza = this.pizzaSeleccionada.price || 0;
     const costoTamano = this.tamanoSeleccionado?.extraCost || 0;
-    
+
     let descripcion = this.pizzaSeleccionada.name;
     if (this.tamanoSeleccionado) {
       descripcion += ` - ${this.tamanoSeleccionado.name}`;
     }
 
-    // Calcular costos de extras localmente de forma inmediata (el endpoint /patrones/*/extras ya no existe en el nuevo backend)
     const costosExtras = this.extrasSeleccionados.reduce((total, extraId) => {
       const ingrediente = this.ingredientesDisponibles.find(i => i.id?.toString() === extraId);
       return total + (ingrediente?.extraCost || 0);
@@ -529,17 +466,23 @@ export class MenuComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    const maxStock = this.getStockParaTamano(this.pizzaSeleccionada, this.tamanoSeleccionado);
+    if (maxStock <= 0) {
+      this.toastService.showError('No hay suficiente stock para el tamaño seleccionado');
+      return;
+    }
+
     try {
-      // Agregar al carrito con la información personalizada
       this.cartService.addItem({
         pizza: {
           ...this.pizzaSeleccionada,
           price: this.precioCalculado
         },
         size: this.tamanoSeleccionado.name,
-        sizeId: this.tamanoSeleccionado.id, // Agregar el ID del tamaño
+        sizeId: this.tamanoSeleccionado.id,
         quantity: 1,
-        extras: this.extrasSeleccionados
+        extras: this.extrasSeleccionados,
+        maxStock
       });
 
       this.toastService.showSuccess(`${this.pizzaSeleccionada.name} agregado al carrito`);
@@ -558,8 +501,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
 
   onImageLoad(pizzaId: number): void {
     this.imagenesCargadas.add(pizzaId);
-    
-    // Obtener URL optimizada de la imagen y marcarla en caché
+
     const pizza = this.pizzas.find(p => p.id === pizzaId);
     if (pizza?.imageUrl) {
       const optimizedUrl = this.imageOptimizer.optimizeImageUrl(pizza.imageUrl, 'medium');
@@ -568,13 +510,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
   }
 
   onImageError(event: any): void {
-    // Cambiar a imagen por defecto cuando falla la carga
     event.target.src = '/combo1.webp';
-    // Marcar como cargada para ocultar skeleton
-    const pizzaId = this.pizzas.find(p => p.imageUrl === event.target.src)?.id;
-    if (pizzaId) {
-      this.imagenesCargadas.add(pizzaId);
-    }
   }
 
   // ACCESIBILIDAD: Control de Foco (Focus Trap)
@@ -587,8 +523,6 @@ export class MenuComponent implements OnInit, AfterViewInit {
         const modales = document.querySelectorAll('.modal.show');
         if (modales.length > 0) {
           const modalActivo = modales[modales.length - 1] as HTMLElement;
-          // Enfocar el contenedor del modal en lugar del primer botón
-          // Esto evita que el lector lea todo de golpe y le da el control al usuario
           modalActivo.focus();
         }
       }, 100);
@@ -603,8 +537,4 @@ export class MenuComponent implements OnInit, AfterViewInit {
       }, 100);
     }
   }
-
-
 }
-
-

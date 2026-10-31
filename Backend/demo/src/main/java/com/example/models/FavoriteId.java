@@ -8,6 +8,8 @@ import java.util.Objects;
 @Embeddable
 public class FavoriteId implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private Integer userId;
     private Integer pizzaId;
 
@@ -54,4 +56,3 @@ public class FavoriteId implements Serializable {
         return Objects.hash(userId, pizzaId);
     }
 }
-

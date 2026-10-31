@@ -101,9 +101,7 @@ public class UsuarioController {
             String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail(), user.getRole().name(),
                     user.getName(), user.getId());
 
-            user.setRefreshToken(refreshToken);
-            user.setRefreshTokenExpiry(LocalDateTime.now().plusDays(7));
-            usuarioService.actualizarUsuario(user.getId(), user);
+            usuarioService.guardarDatosDeSesion(user.getId(), refreshToken, LocalDateTime.now().plusDays(7), true);
 
             auditLogService.registrarLogin(user.getId().intValue(), obtenerIP(request), obtenerUserAgent(request));
             sessionLogService.crearSesion(user.getId().intValue(), token, obtenerIP(request),
@@ -113,13 +111,12 @@ public class UsuarioController {
                     Map.of("token", token, REFRESH_TOKEN_KEY, refreshToken, "usuario", usuarioMapper.toDto(user)),
                     "Login exitoso. Bienvenido " + user.getName()));
         } else {
-            user.incrementLoginAttempts();
-            usuarioService.actualizarUsuario(user.getId(), user);
+            Usuario conIntento = usuarioService.registrarIntentoFallido(user.getId());
             auditLogService.registrarLoginFallido(loginDTO.getEmail(), obtenerIP(request), obtenerUserAgent(request),
                     "Contrase\u00f1a incorrecta");
 
             throw new BadRequestException(
-                    "Contrase\u00f1a incorrecta. Intentos restantes: " + (5 - user.getLoginAttempts()));
+                    "Contrase\u00f1a incorrecta. Intentos restantes: " + (5 - conIntento.getLoginAttempts()));
         }
     }
 
@@ -151,9 +148,7 @@ public class UsuarioController {
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail(), user.getRole().name(),
                 user.getName(), user.getId());
 
-        user.setRefreshToken(newRefreshToken);
-        user.setRefreshTokenExpiry(LocalDateTime.now().plusDays(7));
-        usuarioService.actualizarUsuario(user.getId(), user);
+        usuarioService.guardarDatosDeSesion(user.getId(), newRefreshToken, LocalDateTime.now().plusDays(7), false);
 
         return ResponseEntity.ok(ApiResponse.success(
                 Map.of("token", newToken, REFRESH_TOKEN_KEY, newRefreshToken, "usuario", usuarioMapper.toDto(user))));
@@ -171,9 +166,7 @@ public class UsuarioController {
         Usuario user = usuarioService.obtenerPorId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO));
 
-        user.setRefreshToken(null);
-        user.setRefreshTokenExpiry(null);
-        usuarioService.actualizarUsuario(user.getId(), user);
+        usuarioService.guardarDatosDeSesion(user.getId(), null, null, false);
 
         auditLogService.registrarLogout(user.getId().intValue(), obtenerIP(request));
         sessionLogService.cerrarSesion(token, com.example.models.SessionLog.LogoutReason.MANUAL);

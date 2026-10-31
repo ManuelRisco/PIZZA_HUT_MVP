@@ -18,13 +18,24 @@ export class Orders implements OnInit {
   ordersPaginados: OrderCompleteDTO[] = [];
   currentPage: number = 1;
   itemsPerPage: number = 10;
+  pageSizeOptions: number[] = [10, 25, 50];
+
   selectedOrder: OrderCompleteDTO | null = null;
   filtroEstado: string = 'TODOS';
   filtroDeliveryType: string = 'TODOS';
+  terminoBusqueda: string = '';
   showModal = false;
+  loadError = '';
   mensaje = '';
   error = false;
   loading = true;
+  updatingOrderId: number | null = null;
+
+  // KPIs
+  kpiTotalOrders = 0;
+  kpiPendientes = 0;
+  kpiEntregados = 0;
+  kpiTotalVentas = 0;
 
   estados = ['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
 
@@ -34,39 +45,97 @@ export class Orders implements OnInit {
     this.cargarOrders();
   }
 
+  recargar(): void {
+    this.cargarOrders();
+  }
+
+  reintentar(): void {
+    this.cargarOrders();
+  }
+
   cargarOrders(): void {
     this.loading = true;
+    this.loadError = '';
     this.orderService.obtenerTodosCompletos().subscribe({
       next: (data) => {
-        this.orders = data.toSorted((a, b) => 
+        this.orders = (data || []).toSorted((a, b) =>
           new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
         );
+        this.recalcularKpis();
         this.aplicarFiltro();
         this.loading = false;
       },
       error: (err) => {
         console.error('Error al cargar pedidos:', err);
-        this.mostrarMensaje('Error al cargar pedidos', true);
+        this.loadError = err?.status === 0
+          ? 'No se pudo conectar con el servidor (Backend fuera de línea). Verifica el puerto 8089.'
+          : (err?.error?.message || 'Error al cargar los pedidos del sistema.');
         this.loading = false;
       }
     });
   }
 
+  private recalcularKpis(): void {
+    let pendientes = 0;
+    let entregados = 0;
+    let totalVentas = 0;
+
+    for (const o of this.orders) {
+      if (['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY'].includes(o.status)) {
+        pendientes++;
+      }
+      if (o.status === 'DELIVERED') {
+        entregados++;
+      }
+      if (o.status !== 'CANCELLED') {
+        totalVentas += (o.total ?? 0);
+      }
+    }
+
+    this.kpiTotalOrders = this.orders.length;
+    this.kpiPendientes = pendientes;
+    this.kpiEntregados = entregados;
+    this.kpiTotalVentas = totalVentas;
+  }
+
   aplicarFiltro(): void {
-    let resultado = this.orders;
-    
-    // Filtrar por estado
+    let resultado = [...this.orders];
+
     if (this.filtroEstado !== 'TODOS') {
       resultado = resultado.filter(o => o.status === this.filtroEstado);
     }
-    
-    // Filtrar por tipo de delivery
+
     if (this.filtroDeliveryType !== 'TODOS') {
       resultado = resultado.filter(o => o.deliveryType === this.filtroDeliveryType);
     }
-    
+
+    const term = this.terminoBusqueda.trim().toLowerCase();
+    if (term) {
+      resultado = resultado.filter(
+        o =>
+          String(o.id).includes(term) ||
+          o.userName?.toLowerCase().includes(term) ||
+          o.userEmail?.toLowerCase().includes(term) ||
+          o.userPhone?.toLowerCase().includes(term) ||
+          o.addressLine1?.toLowerCase().includes(term)
+      );
+    }
+
     this.filteredOrders = resultado;
     this.aplicarPaginacion();
+  }
+
+  onFiltroChange(): void {
+    this.currentPage = 1;
+    this.aplicarFiltro();
+  }
+
+  limpiarFiltros(): void {
+    this.filtroEstado = 'TODOS';
+    this.filtroDeliveryType = 'TODOS';
+    this.terminoBusqueda = '';
+    this.currentPage = 1;
+    this.aplicarFiltro();
   }
 
   aplicarPaginacion(): void {
@@ -86,6 +155,12 @@ export class Orders implements OnInit {
     this.aplicarPaginacion();
   }
 
+  onItemsPerPageChange(size: number): void {
+    this.itemsPerPage = size;
+    this.currentPage = 1;
+    this.aplicarPaginacion();
+  }
+
   verDetalles(order: OrderCompleteDTO): void {
     this.selectedOrder = order;
     this.showModal = true;
@@ -96,47 +171,46 @@ export class Orders implements OnInit {
     this.selectedOrder = null;
   }
 
-  cambiarEstado(order: OrderCompleteDTO, nuevoEstado: string): void {
-    this.orderService.cambiarEstado(order.id!, nuevoEstado).subscribe({
+  cambiarEstado(order: OrderCompleteDTO, nuevoEstado: string, estadoAnterior: OrderCompleteDTO['status']): void {
+    if (!order.id || this.updatingOrderId === order.id) return;
+
+    this.updatingOrderId = order.id;
+
+    this.orderService.cambiarEstado(order.id, nuevoEstado).subscribe({
       next: (orderActualizado) => {
-        // Actualizar el estado del pedido localmente sin recargar toda la lista
         order.status = orderActualizado.status;
-        this.mostrarMensaje('Estado actualizado correctamente');
+        this.updatingOrderId = null;
+        this.recalcularKpis();
+        this.mostrarMensaje(
+          nuevoEstado === 'CANCELLED'
+            ? 'Pedido cancelado: el inventario y mermas fueron ajustados automáticamente'
+            : 'Estado actualizado correctamente'
+        );
       },
       error: (err) => {
         console.error('Error al actualizar estado:', err);
-        console.error('Error details:', err.error);
-        this.mostrarMensaje('Error al actualizar estado', true);
+        // Rollback status
+        order.status = estadoAnterior;
+        this.updatingOrderId = null;
+        this.mostrarMensaje(err?.error?.message || 'Error al actualizar el estado del pedido', true);
       }
     });
   }
-  
+
   esPickup(order: OrderCompleteDTO): boolean {
     return order.deliveryType === 'PICKUP';
   }
-  
+
   esDelivery(order: OrderCompleteDTO): boolean {
     return order.deliveryType === 'DELIVERY';
   }
 
-  getBadgeClass(status: string): string {
-    const badges: any = {
-      'PENDING': 'bg-warning text-dark',
-      'CONFIRMED': 'bg-info',
-      'PREPARING': 'bg-primary',
-      'OUT_FOR_DELIVERY': 'bg-secondary',
-      'DELIVERED': 'bg-success',
-      'CANCELLED': 'bg-danger'
-    };
-    return badges[status] || 'bg-secondary';
-  }
-
   getEstadoTexto(status: string): string {
-    const textos: any = {
+    const textos: Record<string, string> = {
       'PENDING': 'Pendiente',
       'CONFIRMED': 'Confirmado',
-      'PREPARING': 'Preparando',
-      'OUT_FOR_DELIVERY': 'En camino',
+      'PREPARING': 'En Preparación',
+      'OUT_FOR_DELIVERY': 'En Camino',
       'DELIVERED': 'Entregado',
       'CANCELLED': 'Cancelado'
     };
@@ -146,7 +220,10 @@ export class Orders implements OnInit {
   mostrarMensaje(msg: string, esError = false): void {
     this.mensaje = msg;
     this.error = esError;
-    setTimeout(() => this.mensaje = '', 3000);
+    setTimeout(() => (this.mensaje = ''), 3500);
+  }
+
+  trackByOrderId(index: number, item: OrderCompleteDTO): number {
+    return item.id ?? index;
   }
 }
-

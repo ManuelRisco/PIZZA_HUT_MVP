@@ -1,0 +1,619 @@
+<div class="space-y-6 font-sans">
+  <!-- Executive v2 Header Card -->
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <div class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1 flex items-center gap-1.5">
+        <i class="bi bi-graph-up-arrow"></i>
+        <span>Reporte Financiero Ejecutivo (P&amp;L)</span>
+      </div>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Dashboard de Pérdidas y Ganancias</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">
+        Estado de resultados en tiempo real: ingresos netos, costo directo de ventas (COGS), utilidad bruta, mermas de productos y resultado neto.
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        [disabled]="loading"
+        (click)="cargarReporte()"
+        class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 disabled:opacity-60 cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise" [ngClass]="{ 'animate-spin': loading }"></i>
+        <span>Actualizar</span>
+      </button>
+
+      <button
+        type="button"
+        [disabled]="exporting || (!hasLoadedOnce && !!errorMessage)"
+        (click)="exportarExcel()"
+        class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+      >
+        <i class="bi bi-file-earmark-excel-fill"></i>
+        <span>{{ exporting ? 'Exportando...' : 'Exportar P&L Excel' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Persistent Error / Backend-Offline Banner -->
+  <div
+    *ngIf="errorMessage"
+    class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+    role="alert"
+  >
+    <div class="flex items-start sm:items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-wifi-off text-lg"></i>
+      </div>
+      <div>
+        <p class="text-sm font-black text-red-900 m-0">No se pudo sincronizar la información</p>
+        <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ errorMessage }}</p>
+      </div>
+    </div>
+    <button
+      type="button"
+      (click)="reintentarCarga()"
+      class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
+    >
+      <i class="bi bi-arrow-clockwise"></i> Reintentar
+    </button>
+  </div>
+
+  <!-- Barra de Filtros Temporales y Agrupación -->
+  <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+    <!-- Presets -->
+    <div class="flex flex-wrap items-center gap-1.5">
+      <button
+        type="button"
+        (click)="seleccionarPreset('ALL')"
+        class="px-3 py-1.5 rounded-lg text-xs font-black transition-colors cursor-pointer"
+        [ngClass]="selectedPreset === 'ALL' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >
+        Todo el historial
+      </button>
+      <button
+        type="button"
+        (click)="seleccionarPreset('TODAY')"
+        class="px-3 py-1.5 rounded-lg text-xs font-black transition-colors cursor-pointer"
+        [ngClass]="selectedPreset === 'TODAY' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >
+        Hoy
+      </button>
+      <button
+        type="button"
+        (click)="seleccionarPreset('7D')"
+        class="px-3 py-1.5 rounded-lg text-xs font-black transition-colors cursor-pointer"
+        [ngClass]="selectedPreset === '7D' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >
+        7 Días
+      </button>
+      <button
+        type="button"
+        (click)="seleccionarPreset('30D')"
+        class="px-3 py-1.5 rounded-lg text-xs font-black transition-colors cursor-pointer"
+        [ngClass]="selectedPreset === '30D' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >
+        30 Días
+      </button>
+      <button
+        type="button"
+        (click)="seleccionarPreset('MONTH')"
+        class="px-3 py-1.5 rounded-lg text-xs font-black transition-colors cursor-pointer"
+        [ngClass]="selectedPreset === 'MONTH' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >
+        Mes Actual
+      </button>
+      <button
+        type="button"
+        (click)="seleccionarPreset('YEAR')"
+        class="px-3 py-1.5 rounded-lg text-xs font-black transition-colors cursor-pointer"
+        [ngClass]="selectedPreset === 'YEAR' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >
+        Año Actual
+      </button>
+      <button
+        type="button"
+        (click)="seleccionarPreset('CUSTOM')"
+        class="px-3 py-1.5 rounded-lg text-xs font-black transition-colors cursor-pointer"
+        [ngClass]="selectedPreset === 'CUSTOM' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+      >
+        Personalizado
+      </button>
+    </div>
+
+    <!-- Fechas personalizadas + Agrupar por + Solo Entregados -->
+    <div class="flex flex-wrap items-center gap-3">
+      <div *ngIf="selectedPreset !== 'ALL'" class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        <input
+          type="date"
+          [(ngModel)]="customStartDate"
+          (change)="selectedPreset = 'CUSTOM'; cargarReporte()"
+          aria-label="Fecha inicial"
+          class="flex-1 sm:flex-none min-w-[130px] px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500"
+        />
+        <span class="text-xs text-gray-400 font-bold">a</span>
+        <input
+          type="date"
+          [(ngModel)]="customEndDate"
+          (change)="selectedPreset = 'CUSTOM'; cargarReporte()"
+          aria-label="Fecha final"
+          class="flex-1 sm:flex-none min-w-[130px] px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500"
+        />
+        <button
+          type="button"
+          (click)="selectedPreset = 'CUSTOM'; cargarReporte()"
+          class="px-3 py-1.5 rounded-lg bg-gray-900 hover:bg-black text-white text-xs font-bold transition-colors cursor-pointer"
+        >
+          Aplicar
+        </button>
+      </div>
+
+      <div class="inline-flex p-0.5 bg-gray-100 rounded-lg">
+        <button
+          type="button"
+          (click)="cambiarAgrupacion('DAY')"
+          class="px-2.5 py-1 rounded-md text-xs font-bold cursor-pointer"
+          [ngClass]="groupBy === 'DAY' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'"
+        >
+          Por Día
+        </button>
+        <button
+          type="button"
+          (click)="cambiarAgrupacion('MONTH')"
+          class="px-2.5 py-1 rounded-md text-xs font-bold cursor-pointer"
+          [ngClass]="groupBy === 'MONTH' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'"
+        >
+          Por Mes
+        </button>
+      </div>
+
+      <label class="inline-flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          [(ngModel)]="onlyDelivered"
+          (change)="cargarReporte()"
+          class="w-4 h-4 accent-red-600 rounded"
+        />
+        <span>Solo pedidos entregados</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Loading Initial State -->
+  <div
+    *ngIf="loading && !hasLoadedOnce"
+    class="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center"
+  >
+    <div class="w-10 h-10 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin mx-auto mb-3"></div>
+    <p class="text-sm font-bold text-gray-600 m-0">Sincronizando estado de pérdidas y ganancias...</p>
+  </div>
+
+  <!-- Contenido Financiero (oculto si falló la primera carga para no mostrar S/ 0.00 falsos) -->
+  <ng-container *ngIf="hasLoadedOnce">
+    <!-- ==================== 5 KPI CARDS EJECUTIVAS ==================== -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <!-- 1. Ingresos Netos -->
+      <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <i class="bi bi-cash-coin text-lg"></i>
+          </div>
+          <span class="text-xs font-bold text-gray-500">{{ report.validOrdersCount }} pedidos</span>
+        </div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Ingresos Netos Ventas</p>
+        <p class="text-2xl font-black text-gray-900 mt-1 mb-0">S/ {{ report.netRevenue | number:'1.2-2' }}</p>
+        <p class="text-xs text-gray-500 mt-1 mb-0">
+          Ticket prom.: <strong class="text-gray-700">S/ {{ report.averageTicket | number:'1.2-2' }}</strong>
+        </p>
+      </div>
+
+      <!-- 2. Costo Directo Ventas (COGS) -->
+      <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <i class="bi bi-basket2-fill text-lg"></i>
+          </div>
+          <span class="text-xs font-bold text-blue-600">{{ cogsPercentOfRevenue | number:'1.1-1' }}% ventas</span>
+        </div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Costo Directo (COGS)</p>
+        <p class="text-2xl font-black text-gray-900 mt-1 mb-0">S/ {{ report.costOfGoodsSold | number:'1.2-2' }}</p>
+        <p class="text-xs text-gray-500 mt-1 mb-0">Materia prima de lo vendido</p>
+      </div>
+
+      <!-- 3. Utilidad Bruta -->
+      <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <i class="bi bi-bar-chart-line-fill text-lg"></i>
+          </div>
+          <span class="px-2 py-0.5 rounded-full text-[11px] font-black bg-indigo-50 text-indigo-700">
+            {{ report.grossMarginPercent | number:'1.1-1' }}%
+          </span>
+        </div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Utilidad / Ganancia Bruta</p>
+        <p class="text-2xl font-black text-indigo-700 mt-1 mb-0">S/ {{ report.grossProfit | number:'1.2-2' }}</p>
+        <p class="text-xs text-gray-500 mt-1 mb-0">Ventas netas menos COGS</p>
+      </div>
+
+      <!-- 4. Pérdidas / Mermas -->
+      <div class="bg-white rounded-2xl p-5 border border-amber-200 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <i class="bi bi-exclamation-octagon-fill text-lg"></i>
+          </div>
+          <span class="text-xs font-bold text-amber-700">{{ report.lossesCount }} mermas</span>
+        </div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Pérdidas de Productos</p>
+        <p class="text-2xl font-black text-amber-600 mt-1 mb-0">S/ {{ report.totalProductLosses | number:'1.2-2' }}</p>
+        <p class="text-xs text-gray-500 mt-1 mb-0">{{ lossesPercentOfRevenue | number:'1.1-1' }}% sobre ingresos</p>
+      </div>
+
+      <!-- 5. Resultado Neto (Ganancia o Pérdida) -->
+      <div
+        class="rounded-2xl p-5 border shadow-sm"
+        [ngClass]="
+          report.netProfit >= 0
+            ? 'bg-emerald-50/60 border-emerald-200'
+            : 'bg-red-50/70 border-red-200'
+        "
+      >
+        <div class="flex items-center justify-between mb-3">
+          <div
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
+            [ngClass]="
+              report.netProfit >= 0
+                ? 'bg-emerald-600 text-white'
+                : 'bg-red-600 text-white'
+            "
+          >
+            <i class="bi text-lg" [ngClass]="report.netProfit >= 0 ? 'bi-trophy-fill' : 'bi-graph-down-arrow'"></i>
+          </div>
+          <span
+            class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase"
+            [ngClass]="
+              report.netProfit >= 0
+                ? 'bg-emerald-100 text-emerald-800'
+                : 'bg-red-100 text-red-800'
+            "
+          >
+            {{ report.netProfit >= 0 ? 'GANANCIA NETA' : 'PÉRDIDA NETA' }}
+          </span>
+        </div>
+        <p class="text-[11px] font-black uppercase tracking-wider m-0" [ngClass]="report.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'">
+          Resultado Neto Final
+        </p>
+        <p class="text-2xl font-black mt-1 mb-0" [ngClass]="report.netProfit >= 0 ? 'text-emerald-800' : 'text-red-700'">
+          S/ {{ report.netProfit | number:'1.2-2' }}
+        </p>
+        <p class="text-xs font-bold mt-1 mb-0" [ngClass]="report.netProfit >= 0 ? 'text-emerald-700' : 'text-red-600'">
+          Margen neto: {{ report.netMarginPercent | number:'1.1-1' }}%
+        </p>
+      </div>
+    </div>
+
+    <!-- ==================== ESTADO DE RESULTADOS + GRÁFICO TEMPORAL ==================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Estado de Resultados Formal (P&L) -->
+      <div class="lg:col-span-5 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+        <div class="bg-gray-900 text-white px-6 py-4 flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-black m-0">Estado de Resultados (P&amp;L)</h3>
+            <p class="text-xs text-gray-400 m-0 mt-0.5">Estructura contable de costos directos</p>
+          </div>
+          <span class="text-xs font-bold text-gray-300 bg-gray-800 px-2.5 py-1 rounded-lg">
+            Cancelados: {{ report.cancelledOrdersCount }}
+          </span>
+        </div>
+
+        <div class="p-6 divide-y divide-gray-100 text-sm flex-1 flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between text-gray-600">
+              <span>(+) Subtotal Ventas Brutas</span>
+              <span class="font-bold text-gray-900">S/ {{ report.grossSalesSubtotal | number:'1.2-2' }}</span>
+            </div>
+
+            <div class="flex items-center justify-between text-gray-600">
+              <span>(+) Tarifas de Delivery Cobradas</span>
+              <span class="font-bold text-gray-900">S/ {{ report.deliveryFeesCollected | number:'1.2-2' }}</span>
+            </div>
+
+            <div class="flex items-center justify-between text-red-600">
+              <span>(-) Descuentos y Promociones</span>
+              <span class="font-bold">- S/ {{ report.totalDiscounts | number:'1.2-2' }}</span>
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-gray-200 bg-gray-50 -mx-3 px-3 py-2.5 rounded-xl">
+              <span class="font-black text-gray-900">(=) Ingresos Netos por Ventas</span>
+              <span class="font-black text-gray-900 text-base">S/ {{ report.netRevenue | number:'1.2-2' }}</span>
+            </div>
+
+            <div class="flex items-center justify-between text-blue-700 pt-1">
+              <span>(-) Costo Directo de lo Vendido (COGS)</span>
+              <span class="font-bold">- S/ {{ report.costOfGoodsSold | number:'1.2-2' }}</span>
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-gray-200 bg-indigo-50/60 -mx-3 px-3 py-2.5 rounded-xl">
+              <div>
+                <span class="font-black text-indigo-950 block">(=) Utilidad / Ganancia Bruta</span>
+                <span class="text-[11px] font-bold text-indigo-600">Margen bruto: {{ report.grossMarginPercent | number:'1.1-1' }}%</span>
+              </div>
+              <span class="font-black text-indigo-700 text-base">S/ {{ report.grossProfit | number:'1.2-2' }}</span>
+            </div>
+
+            <div class="flex items-center justify-between text-amber-700 pt-1">
+              <span>(-) Pérdidas de Productos y Mermas</span>
+              <span class="font-bold">- S/ {{ report.totalProductLosses | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <div
+            class="mt-5 p-4 rounded-xl border flex items-center justify-between"
+            [ngClass]="
+              report.netProfit >= 0
+                ? 'bg-emerald-50 border-emerald-200'
+                : 'bg-red-50 border-red-200'
+            "
+          >
+            <div>
+              <span
+                class="text-xs font-black uppercase tracking-wider block"
+                [ngClass]="report.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'"
+              >
+                (=) {{ report.netProfit >= 0 ? 'Utilidad Neta del Período' : 'Pérdida Neta del Período' }}
+              </span>
+              <span class="text-xs font-bold" [ngClass]="report.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                Margen neto: {{ report.netMarginPercent | number:'1.1-1' }}%
+              </span>
+            </div>
+            <span
+              class="text-2xl font-black"
+              [ngClass]="report.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'"
+            >
+              S/ {{ report.netProfit | number:'1.2-2' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráfico Comparativo de Evolución Temporal -->
+      <div class="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 class="text-base font-black text-gray-900 m-0">Evolución de Ingresos, Costos, Mermas y Utilidad</h3>
+              <p class="text-xs text-gray-500 m-0 mt-0.5">
+                Comparativa agrupada por {{ groupBy === 'MONTH' ? 'mes' : 'día' }} (pasa el cursor sobre cada período para ver el detalle)
+              </p>
+            </div>
+
+            <!-- Leyenda -->
+            <div class="flex flex-wrap items-center gap-3 text-xs font-bold text-gray-600">
+              <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-sm bg-emerald-500 inline-block"></span> Ingresos
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-sm bg-blue-500 inline-block"></span> COGS
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-sm bg-amber-500 inline-block"></span> Mermas
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-sm bg-indigo-600 inline-block"></span> Neto
+              </span>
+            </div>
+          </div>
+
+          <div
+            *ngIf="!loading && !errorMessage && (!report.timeline || report.timeline.length === 0)"
+            class="py-16 text-center text-gray-400"
+          >
+            <i class="bi bi-bar-chart text-3xl block mb-2"></i>
+            No hay movimientos financieros en el rango de fechas seleccionado.
+          </div>
+
+          <div *ngIf="report.timeline && report.timeline.length > 0" class="overflow-x-auto pb-2">
+            <div class="min-w-[460px] h-[250px] flex items-end justify-around gap-4 pt-12 px-3 border-b border-gray-200">
+              <div
+                *ngFor="let pt of report.timeline; trackBy: trackByTimeline"
+                class="flex-1 min-w-[54px] max-w-[96px] h-full flex flex-col items-center justify-end group relative"
+              >
+                <!-- Tooltip -->
+                <div
+                  class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full bg-gray-900 text-white text-[11px] rounded-xl px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-xl"
+                >
+                  <p class="font-black text-gray-200 border-b border-gray-700 pb-1 mb-1">
+                    {{ pt.period }} ({{ pt.ordersCount }} pedidos)
+                  </p>
+                  <p class="text-emerald-400 m-0">Ingresos: S/ {{ pt.revenue | number:'1.2-2' }}</p>
+                  <p class="text-blue-300 m-0">COGS: S/ {{ pt.cogs | number:'1.2-2' }}</p>
+                  <p class="text-amber-300 m-0">Mermas: S/ {{ pt.losses | number:'1.2-2' }}</p>
+                  <p class="m-0" [ngClass]="pt.netProfit >= 0 ? 'text-indigo-300 font-bold' : 'text-red-400 font-bold'">
+                    Neto: S/ {{ pt.netProfit | number:'1.2-2' }}
+                  </p>
+                </div>
+
+                <!-- Barras Agrupadas -->
+                <div class="w-full h-full flex items-end justify-center gap-1">
+                  <div
+                    class="w-2.5 sm:w-3 rounded-t bg-emerald-500 transition-all duration-500"
+                    [style.height.%]="getBarHeight(pt.revenue)"
+                  ></div>
+                  <div
+                    class="w-2.5 sm:w-3 rounded-t bg-blue-500 transition-all duration-500"
+                    [style.height.%]="getBarHeight(pt.cogs)"
+                  ></div>
+                  <div
+                    class="w-2.5 sm:w-3 rounded-t bg-amber-500 transition-all duration-500"
+                    [style.height.%]="getBarHeight(pt.losses)"
+                  ></div>
+                  <div
+                    class="w-2.5 sm:w-3 rounded-t transition-all duration-500"
+                    [ngClass]="pt.netProfit >= 0 ? 'bg-indigo-600' : 'bg-red-600'"
+                    [style.height.%]="getBarHeight(pt.netProfit)"
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Etiquetas eje X -->
+            <div class="min-w-[460px] flex items-center justify-around gap-4 px-3 pt-2">
+              <div
+                *ngFor="let pt of report.timeline; trackBy: trackByTimeline"
+                class="flex-1 min-w-[54px] max-w-[96px] text-center text-[11px] font-bold text-gray-500 truncate"
+              >
+                {{ formatTimelinePeriod(pt) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
+          <span>Los costos reflejan el costo directo exacto guardado en cada orden y merma.</span>
+          <span class="font-bold text-gray-700">{{ report.timeline.length }} períodos analizados</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PANELES INFERIORES: RANKING RENTABILIDAD + DESGLOSE MERMAS ==================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Ranking de Rentabilidad por Producto -->
+      <div class="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-black text-gray-900 m-0">Ranking de Rentabilidad por Producto</h3>
+            <p class="text-xs text-gray-500 m-0 mt-0.5">Ordenado por mayor contribución de ganancia bruta directa</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="relative w-full sm:w-52">
+              <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+              <input
+                type="text"
+                [(ngModel)]="rankingSearch"
+                (ngModelChange)="onRankingSearchChange()"
+                placeholder="Filtrar producto..."
+                class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-gray-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+            </div>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 shrink-0">
+              {{ filteredProductRanking.length }} productos
+            </span>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[640px]">
+              <thead>
+                <tr class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                  <th class="py-3 px-4 font-bold">Producto</th>
+                  <th class="py-3 px-4 font-bold text-right">Unid.</th>
+                  <th class="py-3 px-4 font-bold text-right">Ingresos</th>
+                  <th class="py-3 px-4 font-bold text-right">Costo Directo</th>
+                  <th class="py-3 px-4 font-bold text-right">Ganancia</th>
+                  <th class="py-3 px-4 font-bold text-center">Margen</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 text-sm">
+                <tr
+                  *ngFor="let prod of paginatedProductRanking; trackBy: trackByProductRanking"
+                  class="hover:bg-gray-50 transition-colors"
+                >
+                  <td class="py-3 px-4">
+                    <p class="font-bold text-gray-900 m-0">{{ prod.itemName }}</p>
+                    <span
+                      class="text-[10px] font-black uppercase px-2 py-0.5 rounded inline-block mt-0.5"
+                      [ngClass]="prod.itemType === 'PIZZA' ? 'bg-red-50 text-red-700' : 'bg-indigo-50 text-indigo-700'"
+                    >
+                      {{ prod.itemType }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-right font-bold text-gray-800">{{ prod.unitsSold }}</td>
+                  <td class="py-3 px-4 text-right font-semibold text-gray-800">
+                    S/ {{ prod.revenue | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-4 text-right text-blue-700 font-medium">
+                    S/ {{ prod.cogs | number:'1.2-2' }}
+                  </td>
+                  <td
+                    class="py-3 px-4 text-right font-black"
+                    [ngClass]="prod.profit >= 0 ? 'text-emerald-600' : 'text-red-600'"
+                  >
+                    S/ {{ prod.profit | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span
+                      class="px-2.5 py-0.5 rounded-full text-xs font-black"
+                      [ngClass]="prod.marginPercent >= 40 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'"
+                    >
+                      {{ prod.marginPercent | number:'1.1-1' }}%
+                    </span>
+                  </td>
+                </tr>
+                <tr *ngIf="!loading && !errorMessage && filteredProductRanking.length === 0">
+                  <td colspan="6" class="py-10 text-center text-gray-400">
+                    No se registran productos vendidos para los criterios seleccionados.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <app-pagination
+          *ngIf="filteredProductRanking.length > 0"
+          [currentPage]="rankingPage"
+          [totalItems]="filteredProductRanking.length"
+          [itemsPerPage]="rankingPerPage"
+          [pageSizeOptions]="[10, 25, 50]"
+          (pageChange)="onRankingPageChange($event)"
+          (itemsPerPageChange)="onRankingPerPageChange($event)"
+        ></app-pagination>
+      </div>
+
+      <!-- Desglose de Pérdidas por Categoría -->
+      <div class="lg:col-span-5 bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base font-black text-gray-900 m-0">Desglose de Pérdidas / Mermas</h3>
+            <p class="text-xs text-gray-500 m-0 mt-0.5">Distribución económica por causa de desperdicio</p>
+          </div>
+          <span class="text-xs font-black text-red-600 bg-red-50 px-2.5 py-1 rounded-full shrink-0">
+            S/ {{ report.totalProductLosses | number:'1.2-2' }}
+          </span>
+        </div>
+
+        <div
+          *ngIf="!loading && !errorMessage && (!report.lossesByCategory || report.lossesByCategory.length === 0)"
+          class="py-10 text-center text-gray-400 text-sm"
+        >
+          No hay pérdidas o mermas registradas en este período.
+        </div>
+
+        <div class="space-y-3.5">
+          <div
+            *ngFor="let cat of report.lossesByCategory; trackBy: trackByLossCategory"
+            class="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-2"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <p class="text-sm font-bold text-gray-900 m-0">{{ cat.label }}</p>
+                <span class="text-xs text-gray-500">{{ cat.count }} incidentes registrados</span>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="text-sm font-black text-red-600 m-0">S/ {{ cat.totalCost | number:'1.2-2' }}</p>
+                <span class="text-xs font-bold text-gray-500">{{ cat.percentage | number:'1.1-1' }}%</span>
+              </div>
+            </div>
+            <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+              <div
+                class="h-2 rounded-full bg-red-600 transition-all duration-500"
+                [style.width.%]="cat.percentage"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

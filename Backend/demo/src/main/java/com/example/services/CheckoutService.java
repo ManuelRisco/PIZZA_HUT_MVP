@@ -8,7 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 
 @Service
 @Transactional
@@ -26,11 +29,13 @@ public class CheckoutService {
     private final PizzaService pizzaService;
     private final ExtraService extraService;
     private final SizeService sizeService;
+    private final InventoryService inventoryService;
 
     public CheckoutService(OrderService orderService, OrderItemService orderItemService, AddressService addressService,
                            PaymentService paymentService, PromotionService promotionService,
                            OrderItemExtraService orderItemExtraService, IngredientService ingredientService,
-                           PizzaService pizzaService, ExtraService extraService, SizeService sizeService) {
+                           PizzaService pizzaService, ExtraService extraService, SizeService sizeService,
+                           InventoryService inventoryService) {
         this.orderService = orderService;
         this.orderItemService = orderItemService;
         this.addressService = addressService;
@@ -41,24 +46,25 @@ public class CheckoutService {
         this.pizzaService = pizzaService;
         this.extraService = extraService;
         this.sizeService = sizeService;
+        this.inventoryService = inventoryService;
     }
 
     public Order checkout(CheckoutRequestDTO req) {
         Integer addressId = processAddress(req);
-        
+
         String promoCode = req.getOrder().getPromoCode();
         Promotion promotionAUsar = getValidPromotion(promoCode);
-        BigDecimal discount = promotionAUsar != null ? 
+        BigDecimal discount = promotionAUsar != null ?
             promotionService.calcularDescuento(promotionAUsar, req.getOrder().getSubtotal()) : BigDecimal.ZERO;
-        
+
         Order savedOrder = initializeOrder(req, addressId, discount, promotionAUsar);
-        
+
         BigDecimal realSubtotal = processItems(req, savedOrder.getId());
-        
+
         savedOrder = finalizeOrderTotals(savedOrder, req, realSubtotal, promotionAUsar);
-        
+
         processPayment(req, savedOrder);
-        
+
         incrementPromotionUsage(promotionAUsar);
 
         return savedOrder;
@@ -101,7 +107,8 @@ public class CheckoutService {
         order.setPromoCode(req.getOrder().getPromoCode());
         order.setPromotionId(promotionAUsar != null ? promotionAUsar.getId() : null);
         order.setNotes(req.getOrder().getNotes());
-        order.setEstimatedDelivery(req.getOrder().getEstimatedDelivery() != null ? 
+        order.setStockSettled("DEDUCTED");
+        order.setEstimatedDelivery(req.getOrder().getEstimatedDelivery() != null ?
             req.getOrder().getEstimatedDelivery() : LocalDateTime.now().plusMinutes(45));
 
         return orderService.crearOrder(order);
@@ -109,14 +116,23 @@ public class CheckoutService {
 
     private BigDecimal processItems(CheckoutRequestDTO req, Integer orderId) {
         BigDecimal realSubtotal = BigDecimal.ZERO;
-        
+
         if (req.getItems() == null) return realSubtotal;
 
         for (CheckoutRequestDTO.CheckoutItemDTO itemDTO : req.getItems()) {
-            if (itemDTO.getQuantity() != null && itemDTO.getQuantity() <= 0) {
+            if (itemDTO.getQuantity() == null || itemDTO.getQuantity() <= 0) {
                 throw new IllegalArgumentException("Cantidad inválida. Debe ser mayor a cero.");
             }
-            
+        }
+
+        List<BigDecimal> unitDirectCosts = inventoryService != null
+                ? inventoryService.deductCheckoutStockAndCalculateUnitCosts(
+                        req.getItems(), orderId, req.getOrder() != null ? req.getOrder().getUserId() : null)
+                : Collections.emptyList();
+
+        for (int idx = 0; idx < req.getItems().size(); idx++) {
+            CheckoutRequestDTO.CheckoutItemDTO itemDTO = req.getItems().get(idx);
+
             BigDecimal[] costs = calculateItemCosts(itemDTO);
             BigDecimal unitPrice = costs[0];
             BigDecimal sizeExtra = costs[1];
@@ -124,11 +140,17 @@ public class CheckoutService {
 
             BigDecimal totalUnitPrice = unitPrice.add(sizeExtra).add(extraIngredientsCost);
             BigDecimal lineTotal = totalUnitPrice.multiply(new BigDecimal(itemDTO.getQuantity()));
-            
+
+            BigDecimal directUnitCost = (unitDirectCosts != null && idx < unitDirectCosts.size() && unitDirectCosts.get(idx) != null)
+                    ? unitDirectCosts.get(idx)
+                    : BigDecimal.ZERO;
+            BigDecimal directLineCost = directUnitCost.multiply(BigDecimal.valueOf(itemDTO.getQuantity()))
+                    .setScale(2, RoundingMode.HALF_UP);
+
             realSubtotal = realSubtotal.add(lineTotal);
-            
-            OrderItem savedItem = createOrderItem(orderId, itemDTO, totalUnitPrice, sizeExtra, lineTotal);
-            
+
+            OrderItem savedItem = createOrderItem(orderId, itemDTO, totalUnitPrice, sizeExtra, lineTotal, directUnitCost, directLineCost);
+
             processItemExtras(itemDTO, savedItem.getId());
         }
         return realSubtotal;
@@ -138,16 +160,16 @@ public class CheckoutService {
         BigDecimal unitPrice = BigDecimal.ZERO;
         BigDecimal sizeExtra = BigDecimal.ZERO;
         BigDecimal extraIngredientsCost = BigDecimal.ZERO;
-        
+
         if ("PIZZA".equalsIgnoreCase(itemDTO.getItemType())) {
             Pizza pizza = pizzaService.obtenerPorId(itemDTO.getPizzaId())
                     .orElseThrow(() -> new IllegalArgumentException("Pizza no encontrada"));
             unitPrice = pizza.getPrice();
-            
+
             if (itemDTO.getSizeId() != null) {
                 Size size = sizeService.obtenerPorId(itemDTO.getSizeId())
                         .orElseThrow(() -> new IllegalArgumentException("Tamaño no encontrado"));
-                sizeExtra = size.getExtraCost(); 
+                sizeExtra = size.getExtraCost();
             }
         } else if ("EXTRA".equalsIgnoreCase(itemDTO.getItemType())) {
             Extra extra = extraService.obtenerPorId(itemDTO.getExtraId())
@@ -166,7 +188,9 @@ public class CheckoutService {
         return new BigDecimal[]{unitPrice, sizeExtra, extraIngredientsCost};
     }
 
-    private OrderItem createOrderItem(Integer orderId, CheckoutRequestDTO.CheckoutItemDTO itemDTO, BigDecimal totalUnitPrice, BigDecimal sizeExtra, BigDecimal lineTotal) {
+    private OrderItem createOrderItem(Integer orderId, CheckoutRequestDTO.CheckoutItemDTO itemDTO,
+                                      BigDecimal totalUnitPrice, BigDecimal sizeExtra, BigDecimal lineTotal,
+                                      BigDecimal directUnitCost, BigDecimal directLineCost) {
         OrderItem item = new OrderItem();
         item.setOrderId(orderId);
         item.setItemType(itemDTO.getItemType().toUpperCase());
@@ -174,6 +198,8 @@ public class CheckoutService {
         item.setUnitPrice(totalUnitPrice);
         item.setSizeExtra(sizeExtra);
         item.setLineTotal(lineTotal);
+        item.setUnitCost(directUnitCost);
+        item.setLineCost(directLineCost);
 
         if ("PIZZA".equalsIgnoreCase(itemDTO.getItemType())) {
             item.setPizzaId(itemDTO.getPizzaId());
@@ -207,7 +233,7 @@ public class CheckoutService {
             promotionService.verificarReglasDeUsuario(promotionAUsar, req.getOrder().getUserId());
             discount = promotionService.calcularDescuento(promotionAUsar, realSubtotal);
         }
-        
+
         savedOrder.setSubtotal(realSubtotal);
         savedOrder.setDiscount(discount);
         BigDecimal calculatedTotal = realSubtotal.add(savedOrder.getDeliveryFee()).subtract(discount);

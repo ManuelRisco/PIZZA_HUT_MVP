@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { UsuarioService } from '../../services/usuario.service';
 
@@ -17,7 +18,22 @@ export class ClientePerfilComponent implements OnInit {
   editando = false;
   mensajeExito = '';
   mensajeError = '';
+  loadError = '';
   loading = true;
+  guardandoPerfil = false;
+  guardandoPassword = false;
+
+  editandoPassword = false;
+  passwordActual: string = '';
+  nuevaPassword: string = '';
+  confirmarPassword: string = '';
+
+  showPasswordActual = false;
+  showNuevaPassword = false;
+  showConfirmarPassword = false;
+
+  mensajeSeguridadExito = '';
+  mensajeSeguridadError = '';
 
   constructor(
     private readonly authService: AuthService,
@@ -31,133 +47,97 @@ export class ClientePerfilComponent implements OnInit {
       this.router.navigate(['/']);
       return;
     }
-
-    // Obtener información completa del usuario desde el backend
-    this.usuarioService.obtenerUsuarioActual().subscribe({
-      next: (usuario) => {
-        this.usuario = usuario;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error al cargar información del usuario:', error);
-        // Fallback: usar datos del token si falla la petición
-        this.usuario = {
-          ...currentUser,
-          active: true,
-          createdAt: null
-        };
-        this.loading = false;
-      }
-    });
+    this.cargarDatosUsuario();
   }
 
   toggleEdicion() {
     this.editando = !this.editando;
-    // Si cancela la edición, recargar los datos originales
     if (!this.editando) {
       this.cargarDatosUsuario();
     }
   }
 
   cargarDatosUsuario() {
+    const currentUser = this.authService.getCurrentUser();
     this.loading = true;
-    this.usuarioService.obtenerUsuarioActual().subscribe({
-      next: (usuario) => {
-        this.usuario = usuario;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error al cargar información del usuario:', error);
-        const currentUser = this.authService.getCurrentUser();
-        this.usuario = {
-          ...currentUser,
-          active: true,
-          createdAt: null
-        };
-        this.loading = false;
-      }
-    });
+    this.loadError = '';
+
+    this.usuarioService.obtenerUsuarioActual()
+      .pipe(finalize(() => { this.loading = false; }))
+      .subscribe({
+        next: (usuario) => {
+          this.usuario = usuario;
+        },
+        error: (error) => {
+          console.error('Error al cargar información del usuario:', error);
+          this.usuario = currentUser
+            ? { ...currentUser, active: true, createdAt: null }
+            : null;
+          this.loadError = error?.status === 0
+            ? 'No se pudo conectar con el servidor (Backend fuera de línea). Mostrando información en caché de tu sesión.'
+            : (error?.error?.message || 'No se pudo sincronizar tu perfil con el servidor.');
+        }
+      });
   }
 
   guardarCambios() {
+    if (this.guardandoPerfil) return;
     if (!this.usuario?.id) {
       this.mensajeError = 'Error: No se pudo identificar el usuario';
-      setTimeout(() => this.mensajeError = '', 3000);
+      setTimeout(() => this.mensajeError = '', 3500);
       return;
     }
 
-    // Validaciones
     if (!this.usuario.name || this.usuario.name.trim() === '') {
       this.mensajeError = 'El nombre es obligatorio';
-      setTimeout(() => this.mensajeError = '', 3000);
+      setTimeout(() => this.mensajeError = '', 3500);
       return;
     }
 
     if (!this.usuario.email || this.usuario.email.trim() === '') {
       this.mensajeError = 'El email es obligatorio';
-      setTimeout(() => this.mensajeError = '', 3000);
+      setTimeout(() => this.mensajeError = '', 3500);
       return;
     }
 
-    // Preparar datos para actualizar
     const datosActualizados = {
       name: this.usuario.name.trim(),
       email: this.usuario.email.trim(),
       phone: this.usuario.phone && this.usuario.phone.trim() !== '' ? this.usuario.phone.trim() : null
     };
 
-    this.loading = true;
-    this.usuarioService.actualizarPerfil(this.usuario.id, datosActualizados).subscribe({
-      next: (usuarioActualizado) => {
-        this.usuario = usuarioActualizado;
-        this.mensajeExito = 'Perfil actualizado correctamente';
-        this.editando = false;
-        this.loading = false;
-        
-        // Actualizar el token con los nuevos datos
-        this.authService.updateCurrentUser(usuarioActualizado);
-        
-        setTimeout(() => this.mensajeExito = '', 3000);
-      },
-      error: (error) => {
-        console.error('Error al actualizar perfil:', error);
-        this.loading = false;
-        
-        if (error.status === 400) {
-          this.mensajeError = error.error?.message || 'Datos inválidos';
-        } else if (error.status === 409) {
-          this.mensajeError = 'El email ya está en uso';
-        } else {
-          this.mensajeError = 'Error al actualizar el perfil';
+    this.guardandoPerfil = true;
+    this.usuarioService.actualizarPerfil(this.usuario.id, datosActualizados)
+      .pipe(finalize(() => { this.guardandoPerfil = false; }))
+      .subscribe({
+        next: (usuarioActualizado) => {
+          this.usuario = usuarioActualizado;
+          this.mensajeExito = 'Perfil actualizado correctamente';
+          this.editando = false;
+          this.authService.updateCurrentUser(usuarioActualizado);
+          setTimeout(() => this.mensajeExito = '', 3500);
+        },
+        error: (error) => {
+          console.error('Error al actualizar perfil:', error);
+          if (error.status === 0) {
+            this.mensajeError = 'Sin conexión con el servidor. Inténtalo nuevamente cuando el servicio esté en línea.';
+          } else if (error.status === 400) {
+            this.mensajeError = error.error?.message || 'Datos inválidos';
+          } else if (error.status === 409) {
+            this.mensajeError = 'El correo electrónico ya está en uso';
+          } else {
+            this.mensajeError = error.error?.message || 'Error al actualizar el perfil';
+          }
+          setTimeout(() => this.mensajeError = '', 5000);
         }
-        
-        setTimeout(() => this.mensajeError = '', 5000);
-      }
-    });
+      });
   }
 
   getIniciales(): string {
     if (!this.usuario?.name) return 'U';
-    
-    // Obtener solo el primer nombre
     const primerNombre = this.usuario.name.trim().split(' ')[0];
-    
-    // Retornar las primeras 2 letras del primer nombre en mayúsculas
     return primerNombre.substring(0, 2).toUpperCase();
   }
-
-  // --- Sección de Configuración de Seguridad ---
-  editandoPassword = false;
-  passwordActual: string = '';
-  nuevaPassword: string = '';
-  confirmarPassword: string = '';
-
-  showPasswordActual = false;
-  showNuevaPassword = false;
-  showConfirmarPassword = false;
-
-  mensajeSeguridadExito = '';
-  mensajeSeguridadError = '';
 
   toggleEdicionPassword() {
     this.editandoPassword = !this.editandoPassword;
@@ -174,49 +154,48 @@ export class ClientePerfilComponent implements OnInit {
   }
 
   cambiarPassword() {
-    if (!this.usuario?.id) return;
+    if (this.guardandoPassword || !this.usuario?.id) return;
 
     if (!this.passwordActual || !this.nuevaPassword || !this.confirmarPassword) {
       this.mensajeSeguridadError = 'Todos los campos son obligatorios';
-      setTimeout(() => this.mensajeSeguridadError = '', 3000);
+      setTimeout(() => this.mensajeSeguridadError = '', 3500);
       return;
     }
 
     if (this.nuevaPassword !== this.confirmarPassword) {
       this.mensajeSeguridadError = 'Las contraseñas nuevas no coinciden';
-      setTimeout(() => this.mensajeSeguridadError = '', 3000);
+      setTimeout(() => this.mensajeSeguridadError = '', 3500);
       return;
     }
 
     if (this.nuevaPassword.length < 6) {
       this.mensajeSeguridadError = 'La nueva contraseña debe tener al menos 6 caracteres';
-      setTimeout(() => this.mensajeSeguridadError = '', 3000);
+      setTimeout(() => this.mensajeSeguridadError = '', 3500);
       return;
     }
 
-    this.loading = true;
-    this.usuarioService.cambiarPassword(this.usuario.id, { password: this.nuevaPassword }).subscribe({
-      next: () => {
-        this.mensajeExito = 'Contraseña actualizada correctamente. Por seguridad, vuelve a iniciar sesión.';
-        this.loading = false;
-        this.editandoPassword = false;
-        
-        // El backend ha invalidado el token actual, así que debemos cerrar sesión
-        setTimeout(() => {
-          this.authService.logout();
-        }, 2000);
-      },
-      error: (error) => {
-        console.error('Error al cambiar contraseña:', error);
-        this.loading = false;
-        this.mensajeSeguridadError = 'Error al actualizar la contraseña';
-        setTimeout(() => this.mensajeSeguridadError = '', 5000);
-      }
-    });
+    this.guardandoPassword = true;
+    this.usuarioService.cambiarPassword(this.usuario.id, { password: this.nuevaPassword })
+      .pipe(finalize(() => { this.guardandoPassword = false; }))
+      .subscribe({
+        next: () => {
+          this.mensajeExito = 'Contraseña actualizada correctamente. Por seguridad, vuelve a iniciar sesión.';
+          this.editandoPassword = false;
+          setTimeout(() => {
+            this.authService.logout();
+          }, 2000);
+        },
+        error: (error) => {
+          console.error('Error al cambiar contraseña:', error);
+          this.mensajeSeguridadError = error?.status === 0
+            ? 'Sin conexión con el servidor. No se pudo actualizar la contraseña.'
+            : (error?.error?.message || 'Error al actualizar la contraseña');
+          setTimeout(() => this.mensajeSeguridadError = '', 5000);
+        }
+      });
   }
 
   volverDashboard() {
     this.router.navigate(['/cliente/dashboard']);
   }
 }
-

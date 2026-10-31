@@ -1,332 +1,995 @@
-<div class="max-w-7xl mx-auto">
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
-    <div class="flex items-center gap-3">
-      <h2 class="text-2xl font-black text-gray-800">
-        <i class="bi bi-pie-chart-fill text-red-600 mr-2"></i> Gestión de Pizzas
-      </h2>
+<div class="space-y-6 font-sans">
+  <!-- Executive v2 Header Card -->
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Catálogo y Operaciones</p>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Gestión de Pizzas, Recetas y Costos</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">Administra el menú de pizzas, insumos por receta base, costos directos y disponibilidad.</p>
     </div>
-    <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition-colors shadow-sm" 
-            (click)="abrirFormulario()" *ngIf="!showForm">
-      <i class="bi bi-plus-lg font-bold"></i> Nueva Pizza
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button type="button" (click)="recargar()" [disabled]="loading" class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer">
+        <i class="bi bi-arrow-clockwise" [class.animate-spin]="loading"></i> Actualizar
+      </button>
+      <button type="button" (click)="abrirNuevo()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer">
+        <i class="bi bi-plus-lg"></i> Nueva Pizza
+      </button>
+    </div>
+  </div>
+
+  <!-- Persistent Load Error / Backend Offline Banner -->
+  <div *ngIf="loadError" class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3" role="alert">
+    <div class="flex items-start sm:items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-wifi-off text-lg"></i>
+      </div>
+      <div>
+        <p class="text-sm font-black text-red-900 m-0">Error de conexión o carga de datos</p>
+        <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ loadError }}</p>
+      </div>
+    </div>
+    <button type="button" (click)="reintentar()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer">
+      <i class="bi bi-arrow-clockwise"></i> Reintentar
     </button>
   </div>
 
-  <!-- Mensajes de éxito y error -->
-  <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg mb-6 flex justify-between items-center" *ngIf="success">
-    <div class="flex items-center gap-2"><i class="bi bi-check-circle-fill"></i> {{ success }}</div>
-    <button (click)="limpiarMensajes()" class="text-emerald-700 hover:text-emerald-900"><i class="bi bi-x-lg"></i></button>
+  <!-- Mensajes de acción (éxito y error de mutación) -->
+  <div *ngIf="success" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl flex justify-between items-center text-sm font-medium">
+    <div class="flex items-center gap-2">
+      <i class="bi bi-check-circle-fill text-emerald-600"></i>
+      <span>{{ success }}</span>
+    </div>
+    <button type="button" (click)="limpiarMensajes()" class="text-emerald-700 hover:text-emerald-900 cursor-pointer">
+      <i class="bi bi-x-lg"></i>
+    </button>
   </div>
-  <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex justify-between items-center" *ngIf="error">
-    <div class="flex items-center gap-2"><i class="bi bi-exclamation-triangle-fill"></i> {{ error }}</div>
-    <button (click)="limpiarMensajes()" class="text-red-700 hover:text-red-900"><i class="bi bi-x-lg"></i></button>
+  <div *ngIf="error && !showForm && !mostrarModalReceta" class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-2xl flex justify-between items-center text-sm font-medium">
+    <div class="flex items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill text-red-600"></i>
+      <span>{{ error }}</span>
+    </div>
+    <button type="button" (click)="limpiarMensajes()" class="text-red-700 hover:text-red-900 cursor-pointer">
+      <i class="bi bi-x-lg"></i>
+    </button>
   </div>
 
-  <!-- Formulario para crear/editar pizza -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6" *ngIf="showForm">
-    <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
-      <h5 class="text-xl font-bold text-gray-800">
-        <i class="bi bi-pencil-fill text-red-600 mr-2"></i> {{ editMode ? 'Editar Pizza' : 'Nueva Pizza' }}
-      </h5>
-      <button class="text-gray-400 hover:text-red-600 transition-colors" (click)="cancelar()">
-        <i class="bi bi-x-lg text-xl"></i>
+  <!-- White KPI Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Pizzas</p>
+        <p class="text-2xl font-black text-gray-900 m-0">{{ kpiTotalPizzas }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-pie-chart-fill text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Disponibles</p>
+        <p class="text-2xl font-black text-gray-900 m-0">{{ kpiDisponibles }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-check-circle-fill text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Sin Stock / Agotadas</p>
+        <p class="text-2xl font-black text-gray-900 m-0">{{ kpiAgotadas }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-exclamation-triangle-fill text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Populares</p>
+        <p class="text-2xl font-black text-gray-900 m-0">{{ kpiPopulares }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-star-fill text-lg"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar Card -->
+  <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3">
+    <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 flex-1">
+      <div class="relative w-full sm:w-72">
+        <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input
+          type="text"
+          [(ngModel)]="terminoBusqueda"
+          (ngModelChange)="onFiltroBusquedaChange()"
+          placeholder="Buscar por nombre o descripción..."
+          class="w-full sm:w-72 pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
+        />
+      </div>
+
+      <select
+        [(ngModel)]="categoriaFiltro"
+        (ngModelChange)="onFiltroBusquedaChange()"
+        aria-label="Filtrar por categoría"
+        class="w-full sm:w-52 px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
+      >
+        <option value="TODAS">Todas las categorías</option>
+        <option *ngFor="let cat of categorias; trackBy: trackByCategoriaId" [value]="cat.id">
+          {{ cat.name }}
+        </option>
+      </select>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <button
+        type="button"
+        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-colors border cursor-pointer"
+        [ngClass]="filtroActivo === 'todas' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
+        (click)="aplicarFiltro('todas')"
+      >
+        Todas
+      </button>
+      <button
+        type="button"
+        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-colors border cursor-pointer"
+        [ngClass]="filtroActivo === 'disponibles' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
+        (click)="aplicarFiltro('disponibles')"
+      >
+        Disponibles
+      </button>
+      <button
+        type="button"
+        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-colors border cursor-pointer"
+        [ngClass]="filtroActivo === 'populares' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
+        (click)="aplicarFiltro('populares')"
+      >
+        Populares
+      </button>
+      <button
+        type="button"
+        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-colors border cursor-pointer"
+        [ngClass]="filtroActivo === 'stock-bajo' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-amber-700 border-amber-200 hover:bg-amber-50'"
+        (click)="aplicarFiltro('stock-bajo')"
+      >
+        Stock Bajo / Agotadas
       </button>
     </div>
-    
-    <form [formGroup]="pizzaForm" (ngSubmit)="guardarPizza()" class="space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Nombre -->
-        <div>
-          <label for="name" class="block text-sm font-bold text-gray-700 mb-1">Nombre de la Pizza *</label>
-          <input type="text" id="name" formControlName="name" placeholder="Ej: Pizza Margherita"
-                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
-                 [ngClass]="pizzaForm.get('name')?.invalid && pizzaForm.get('name')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
-          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="pizzaForm.get('name')?.invalid && pizzaForm.get('name')?.touched">
-            <span *ngIf="pizzaForm.get('name')?.errors?.['required']">El nombre es requerido</span>
-            <span *ngIf="pizzaForm.get('name')?.errors?.['maxlength']">El nombre no puede exceder 150 caracteres</span>
-          </div>
-        </div>
-
-        <!-- Categoría -->
-        <div>
-          <label for="categoryId" class="block text-sm font-bold text-gray-700 mb-1">Categoría *</label>
-          <select id="categoryId" formControlName="categoryId"
-                  class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
-                  [ngClass]="pizzaForm.get('categoryId')?.invalid && pizzaForm.get('categoryId')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
-            <option value="">Seleccione una categoría</option>
-            <option *ngFor="let categoria of categorias" [value]="categoria.id">{{ categoria.name }}</option>
-          </select>
-          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="pizzaForm.get('categoryId')?.invalid && pizzaForm.get('categoryId')?.touched">
-            La categoría es requerida
-          </div>
-        </div>
-
-        <!-- Precio -->
-        <div>
-          <label for="price" class="block text-sm font-bold text-gray-700 mb-1">Precio (S/) *</label>
-          <input type="number" id="price" formControlName="price" placeholder="0.00" step="0.01" min="0.01"
-                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
-                 [ngClass]="pizzaForm.get('price')?.invalid && pizzaForm.get('price')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
-          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="pizzaForm.get('price')?.invalid && pizzaForm.get('price')?.touched">
-            <span *ngIf="pizzaForm.get('price')?.errors?.['required']">El precio es requerido</span>
-            <span *ngIf="pizzaForm.get('price')?.errors?.['min']">El precio debe ser mayor a S/ 0.00</span>
-          </div>
-        </div>
-
-        <!-- URL de imagen -->
-        <div>
-          <label for="imageUrl" class="block text-sm font-bold text-gray-700 mb-1">URL de Imagen</label>
-          <input type="url" id="imageUrl" formControlName="imageUrl" placeholder="https://ejemplo.com/imagen.jpg"
-                 class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
-                 [ngClass]="pizzaForm.get('imageUrl')?.invalid && pizzaForm.get('imageUrl')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'">
-          <div class="text-red-500 text-xs mt-1 font-medium" *ngIf="pizzaForm.get('imageUrl')?.invalid && pizzaForm.get('imageUrl')?.touched">
-            <span *ngIf="pizzaForm.get('imageUrl')?.errors?.['maxlength']">La URL no puede exceder 500 caracteres</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Descripción -->
-      <div>
-        <label for="description" class="block text-sm font-bold text-gray-700 mb-1">Descripción</label>
-        <textarea id="description" formControlName="description" rows="3" placeholder="Describe los ingredientes y características de la pizza..."
-                  class="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"></textarea>
-      </div>
-
-      <!-- Checkboxes -->
-      <div class="flex flex-wrap gap-6">
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" formControlName="isAvailable" class="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500">
-          <span class="font-medium text-gray-700">Disponible</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" formControlName="isPopular" class="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500">
-          <span class="font-medium text-gray-700">Popular</span>
-        </label>
-      </div>
-
-      <!-- Botones -->
-      <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
-        <button type="button" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg transition-colors" (click)="cancelar()" [disabled]="loading">
-          Cancelar
-        </button>
-        <button type="submit" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="pizzaForm.invalid || loading">
-          <i class="bi bi-arrow-repeat animate-spin" *ngIf="loading"></i>
-          <i class="bi bi-save" *ngIf="!loading"></i>
-          {{ editMode ? 'Actualizar' : 'Guardar' }}
-        </button>
-      </div>
-    </form>
   </div>
 
-  <!-- Lista de pizzas -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" *ngIf="!showForm">
-    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center flex-wrap gap-4">
-      <h5 class="text-lg font-bold text-gray-800 m-0">Lista de Pizzas ({{ pizzas.length }})</h5>
-    </div>
-    
-    <!-- Filtros -->
-    <div class="p-4 border-b border-gray-100 flex items-center gap-4 flex-wrap bg-white">
-      <span class="font-bold text-gray-600 flex items-center gap-2">
-        <i class="bi bi-funnel"></i> Filtros:
-      </span>
-      <div class="flex flex-wrap gap-2">
-        <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
-          [ngClass]="filtroActivo === 'todas' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
-          (click)="aplicarFiltro('todas')">Todas</button>
-        <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
-          [ngClass]="filtroActivo === 'disponibles' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
-          (click)="aplicarFiltro('disponibles')">Solo Disponibles</button>
-        <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
-          [ngClass]="filtroActivo === 'populares' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
-          (click)="aplicarFiltro('populares')">Solo Populares</button>
-        <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
-          [ngClass]="filtroActivo === 'disponibles-populares' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
-          (click)="aplicarFiltro('disponibles-populares')">Disp. y Populares</button>
-      </div>
+  <!-- Loading State -->
+  <div *ngIf="loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm py-16 flex flex-col items-center justify-center text-gray-500">
+    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
+    <span class="text-sm font-bold text-gray-600">Cargando catálogo de pizzas...</span>
+  </div>
+
+  <!-- Catálogo de Pizzas -->
+  <div *ngIf="!loading && (!loadError || todasLasPizzas.length > 0)" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 bg-gray-50/70 flex flex-wrap justify-between items-center gap-3">
+      <h3 class="text-sm font-black text-gray-800 uppercase tracking-wider m-0">
+        Catálogo de Pizzas <span class="text-red-600">({{ pizzas.length }})</span>
+      </h3>
+      <button
+        *ngIf="terminoBusqueda || categoriaFiltro !== 'TODAS' || filtroActivo !== 'todas'"
+        type="button"
+        (click)="limpiarFiltros()"
+        class="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
+      >
+        <i class="bi bi-x-circle"></i> Limpiar filtros
+      </button>
     </div>
 
-    <!-- Loading spinner -->
-    <div class="flex justify-center items-center py-12 text-gray-400" *ngIf="loading">
-      <i class="bi bi-arrow-repeat animate-spin text-3xl mr-3 text-red-600"></i> <span class="text-lg font-medium">Cargando pizzas...</span>
-    </div>
-
-    <!-- Grid de pizzas -->
-    <div class="p-6" *ngIf="!loading && pizzas.length > 0">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-red-200 hover:shadow-md transition-all group flex h-full" *ngFor="let pizza of pizzasPaginadas; trackBy: trackByPizzaId; let i = index">
-          
+    <!-- Grid Responsivo de Pizzas -->
+    <div *ngIf="pizzas.length > 0" class="p-4 sm:p-5">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+        <div
+          *ngFor="let pizza of pizzasPaginadas; trackBy: trackByPizzaId; let i = index"
+          class="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-red-200 hover:shadow-md transition-all group flex flex-col sm:flex-row h-full"
+        >
           <!-- Imagen de la pizza -->
-          <div class="w-1/3 bg-gray-50 flex items-center justify-center p-4 border-r border-gray-100">
-            <img *ngIf="pizza.imageUrl && !pizza.imageError"
-                 [src]="getOptimizedImageUrl(pizza.imageUrl)"
-                 [alt]="pizza.name"
-                 [loading]="i < 4 ? 'eager' : 'lazy'"
-                 [attr.fetchpriority]="i === 0 ? 'high' : (i < 4 ? 'auto' : 'low')"
-                 class="w-full h-full object-cover rounded-full shadow-sm max-w-[120px] max-h-[120px]"
-                 decoding="async"
-                 (error)="onImageError(pizza)">
-            <div *ngIf="!pizza.imageUrl || pizza.imageError"
-                 class="w-full h-full flex items-center justify-center rounded-full border-2 border-dashed border-gray-300 max-w-[120px] max-h-[120px]">
+          <div class="w-full sm:w-44 md:w-48 h-48 sm:h-auto shrink-0 bg-gray-50 flex flex-col items-center justify-center p-4 border-b sm:border-b-0 sm:border-r border-gray-100 relative">
+            <img
+              *ngIf="pizza.imageUrl && !pizza.imageError"
+              [src]="getOptimizedImageUrl(pizza.imageUrl)"
+              [alt]="pizza.name"
+              [loading]="i < 4 ? 'eager' : 'lazy'"
+              class="w-32 h-32 sm:w-28 sm:h-28 object-cover rounded-full shadow-sm border border-white"
+              decoding="async"
+              (error)="onImageError(pizza)"
+            />
+            <div
+              *ngIf="!pizza.imageUrl || pizza.imageError"
+              class="w-28 h-28 flex items-center justify-center rounded-full border-2 border-dashed border-gray-300 bg-white"
+            >
               <i class="bi bi-pie-chart text-4xl text-gray-300"></i>
             </div>
+            <span
+              class="mt-2.5 text-[10px] font-black px-2.5 py-0.5 rounded-full"
+              [ngClass]="pizza.outOfStock ? 'bg-red-100 text-red-700' : (pizza.lowStock ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700')"
+            >
+              Stock: {{ pizza.availableStock ?? 0 }} und
+            </span>
           </div>
 
           <!-- Información de la pizza -->
-          <div class="w-2/3 p-4 flex flex-col justify-between">
+          <div class="flex-1 min-w-0 p-4 flex flex-col justify-between">
             <div>
-              <div class="flex justify-between items-start mb-2">
-                <div>
-                  <h5 class="font-black text-gray-800 text-lg leading-tight mb-1 group-hover:text-red-600 transition-colors">{{ pizza.name }}</h5>
-                  <p class="text-xs text-gray-400 font-mono">#{{ pizza.id }}</p>
+              <div class="flex justify-between items-start gap-2 mb-1.5">
+                <div class="min-w-0 flex-1">
+                  <h4 class="font-black text-gray-900 text-base sm:text-lg leading-tight mb-0.5 group-hover:text-red-600 transition-colors truncate m-0">
+                    {{ pizza.name }}
+                  </h4>
+                  <p class="text-[11px] text-gray-400 font-mono truncate m-0">
+                    #{{ pizza.id }}{{ pizza.imageUrl ? ' · ' + pizza.imageUrl : '' }}
+                  </p>
                 </div>
-                <span class="font-black text-emerald-600 text-lg">{{ formatearPrecio(pizza.price) }}</span>
+                <span class="font-black text-emerald-600 text-lg shrink-0">{{ formatearPrecio(pizza.price) }}</span>
               </div>
 
               <p class="text-gray-500 text-xs mb-3 line-clamp-2" *ngIf="pizza.description">
                 {{ pizza.description }}
               </p>
 
-              <div class="flex flex-wrap gap-1 mb-4">
+              <!-- Métricas financieras directas -->
+              <div class="grid grid-cols-3 gap-1.5 bg-gray-50 border border-gray-100 rounded-xl p-2.5 mb-3 text-[11px]">
+                <div>
+                  <span class="text-gray-400 block font-semibold">Costo Directo</span>
+                  <strong class="text-gray-900">S/ {{ (pizza.productionCost || 0) | number:'1.2-2' }}</strong>
+                </div>
+                <div>
+                  <span class="text-gray-400 block font-semibold">Margen</span>
+                  <strong [ngClass]="(pizza.profitMargin || 0) >= 50 ? 'text-emerald-600' : 'text-amber-600'">
+                    {{ (pizza.profitMargin || 0) | number:'1.1-1' }}%
+                  </strong>
+                </div>
+                <div>
+                  <span class="text-gray-400 block font-semibold">Receta</span>
+                  <strong class="text-gray-800">{{ pizza.recipeCount || 0 }} insumos</strong>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-1.5 mb-3">
                 <span class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider bg-gray-100 text-gray-700">
                   {{ obtenerNombreCategoria(pizza) | uppercase }}
                 </span>
-                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider"
-                      [ngClass]="pizza.isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'">
-                  {{ pizza.isAvailable ? 'DISPONIBLE' : 'AGOTADO' }}
+                <span
+                  class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider"
+                  [ngClass]="!pizza.outOfStock && pizza.isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'"
+                >
+                  {{ !pizza.outOfStock && pizza.isAvailable ? 'DISPONIBLE' : 'AGOTADO' }}
                 </span>
-                <span *ngIf="pizza.isPopular" class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider bg-amber-100 text-amber-700">
+                <span *ngIf="pizza.lowStock && !pizza.outOfStock" class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider bg-amber-100 text-amber-700">
+                  STOCK BAJO
+                </span>
+                <span *ngIf="pizza.isPopular" class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
                   <i class="bi bi-star-fill"></i> POPULAR
                 </span>
               </div>
             </div>
 
-            <!-- Botones de acción -->
-            <div class="grid grid-cols-3 gap-2 mt-auto">
-              <button class="bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-700 font-bold py-1.5 px-2 rounded-lg text-xs transition-colors flex items-center justify-center gap-1"
-                      (click)="editarPizza(pizza)" [disabled]="loading" title="Editar">
+            <!-- Botones de acción responsivos -->
+            <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mt-auto pt-2 border-t border-gray-100">
+              <button
+                type="button"
+                class="sm:flex-1 bg-gray-100 hover:bg-gray-900 hover:text-white text-gray-700 font-bold py-2 px-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                (click)="editarPizza(pizza)"
+                title="Editar pizza"
+              >
                 <i class="bi bi-pencil-fill"></i> Editar
               </button>
-              <button class="bg-gray-100 hover:bg-emerald-600 hover:text-white text-gray-700 font-bold py-1.5 px-2 rounded-lg text-xs transition-colors flex items-center justify-center gap-1"
-                      (click)="mostrarOpcionesExtras(pizza)" [disabled]="loading" title="Extras">
+              <button
+                type="button"
+                class="sm:flex-1 bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-700 font-bold py-2 px-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                (click)="abrirModalRecetaRapida(pizza)"
+                title="Editar Receta e Insumos"
+              >
+                <i class="bi bi-journal-text"></i> Receta
+              </button>
+              <button
+                type="button"
+                class="sm:flex-1 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-bold py-2 px-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                (click)="mostrarOpcionesExtras(pizza)"
+                title="Simular Extras"
+              >
                 <i class="bi bi-plus-circle-fill"></i> Extras
               </button>
-              <button class="bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold py-1.5 px-2 rounded-lg text-xs transition-colors flex items-center justify-center gap-1"
-                      (click)="eliminarPizza(pizza.id!, pizza.name)" [disabled]="loading" title="Eliminar">
-                <i class="bi bi-trash-fill"></i> Eliminar
+              <button
+                type="button"
+                class="bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                (click)="eliminarPizza(pizza.id!, pizza.name)"
+                title="Eliminar pizza"
+              >
+                <i class="bi bi-trash-fill"></i>
+                <span class="sm:hidden">Eliminar</span>
               </button>
             </div>
           </div>
         </div>
       </div>
-      
-      <!-- Paginación -->
-      <div class="mt-6">
-        <app-pagination [currentPage]="currentPage" [totalItems]="pizzas.length" [itemsPerPage]="itemsPerPage" (pageChange)="onPageChange($event)"></app-pagination>
-      </div>
     </div>
 
-    <!-- Mensaje cuando no hay pizzas -->
-    <div class="py-16 px-6 text-center flex flex-col items-center" *ngIf="!loading && pizzas.length === 0">
-      <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
-        <i class="bi bi-pie-chart text-4xl"></i>
+    <!-- Paginación -->
+    <div *ngIf="pizzas.length > 0" class="px-5 py-4 border-t border-gray-100 bg-white">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="pizzas.length"
+        [itemsPerPage]="itemsPerPage"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
+    </div>
+
+    <!-- Estado vacío (solo si no hay loadError) -->
+    <div *ngIf="!loadError && pizzas.length === 0" class="py-16 px-6 text-center flex flex-col items-center">
+      <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mb-4 border border-gray-100">
+        <i class="bi bi-pie-chart text-3xl"></i>
       </div>
-      <h3 class="text-lg font-bold text-gray-800 mb-1">No hay pizzas</h3>
-      <p class="text-gray-500 text-sm mb-6 max-w-sm">No se encontraron pizzas registradas en el sistema.</p>
+      <h3 class="text-base font-black text-gray-900 mb-1">No se encontraron pizzas</h3>
+      <p class="text-gray-500 text-sm mb-5 max-w-sm">No hay pizzas registradas que coincidan con los criterios de búsqueda o filtros aplicados.</p>
+      <button
+        *ngIf="terminoBusqueda || categoriaFiltro !== 'TODAS' || filtroActivo !== 'todas'"
+        type="button"
+        (click)="limpiarFiltros()"
+        class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold px-4 py-2 rounded-xl text-xs transition-colors cursor-pointer"
+      >
+        Restablecer filtros
+      </button>
     </div>
   </div>
 
-  <!-- DECORATOR PATTERN - Modal de Extras -->
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" *ngIf="mostrarExtras">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+  <!-- MODAL CREAR / EDITAR PIZZA + RECETA + IMAGEN LOCAL -->
+  <div
+    *ngIf="showForm"
+    class="fixed inset-0 z-[6000] !mt-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+  >
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90dvh] flex flex-col overflow-hidden">
       <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center shrink-0">
-        <h5 class="text-xl font-bold m-0 flex items-center gap-2">
-          <i class="bi bi-plus-circle-fill text-red-500"></i> Agregar Extras
-        </h5>
-        <button class="text-gray-400 hover:text-white transition-colors" (click)="cerrarExtras()">
+        <div>
+          <h5 class="text-lg font-black m-0 flex items-center gap-2">
+            <i class="bi text-red-500" [ngClass]="editMode ? 'bi-pencil-fill' : 'bi-plus-circle-fill'"></i>
+            {{ editMode ? 'Editar Pizza y Receta' : 'Nueva Pizza y Receta' }}
+          </h5>
+          <p class="text-xs text-gray-400 m-0 mt-0.5">Define información comercial, imagen y receta base para tamaño Personal (1.0x).</p>
+        </div>
+        <button type="button" class="text-gray-400 hover:text-white transition-colors cursor-pointer" (click)="cancelar()">
           <i class="bi bi-x-lg text-xl"></i>
         </button>
       </div>
-      
-      <div class="p-6 overflow-y-auto flex-1 bg-gray-50">
-        <div class="bg-white p-4 rounded-xl border border-gray-200 mb-6 flex justify-between items-center shadow-sm">
-          <div>
-            <h6 class="font-black text-xl text-gray-800 m-0">{{ pizzaSeleccionadaExtras?.name }}</h6>
-            <p class="text-gray-500 text-sm m-0">Personaliza esta pizza con opciones adicionales.</p>
+
+      <form [formGroup]="pizzaForm" (ngSubmit)="guardarPizza()" class="flex flex-col flex-1 overflow-hidden">
+        <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-5">
+          <!-- Alerta dentro del modal -->
+          <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex justify-between items-center text-xs sm:text-sm font-medium">
+            <div class="flex items-center gap-2">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <span>{{ error }}</span>
+            </div>
+            <button type="button" (click)="limpiarMensajes()" class="text-red-700 hover:text-red-900 cursor-pointer">
+              <i class="bi bi-x-lg"></i>
+            </button>
           </div>
-          <div class="text-right">
-            <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Precio Base</span>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Nombre -->
+            <div>
+              <label for="name" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Nombre de la Pizza *</label>
+              <input
+                type="text"
+                id="name"
+                formControlName="name"
+                placeholder="Ej: Pizza Margherita"
+                class="w-full px-4 py-2.5 rounded-xl border text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
+                [ngClass]="pizzaForm.get('name')?.invalid && pizzaForm.get('name')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'"
+              />
+              <div class="text-red-600 text-xs mt-1 font-medium" *ngIf="pizzaForm.get('name')?.invalid && pizzaForm.get('name')?.touched">
+                <span *ngIf="pizzaForm.get('name')?.errors?.['required']">El nombre es requerido</span>
+                <span *ngIf="pizzaForm.get('name')?.errors?.['maxlength']">El nombre no puede exceder 150 caracteres</span>
+              </div>
+            </div>
+
+            <!-- Categoría -->
+            <div>
+              <label for="categoryId" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Categoría *</label>
+              <select
+                id="categoryId"
+                formControlName="categoryId"
+                class="w-full px-4 py-2.5 rounded-xl border text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
+                [ngClass]="pizzaForm.get('categoryId')?.invalid && pizzaForm.get('categoryId')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'"
+              >
+                <option value="">Seleccione una categoría</option>
+                <option *ngFor="let categoria of categorias; trackBy: trackByCategoriaId" [value]="categoria.id">{{ categoria.name }}</option>
+              </select>
+              <div class="text-red-600 text-xs mt-1 font-medium" *ngIf="pizzaForm.get('categoryId')?.invalid && pizzaForm.get('categoryId')?.touched">
+                La categoría es requerida
+              </div>
+            </div>
+
+            <!-- Precio -->
+            <div>
+              <label for="price" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Precio Base Venta - Personal (S/) *</label>
+              <input
+                type="number"
+                id="price"
+                formControlName="price"
+                placeholder="0.00"
+                step="0.01"
+                min="0.01"
+                class="w-full px-4 py-2.5 rounded-xl border text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
+                [ngClass]="pizzaForm.get('price')?.invalid && pizzaForm.get('price')?.touched ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white'"
+              />
+              <div class="text-red-600 text-xs mt-1 font-medium" *ngIf="pizzaForm.get('price')?.invalid && pizzaForm.get('price')?.touched">
+                <span *ngIf="pizzaForm.get('price')?.errors?.['required']">El precio es requerido</span>
+                <span *ngIf="pizzaForm.get('price')?.errors?.['min']">El precio debe ser mayor a S/ 0.00</span>
+              </div>
+            </div>
+
+            <!-- Archivo de Imagen en Servidor -->
+            <div>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Imagen de la Pizza (Archivo en Backend)</label>
+              <div class="flex items-center gap-3 p-3 rounded-xl border border-dashed border-gray-300 bg-gray-50">
+                <div class="w-14 h-14 rounded-xl bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+                  <img *ngIf="imagenPreview" [src]="imagenPreview" alt="Vista previa" class="w-full h-full object-cover" />
+                  <i *ngIf="!imagenPreview" class="bi bi-image text-2xl text-gray-300"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <label class="inline-flex items-center gap-2 px-3.5 py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl cursor-pointer transition-colors">
+                    <i class="bi" [ngClass]="subiendoImagen ? 'bi-arrow-repeat animate-spin' : 'bi-cloud-arrow-up-fill'"></i>
+                    {{ subiendoImagen ? 'Subiendo archivo...' : 'Seleccionar Imagen' }}
+                    <input type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)" [disabled]="subiendoImagen" />
+                  </label>
+                  <button
+                    *ngIf="pizzaForm.get('imageUrl')?.value"
+                    type="button"
+                    (click)="quitarImagenSeleccionada()"
+                    class="ml-2 text-xs text-red-600 hover:underline font-bold cursor-pointer"
+                  >
+                    Quitar
+                  </button>
+                  <p class="text-[11px] text-gray-500 mt-1 mb-0 truncate">
+                    {{ pizzaForm.get('imageUrl')?.value || 'Se guardará localmente en /uploads/pizzas/' }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="description" class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Descripción</label>
+              <button
+                type="button"
+                (click)="generarDescripcionDesdeReceta()"
+                class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+                title="Generar descripción automática con los ingredientes de la receta"
+              >
+                <i class="bi bi-magic text-sm"></i>
+                <span>Jalar data de la receta</span>
+              </button>
+            </div>
+            <textarea
+              id="description"
+              formControlName="description"
+              rows="2"
+              placeholder="Describe los ingredientes y características de la pizza..."
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
+            ></textarea>
+            <p class="text-[11px] text-gray-400 mt-1 mb-0 flex items-center justify-between">
+              <span>Esta descripción se mostrará en el menú de clientes (<code>/menu</code>). Puedes editarla libremente.</span>
+              <span *ngIf="recetaFormulario.length > 0" class="text-gray-500 font-semibold">
+                {{ recetaFormulario.length }} insumo(s) en receta
+              </span>
+            </p>
+          </div>
+
+          <!-- Editor de Receta Directa -->
+          <div class="bg-gray-50 rounded-2xl border border-gray-200 p-4 sm:p-5">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
+              <div>
+                <h6 class="font-black text-gray-900 text-sm sm:text-base m-0 flex items-center gap-2">
+                  <i class="bi bi-journal-check text-red-600"></i> Receta Base (Tamaño Personal 1.0x)
+                </h6>
+                <p class="text-xs text-gray-500 m-0 mt-0.5">El stock disponible y el costo directo de producción se calculan a partir de estos insumos.</p>
+              </div>
+              <div class="flex flex-wrap gap-2 text-xs">
+                <span class="bg-white border border-gray-200 px-3 py-1.5 rounded-xl font-bold text-gray-700 shadow-2xs">
+                  Costo Simulado: <strong class="text-red-600">S/ {{ getCostoSimuladoForm() | number:'1.2-2' }}</strong>
+                </span>
+                <span class="bg-white border border-gray-200 px-3 py-1.5 rounded-xl font-bold text-gray-700 shadow-2xs">
+                  Margen: <strong class="text-emerald-600">{{ getMargenSimuladoForm() | number:'1.1-1' }}%</strong>
+                </span>
+                <span class="bg-white border border-gray-200 px-3 py-1.5 rounded-xl font-bold text-gray-700 shadow-2xs">
+                  Stock Producible: <strong class="text-gray-900">{{ getStockProducibleSimuladoForm() }} und</strong>
+                </span>
+                <span *ngIf="getStockMasaForm() !== null" class="bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl font-bold text-amber-800 shadow-2xs" title="Stock compartido de masa fresca para este tamaño">
+                  Masa: <strong>{{ getStockMasaForm() }} und</strong>
+                </span>
+              </div>
+            </div>
+
+            <!-- SIMULADOR DE TAMAÑOS INTERACTIVO -->
+            <div class="bg-white p-3 sm:p-3.5 rounded-xl border border-gray-200 mb-4 shadow-2xs">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <span class="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="bi bi-rulers text-red-600"></i> Simular con otros tamaños:
+                </span>
+                <span *ngIf="tamanoSimuladorForm && (tamanoSimuladorForm.recipeMultiplier || 1) !== 1" class="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                  <i class="bi bi-eye-fill"></i> Simulación activa: {{ tamanoSimuladorForm.name }} (x{{ tamanoSimuladorForm.recipeMultiplier || 1 | number:'1.1-2' }})
+                </span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <!-- Personal / Base -->
+                <button
+                  type="button"
+                  (click)="seleccionarTamanoSimuladorForm(null)"
+                  class="p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between"
+                  [ngClass]="!tamanoSimuladorForm ? 'border-red-600 bg-red-50/80 text-red-900 ring-2 ring-red-100 shadow-2xs' : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700'"
+                >
+                  <div class="flex items-center justify-between w-full">
+                    <span class="font-black text-xs">Personal (Base)</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded font-black" [ngClass]="!tamanoSimuladorForm ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-600'">1.0x</span>
+                  </div>
+                  <div class="text-[11px] mt-1 font-semibold text-gray-500">
+                    Costo: <strong class="text-red-600">S/ {{ costoRecetaForm | number:'1.2-2' }}</strong>
+                  </div>
+                </button>
+
+                <!-- Otros tamaños de la BD -->
+                <button
+                  *ngFor="let tam of tamanosDisponibles; trackBy: trackBySizeId"
+                  [hidden]="(tam.recipeMultiplier || 1) === 1.0 && tam.name.toLowerCase().includes('personal')"
+                  type="button"
+                  (click)="seleccionarTamanoSimuladorForm(tam)"
+                  class="p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between"
+                  [ngClass]="tamanoSimuladorForm?.id === tam.id ? 'border-red-600 bg-red-50/80 text-red-900 ring-2 ring-red-100 shadow-2xs' : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700'"
+                >
+                  <div class="flex items-center justify-between w-full">
+                    <span class="font-black text-xs truncate">{{ tam.name }}</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded font-black" [ngClass]="tamanoSimuladorForm?.id === tam.id ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-600'">
+                      {{ tam.recipeMultiplier || 1 }}x
+                    </span>
+                  </div>
+                  <div class="text-[11px] mt-1 font-semibold text-gray-500">
+                    Costo: <strong class="text-red-600">S/ {{ (costoRecetaForm * (tam.recipeMultiplier || 1)) | number:'1.2-2' }}</strong>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Agregar Insumo a Receta -->
+            <div class="flex flex-col sm:flex-row gap-2.5 mb-4">
+              <select
+                class="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                [(ngModel)]="nuevoIngredienteId"
+                [ngModelOptions]="{standalone: true}"
+              >
+                <option [ngValue]="null">-- Seleccionar ingrediente / insumo --</option>
+                <option *ngFor="let ing of todosIngredientes; trackBy: trackByIngredienteId" [ngValue]="ing.id">
+                  {{ ing.name }} (Stock: {{ ing.stockQuantity | number:'1.0-0' }} {{ ing.unit || 'g' }} · Costo: S/ {{ ing.unitCost | number:'1.2-4' }}/{{ ing.unit || 'g' }})
+                </option>
+              </select>
+              <input
+                type="number"
+                min="0.1"
+                step="1"
+                placeholder="Cantidad"
+                class="w-full sm:w-36 px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                [(ngModel)]="nuevaCantidadReceta"
+                [ngModelOptions]="{standalone: true}"
+              />
+              <button
+                type="button"
+                class="px-4 py-2 bg-gray-900 hover:bg-black text-white text-xs sm:text-sm font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                (click)="agregarIngredienteAReceta(recetaFormulario)"
+              >
+                <i class="bi bi-plus-circle-fill"></i> Agregar Insumo
+              </button>
+            </div>
+
+            <!-- Tabla de Insumos de la Receta -->
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden" *ngIf="recetaFormulario.length > 0">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs min-w-[560px]">
+                  <thead class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                    <tr>
+                      <th class="px-4 py-2.5">Insumo</th>
+                      <th class="px-4 py-2.5 text-center">Cant. Base (1.0x)</th>
+                      <th *ngIf="tamanoSimuladorForm && (tamanoSimuladorForm.recipeMultiplier || 1) !== 1" class="px-4 py-2.5 text-center bg-amber-900/60 text-amber-200">
+                        Cant. Simulada ({{ getMultiplicadorForm() }}x)
+                      </th>
+                      <th class="px-4 py-2.5 text-right">Costo Unit.</th>
+                      <th class="px-4 py-2.5 text-right">
+                        {{ tamanoSimuladorForm && (tamanoSimuladorForm.recipeMultiplier || 1) !== 1 ? 'Costo Simulado' : 'Subtotal Costo' }}
+                      </th>
+                      <th class="px-4 py-2.5 text-center">Quitar</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    <tr *ngFor="let item of recetaFormulario; trackBy: trackByRecetaItem; let idx = index" class="hover:bg-gray-50">
+                      <td class="px-4 py-2.5 font-bold text-gray-800">{{ item.ingredientName }}</td>
+                      <td class="px-4 py-2.5 text-center">
+                        <div class="inline-flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            min="0.1"
+                            step="1"
+                            class="w-20 px-2 py-1 border border-gray-200 rounded-lg text-center font-bold focus:border-red-500 outline-none"
+                            [(ngModel)]="item.quantity"
+                            [ngModelOptions]="{standalone: true}"
+                            (ngModelChange)="actualizarCantidadItemReceta(item, false)"
+                          />
+                          <span class="text-gray-500 font-semibold">{{ item.unit || 'g' }}</span>
+                        </div>
+                      </td>
+                      <td *ngIf="tamanoSimuladorForm && (tamanoSimuladorForm.recipeMultiplier || 1) !== 1" class="px-4 py-2.5 text-center font-bold text-amber-800 bg-amber-50/50">
+                        {{ getCantidadEscalada(item.quantity, getMultiplicadorForm()) }} {{ item.unit || 'g' }}
+                      </td>
+                      <td class="px-4 py-2.5 text-right text-gray-500">S/ {{ item.unitCost | number:'1.2-4' }}</td>
+                      <td class="px-4 py-2.5 text-right font-bold text-gray-900">
+                        S/ {{ getCostoEscalado(item.lineCost, getMultiplicadorForm()) | number:'1.2-2' }}
+                      </td>
+                      <td class="px-4 py-2.5 text-center">
+                        <button
+                          type="button"
+                          class="text-red-500 hover:text-red-700 cursor-pointer"
+                          (click)="quitarIngredienteDeReceta(recetaFormulario, idx)"
+                        >
+                          <i class="bi bi-trash-fill"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <p *ngIf="recetaFormulario.length === 0" class="text-xs text-amber-700 font-semibold m-0">
+              <i class="bi bi-exclamation-circle"></i> Sin insumos en la receta: la pizza aparecerá con stock producible 0 hasta asignarle insumos.
+            </p>
+          </div>
+
+          <!-- Checkboxes -->
+          <div class="flex flex-wrap gap-4 sm:gap-6">
+            <label class="flex items-center gap-2.5 cursor-pointer bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl">
+              <input type="checkbox" formControlName="isAvailable" class="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500" />
+              <span class="text-sm font-bold text-gray-700">Disponible en el menú</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl">
+              <input type="checkbox" formControlName="isPopular" class="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500" />
+              <span class="text-sm font-bold text-gray-700">Destacar como Popular</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end gap-3 shrink-0">
+          <button
+            type="button"
+            class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl text-sm transition-colors cursor-pointer"
+            (click)="cancelar()"
+            [disabled]="guardando || subiendoImagen"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            [disabled]="pizzaForm.invalid || guardando || subiendoImagen"
+          >
+            <i class="bi" [ngClass]="guardando ? 'bi-arrow-repeat animate-spin' : 'bi-save'"></i>
+            {{ editMode ? 'Actualizar Pizza' : 'Guardar Pizza' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL RÁPIDO DE RECETA E INSUMOS -->
+  <div
+    *ngIf="mostrarModalReceta && pizzaRecetaModal"
+    class="fixed inset-0 z-[6000] !mt-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+  >
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90dvh] flex flex-col overflow-hidden">
+      <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center shrink-0">
+        <div>
+          <h5 class="text-lg font-black m-0 flex items-center gap-2">
+            <i class="bi bi-journal-check text-red-500"></i> Receta e Insumos: {{ pizzaRecetaModal.name }}
+          </h5>
+          <p class="text-xs text-gray-400 m-0 mt-0.5">Cantidades base para tamaño Personal (1.0x). Los demás tamaños escalan según su multiplicador.</p>
+        </div>
+        <button type="button" class="text-gray-400 hover:text-white transition-colors cursor-pointer" (click)="cerrarModalRecetaRapida()">
+          <i class="bi bi-x-lg text-xl"></i>
+        </button>
+      </div>
+
+      <div class="p-5 sm:p-6 overflow-y-auto flex-1 bg-gray-50 space-y-5">
+        <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex justify-between items-center text-xs sm:text-sm font-medium">
+          <div class="flex items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>{{ error }}</span>
+          </div>
+          <button type="button" (click)="limpiarMensajes()" class="text-red-700 hover:text-red-900 cursor-pointer">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <!-- SIMULADOR DE TAMAÑOS EN MODAL RÁPIDO -->
+        <div class="bg-white p-3.5 rounded-xl border border-gray-200 shadow-2xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <span class="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="bi bi-rulers text-red-600"></i> Simular Insumos y Costos por Tamaño:
+            </span>
+            <span *ngIf="tamanoSimuladorModal && (tamanoSimuladorModal.recipeMultiplier || 1) !== 1" class="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg flex items-center gap-1">
+              <i class="bi bi-eye-fill"></i> Simulación activa: {{ tamanoSimuladorModal.name }} (x{{ tamanoSimuladorModal.recipeMultiplier || 1 | number:'1.1-2' }})
+            </span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <!-- Personal / Base -->
+            <button
+              type="button"
+              (click)="seleccionarTamanoSimuladorModal(null)"
+              class="p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between"
+              [ngClass]="!tamanoSimuladorModal ? 'border-red-600 bg-red-50/80 text-red-900 ring-2 ring-red-100 shadow-2xs' : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700'"
+            >
+              <div class="flex items-center justify-between w-full">
+                <span class="font-black text-xs">Personal (Base)</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-black" [ngClass]="!tamanoSimuladorModal ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-600'">1.0x</span>
+              </div>
+              <div class="text-[11px] mt-1 font-semibold text-gray-500">
+                Costo: <strong class="text-red-600">S/ {{ costoRecetaModal | number:'1.2-2' }}</strong>
+              </div>
+            </button>
+
+            <!-- Otros tamaños de la BD -->
+            <button
+              *ngFor="let tam of tamanosDisponibles; trackBy: trackBySizeId"
+              [hidden]="(tam.recipeMultiplier || 1) === 1.0 && tam.name.toLowerCase().includes('personal')"
+              type="button"
+              (click)="seleccionarTamanoSimuladorModal(tam)"
+              class="p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between"
+              [ngClass]="tamanoSimuladorModal?.id === tam.id ? 'border-red-600 bg-red-50/80 text-red-900 ring-2 ring-red-100 shadow-2xs' : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700'"
+            >
+              <div class="flex items-center justify-between w-full">
+                <span class="font-black text-xs truncate">{{ tam.name }}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-black" [ngClass]="tamanoSimuladorModal?.id === tam.id ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-600'">
+                  {{ tam.recipeMultiplier || 1 }}x
+                </span>
+              </div>
+              <div class="text-[11px] mt-1 font-semibold text-gray-500">
+                Costo: <strong class="text-red-600">S/ {{ (costoRecetaModal * (tam.recipeMultiplier || 1)) | number:'1.2-2' }}</strong>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Resumen precalculado / simulado -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-white p-3.5 rounded-xl border border-gray-200 shadow-xs">
+            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+              {{ tamanoSimuladorModal && (tamanoSimuladorModal.recipeMultiplier || 1) !== 1 ? 'Precio Estimado' : 'Precio Base' }}
+            </span>
+            <span class="text-lg font-black text-gray-900">S/ {{ getPrecioSimuladoModal() | number:'1.2-2' }}</span>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-gray-200 shadow-xs">
+            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+              {{ tamanoSimuladorModal && (tamanoSimuladorModal.recipeMultiplier || 1) !== 1 ? 'Costo Simulado' : 'Costo Directo' }}
+            </span>
+            <span class="text-lg font-black text-red-600">S/ {{ getCostoSimuladoModal() | number:'1.2-2' }}</span>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-gray-200 shadow-xs">
+            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Margen Bruto</span>
+            <span class="text-lg font-black text-emerald-600">{{ getMargenSimuladoModal() | number:'1.1-1' }}%</span>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-gray-200 shadow-xs">
+            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Stock Producible</span>
+            <span class="text-lg font-black text-gray-900">{{ getStockProducibleSimuladoModal() }} und</span>
+          </div>
+        </div>
+
+        <!-- Selector para agregar insumo -->
+        <div class="bg-white p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row gap-3">
+          <select
+            class="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-none focus:bg-white focus:border-red-500"
+            [(ngModel)]="nuevoIngredienteId"
+          >
+            <option [ngValue]="null">-- Seleccionar insumo para agregar --</option>
+            <option *ngFor="let ing of todosIngredientes; trackBy: trackByIngredienteId" [ngValue]="ing.id">
+              {{ ing.name }} (Stock: {{ ing.stockQuantity | number:'1.0-0' }} {{ ing.unit || 'g' }} · S/ {{ ing.unitCost | number:'1.2-4' }}/{{ ing.unit || 'g' }})
+            </option>
+          </select>
+          <input
+            type="number"
+            min="0.1"
+            step="1"
+            class="w-full sm:w-32 px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:border-red-500 outline-none"
+            [(ngModel)]="nuevaCantidadReceta"
+            placeholder="Cantidad"
+          />
+          <button
+            type="button"
+            class="px-4 py-2 bg-gray-900 hover:bg-black text-white text-sm font-bold rounded-xl transition-colors cursor-pointer"
+            (click)="agregarIngredienteAReceta(recetaModalItems)"
+          >
+            <i class="bi bi-plus-lg"></i> Añadir
+          </button>
+        </div>
+
+        <!-- Tabla de receta con overflow-x-auto -->
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm min-w-[560px]">
+              <thead class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                <tr>
+                  <th class="px-4 py-3">Insumo</th>
+                  <th class="px-4 py-3 text-center">Stock Bodega</th>
+                  <th class="px-4 py-3 text-center">Cant. Base (1.0x)</th>
+                  <th *ngIf="tamanoSimuladorModal && (tamanoSimuladorModal.recipeMultiplier || 1) !== 1" class="px-4 py-3 text-center bg-amber-900/60 text-amber-200">
+                    Cant. Simulada ({{ getMultiplicadorModal() }}x)
+                  </th>
+                  <th class="px-4 py-3 text-right">
+                    {{ tamanoSimuladorModal && (tamanoSimuladorModal.recipeMultiplier || 1) !== 1 ? 'Costo Simulado' : 'Costo Línea' }}
+                  </th>
+                  <th class="px-4 py-3 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr *ngFor="let item of recetaModalItems; trackBy: trackByRecetaItem; let idx = index" class="hover:bg-gray-50">
+                  <td class="px-4 py-3 font-bold text-gray-800">{{ item.ingredientName }}</td>
+                  <td class="px-4 py-3 text-center text-xs text-gray-500">{{ item.stockQuantity | number:'1.0-0' }} {{ item.unit || 'g' }}</td>
+                  <td class="px-4 py-3 text-center">
+                    <div class="inline-flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min="0.1"
+                        step="1"
+                        class="w-24 px-2 py-1 border border-gray-200 rounded-lg text-center font-bold focus:border-red-500 outline-none"
+                        [(ngModel)]="item.quantity"
+                        (ngModelChange)="actualizarCantidadItemReceta(item, true)"
+                      />
+                      <span class="text-xs text-gray-500 font-bold">{{ item.unit || 'g' }}</span>
+                    </div>
+                  </td>
+                  <td *ngIf="tamanoSimuladorModal && (tamanoSimuladorModal.recipeMultiplier || 1) !== 1" class="px-4 py-3 text-center font-bold text-amber-800 bg-amber-50/50">
+                    {{ getCantidadEscalada(item.quantity, getMultiplicadorModal()) }} {{ item.unit || 'g' }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-bold text-gray-900">
+                    S/ {{ getCostoEscalado(item.lineCost, getMultiplicadorModal()) | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <button
+                      type="button"
+                      class="text-red-500 hover:text-red-700 cursor-pointer"
+                      (click)="quitarIngredienteDeReceta(recetaModalItems, idx)"
+                    >
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="recetaModalItems.length === 0">
+                  <td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Agrega al menos un insumo a la receta.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white border-t border-gray-200 px-6 py-4 flex justify-end gap-3 shrink-0">
+        <button
+          type="button"
+          class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl text-sm transition-colors cursor-pointer"
+          (click)="cerrarModalRecetaRapida()"
+          [disabled]="guardandoReceta"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+          [disabled]="guardandoReceta"
+          (click)="guardarRecetaRapida()"
+        >
+          <i class="bi" [ngClass]="guardandoReceta ? 'bi-arrow-repeat animate-spin' : 'bi-save'"></i>
+          Guardar Receta
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DECORATOR PATTERN - Modal Simulador de Extras y Tamaños -->
+  <div
+    *ngIf="mostrarExtras"
+    class="fixed inset-0 z-[6000] !mt-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+  >
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90dvh] flex flex-col overflow-hidden">
+      <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center shrink-0">
+        <h5 class="text-lg font-black m-0 flex items-center gap-2">
+          <i class="bi bi-plus-circle-fill text-red-500"></i> Simulador de Extras y Tamaños
+        </h5>
+        <button type="button" class="text-gray-400 hover:text-white transition-colors cursor-pointer" (click)="cerrarExtras()">
+          <i class="bi bi-x-lg text-xl"></i>
+        </button>
+      </div>
+
+      <div class="p-5 sm:p-6 overflow-y-auto flex-1 bg-gray-50 space-y-6">
+        <div class="bg-white p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 shadow-xs">
+          <div>
+            <h6 class="font-black text-lg text-gray-900 m-0">{{ pizzaSeleccionadaExtras?.name }}</h6>
+            <p class="text-gray-500 text-xs sm:text-sm m-0">Simulación de precio final con tamaños y toppings adicionales.</p>
+          </div>
+          <div class="sm:text-right">
+            <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Precio Base</span>
             <span class="font-black text-2xl text-emerald-600">{{ formatearPrecio(pizzaSeleccionadaExtras?.price || 0) }}</span>
           </div>
         </div>
 
-        <!-- Selección de Tamaño -->
-        <div class="mb-8">
-          <span class="block font-black text-gray-800 mb-3 text-lg flex items-center gap-2">
-            <i class="bi bi-rulers text-red-500"></i> Selecciona el tamaño
+        <div>
+          <span class="block font-black text-gray-900 mb-3 text-sm sm:text-base flex items-center gap-2">
+            <i class="bi bi-rulers text-red-600"></i> Selecciona el tamaño
           </span>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <div *ngFor="let tamano of tamanosDisponibles"
-                 class="bg-white border-2 rounded-xl p-4 cursor-pointer transition-all text-center group"
-                 [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'border-red-600 ring-2 ring-red-100' : 'border-gray-200 hover:border-red-300'"
-                 (click)="seleccionarTamano(tamano)">
-              <i class="bi bi-pie-chart text-2xl block mb-2" [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'text-red-600' : 'text-gray-400 group-hover:text-red-400'"></i>
-              <div class="font-black text-gray-800 text-sm">{{ tamano.name }}</div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div
+              *ngFor="let tamano of tamanosDisponibles; trackBy: trackBySizeId"
+              class="bg-white border-2 rounded-xl p-3.5 cursor-pointer transition-all text-center group"
+              [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'border-red-600 ring-2 ring-red-100' : 'border-gray-200 hover:border-red-300'"
+              (click)="seleccionarTamano(tamano)"
+            >
+              <i class="bi bi-pie-chart text-xl block mb-1.5" [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'text-red-600' : 'text-gray-400 group-hover:text-red-400'"></i>
+              <div class="font-black text-gray-900 text-sm">{{ tamano.name }}</div>
+              <div class="text-[11px] text-gray-400">Receta {{ tamano.recipeMultiplier || 1 }}x</div>
               <div class="font-bold text-xs mt-1" [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'text-emerald-600' : 'text-gray-500'">
                 +S/ {{ tamano.extraCost | number:'1.2-2' }}
               </div>
             </div>
           </div>
-          <div *ngIf="tamanosDisponibles.length === 0" class="text-gray-500 text-sm italic mt-2">
-            <i class="bi bi-info-circle"></i> Cargando tamaños disponibles...
-          </div>
         </div>
-        
-        <!-- Selección de Extras -->
-        <div class="mb-4">
-          <span class="block font-black text-gray-800 mb-3 text-lg flex items-center gap-2">
-            <i class="bi bi-plus-circle text-red-500"></i> Adicionales (Ingredientes)
+
+        <div>
+          <span class="block font-black text-gray-900 mb-3 text-sm sm:text-base flex items-center gap-2">
+            <i class="bi bi-plus-circle text-red-600"></i> Adicionales (Ingredientes con Stock)
           </span>
-          
-          <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-            <div *ngIf="ingredientesDisponibles.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              <label *ngFor="let ingrediente of ingredientesDisponibles" 
-                     class="flex items-center p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-                     [ngClass]="{'bg-red-50 border-red-200': extrasSeleccionados.includes(ingrediente.name)}">
-                <input type="checkbox" [id]="'extra-' + ingrediente.id" class="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
-                       [checked]="extrasSeleccionados.includes(ingrediente.name)" (change)="toggleExtra(ingrediente.name)">
-                <span class="ml-3 text-sm font-bold text-gray-700 flex-1">{{ ingrediente.name }}</span>
-                <span class="text-xs font-bold text-emerald-600">+S/ {{ ingrediente.extraCost | number:'1.2-2' }}</span>
+          <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-xs">
+            <div *ngIf="ingredientesDisponibles.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+              <label
+                *ngFor="let ingrediente of ingredientesDisponibles; trackBy: trackByIngredienteId"
+                class="flex items-center p-3 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                [ngClass]="{'bg-red-50 border-red-200': extrasSeleccionados.includes(ingrediente.name)}"
+              >
+                <input
+                  type="checkbox"
+                  [id]="'extra-' + ingrediente.id"
+                  class="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
+                  [checked]="extrasSeleccionados.includes(ingrediente.name)"
+                  (change)="toggleExtra(ingrediente.name)"
+                />
+                <span class="ml-2.5 text-xs sm:text-sm font-bold text-gray-700 flex-1 truncate">{{ ingrediente.name }}</span>
+                <span class="text-xs font-bold text-emerald-600 shrink-0 ml-1">+S/ {{ ingrediente.extraCost | number:'1.2-2' }}</span>
               </label>
-            </div>
-            
-            <div *ngIf="ingredientesDisponibles.length === 0" class="text-gray-500 text-sm italic">
-              <i class="bi bi-info-circle"></i> Cargando ingredientes disponibles...
             </div>
           </div>
         </div>
       </div>
-      
-      <div class="bg-white border-t border-gray-200 p-6 shrink-0">
-        <div class="bg-gray-900 rounded-xl p-4 text-white flex flex-col md:flex-row justify-between items-center gap-4 shadow-lg">
-          <div class="flex-1">
-            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Resumen del pedido</span>
-            <p class="text-sm m-0 line-clamp-2 text-gray-300">{{ descripcionConExtras }}</p>
-            <div *ngIf="tamanoSeleccionado" class="text-xs text-red-400 font-bold mt-1">
-              Tamaño: {{ tamanoSeleccionado.name }} (+S/ {{ tamanoSeleccionado.extraCost | number:'1.2-2' }})
-            </div>
+
+      <div class="bg-white border-t border-gray-200 p-5 shrink-0">
+        <div class="bg-gray-900 rounded-xl p-4 text-white flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+          <div class="flex-1 min-w-0">
+            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Resumen</span>
+            <p class="text-xs sm:text-sm m-0 line-clamp-2 text-gray-300">{{ descripcionConExtras }}</p>
           </div>
-          <div class="text-right shrink-0">
-            <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Precio Final</span>
-            <span class="font-black text-3xl text-emerald-400">{{ formatearPrecio(precioConExtras) }}</span>
+          <div class="sm:text-right shrink-0">
+            <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Precio Final</span>
+            <span class="font-black text-2xl sm:text-3xl text-emerald-400">{{ formatearPrecio(precioConExtras) }}</span>
           </div>
         </div>
-        
-        <div class="mt-4 flex justify-end gap-3">
-          <button type="button" class="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg transition-colors" (click)="cerrarExtras()">
-            Cancelar
-          </button>
-          <button type="button" class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors shadow-md" (click)="cerrarExtras()">
-            Guardar Configuración
+        <div class="mt-3 flex justify-end">
+          <button
+            type="button"
+            class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-colors cursor-pointer"
+            (click)="cerrarExtras()"
+          >
+            Cerrar
           </button>
         </div>
       </div>

@@ -43,12 +43,27 @@
     @for (pizza of pizzasFiltradas; track pizza.id; let i = $index) {
       <div class="animate-on-scroll opacity-0 translate-y-12 transition-all duration-1000 hover:duration-300 ease-out bg-white border border-gray-200 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col h-full relative font-sans group cursor-pointer" [id]="'pizza-' + pizza.id">
         
-        <!-- Popular Badge (simulado para los 2 primeros si no hay búsqueda) -->
-        @if (i < 2 && !searchTerm) {
-          <div class="absolute top-4 right-4 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-sm uppercase tracking-wider">
-            Popular
-          </div>
-        }
+        <!-- Popular & Stock Badges -->
+        <div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-1.5">
+          @if ((i < 2 && !searchTerm) || pizza.isPopular) {
+            <div class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-sm uppercase tracking-wider shadow">
+              Popular
+            </div>
+          }
+          @if (esPizzaAgotada(pizza)) {
+            <div class="bg-gray-900 text-white text-xs font-bold px-2.5 py-1 rounded-sm uppercase tracking-wider shadow">
+              Agotado
+            </div>
+          } @else if (pizza.lowStock || (pizza.availableStock !== undefined && pizza.availableStock <= 5)) {
+            <div class="bg-amber-500 text-white text-xs font-bold px-2.5 py-1 rounded-sm shadow">
+              ¡Últimas {{ pizza.availableStock }}!
+            </div>
+          } @else if (pizza.availableStock !== undefined) {
+            <div class="bg-emerald-600/90 text-white text-[11px] font-bold px-2 py-0.5 rounded-sm shadow">
+              Disponible: {{ pizza.availableStock }}
+            </div>
+          }
+        </div>
 
         <!-- Botón de favorito -->
         <button
@@ -66,6 +81,7 @@
             [src]="getOptimizedImageUrl(pizza.imageUrl)" 
             [alt]="pizza.name"
             class="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-110"
+            [class.grayscale]="esPizzaAgotada(pizza)"
             [loading]="i < 3 ? 'eager' : 'lazy'"
             (load)="onImageLoad(pizza.id || 0)"
             (error)="onImageError($event)"
@@ -82,7 +98,9 @@
               S/ {{ pizza.price | number:'1.2-2' }}
             </div>
             <button 
-              class="w-10 h-10 bg-gray-900 hover:bg-black text-white rounded flex items-center justify-center transition-colors"
+              class="w-10 h-10 rounded flex items-center justify-center transition-colors"
+              [ngClass]="esPizzaAgotada(pizza) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-900 hover:bg-black text-white'"
+              [disabled]="esPizzaAgotada(pizza)"
               (click)="abrirModalPersonalizacion(pizza)"
               aria-label="Agregar al carrito"
             >
@@ -131,8 +149,8 @@
         <div class="grid grid-cols-2 gap-3" aria-labelledby="sizes-label">
           @for (tamano of tamanosDisponibles; track tamano.id) {
             <div 
-              class="relative border-2 rounded-xl p-4 cursor-pointer transition-all duration-200 flex flex-col items-center justify-center text-center group"
-              [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'border-red-600 bg-red-50/50' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50'"
+              class="relative border-2 rounded-xl p-4 transition-all duration-200 flex flex-col items-center justify-center text-center group"
+              [ngClass]="getStockParaTamano(pizzaSeleccionada, tamano) <= 0 ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed' : (tamanoSeleccionado?.id === tamano.id ? 'border-red-600 bg-red-50/50 cursor-pointer' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50 cursor-pointer')"
               (click)="seleccionarTamano(tamano)"
               [attr.aria-pressed]="tamanoSeleccionado?.id === tamano.id"
             >
@@ -144,6 +162,9 @@
               <i class="bi bi-pie-chart-fill text-2xl mb-2" [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'text-red-600' : 'text-gray-400 group-hover:text-red-400'"></i>
               <span class="font-bold text-gray-900">{{ tamano.name }}</span>
               <span class="text-sm text-gray-500 font-medium mt-1">{{ formatearPrecio((pizzaSeleccionada.price || 0) + (tamano.extraCost || 0)) }}</span>
+              <span class="text-[11px] font-bold mt-1" [ngClass]="getStockParaTamano(pizzaSeleccionada, tamano) > 0 ? 'text-emerald-600' : 'text-red-500'">
+                {{ getStockParaTamano(pizzaSeleccionada, tamano) > 0 ? ('Disp: ' + getStockParaTamano(pizzaSeleccionada, tamano)) : 'Agotado' }}
+              </span>
             </div>
           }
         </div>
@@ -198,8 +219,8 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" aria-labelledby="sizes-label-personalizacion">
             @for (tamano of tamanosDisponibles; track tamano.id) {
               <div 
-                class="relative border-2 rounded-xl p-4 cursor-pointer transition-all duration-200 flex flex-col items-center justify-center text-center group"
-                [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'border-red-600 bg-red-50/50 shadow-md' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50'"
+                class="relative border-2 rounded-xl p-4 transition-all duration-200 flex flex-col items-center justify-center text-center group"
+                [ngClass]="getStockParaTamano(pizzaSeleccionada, tamano) <= 0 ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed' : (tamanoSeleccionado?.id === tamano.id ? 'border-red-600 bg-red-50/50 shadow-md cursor-pointer' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50 cursor-pointer')"
                 (click)="seleccionarTamano(tamano)"
                 [attr.aria-pressed]="tamanoSeleccionado?.id === tamano.id"
               >
@@ -212,6 +233,9 @@
                 <span class="font-bold text-gray-900">{{ tamano.name }}</span>
                 <span class="text-xs text-gray-500 my-1 line-clamp-2 h-8">{{ tamano.description }}</span>
                 <span class="text-sm text-gray-900 font-bold mt-1">+ {{ formatearPrecio(tamano.extraCost || 0) }}</span>
+                <span class="text-[11px] font-bold mt-1" [ngClass]="getStockParaTamano(pizzaSeleccionada, tamano) > 0 ? 'text-emerald-600' : 'text-red-500'">
+                  {{ getStockParaTamano(pizzaSeleccionada, tamano) > 0 ? ('Disp: ' + getStockParaTamano(pizzaSeleccionada, tamano)) : 'Agotado' }}
+                </span>
               </div>
             }
           </div>

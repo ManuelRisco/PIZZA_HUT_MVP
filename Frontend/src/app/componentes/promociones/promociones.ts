@@ -12,18 +12,36 @@ import { PaginationComponent } from '../pagination/pagination';
   styleUrl: './promociones.css'
 })
 export class Promociones implements OnInit {
+  todasLasPromociones: Promotion[] = [];
   promociones: Promotion[] = [];
   promocionesPaginadas: Promotion[] = [];
   currentPage: number = 1;
   itemsPerPage: number = 10;
+  pageSizeOptions: number[] = [10, 25, 50];
+
   promocionForm: FormGroup;
   editMode = false;
   selectedPromocionId?: number;
   showForm = false;
   loading = false;
+  guardando = false;
+  loadError = '';
   error = '';
   success = '';
-  filtroEstado: string = 'TODOS';
+
+  // Filtros
+  filtroEstado: 'TODOS' | 'ACTIVAS' | 'INACTIVAS' = 'TODOS';
+  terminoBusqueda = '';
+
+  // KPIs
+  kpiTotalPromociones = 0;
+  kpiActivas = 0;
+  kpiInactivas = 0;
+  kpiConLimiteUso = 0;
+
+  // Precomputed maps to eliminate new Date() allocations per row per render
+  vigenciaMap = new Map<number, boolean>();
+  fechasMap = new Map<number, { start: string; end: string }>();
 
   tiposDescuento = [
     { value: 'PERCENTAGE', label: 'Porcentaje (%)' },
@@ -32,7 +50,7 @@ export class Promociones implements OnInit {
   ];
 
   aplicableTo = [
-    { value: 'ALL', label: 'Todo' },
+    { value: 'ALL', label: 'Todo el menú' },
     { value: 'PIZZAS', label: 'Solo Pizzas' },
     { value: 'EXTRAS', label: 'Solo Extras' },
     { value: 'SPECIFIC_PRODUCTS', label: 'Productos Específicos' }
@@ -44,8 +62,8 @@ export class Promociones implements OnInit {
   ) {
     const today = new Date().toISOString().split('T')[0];
     this.promocionForm = this.formBuilder.group({
-      code: ['', [Validators.required, Validators.minLength(3)]],
-      name: ['', [Validators.required, Validators.minLength(3)]],
+      code: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
+      name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
       description: [''],
       discountType: ['PERCENTAGE', Validators.required],
       discountValue: [0, Validators.min(0)],
@@ -64,38 +82,115 @@ export class Promociones implements OnInit {
     this.cargarPromociones();
   }
 
+  recargar(): void {
+    this.cargarPromociones();
+  }
+
+  reintentar(): void {
+    this.cargarPromociones();
+  }
+
+  abrirNuevo(): void {
+    this.abrirFormulario();
+  }
+
   cargarPromociones(): void {
     this.loading = true;
+    this.loadError = '';
     this.promocionService.listarTodas().subscribe({
       next: (data) => {
-        this.promociones = data;
+        this.todasLasPromociones = data || [];
+        this.precomputarMetricasYFechas();
         this.aplicarFiltro();
         this.loading = false;
       },
       error: (err) => {
-        this.error = 'Error al cargar promociones';
+        console.error('Error al cargar promociones:', err);
+        this.loadError = err?.status === 0
+          ? 'No se pudo conectar con el servidor (Backend fuera de línea). Verifica el puerto 8089.'
+          : (err?.error?.message || 'Error al cargar las promociones comerciales.');
         this.loading = false;
       }
     });
   }
 
-  aplicarFiltro(): void {
-    let filtradas = [...this.promociones];
-    
-    if (this.filtroEstado === 'ACTIVAS') {
-      filtradas = filtradas.filter(p => p.isActive && p.currentlyActive);
-    } else if (this.filtroEstado === 'INACTIVAS') {
-      filtradas = filtradas.filter(p => !p.isActive || !p.currentlyActive);
+  private precomputarMetricasYFechas(): void {
+    this.vigenciaMap.clear();
+    this.fechasMap.clear();
+
+    const ahora = new Date();
+    let activas = 0;
+    let inactivas = 0;
+    let conLimite = 0;
+
+    for (const promo of this.todasLasPromociones) {
+      const id = promo.id ?? 0;
+      const inicio = new Date(promo.startDate);
+      const fin = new Date(promo.endDate);
+      const esVig = ahora >= inicio && ahora <= fin && !!promo.isActive;
+      this.vigenciaMap.set(id, esVig);
+
+      this.fechasMap.set(id, {
+        start: inicio.toLocaleDateString('es-ES'),
+        end: fin.toLocaleDateString('es-ES')
+      });
+
+      if (esVig) {
+        activas++;
+      } else {
+        inactivas++;
+      }
+
+      if (promo.usageLimit && promo.usageLimit > 0) {
+        conLimite++;
+      }
     }
-    
+
+    this.kpiTotalPromociones = this.todasLasPromociones.length;
+    this.kpiActivas = activas;
+    this.kpiInactivas = inactivas;
+    this.kpiConLimiteUso = conLimite;
+  }
+
+  aplicarFiltro(): void {
+    let filtradas = [...this.todasLasPromociones];
+
+    if (this.filtroEstado === 'ACTIVAS') {
+      filtradas = filtradas.filter(p => this.vigenciaMap.get(p.id ?? 0) === true);
+    } else if (this.filtroEstado === 'INACTIVAS') {
+      filtradas = filtradas.filter(p => this.vigenciaMap.get(p.id ?? 0) !== true);
+    }
+
+    const term = this.terminoBusqueda.trim().toLowerCase();
+    if (term) {
+      filtradas = filtradas.filter(
+        p =>
+          p.code?.toLowerCase().includes(term) ||
+          p.name?.toLowerCase().includes(term) ||
+          p.description?.toLowerCase().includes(term)
+      );
+    }
+
     this.promociones = filtradas;
     this.paginar();
   }
 
-  cambiarFiltro(estado: string): void {
+  cambiarFiltro(estado: 'TODOS' | 'ACTIVAS' | 'INACTIVAS'): void {
     this.filtroEstado = estado;
     this.currentPage = 1;
-    this.cargarPromociones();
+    this.aplicarFiltro();
+  }
+
+  onBusquedaChange(): void {
+    this.currentPage = 1;
+    this.aplicarFiltro();
+  }
+
+  limpiarFiltros(): void {
+    this.filtroEstado = 'TODOS';
+    this.terminoBusqueda = '';
+    this.currentPage = 1;
+    this.aplicarFiltro();
   }
 
   paginar(): void {
@@ -115,19 +210,27 @@ export class Promociones implements OnInit {
     this.paginar();
   }
 
+  onItemsPerPageChange(size: number): void {
+    this.itemsPerPage = size;
+    this.currentPage = 1;
+    this.paginar();
+  }
+
   abrirFormulario(): void {
     this.showForm = true;
     this.editMode = false;
     const today = new Date().toISOString().split('T')[0];
-    this.promocionForm.reset({ 
-      isActive: true, 
-      discountType: 'PERCENTAGE', 
+    this.promocionForm.reset({
+      isActive: true,
+      discountType: 'PERCENTAGE',
       applicableTo: 'ALL',
       startDate: today,
+      endDate: '',
       discountValue: 0,
       finalPrice: 0,
       minPurchase: 0,
-      maxDiscount: 0
+      maxDiscount: 0,
+      usageLimit: null
     });
   }
 
@@ -137,15 +240,15 @@ export class Promociones implements OnInit {
     this.selectedPromocionId = promocion.id;
     this.promocionForm.patchValue({
       ...promocion,
-      startDate: promocion.startDate.split('T')[0],
-      endDate: promocion.endDate.split('T')[0]
+      startDate: promocion.startDate ? promocion.startDate.split('T')[0] : '',
+      endDate: promocion.endDate ? promocion.endDate.split('T')[0] : ''
     });
   }
 
   guardarPromocion(): void {
-    if (this.promocionForm.invalid) return;
+    if (this.promocionForm.invalid || this.guardando) return;
 
-    this.loading = true;
+    this.guardando = true;
     const promocionData: Promotion = {
       ...this.promocionForm.value,
       startDate: this.promocionForm.value.startDate + 'T00:00:00',
@@ -158,15 +261,15 @@ export class Promociones implements OnInit {
 
     observable.subscribe({
       next: () => {
+        this.guardando = false;
         this.success = this.editMode ? 'Promoción actualizada correctamente' : 'Promoción creada correctamente';
         this.cargarPromociones();
         this.cancelar();
-        this.loading = false;
         setTimeout(() => this.success = '', 3000);
       },
       error: (err) => {
+        this.guardando = false;
         this.error = err.error?.message || 'Error al guardar promoción';
-        this.loading = false;
       }
     });
   }
@@ -174,17 +277,14 @@ export class Promociones implements OnInit {
   eliminarPromocion(id: number): void {
     if (!confirm('¿Está seguro de eliminar esta promoción?')) return;
 
-    this.loading = true;
     this.promocionService.eliminar(id).subscribe({
       next: () => {
         this.success = 'Promoción eliminada correctamente';
         this.cargarPromociones();
-        this.loading = false;
         setTimeout(() => this.success = '', 3000);
       },
       error: (err) => {
-        this.error = 'Error al eliminar promoción';
-        this.loading = false;
+        this.error = err?.error?.message || 'Error al eliminar promoción';
       }
     });
   }
@@ -202,7 +302,7 @@ export class Promociones implements OnInit {
         setTimeout(() => this.success = '', 2000);
       },
       error: (err) => {
-        this.error = 'Error al cambiar estado';
+        this.error = err?.error?.message || 'Error al cambiar estado de la promoción';
       }
     });
   }
@@ -218,11 +318,19 @@ export class Promociones implements OnInit {
     return new Date(fecha).toLocaleDateString('es-ES');
   }
 
+  obtenerFechasPromo(id?: number): { start: string; end: string } {
+    if (!id || !this.fechasMap.has(id)) {
+      return { start: '-', end: '-' };
+    }
+    return this.fechasMap.get(id)!;
+  }
+
   esVigente(promocion: Promotion): boolean {
-    const ahora = new Date();
-    const inicio = new Date(promocion.startDate);
-    const fin = new Date(promocion.endDate);
-    return ahora >= inicio && ahora <= fin && promocion.isActive;
+    if (!promocion.id) return false;
+    return this.vigenciaMap.get(promocion.id) ?? false;
+  }
+
+  trackByPromoId(index: number, item: Promotion): number {
+    return item.id ?? index;
   }
 }
-

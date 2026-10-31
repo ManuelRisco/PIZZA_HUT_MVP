@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import org.jspecify.annotations.NonNull;
 import org.springframework.cache.annotation.Cacheable;
@@ -39,6 +40,19 @@ public class UsuarioService {
      * Registra un usuario usando validaci\u00f3n con Strategy Pattern
      */
     public String registrarUsuario(Usuario usuario) {
+        if (usuario.getEmail() != null) {
+            usuario.setEmail(usuario.getEmail().trim().toLowerCase(Locale.ROOT));
+        }
+        if (usuario.getName() != null) {
+            usuario.setName(usuario.getName().trim());
+        }
+        if (usuario.getTokenVersion() == null) {
+            usuario.setTokenVersion(1);
+        }
+        if (usuario.getLoginAttempts() == null) {
+            usuario.setLoginAttempts(0);
+        }
+
         // Validar usando Strategy Pattern
         UsuarioValidator.ValidationResult validationResult = validator.validate(usuario);
         if (!validationResult.isValid()) {
@@ -53,7 +67,10 @@ public class UsuarioService {
             return "El nombre de usuario ya se encuentra registrado.";
         }
         usuario.setPasswordHash(passwordEncoder.encode(usuario.getPasswordHash()));
-        usuarioRepository.save(usuario);
+        Usuario guardado = usuarioRepository.saveAndFlush(usuario);
+        if (guardado.getId() == null) {
+            throw new IllegalStateException("No se pudo crear el usuario en la base de datos");
+        }
         return "¡Acabas de registrarte con \u00e9xito!";
     }
 
@@ -80,7 +97,37 @@ public class UsuarioService {
     }
 
     public Optional<Usuario> obtenerPorEmail(String email) {
-        return usuarioRepository.findByEmail(email);
+        if (email == null || email.isBlank()) {
+            return Optional.empty();
+        }
+        return usuarioRepository.findByEmail(email.trim().toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * Persiste la sesión sobre la fila ya guardada. El login recibía un
+     * usuario desconectado y actualizarUsuario no copiaba refresh token ni
+     * último acceso, así que la fila quedaba sin sesión.
+     */
+    @CacheEvict(value = "users", key = "#p0")
+    public Usuario guardarDatosDeSesion(@NonNull Long id, String refreshToken, LocalDateTime refreshTokenExpiry,
+            boolean reiniciarIntentos) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        usuario.setRefreshToken(refreshToken);
+        usuario.setRefreshTokenExpiry(refreshTokenExpiry);
+        if (reiniciarIntentos) {
+            usuario.resetLoginAttempts();
+            usuario.setLastLogin(LocalDateTime.now());
+        }
+        return usuarioRepository.saveAndFlush(usuario);
+    }
+
+    @CacheEvict(value = "users", key = "#p0")
+    public Usuario registrarIntentoFallido(@NonNull Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        usuario.incrementLoginAttempts();
+        return usuarioRepository.saveAndFlush(usuario);
     }
 
     public boolean validarPassword(String rawPassword, String encodedPassword) {

@@ -1,34 +1,68 @@
-<nav class="pagination-container" *ngIf="totalPages > 1">
-  <button 
-    class="pagination-btn" 
-    [disabled]="currentPage === 1"
-    (click)="previousPage()"
-    title="Página anterior"
-  >
-    <i class="bi bi-chevron-left"></i>
-  </button>
+<div *ngIf="totalItems > 0" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-1 font-sans">
+  <!-- Información de rango y selector de tamaño de página -->
+  <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs text-gray-500">
+    <span>
+      Mostrando <strong class="font-bold text-gray-900">{{ rangeStart }}</strong>–<strong class="font-bold text-gray-900">{{ rangeEnd }}</strong>
+      de <strong class="font-bold text-gray-900">{{ totalItems }}</strong> registros
+    </span>
 
-  <button
-    *ngFor="let page of pages"
-    class="pagination-btn"
-    [class.active]="page === currentPage"
-    [disabled]="page === -1"
-    (click)="changePage(page)"
-  >
-    {{ page === -1 ? '...' : page }}
-  </button>
+    <label *ngIf="canChangePageSize" class="inline-flex items-center gap-1.5 text-xs text-gray-500">
+      <span class="font-medium">Mostrar:</span>
+      <select
+        [ngModel]="itemsPerPage"
+        (ngModelChange)="onPageSizeSelect($event)"
+        aria-label="Registros por página"
+        class="bg-white border border-gray-200 text-gray-800 text-xs font-bold rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 cursor-pointer transition-colors"
+      >
+        <option *ngFor="let opt of effectivePageSizeOptions" [ngValue]="opt">{{ opt }} / pág.</option>
+      </select>
+    </label>
+  </div>
 
-  <button 
-    class="pagination-btn" 
-    [disabled]="currentPage === totalPages"
-    (click)="nextPage()"
-    title="Página siguiente"
-  >
-    <i class="bi bi-chevron-right"></i>
-  </button>
-</nav>
+  <!-- Controles de páginas -->
+  <nav *ngIf="totalPages > 1" class="flex items-center justify-center sm:justify-end gap-1.5 flex-wrap" aria-label="Navegación de páginas">
+    <button
+      type="button"
+      class="w-9 h-9 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all text-xs font-bold shadow-2xs"
+      [disabled]="currentPage <= 1"
+      (click)="previousPage()"
+      title="Página anterior"
+      aria-label="Página anterior"
+    >
+      <i class="bi bi-chevron-left"></i>
+    </button>
 
-<div class="pagination-info" *ngIf="totalItems > 0">
-  Mostrando {{ (currentPage - 1) * itemsPerPage + 1 }} - 
-  {{ Math.min(currentPage * itemsPerPage, totalItems) }} de {{ totalItems }} registros
+    <ng-container *ngFor="let page of pages; trackBy: trackByPage">
+      <span
+        *ngIf="page === -1"
+        class="w-8 h-9 flex items-center justify-center text-gray-400 text-xs font-bold select-none"
+        aria-hidden="true"
+      >
+        …
+      </span>
+      <button
+        *ngIf="page !== -1"
+        type="button"
+        class="min-w-[36px] h-9 px-2.5 rounded-xl border text-xs font-black flex items-center justify-center transition-all"
+        [ngClass]="page === currentPage
+          ? 'bg-red-600 border-red-600 text-white shadow-sm'
+          : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900'"
+        [attr.aria-current]="page === currentPage ? 'page' : null"
+        (click)="changePage(page)"
+      >
+        {{ page }}
+      </button>
+    </ng-container>
+
+    <button
+      type="button"
+      class="w-9 h-9 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all text-xs font-bold shadow-2xs"
+      [disabled]="currentPage >= totalPages"
+      (click)="nextPage()"
+      title="Página siguiente"
+      aria-label="Página siguiente"
+    >
+      <i class="bi bi-chevron-right"></i>
+    </button>
+  </nav>
 </div>

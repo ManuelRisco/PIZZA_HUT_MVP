@@ -9,6 +9,8 @@ services:
       - "8089:8089"
     env_file:
       - ./Backend/demo/.env
+    volumes:
+      - ./Backend/demo/uploads:/app/uploads
     # depends_on: 
     #   - db # Descomentar si decides agregar una BD local en el futuro
 

@@ -1,91 +1,132 @@
-<div class="max-w-6xl mx-auto font-sans">
-  <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
-    <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-500 shrink-0">
-      <i class="bi bi-heart-fill text-xl"></i>
+<div class="space-y-6 font-sans">
+  <!-- Executive v2 Header Card -->
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel de Cliente</p>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Mis Pizzas Favoritas</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">Accede rápidamente a tus especialidades preferidas ({{ pizzasFavoritas.length }})</p>
     </div>
-    <h2 class="text-2xl font-black text-gray-800 m-0">Mis Pizzas Favoritas</h2>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        (click)="cargarFavoritos()"
+        [disabled]="loading"
+        class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise" [class.animate-spin]="loading"></i> Actualizar
+      </button>
+      <button
+        type="button"
+        (click)="verPizza(0)"
+        class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-grid"></i> Explorar Menú
+      </button>
+    </div>
   </div>
 
+  <!-- Banner persistente de error de carga -->
+  @if (loadError) {
+    <div class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3" role="alert">
+      <div class="flex items-start sm:items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+          <i class="bi bi-wifi-off text-lg"></i>
+        </div>
+        <div>
+          <p class="text-sm font-black text-red-900 m-0">No se pudieron cargar tus favoritos</p>
+          <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ loadError }}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="cargarFavoritos()"
+        class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise"></i> Reintentar
+      </button>
+    </div>
+  }
+
   @if (mensaje) {
-    <div class="mb-6 px-5 py-4 rounded-xl flex items-center gap-3 font-medium shadow-sm border"
+    <div class="px-5 py-3.5 rounded-2xl flex items-center gap-3 font-medium shadow-2xs border"
          [ngClass]="esError ? 'bg-red-50 text-red-800 border-red-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'">
-      <i class="bi text-xl" [ngClass]="esError ? 'bi-exclamation-triangle-fill text-red-500' : 'bi-check-circle-fill text-emerald-500'"></i>
-      <span>{{ mensaje }}</span>
+      <i class="bi text-lg" [ngClass]="esError ? 'bi-exclamation-triangle-fill text-red-500' : 'bi-check-circle-fill text-emerald-500'"></i>
+      <span class="text-sm">{{ mensaje }}</span>
     </div>
   }
 
   @if (loading) {
-    <div class="flex flex-col items-center justify-center py-16">
-      <div class="animate-spin rounded-full h-12 w-12 border-4 border-red-200 border-t-red-600 mb-4"></div>
-      <p class="text-gray-500 font-medium">Cargando tus pizzas favoritas...</p>
+    <div class="bg-white rounded-2xl border border-gray-200 p-16 flex flex-col items-center justify-center shadow-sm">
+      <div class="animate-spin rounded-full h-11 w-11 border-4 border-red-100 border-t-red-600 mb-4"></div>
+      <p class="text-gray-500 font-medium text-sm m-0">Cargando tus pizzas favoritas...</p>
     </div>
   }
 
-  @if (!loading && pizzasFavoritas.length === 0) {
-    <div class="bg-white rounded-2xl border border-gray-100 p-12 flex flex-col items-center justify-center text-center shadow-sm">
-      <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-6">
-        <i class="bi bi-heart text-5xl"></i>
+  @if (!loading && !loadError && pizzasFavoritas.length === 0) {
+    <div class="bg-white rounded-2xl border border-gray-200 p-12 flex flex-col items-center justify-center text-center shadow-sm">
+      <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-5">
+        <i class="bi bi-heart text-4xl"></i>
       </div>
-      <h3 class="text-xl font-bold text-gray-800 mb-2">No tienes pizzas favoritas</h3>
-      <p class="text-gray-500 max-w-sm mb-6">Explora nuestro menú y agrega tus pizzas favoritas haciendo clic en el corazón para guardarlas aquí.</p>
-      <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow flex items-center gap-2" (click)="verPizza(0)">
+      <h3 class="text-lg font-black text-gray-900 mb-2">No tienes pizzas favoritas aún</h3>
+      <p class="text-sm text-gray-500 max-w-sm mb-6">Explora nuestro menú y marca el corazón en tus pizzas preferidas para guardarlas aquí.</p>
+      <button type="button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-xl text-sm transition-all shadow-sm flex items-center gap-2 cursor-pointer" (click)="verPizza(0)">
         <i class="bi bi-search"></i> Ver Menú
       </button>
     </div>
   }
 
   @if (!loading && pizzasFavoritas.length > 0) {
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
       @for (pizza of pizzasFavoritasPaginadas; track pizza.id; let i = $index) {
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col relative group">
-          
-          <div class="relative h-48 bg-gray-100 flex items-center justify-center overflow-hidden">
-            @if (!imagenesCargadas.has(pizza.id || 0) && !isImageCached(pizza.imageUrl || '')) {
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col relative group">
+          <div class="relative h-44 bg-gray-100 flex items-center justify-center overflow-hidden">
+            @if (!imagenesCargadas.has(pizza.id || 0)) {
               <div class="absolute inset-0 bg-gray-200 animate-pulse"></div>
             }
-            <img 
-              [src]="getOptimizedImageUrl(pizza.imageUrl)" 
+            <img
+              [src]="getOptimizedImageUrl(pizza.imageUrl)"
               [alt]="pizza.name"
-              [loading]="i < 3 ? 'eager' : 'lazy'"
-              [attr.fetchpriority]="i === 0 ? 'high' : (i < 3 ? 'auto' : 'low')"
-              class="w-full h-full object-cover object-center opacity-0 transition-opacity duration-300 group-hover:scale-105"
-              [class.opacity-100]="imagenesCargadas.has(pizza.id || 0) || isImageCached(pizza.imageUrl || '')"
+              [loading]="i < 4 ? 'eager' : 'lazy'"
+              class="w-full h-full object-cover object-center opacity-0 transition-all duration-300 group-hover:scale-105"
+              [class.opacity-100]="imagenesCargadas.has(pizza.id || 0)"
               (load)="onImageLoad(pizza.id || 0)"
               (error)="onImageError($event)"
               decoding="async"
             >
-            <button 
-              class="absolute top-3 right-3 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-red-500 hover:bg-red-50 hover:text-red-600 shadow-sm transition-colors border border-red-100/50 z-10"
+            <button
+              type="button"
+              [disabled]="eliminandoId === pizza.id"
+              class="absolute top-3 right-3 w-9 h-9 bg-white/95 backdrop-blur rounded-full flex items-center justify-center text-red-600 hover:bg-red-50 shadow-sm transition-colors border border-red-100 z-10 cursor-pointer disabled:opacity-50"
               (click)="eliminarFavorito(pizza.id!)"
-              title="Eliminar de favoritos"
+              title="Quitar de favoritos"
             >
               <i class="bi bi-heart-fill"></i>
             </button>
-            
-            <div class="absolute bottom-3 left-3 flex flex-wrap gap-2 z-10">
-              <span class="px-2.5 py-1 bg-white/90 backdrop-blur rounded-lg text-xs font-bold border shadow-sm" [ngClass]="pizza.isAvailable ? 'text-emerald-700 border-emerald-200' : 'text-red-700 border-red-200'">
+
+            <div class="absolute bottom-3 left-3 flex flex-wrap gap-1.5 z-10">
+              <span class="px-2.5 py-0.5 bg-white/95 backdrop-blur rounded-lg text-[11px] font-bold border shadow-2xs"
+                    [ngClass]="pizza.isAvailable ? 'text-emerald-700 border-emerald-200' : 'text-red-700 border-red-200'">
                 {{ pizza.isAvailable ? 'Disponible' : 'Agotado' }}
               </span>
               @if (pizza.isPopular) {
-                <span class="px-2.5 py-1 bg-amber-400/90 backdrop-blur text-amber-900 rounded-lg text-xs font-bold border border-amber-300 shadow-sm flex items-center gap-1">
-                  <i class="bi bi-star-fill text-amber-700"></i> Popular
+                <span class="px-2.5 py-0.5 bg-amber-400/95 text-amber-950 rounded-lg text-[11px] font-bold shadow-2xs flex items-center gap-1">
+                  <i class="bi bi-star-fill text-amber-800"></i> Popular
                 </span>
               }
             </div>
           </div>
-          
-          <div class="p-5 flex flex-col flex-1">
-            <h3 class="text-lg font-black text-gray-800 mb-1 line-clamp-1">{{ pizza.name }}</h3>
-            <p class="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">{{ pizza.description || 'Deliciosa pizza preparada al instante con los mejores ingredientes.' }}</p>
 
-            <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
+          <div class="p-5 flex flex-col flex-1">
+            <h3 class="text-base font-black text-gray-900 mb-1 line-clamp-1">{{ pizza.name }}</h3>
+            <p class="text-xs text-gray-500 line-clamp-2 mb-4 flex-1">{{ pizza.description || 'Especialidad preparada al horno con ingredientes frescos.' }}</p>
+
+            <div class="flex items-center justify-between mt-auto pt-3.5 border-t border-gray-100">
               <div>
-                <span class="text-xs text-gray-400 font-bold uppercase tracking-wider block mb-0.5">Desde</span>
-                <span class="text-lg font-black text-emerald-600">{{ formatearPrecio(pizza.price) }}</span>
+                <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Desde</span>
+                <span class="text-lg font-black text-gray-900">{{ formatearPrecio(pizza.price) }}</span>
               </div>
-              <button class="bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors flex items-center gap-2" (click)="verPizza(pizza.id!)">
-                <i class="bi bi-eye"></i>
-                Ver Menú
+              <button type="button" class="bg-gray-900 hover:bg-black text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer" (click)="verPizza(pizza.id!)">
+                <i class="bi bi-eye"></i> Ver Menú
               </button>
             </div>
           </div>
@@ -93,13 +134,14 @@
       }
     </div>
 
-    <!-- Paginación -->
-    <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm" *ngIf="pizzasFavoritas.length > itemsPerPage">
-      <app-pagination 
-        [currentPage]="currentPage" 
-        [totalItems]="pizzasFavoritas.length" 
+    <div class="bg-white rounded-2xl border border-gray-200 px-5 py-3.5 shadow-sm">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="pizzasFavoritas.length"
         [itemsPerPage]="itemsPerPage"
-        (pageChange)="onPageChange($event)">
+        [pageSizeOptions]="[12, 24, 48]"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)">
       </app-pagination>
     </div>
   }

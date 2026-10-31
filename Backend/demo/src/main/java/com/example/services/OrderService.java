@@ -83,6 +83,9 @@ public class OrderService {
         if (orderActualizada.getPromoCode() != null) {
             order.setPromoCode(orderActualizada.getPromoCode());
         }
+        if (orderActualizada.getStockSettled() != null) {
+            order.setStockSettled(orderActualizada.getStockSettled());
+        }
         if (orderActualizada.getEstimatedDelivery() != null) {
             order.setEstimatedDelivery(orderActualizada.getEstimatedDelivery());
         }

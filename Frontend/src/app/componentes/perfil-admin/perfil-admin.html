@@ -1,78 +1,149 @@
-<div class="max-w-6xl mx-auto">
-  <div class="flex flex-col mb-8">
-    <h2 class="text-3xl font-black text-gray-800 flex items-center gap-3">
-      <i class="bi bi-person-badge-fill text-red-600 drop-shadow-sm"></i> Mi Perfil
-    </h2>
-    <p class="text-gray-500 font-medium mt-1 ml-10">Gestiona tu información personal y configuración de seguridad</p>
-  </div>
-
-  <!-- Mensajes -->
-  <div *ngIf="mensaje" class="mb-6">
-    <div class="px-5 py-4 rounded-xl flex items-center gap-3 font-medium shadow-sm" 
-         [ngClass]="tipoMensaje === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'">
-      <i class="bi text-xl" [ngClass]="tipoMensaje === 'success' ? 'bi-check-circle-fill text-emerald-500' : 'bi-exclamation-triangle-fill text-red-500'"></i>
-      {{ mensaje }}
+<div class="space-y-6 font-sans">
+  <!-- Executive v2 Header Card -->
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Cuenta y Seguridad</p>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Mi Perfil de Administrador</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">Gestiona tu información personal, correo de notificaciones y credenciales de acceso.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        (click)="recargar()"
+        [disabled]="cargando"
+        class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise" [class.animate-spin]="cargando"></i> Actualizar
+      </button>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- Panel Principal (Izquierda) -->
-    <div class="lg:col-span-2 space-y-8">
-      
-      <!-- Información Personal -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+  <!-- Persistent Load Error / Backend Offline Banner -->
+  <div
+    *ngIf="loadError"
+    class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+    role="alert"
+  >
+    <div class="flex items-start sm:items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-wifi-off text-lg"></i>
+      </div>
+      <div>
+        <p class="text-sm font-black text-red-900 m-0">Error al sincronizar datos del perfil</p>
+        <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ loadError }}</p>
+      </div>
+    </div>
+    <button
+      type="button"
+      (click)="reintentar()"
+      class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
+    >
+      <i class="bi bi-arrow-clockwise"></i> Reintentar
+    </button>
+  </div>
+
+  <!-- Mensajes de acción (éxito y error) -->
+  <div
+    *ngIf="mensaje"
+    class="px-4 py-3 rounded-2xl border flex justify-between items-center text-sm font-medium"
+    [ngClass]="tipoMensaje === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'"
+  >
+    <div class="flex items-center gap-2">
+      <i class="bi" [ngClass]="tipoMensaje === 'success' ? 'bi-check-circle-fill text-emerald-600' : 'bi-exclamation-triangle-fill text-red-600'"></i>
+      <span>{{ mensaje }}</span>
+    </div>
+    <button type="button" (click)="mensaje = ''" class="hover:opacity-75 cursor-pointer">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Panel Principal: Datos Personales (2 cols) -->
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
             <i class="bi bi-person-lines-fill text-lg"></i>
           </div>
-          <h5 class="text-xl font-bold text-gray-800 m-0">Información Personal</h5>
+          <div>
+            <h3 class="text-base font-black text-gray-900 m-0">Datos Personales</h3>
+            <p class="text-xs text-gray-500 m-0">Información visible para auditoría y contacto operativo</p>
+          </div>
         </div>
-        
+
         <div class="p-6">
-          <form (ngSubmit)="actualizarDatos()" class="space-y-5">
+          <form (ngSubmit)="actualizarDatos()" class="space-y-4">
             <div>
-              <label for="nombre" class="block text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Nombre Completo <span class="text-red-500">*</span></label>
+              <label for="nombre" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                Nombre Completo <span class="text-red-500">*</span>
+              </label>
               <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <i class="bi bi-person text-gray-400"></i>
-                </div>
-                <input type="text" id="nombre" name="nombre" [(ngModel)]="usuarioEditado.name" required
-                       class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800 font-medium">
+                <i class="bi bi-person absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input
+                  type="text"
+                  id="nombre"
+                  name="nombre"
+                  [(ngModel)]="usuarioEditado.name"
+                  placeholder="Tu nombre completo"
+                  required
+                  class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                />
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label for="email" class="block text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Email <span class="text-red-500">*</span></label>
+                <label for="email" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Email de Administrador <span class="text-red-500">*</span>
+                </label>
                 <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <i class="bi bi-envelope text-gray-400"></i>
-                  </div>
-                  <input type="email" id="email" name="email" [(ngModel)]="usuarioEditado.email" required
-                         class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800 font-medium">
+                  <i class="bi bi-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    [(ngModel)]="usuarioEditado.email"
+                    placeholder="admin@ejemplo.com"
+                    required
+                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                  />
                 </div>
               </div>
 
               <div>
-                <label for="telefono" class="block text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Teléfono</label>
+                <label for="telefono" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Teléfono / WhatsApp
+                </label>
                 <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <i class="bi bi-telephone text-gray-400"></i>
-                  </div>
-                  <input type="tel" id="telefono" name="telefono" [(ngModel)]="usuarioEditado.phone" placeholder="Opcional"
-                         class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-800 font-medium">
+                  <i class="bi bi-telephone absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                  <input
+                    type="tel"
+                    id="telefono"
+                    name="telefono"
+                    [(ngModel)]="usuarioEditado.phone"
+                    placeholder="9 dígitos"
+                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                  />
                 </div>
               </div>
             </div>
 
-            <div class="pt-5 mt-2 border-t border-gray-100 flex gap-3">
-              <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed" [disabled]="cargando">
-                <i class="bi bi-arrow-repeat animate-spin" *ngIf="cargando"></i>
-                <i class="bi bi-floppy-fill" *ngIf="!cargando"></i>
-                {{ cargando ? 'Guardando...' : 'Guardar Cambios' }}
+            <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                (click)="cancelarEdicion()"
+                [disabled]="guardandoPerfil"
+                class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-sm transition-colors cursor-pointer"
+              >
+                Cancelar
               </button>
-              <button type="button" class="px-6 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold rounded-xl transition-colors flex items-center gap-2" (click)="cancelarEdicion()" [disabled]="cargando">
-                <i class="bi bi-x-lg"></i> Cancelar
+              <button
+                type="submit"
+                [disabled]="guardandoPerfil"
+                class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+              >
+                <i class="bi" [ngClass]="guardandoPerfil ? 'bi-arrow-repeat animate-spin' : 'bi-floppy-fill'"></i>
+                {{ guardandoPerfil ? 'Guardando...' : 'Guardar Cambios' }}
               </button>
             </div>
           </form>
@@ -80,108 +151,134 @@
       </div>
     </div>
 
-    <!-- Panel Lateral (Derecha) -->
+    <!-- Panel Lateral: Cuenta y Cambio de Contraseña (1 col) -->
     <div class="lg:col-span-1 space-y-6">
-      
-      <!-- Información de Cuenta -->
-      <div class="bg-gray-900 rounded-2xl shadow-lg border border-gray-800 overflow-hidden text-white relative">
-        <div class="absolute top-0 right-0 p-4 opacity-10">
-          <i class="bi bi-shield-lock-fill text-8xl"></i>
-        </div>
-        
-        <div class="px-6 py-5 border-b border-gray-800 relative z-10">
-          <h5 class="text-lg font-bold m-0 flex items-center gap-2">
-            <i class="bi bi-info-circle text-blue-400"></i> Detalles de Cuenta
-          </h5>
-        </div>
-        
-        <div class="p-6 relative z-10 space-y-4">
-          <div>
-            <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ID de Usuario</span>
-            <span class="font-mono bg-black/50 px-2 py-1 rounded text-sm text-gray-300 border border-gray-700">{{ usuario?.id || '---' }}</span>
+      <!-- Tarjeta Resumen de Cuenta -->
+      <div class="bg-gray-900 rounded-2xl p-5 text-white shadow-sm space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-red-600 text-white flex items-center justify-center font-black text-lg shrink-0">
+            {{ usuario?.name ? usuario!.name.charAt(0).toUpperCase() : 'A' }}
           </div>
-          
           <div>
-            <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Nivel de Acceso</span>
-            <span class="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg text-sm font-bold">
-              <i class="bi bi-star-fill text-xs"></i> {{ usuario?.role || 'ADMIN' }}
+            <h4 class="font-black text-base text-white m-0">{{ usuario?.name || 'Administrador' }}</h4>
+            <p class="text-xs text-gray-400 m-0">{{ usuario?.email || 'admin@pizzahut.com' }}</p>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-gray-800 space-y-2 text-xs">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-400">ID de Usuario:</span>
+            <span class="font-mono font-bold text-gray-200">#{{ usuario?.id || '---' }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-400">Nivel de Acceso:</span>
+            <span class="px-2 py-0.5 rounded bg-red-600/30 text-red-400 font-black text-[10px] uppercase border border-red-500/30">
+              {{ usuario?.role || 'ADMIN' }}
             </span>
           </div>
-          
-          <div>
-            <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Estado</span>
-            <span class="inline-flex items-center gap-1.5 text-blue-400 font-medium text-sm">
-              <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Activo
+          <div class="flex justify-between items-center">
+            <span class="text-gray-400">Estado de Cuenta:</span>
+            <span class="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Activo
             </span>
           </div>
         </div>
       </div>
 
-      <!-- Seguridad / Contraseña -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
-            <i class="bi bi-shield-check text-lg"></i>
+      <!-- Tarjeta de Contraseña y Seguridad -->
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <i class="bi bi-shield-lock-fill text-base"></i>
           </div>
-          <h5 class="text-lg font-bold text-gray-800 m-0">Seguridad</h5>
+          <div>
+            <h4 class="font-black text-sm text-gray-900 m-0">Seguridad y Acceso</h4>
+            <p class="text-xs text-gray-500 m-0">Actualización de contraseña</p>
+          </div>
         </div>
-        
-        <div class="p-6">
-          <div *ngIf="!mostrarCambioPassword" class="text-center py-2">
-            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400">
-              <i class="bi bi-key-fill text-2xl"></i>
+
+        <div *ngIf="!mostrarCambioPassword" class="space-y-3 pt-2">
+          <p class="text-xs text-gray-500 m-0">Mantén tu contraseña protegida con mayúsculas y números periódicamente.</p>
+          <button
+            type="button"
+            (click)="mostrarCambioPassword = true"
+            class="w-full py-2.5 px-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-800 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <i class="bi bi-key-fill text-gray-500"></i> Cambiar Contraseña
+          </button>
+        </div>
+
+        <div *ngIf="mostrarCambioPassword">
+          <form (ngSubmit)="cambiarPassword()" class="space-y-3">
+            <div>
+              <label for="nuevaPassword" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                Nueva Contraseña <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <input
+                  [type]="showPassword ? 'text' : 'password'"
+                  id="nuevaPassword"
+                  name="nuevaPassword"
+                  [(ngModel)]="nuevaPassword"
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                  class="w-full px-3.5 py-2 pr-9 rounded-xl border border-gray-200 bg-gray-50 text-xs focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                />
+                <button
+                  type="button"
+                  (click)="showPassword = !showPassword"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  <i class="bi text-xs" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                </button>
+              </div>
             </div>
-            <p class="text-gray-500 text-sm mb-5">Actualiza tu contraseña regularmente para mantener tu cuenta segura.</p>
-            <button type="button" class="w-full bg-white border-2 border-gray-200 hover:border-gray-800 hover:bg-gray-800 hover:text-white text-gray-800 font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 group" (click)="mostrarCambioPassword = true">
-              <i class="bi bi-lock-fill text-gray-400 group-hover:text-white transition-colors"></i> Cambiar Contraseña
-            </button>
-          </div>
 
-          <div *ngIf="mostrarCambioPassword" class="animate-in fade-in slide-in-from-top-4 duration-300">
-            <form (ngSubmit)="cambiarPassword()" class="space-y-4">
-              <div>
-                <label for="nuevaPassword" class="block text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Nueva Contraseña <span class="text-red-500">*</span></label>
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <i class="bi bi-key text-gray-400"></i>
-                  </div>
-                  <input [type]="showPassword ? 'text' : 'password'" id="nuevaPassword" name="nuevaPassword" [(ngModel)]="nuevaPassword" placeholder="Mínimo 6 caracteres" required
-                         class="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-800 focus:border-gray-800 outline-none transition-all">
-                  <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700" (click)="showPassword = !showPassword">
-                    <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label for="confirmarPassword" class="block text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Confirmar Contraseña <span class="text-red-500">*</span></label>
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <i class="bi bi-check2-all text-gray-400"></i>
-                  </div>
-                  <input [type]="showConfirmPassword ? 'text' : 'password'" id="confirmarPassword" name="confirmarPassword" [(ngModel)]="confirmarPassword" placeholder="Repite la contraseña" required
-                         class="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-800 focus:border-gray-800 outline-none transition-all">
-                  <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700" (click)="showConfirmPassword = !showConfirmPassword">
-                    <i class="bi" [ngClass]="showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
-                  </button>
-                </div>
-              </div>
-
-              <div class="pt-2 flex gap-2">
-                <button type="submit" class="flex-1 bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed" [disabled]="cargando">
-                  <i class="bi bi-arrow-repeat animate-spin" *ngIf="cargando"></i>
-                  <i class="bi bi-check-circle-fill" *ngIf="!cargando"></i>
-                  {{ cargando ? 'Cambiando...' : 'Actualizar' }}
-                </button>
-                <button type="button" class="w-12 flex items-center justify-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 rounded-xl transition-colors" (click)="cancelarCambioPassword()" [disabled]="cargando" title="Cancelar">
-                  <i class="bi bi-x-lg font-bold"></i>
+            <div>
+              <label for="confirmarPassword" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                Confirmar Contraseña <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <input
+                  [type]="showConfirmPassword ? 'text' : 'password'"
+                  id="confirmarPassword"
+                  name="confirmarPassword"
+                  [(ngModel)]="confirmarPassword"
+                  placeholder="Repite la contraseña"
+                  required
+                  class="w-full px-3.5 py-2 pr-9 rounded-xl border border-gray-200 bg-gray-50 text-xs focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                />
+                <button
+                  type="button"
+                  (click)="showConfirmPassword = !showConfirmPassword"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  <i class="bi text-xs" [ngClass]="showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
                 </button>
               </div>
-            </form>
-          </div>
+            </div>
+
+            <div class="pt-2 flex items-center gap-2">
+              <button
+                type="button"
+                (click)="cancelarCambioPassword()"
+                [disabled]="guardandoPassword"
+                class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                [disabled]="guardandoPassword"
+                class="flex-1 py-2 px-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm"
+              >
+                <i class="bi" [ngClass]="guardandoPassword ? 'bi-arrow-repeat animate-spin' : 'bi-check-circle-fill'"></i>
+                {{ guardandoPassword ? 'Actualizando...' : 'Actualizar' }}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
-      
     </div>
   </div>
 </div>

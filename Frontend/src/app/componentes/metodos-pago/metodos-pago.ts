@@ -14,19 +14,29 @@ import { PaginationComponent } from '../pagination/pagination';
 })
 export class MetodosPagoComponent implements OnInit {
   metodosPago: PaymentMethodDTO[] = [];
+  metodosPagoFiltrados: PaymentMethodDTO[] = [];
   metodosPagoPaginados: PaymentMethodDTO[] = [];
   metodoSeleccionado: PaymentMethodDTO | null = null;
   modoEdicion: boolean = false;
   mostrarFormulario: boolean = false;
+  loadError: string = '';
   mensajeExito: string = '';
   mensajeError: string = '';
   mensajeAdvertenciaOrden: string = '';
   mensajeAdvertenciaNombre: string = '';
   loading: boolean = false;
+  guardando: boolean = false;
+  terminoBusqueda: string = '';
+
+  // KPIs
+  kpiTotalMetodos = 0;
+  kpiActivos = 0;
+  kpiEnUso = 0;
 
   // Paginación
   currentPage = 1;
   itemsPerPage = 10;
+  pageSizeOptions: number[] = [10, 20, 50];
 
   // Modelo para el formulario
   formulario: PaymentMethodDTO = {
@@ -36,30 +46,75 @@ export class MetodosPagoComponent implements OnInit {
     displayOrder: 0
   };
 
-  constructor(private readonly paymentMethodService: PaymentMethodService) { }
+  constructor(private readonly paymentMethodService: PaymentMethodService) {}
 
   ngOnInit(): void {
     this.cargarMetodosPago();
   }
 
+  recargar(): void {
+    this.cargarMetodosPago();
+  }
+
+  reintentar(): void {
+    this.cargarMetodosPago();
+  }
+
   cargarMetodosPago(): void {
     this.loading = true;
+    this.loadError = '';
     this.paymentMethodService.listarMetodosPago().subscribe({
       next: (data) => {
-        this.metodosPago = data.toSorted((a, b) => a.displayOrder - b.displayOrder);
-        this.aplicarPaginacion();
+        this.metodosPago = (data || []).toSorted((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+        this.recalcularKpis();
+        this.filtrarLocalmente();
         this.loading = false;
       },
       error: (error) => {
-        this.mostrarError('Error al cargar los métodos de pago');
-        console.error(error);
+        console.error('Error al cargar métodos de pago:', error);
+        this.loadError = error?.status === 0
+          ? 'No se pudo conectar con el servidor (Backend fuera de línea). Verifica el puerto 8089.'
+          : (error?.error?.message || 'Error al cargar los métodos de pago.');
         this.loading = false;
       }
     });
   }
 
+  private recalcularKpis(): void {
+    let activos = 0;
+    let enUso = 0;
+
+    for (const m of this.metodosPago) {
+      if (m.isActive) activos++;
+      if (m.inUse) enUso++;
+    }
+
+    this.kpiTotalMetodos = this.metodosPago.length;
+    this.kpiActivos = activos;
+    this.kpiEnUso = enUso;
+  }
+
+  filtrarLocalmente(): void {
+    const term = this.terminoBusqueda.trim().toLowerCase();
+    if (!term) {
+      this.metodosPagoFiltrados = [...this.metodosPago];
+    } else {
+      this.metodosPagoFiltrados = this.metodosPago.filter(
+        (m) =>
+          m.name?.toLowerCase().includes(term) ||
+          m.description?.toLowerCase().includes(term)
+      );
+    }
+    this.aplicarPaginacion();
+  }
+
+  onBusquedaChange(): void {
+    this.currentPage = 1;
+    this.filtrarLocalmente();
+  }
+
   aplicarPaginacion(): void {
-    const totalPages = Math.ceil(this.metodosPago.length / this.itemsPerPage);
+    const totalPages = Math.ceil(this.metodosPagoFiltrados.length / this.itemsPerPage);
     if (this.currentPage > totalPages && totalPages > 0) {
       this.currentPage = totalPages;
     } else if (this.currentPage < 1) {
@@ -67,11 +122,17 @@ export class MetodosPagoComponent implements OnInit {
     }
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
-    this.metodosPagoPaginados = this.metodosPago.slice(startIndex, endIndex);
+    this.metodosPagoPaginados = this.metodosPagoFiltrados.slice(startIndex, endIndex);
   }
 
   onPageChange(page: number): void {
     this.currentPage = page;
+    this.aplicarPaginacion();
+  }
+
+  onItemsPerPageChange(size: number): void {
+    this.itemsPerPage = size;
+    this.currentPage = 1;
     this.aplicarPaginacion();
   }
 
@@ -102,7 +163,8 @@ export class MetodosPagoComponent implements OnInit {
   }
 
   guardarMetodoPago(): void {
-    // Validar antes de enviar
+    if (this.guardando) return;
+
     if (!this.formulario.name.trim()) {
       this.mostrarError('El nombre es obligatorio');
       return;
@@ -118,29 +180,33 @@ export class MetodosPagoComponent implements OnInit {
       return;
     }
 
+    this.guardando = true;
+
     if (this.modoEdicion && this.metodoSeleccionado?.id) {
-      // Actualizar
       this.paymentMethodService.actualizarMetodoPago(this.metodoSeleccionado.id, this.formulario).subscribe({
         next: () => {
+          this.guardando = false;
           this.mostrarExito('Método de pago actualizado correctamente');
           this.cargarMetodosPago();
           this.cerrarFormulario();
         },
         error: (error) => {
+          this.guardando = false;
           const mensaje = error.error?.message || 'Error al actualizar el método de pago';
           this.mostrarError(mensaje);
           console.error(error);
         }
       });
     } else {
-      // Crear
       this.paymentMethodService.crearMetodoPago(this.formulario).subscribe({
         next: () => {
+          this.guardando = false;
           this.mostrarExito('Método de pago creado correctamente');
           this.cargarMetodosPago();
           this.cerrarFormulario();
         },
         error: (error) => {
+          this.guardando = false;
           const mensaje = error.error?.message || 'Error al crear el método de pago';
           this.mostrarError(mensaje);
           console.error(error);
@@ -159,7 +225,7 @@ export class MetodosPagoComponent implements OnInit {
         this.cargarMetodosPago();
       },
       error: (error) => {
-        this.mostrarError('Error al cambiar el estado');
+        this.mostrarError('Error al cambiar el estado del método de pago');
         console.error(error);
       }
     });
@@ -189,7 +255,7 @@ export class MetodosPagoComponent implements OnInit {
   mostrarExito(mensaje: string): void {
     this.mensajeExito = mensaje;
     this.mensajeError = '';
-    setTimeout(() => this.mensajeExito = '', 3000);
+    setTimeout(() => (this.mensajeExito = ''), 3500);
   }
 
   mostrarError(mensaje: string): void {
@@ -206,36 +272,44 @@ export class MetodosPagoComponent implements OnInit {
 
   validarDisplayOrder(): void {
     this.mensajeAdvertenciaOrden = '';
-    
-    const ordenExiste = this.metodosPago.some(metodo => 
-      metodo.displayOrder === this.formulario.displayOrder && 
-      metodo.id !== this.metodoSeleccionado?.id
+
+    const ordenExiste = this.metodosPago.some(
+      (metodo) =>
+        metodo.displayOrder === this.formulario.displayOrder &&
+        metodo.id !== this.metodoSeleccionado?.id
     );
-    
+
     if (ordenExiste) {
-      this.mensajeAdvertenciaOrden = 'âš ï¸ Este orden ya está en uso por otro método de pago';
+      this.mensajeAdvertenciaOrden = 'Este orden de visualización ya está en uso';
     }
   }
 
   validarNombre(): void {
     this.mensajeAdvertenciaNombre = '';
-    
+
     if (this.formulario.name.trim()) {
-      const nombreExiste = this.metodosPago.some(metodo => 
-        metodo.name.toLowerCase() === this.formulario.name.trim().toLowerCase() && 
-        metodo.id !== this.metodoSeleccionado?.id
+      const nombreExiste = this.metodosPago.some(
+        (metodo) =>
+          metodo.name.toLowerCase() === this.formulario.name.trim().toLowerCase() &&
+          metodo.id !== this.metodoSeleccionado?.id
       );
-      
+
       if (nombreExiste) {
-        this.mensajeAdvertenciaNombre = 'âš ï¸ Este nombre ya está en uso';
+        this.mensajeAdvertenciaNombre = 'Este nombre ya está en uso';
       }
     }
   }
 
   puedeGuardar(): boolean {
-    return !this.mensajeAdvertenciaOrden && 
-           !this.mensajeAdvertenciaNombre && 
-           this.formulario.name.trim() !== '';
+    return (
+      !this.mensajeAdvertenciaOrden &&
+      !this.mensajeAdvertenciaNombre &&
+      this.formulario.name.trim() !== '' &&
+      !this.guardando
+    );
+  }
+
+  trackByMetodoId(index: number, item: PaymentMethodDTO): number {
+    return item.id ?? index;
   }
 }
-
