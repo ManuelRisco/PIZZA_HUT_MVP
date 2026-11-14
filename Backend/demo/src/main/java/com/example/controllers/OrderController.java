@@ -4,8 +4,10 @@ import com.example.services.OrderService;
 import com.example.services.PromotionService;
 import com.example.services.PaymentService;
 import com.example.services.CheckoutService;
+import com.example.services.EmailService;
 import com.example.services.InventoryService;
 import com.example.services.ProductLossService;
+import com.example.services.StockAlertNotificationService;
 import com.example.dtos.OrderDTO;
 import com.example.dtos.OrderCompleteDTO;
 import com.example.dtos.CheckoutRequestDTO;
@@ -32,7 +34,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/orders")
-@CrossOrigin(origins = "http://localhost:4200")
 public class OrderController {
 
     private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
@@ -52,6 +53,8 @@ public class OrderController {
     private final PaymentService paymentService;
     private final InventoryService inventoryService;
     private final ProductLossService productLossService;
+    private final EmailService emailService;
+    private final StockAlertNotificationService stockAlertNotificationService;
 
     public OrderController(OrderService orderService,
                            CheckoutService checkoutService,
@@ -60,7 +63,9 @@ public class OrderController {
                            SecurityUtils securityUtils,
                            PaymentService paymentService,
                            InventoryService inventoryService,
-                           ProductLossService productLossService) {
+                           ProductLossService productLossService,
+                           EmailService emailService,
+                           StockAlertNotificationService stockAlertNotificationService) {
         this.orderService = orderService;
         this.checkoutService = checkoutService;
         this.promotionService = promotionService;
@@ -69,6 +74,8 @@ public class OrderController {
         this.paymentService = paymentService;
         this.inventoryService = inventoryService;
         this.productLossService = productLossService;
+        this.emailService = emailService;
+        this.stockAlertNotificationService = stockAlertNotificationService;
     }
 
     @GetMapping
@@ -168,7 +175,7 @@ public class OrderController {
 
             if (deliveryType == Order.DeliveryType.DELIVERY && orderDTO.getAddressId() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of(MSG_KEY, "La dirección es requerida para entregas a domicilio"));
+                    .body(Map.of(MSG_KEY, "La direcci\u00f3n es requerida para entregas a domicilio"));
             }
 
             BigDecimal deliveryFee = orderDTO.getDeliveryFee();
@@ -202,7 +209,7 @@ public class OrderController {
             order.setPromoCode(promoCode);
             order.setPromotionId(promotionId);
             order.setNotes(orderDTO.getNotes());
-            order.setStockSettled("DEDUCTED");
+            order.setStockSettled("PENDING");
             order.setEstimatedDelivery(orderDTO.getEstimatedDelivery() != null ?
                 orderDTO.getEstimatedDelivery() : LocalDateTime.now().plusMinutes(45));
 
@@ -210,7 +217,13 @@ public class OrderController {
 
             incrementarUsoPromocionSafely(promotionAUsar);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(new OrderDTO(orderCreado), "Creado exitosamente"));
+            OrderDTO responseDto = buildOrderDtoWithEmailDispatch(orderCreado);
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(responseDto,
+                        Boolean.TRUE.equals(responseDto.getEmailSent())
+                                ? "Creado exitosamente y comprobante enviado por correo"
+                                : "Creado exitosamente"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
         }
@@ -221,7 +234,7 @@ public class OrderController {
             try {
                 promotionService.incrementarUsoPromocion(promotionAUsar.getCode());
             } catch (Exception e) {
-                logger.error("Error al incrementar uso de promoción", e);
+                logger.error("Error al incrementar uso de promoci\u00f3n", e);
             }
         }
     }
@@ -258,13 +271,42 @@ public class OrderController {
             }
 
             Order orderCreado = checkoutService.checkout(req);
+            OrderDTO responseDto = buildOrderDtoWithEmailDispatch(orderCreado);
             return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(new OrderDTO(orderCreado), "Pedido procesado exitosamente"));
+                .body(ApiResponse.success(responseDto,
+                        Boolean.TRUE.equals(responseDto.getEmailSent())
+                                ? "Pedido confirmado y comprobante enviado por correo"
+                                : "Pedido procesado exitosamente"));
         } catch (com.example.exceptions.InsufficientStockException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
         }
+    }
+
+    private OrderDTO buildOrderDtoWithEmailDispatch(Order orderCreado) {
+        OrderDTO dto = new OrderDTO(orderCreado);
+        dto.setEmailSent(false);
+        dto.setAdminEmailSent(false);
+        if (orderCreado == null || orderCreado.getId() == null) {
+            return dto;
+        }
+        try {
+            if (emailService != null) {
+                EmailService.OrderEmailDispatchResult mailResult = emailService.sendOrderCreatedEmails(orderCreado.getId());
+                dto.setEmailSent(mailResult.customerEmailSent());
+                dto.setEmailSentTo(mailResult.customerEmail());
+                dto.setAdminEmailSent(mailResult.adminEmailSent());
+            }
+            if (stockAlertNotificationService != null) {
+                // Las alertas de stock se consolidan en la ventana de 1 minuto (60s) para enviarse juntas en un solo correo
+                stockAlertNotificationService.synchronizeAlertsAsync();
+            }
+        } catch (Exception mailEx) {
+            logger.warn("El pedido #{} fue confirmado, pero ocurri\u00f3 un aviso al despachar correos: {}",
+                    orderCreado.getId(), mailEx.getMessage());
+        }
+        return dto;
     }
 
     @PutMapping("/{id}")
@@ -343,7 +385,7 @@ public class OrderController {
 
             return ResponseEntity.ok(ApiResponse.success(new OrderDTO(orderActualizado)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(MSG_KEY, "Estado inválido: " + payload.get(STATUS_KEY)));
+            return ResponseEntity.badRequest().body(Map.of(MSG_KEY, "Estado inv\u00e1lido: " + payload.get(STATUS_KEY)));
         } catch (Exception e) {
             logger.error("Error al cambiar estado del pedido #{}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(MSG_KEY, "Error al actualizar el estado"));
@@ -361,7 +403,8 @@ public class OrderController {
     }
 
     @GetMapping("/complete")
-    public ResponseEntity<ApiResponse<List<OrderCompleteDTO>>> listarOrdersCompletos() {
+    public ResponseEntity<ApiResponse<List<OrderCompleteDTO>>> listarOrdersCompletos(
+            @RequestParam(value = "limit", defaultValue = "1000") int limit) {
         Integer currentUserId = null;
         if (!securityUtils.isAdmin()) {
             currentUserId = securityUtils.getCurrentUserId();
@@ -370,7 +413,8 @@ public class OrderController {
             }
         }
 
-        List<OrderCompleteDTO> orders = fetchOrders(currentUserId);
+        int safeLimit = Math.max(1, Math.min(limit, 5000));
+        List<OrderCompleteDTO> orders = fetchOrders(currentUserId, safeLimit);
         if (orders.isEmpty()) {
             return ResponseEntity.ok(ApiResponse.success(orders));
         }
@@ -387,7 +431,7 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
 
-    private List<OrderCompleteDTO> fetchOrders(Integer currentUserId) {
+    private List<OrderCompleteDTO> fetchOrders(Integer currentUserId, int safeLimit) {
         String sql = """
             SELECT o.id AS order_id, o.delivery_type, o.status, o.subtotal, o.deliveryFee, o.discount, o.promo_code, o.total, o.notes, o.estimatedDelivery, o.createdAt AS order_date,
                    u.id AS user_id, u.name AS customer_name, u.email AS customer_email, u.phone AS customer_phone,
@@ -398,11 +442,12 @@ public class OrderController {
             LEFT JOIN addresses a ON o.addressId = a.id
             LEFT JOIN payment_methods pm ON o.paymentMethodId = pm.id
             """ + (currentUserId != null ? "WHERE o.userId = ? " : "") + """
-            ORDER BY o.createdAt DESC LIMIT 100
+            ORDER BY o.createdAt DESC OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY
             """;
 
         List<Object> queryArgs = new ArrayList<>();
         if (currentUserId != null) queryArgs.add(currentUserId);
+        queryArgs.add(safeLimit);
 
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             OrderCompleteDTO dto = new OrderCompleteDTO();
@@ -484,15 +529,25 @@ public class OrderController {
         }
     }
 
-    private List<String> obtenerExtrasPorItem(Integer orderItemId) {
-        String sql = "SELECT ingredientName FROM order_item_extras WHERE orderItemId = ? ORDER BY id";
-        return jdbcTemplate.query(sql, (rs, rowNum) -> rs.getString("ingredientName"), orderItemId);
-    }
-
     @GetMapping("/{id}/items")
     public ResponseEntity<ApiResponse<List<OrderCompleteDTO.OrderItemCompleteDTO>>> obtenerItemsCompletos(@PathVariable("id") Integer id) {
+        Optional<Order> orderOpt = orderService.obtenerPorId(id);
+        if (orderOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Pedido no encontrado"));
+        }
+
+        if (!securityUtils.isAdmin()) {
+            Integer currentUserId = securityUtils.getCurrentUserId();
+            if (currentUserId == null || !orderOpt.get().getUserId().equals(currentUserId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("No tienes permiso para ver los \u00edtems de este pedido"));
+            }
+        }
+
         String sql = "SELECT oi.id, oi.pizzaId, oi.extraId, oi.item_type, p.name AS pizza_name, e.name AS extra_name, oi.sizeId, s.name AS size_name, oi.quantity, oi.unitPrice, oi.lineTotal FROM order_items oi LEFT JOIN pizzas p ON oi.pizzaId = p.id LEFT JOIN extras e ON oi.extraId = e.id LEFT JOIN sizes s ON oi.sizeId = s.id WHERE oi.orderId = ? ORDER BY oi.id";
 
+        List<Integer> pizzaItemIds = new ArrayList<>();
         List<OrderCompleteDTO.OrderItemCompleteDTO> items = jdbcTemplate.query(sql, (rs, rowNum) -> {
             OrderCompleteDTO.OrderItemCompleteDTO item = new OrderCompleteDTO.OrderItemCompleteDTO();
             item.setId(rs.getInt("id"));
@@ -507,7 +562,7 @@ public class OrderController {
                 item.setPizzaName(rs.getString("pizza_name"));
                 item.setSizeId(rs.getObject(FIELD_SIZE_ID) != null ? rs.getInt(FIELD_SIZE_ID) : null);
                 item.setSizeName(rs.getString("size_name"));
-                item.setExtras(obtenerExtrasPorItem(rs.getInt("id")));
+                pizzaItemIds.add(item.getId());
             }
             item.setQuantity(rs.getInt("quantity"));
             item.setUnitPrice(rs.getBigDecimal("unitPrice"));
@@ -515,6 +570,14 @@ public class OrderController {
             return item;
         }, id);
 
+        Map<Integer, List<String>> extrasMap = fetchItemExtras(pizzaItemIds);
+        for (OrderCompleteDTO.OrderItemCompleteDTO item : items) {
+            if (!ITEM_TYPE_EXTRA.equals(item.getItemType())) {
+                item.setExtras(extrasMap.getOrDefault(item.getId(), List.of()));
+            }
+        }
+
         return ResponseEntity.ok(ApiResponse.success(items));
     }
 }
+

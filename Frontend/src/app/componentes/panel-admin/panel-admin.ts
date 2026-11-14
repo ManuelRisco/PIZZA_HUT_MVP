@@ -63,21 +63,21 @@ const ROUTE_TO_VISTA: Record<string, string> = Object.entries(VISTA_TO_ROUTE).re
 
 const VISTA_TITLES: Record<string, string> = {
   dashboard: 'Dashboard Ejecutivo',
-  finanzas: 'Pérdidas y Ganancias',
+  finanzas: 'P\u00e9rdidas y Ganancias',
   inventario: 'Stock e Inventario',
-  perdidas: 'Pérdidas de Productos',
-  'costos-produccion': 'Costos de Producción',
+  perdidas: 'P\u00e9rdidas de Productos',
+  'costos-produccion': 'Costos de Producci\u00f3n',
   usuarios: 'Usuarios',
   pizzas: 'Pizzas y Recetas',
-  categorias: 'Categorías',
+  categorias: 'Categor\u00edas',
   ingredientes: 'Ingredientes',
-  sizes: 'Tamaños',
+  sizes: 'Tama\u00f1os',
   extras: 'Extras',
   promociones: 'Promociones',
   orders: 'Pedidos',
   payments: 'Pagos',
-  'metodos-pago': 'Métodos de Pago',
-  reviews: 'Reseñas',
+  'metodos-pago': 'M\u00e9todos de Pago',
+  reviews: 'Rese\u00f1as',
   'mi-perfil': 'Mi Perfil',
 };
 
@@ -118,18 +118,15 @@ export class PanelAdmin implements OnInit, OnDestroy {
   currentUser: any = null;
   currentUserInitial: string = 'A';
 
-  // Estado de carga y resiliencia en Dashboard Home
   loadingDashboard: boolean = false;
   exportandoExcel: boolean = false;
   errorDashboard: string = '';
 
-  // Propiedades para dashboard
   pedidosRecientes: OrderCompleteDTO[] = [];
   todosLosPedidos: OrderCompleteDTO[] = [];
   masVendidos: any[] = [];
   ventasSemanales: any[] = [];
 
-  // KPI Cards
   ventasHoy: number = 0;
   pedidosHoy: number = 0;
   pedidosPendientes: number = 0;
@@ -141,14 +138,13 @@ export class PanelAdmin implements OnInit, OnDestroy {
   alertasStockTotal: number = 0;
   valorAlmacenTotal: number = 0;
 
-  // Propiedad y paginación para el modal de pedidos del día
   diaSeleccionado: any = null;
   diaModalPage: number = 1;
   diaModalPerPage: number = 10;
   diaModalPedidosPaginados: OrderCompleteDTO[] = [];
 
-  // Pedido seleccionado para abrir en vista de pedidos
   pedidoSeleccionadoId: number | null = null;
+  mostrarModalLogout: boolean = false;
 
   constructor(
     private readonly authService: AuthService,
@@ -169,6 +165,14 @@ export class PanelAdmin implements OnInit, OnDestroy {
     this.userSubscription = this.authService.currentUser$.subscribe((user) => {
       this.syncCurrentUser(user);
     });
+    this.usuarioService.obtenerUsuarioActual().subscribe({
+      next: (u) => {
+        if (u) {
+          this.authService.updateCurrentUser(u);
+        }
+      },
+      error: () => {},
+    });
 
     if (typeof window !== 'undefined') {
       if (window.innerWidth < 768) {
@@ -178,7 +182,6 @@ export class PanelAdmin implements OnInit, OnDestroy {
       }
     }
 
-    // Leer el parámetro de vista desde la ruta o URL actual
     const cleanPath = (this.location.path() || '').split('?')[0].split('#')[0];
     const vistaFromRoute = this.route.snapshot.data['vista'] || ROUTE_TO_VISTA[cleanPath];
     if (vistaFromRoute) {
@@ -224,8 +227,10 @@ export class PanelAdmin implements OnInit, OnDestroy {
   }
 
   iniciarAutoRefresh(): void {
-    // Actualizar cada 60 segundos sin saturar la BD; también carga alertas del sidebar al iniciar
     this.pollingSubscription = timer(0, 60000).subscribe(() => {
+      if (typeof document !== 'undefined' && document.hidden) {
+        return;
+      }
       if (this.vistaActual === 'dashboard') {
         this.cargarEstadisticas(false);
       } else {
@@ -288,8 +293,9 @@ export class PanelAdmin implements OnInit, OnDestroy {
         if (failedPrimary || res.pedidos === null) {
           this.errorDashboard =
             firstErrorStatus === 0
-              ? 'No se pudo conectar con el servidor (Backend fuera de línea). Verifique que el servicio en el puerto 8089 esté encendido.'
-              : firstErrorMsg || 'Ocurrió un problema al sincronizar las métricas del Dashboard.';
+              ? 'No se pudo conectar con el servidor (Backend fuera de l\u00ednea). Verifique que el servicio en el puerto 8089 est\u00e9 encendido.'
+              : firstErrorMsg ||
+                'Ocurri\u00f3 un problema al sincronizar las m\u00e9tricas del Dashboard.';
         } else {
           this.errorDashboard = '';
         }
@@ -514,7 +520,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
       this.todosLosPedidos.forEach((p) => {
         const row = worksheet.addRow({
           id: `PH-${p.id?.toString().padStart(4, '0')}`,
-          cliente: p.userName || 'Usuario Anónimo',
+          cliente: p.userName || 'Usuario An\u00f3nimo',
           correo: p.userEmail || 'No registrado',
           estado: p.status,
           total: p.total,
@@ -568,9 +574,10 @@ export class PanelAdmin implements OnInit, OnDestroy {
 
     const targetPath = VISTA_TO_ROUTE[vista];
     if (targetPath) {
-      const fullPath = vista === 'orders' && this.pedidoSeleccionadoId
-        ? `${targetPath}?id=${this.pedidoSeleccionadoId}`
-        : targetPath;
+      const fullPath =
+        vista === 'orders' && this.pedidoSeleccionadoId
+          ? `${targetPath}?id=${this.pedidoSeleccionadoId}`
+          : targetPath;
       if (this.location.path() !== fullPath) {
         this.location.go(fullPath);
       }
@@ -625,11 +632,18 @@ export class PanelAdmin implements OnInit, OnDestroy {
   }
 
   cerrarSesion(): void {
-    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-      sessionStorage.removeItem('adminVistaActual');
-      this.authService.logout();
-      this.router.navigate(['/join']);
-    }
+    this.mostrarModalLogout = true;
+  }
+
+  cancelarLogout(): void {
+    this.mostrarModalLogout = false;
+  }
+
+  confirmarLogout(): void {
+    this.mostrarModalLogout = false;
+    sessionStorage.removeItem('adminVistaActual');
+    this.authService.logout();
+    this.router.navigate(['/join']);
   }
 
   getCurrentUser() {

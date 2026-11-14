@@ -803,40 +803,284 @@
   position: fixed;
   inset: 0;
   z-index: 99999;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(15, 23, 42, 0.55);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.3s ease-out forwards;
+  padding: 1.25rem;
+  animation: fadeIn 0.28s ease-out forwards;
 }
 
 .processing-content,
 .success-content {
+  background: #ffffff;
+  border-radius: 22px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.24);
+  padding: 2.2rem 2rem;
+  width: 100%;
+  max-width: 460px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-  animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  gap: 1.25rem;
+  animation: modalPop 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-.processing-content h3 { font-size: 1.5rem; color: #111; margin: 0; font-weight: 800; }
-.processing-content p { color: #555; margin: 0; font-weight: 500; font-size: 1.1rem; }
+.processing-visual {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-.success-content h2 { font-size: 2.2rem; color: #111; margin: 0; font-weight: 900; }
-.success-content p { color: #444; max-width: 400px; line-height: 1.5; font-size: 1.1rem; }
-.success-content .btn-primary { width: auto; min-width: 200px; }
+.processing-center-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.85rem;
+  color: #c8102e;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.processing-visual.done-stage .processing-center-icon {
+  color: #16a34a;
+  transform: scale(1.12);
+}
+
+.mail-pulse-icon {
+  animation: mailFloat 1.1s ease-in-out infinite;
+}
+
+@keyframes mailFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.08); }
+}
+
+.processing-header-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.processing-content h3 {
+  font-size: 1.35rem;
+  color: #111827;
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.processing-content p {
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.processing-progress-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.processing-progress-track {
+  flex: 1;
+  height: 10px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.processing-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c8102e 0%, #ef4444 100%);
+  border-radius: 999px;
+  transition: width 0.25s ease-out;
+}
+
+.processing-progress-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #334155;
+  min-width: 40px;
+  text-align: right;
+}
+
+.processing-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.processing-step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #64748b;
+  transition: all 0.25s ease;
+}
+
+.processing-step-item.active {
+  background: #fff5f5;
+  border-color: rgba(200, 16, 46, 0.35);
+  color: #111827;
+  font-weight: 700;
+}
+
+.processing-step-item.completed {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+  font-weight: 600;
+}
+
+.step-badge {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.processing-step-item.completed .step-badge {
+  color: #16a34a;
+}
+
+.step-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+
+.processing-step-item.active .step-dot {
+  background: #c8102e;
+  box-shadow: 0 0 0 4px rgba(200, 16, 46, 0.18);
+  animation: dotPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+
+.processing-footnote {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.success-content h2 { font-size: 1.85rem; color: #111827; margin: 0; font-weight: 900; }
+.success-content p { color: #475569; max-width: 390px; line-height: 1.55; font-size: 1rem; margin: 0; }
+.success-content .btn-primary { width: auto; min-width: 210px; margin-top: 0.25rem; }
+
+.email-status-banner {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  text-align: left;
+  border: 1px solid transparent;
+}
+
+.email-status-banner.sent {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.email-status-banner.pending {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.email-status-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.15rem;
+}
+
+.email-status-banner.sent .email-status-icon {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.email-status-banner.pending .email-status-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.email-status-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.email-status-banner.sent .email-status-copy strong {
+  color: #065f46;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.email-status-banner.sent .email-status-copy span {
+  color: #047857;
+}
+
+.email-status-banner.pending .email-status-copy strong {
+  color: #92400e;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.email-status-banner.pending .email-status-copy span {
+  color: #b45309;
+}
 
 /* SPINNER (Pizza Loader) */
 .pizza-loader {
-  width: 80px;
-  height: 80px;
-  border: 8px solid #f3f3f3;
-  border-top: 8px solid #c8102e;
+  width: 88px;
+  height: 88px;
+  border: 6px solid #f1f5f9;
+  border-top: 6px solid #c8102e;
   border-radius: 50%;
-  animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+  animation: spin 0.95s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+}
+
+.processing-visual.done-stage .pizza-loader {
+  border-color: #dcfce7;
+  border-top-color: #16a34a;
+  animation: none;
 }
 
 @keyframes spin {
@@ -885,98 +1129,6 @@
 }
 @keyframes fill {
   100% { box-shadow: inset 0px 0px 0px 50px rgba(39, 174, 96, 0.1); }
-}
-
-/* =========================================================================
-   ALTO CONTRASTE (HIGH CONTRAST MODE)
-   ========================================================================= */
-:host-context(html[data-contraste="alto"]) .cart-items-container,
-:host-context(html[data-contraste="alto"]) .checkout-section,
-:host-context(html[data-contraste="alto"]) .summary-card,
-:host-context(html[data-contraste="alto"]) .payment-card-form,
-:host-context(html[data-contraste="alto"]) .payment-mobile-form,
-:host-context(html[data-contraste="alto"]) .address-form {
-  background: #000;
-  border: 2px solid #000000;
-  box-shadow: none;
-}
-
-:host-context(html[data-contraste="alto"]) .section-title,
-:host-context(html[data-contraste="alto"]) .summary-card-title,
-:host-context(html[data-contraste="alto"]) .line-total,
-:host-context(html[data-contraste="alto"]) .item-size,
-:host-context(html[data-contraste="alto"]) .unit-price-text,
-:host-context(html[data-contraste="alto"]) .quantity-display,
-:host-context(html[data-contraste="alto"]) .summary-field label,
-:host-context(html[data-contraste="alto"]) .radio-option span,
-:host-context(html[data-contraste="alto"]) .empty-state h2,
-:host-context(html[data-contraste="alto"]) .empty-state p,
-:host-context(html[data-contraste="alto"]) .helper-text {
-  color: #000000 !important;
-}
-
-:host-context(html[data-contraste="alto"]) .quantity-control,
-:host-context(html[data-contraste="alto"]) .quantity-control button,
-:host-context(html[data-contraste="alto"]) .radio-option,
-:host-context(html[data-contraste="alto"]) .summary-field select,
-:host-context(html[data-contraste="alto"]) .summary-field textarea,
-:host-context(html[data-contraste="alto"]) .payment-card-form input,
-:host-context(html[data-contraste="alto"]) .payment-mobile-form input,
-:host-context(html[data-contraste="alto"]) .promo-input {
-  background: #000;
-  border-color: #ffffff;
-  color: #ffffff;
-}
-
-:host-context(html[data-contraste="alto"]) .quantity-control button:hover:not(:disabled),
-:host-context(html[data-contraste="alto"]) .radio-option:hover {
-  background-color: #000000;
-  color: #ffffff !important;
-}
-
-:host-context(html[data-contraste="alto"]) .radio-option input[type="radio"] {
-  accent-color: #000000;
-}
-
-:host-context(html[data-contraste="alto"]) .promo-section {
-  border-color: #000000;
-}
-
-:host-context(html[data-contraste="alto"]) .promo-alert {
-  background: #000;
-  border: 1px solid #ffffff;
-  color: #ffffff;
-}
-
-:host-context(html[data-contraste="alto"]) .btn-primary,
-:host-context(html[data-contraste="alto"]) .btn-secondary,
-:host-context(html[data-contraste="alto"]) .btn-promo,
-:host-context(html[data-contraste="alto"]) .remove-button,
-:host-context(html[data-contraste="alto"]) .btn-remove-promo {
-  background: #000;
-  color: #ffffff;
-  border: 2px solid #ffffff;
-}
-
-:host-context(html[data-contraste="alto"]) .btn-primary:hover:not(:disabled),
-:host-context(html[data-contraste="alto"]) .btn-secondary:hover,
-:host-context(html[data-contraste="alto"]) .btn-promo:hover:not(:disabled),
-:host-context(html[data-contraste="alto"]) .remove-button:hover,
-:host-context(html[data-contraste="alto"]) .btn-remove-promo:hover {
-  background: #000000;
-  color: #ffffff !important;
-}
-
-:host-context(html[data-contraste="alto"]) .remove-button:hover i {
-  color: #ffffff;
-}
-
-:host-context(html[data-contraste="alto"]) .summary-row,
-:host-context(html[data-contraste="alto"]) .summary-row.total,
-:host-context(html[data-contraste="alto"]) .summary-row.promo-discount,
-:host-context(html[data-contraste="alto"]) .summary-row.promo-discount 
-.discount-value {
-  color: #000000 !important;
 }
 
 /* =========================================================================

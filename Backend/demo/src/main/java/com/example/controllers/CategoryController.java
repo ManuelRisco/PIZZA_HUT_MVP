@@ -17,7 +17,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/categories")
-@CrossOrigin(origins = "http://localhost:4200")
 public class CategoryController {
 
     private static final String MSG_NOT_FOUND_PREFIX = "Categoría no encontrada con id: ";

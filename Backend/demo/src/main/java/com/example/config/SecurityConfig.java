@@ -2,15 +2,20 @@ package com.example.config;
 
 import com.example.security.JwtAuthenticationFilter;
 import com.example.security.GlobalAuditFilter;
+import com.example.security.RateLimitingFilter;
+import com.example.security.XssProtectionFilter;
 import com.example.services.AuditLogService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -24,13 +29,20 @@ import org.springframework.http.HttpMethod;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitingFilter rateLimitingFilter;
+    private final XssProtectionFilter xssProtectionFilter;
     private final AuditLogService auditLogService;
 
     @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:http://localhost,http://localhost:4200,http://127.0.0.1:4200,http://172.28.192.1:4200,http://localhost:8080,http://localhost:8081}")
     private String[] allowedOrigins;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, AuditLogService auditLogService) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          RateLimitingFilter rateLimitingFilter,
+                          XssProtectionFilter xssProtectionFilter,
+                          AuditLogService auditLogService) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.rateLimitingFilter = rateLimitingFilter;
+        this.xssProtectionFilter = xssProtectionFilter;
         this.auditLogService = auditLogService;
     }
 
@@ -39,28 +51,41 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .headers(headers -> headers
+                .contentTypeOptions(Customizer.withDefaults())
+                .frameOptions(frame -> frame.deny())
+                .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+                .referrerPolicy(ref -> ref.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                .contentSecurityPolicy(csp -> csp.policyDirectives(
+                    "default-src 'self'; " +
+                    "script-src 'self' https://accounts.google.com https://apis.google.com; " +
+                    "frame-src 'self' https://accounts.google.com; " +
+                    "img-src 'self' data: blob: https:; " +
+                    "style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com; " +
+                    "font-src 'self' data: https://fonts.gstatic.com; " +
+                    "connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com; " +
+                    "object-src 'none'; frame-ancestors 'none'; base-uri 'self';"
+                ))
+            )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                 // ==========================================
-                // ENDPOINTS PÚBLICOS (Sin autenticación)
+                // ENDPOINTS P\u00daBLICOS (Sin autenticaci\u00f3n)
                 // ==========================================
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/api/registro", "/api/ingresar").permitAll()
+                .requestMatchers("/api/auth/google", "/api/auth/google/config").permitAll()
+                .requestMatchers("/api/recuperar-password/**").permitAll()
                 .requestMatchers("/api/verificar-email", "/api/verificar-nombre").permitAll()
                 .requestMatchers("/api/refresh-token").permitAll()
-
-                // Debug endpoints - temporal para verificar roles
-                .requestMatchers("/api/debug/auth-info").permitAll()
-                .requestMatchers("/api/debug/test-admin").hasRole("ADMIN")
-                .requestMatchers("/api/debug/test-customer").hasAnyRole("CUSTOMER", "ADMIN")
 
                 // Logout - Cualquier usuario autenticado
                 .requestMatchers("/api/logout").authenticated()
 
                 // ==========================================
-                // PRODUCTOS Y CATÁLOGO (Lectura pública)
+                // PRODUCTOS Y CAT\u00c1LOGO (Lectura p\u00fablica)
                 // ==========================================
-                // Pizzas y Categorías - Solo GET público, resto requiere ADMIN
+                // Pizzas y Categor\u00edas - Solo GET p\u00fablico, resto requiere ADMIN
                 .requestMatchers(HttpMethod.GET, "/api/pizzas", "/api/pizzas/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/pizzas").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/pizzas/**").hasRole("ADMIN")
@@ -96,14 +121,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/extras/**").hasRole("ADMIN")
 
                 // ==========================================
-                // UPLOADS (Imágenes estáticas y subida de archivos)
+                // UPLOADS (Im\u00e1genes est\u00e1ticas y subida de archivos)
                 // ==========================================
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/uploads/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/uploads/**").hasRole("ADMIN")
 
                 // ==========================================
-                // STOCK / INVENTARIO, MERMAS, COSTOS DE PRODUCCIÓN Y P&L (Solo ADMIN)
+                // STOCK / INVENTARIO, MERMAS, COSTOS DE PRODUCCI\u00d3N Y P&L (Solo ADMIN)
                 // ==========================================
                 .requestMatchers("/api/inventory", "/api/inventory/**").hasRole("ADMIN")
                 .requestMatchers("/api/losses", "/api/losses/**").hasRole("ADMIN")
@@ -121,15 +146,15 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/promociones/**").hasRole("ADMIN")
 
                 // ==========================================
-                // PATRONES DE PIZZA (Cálculo de precios)
+                // PATRONES DE PIZZA (C\u00e1lculo de precios)
                 // ==========================================
                 .requestMatchers(HttpMethod.POST, "/api/pizzas/patrones/*/extras").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/pizzas/patrones/**").permitAll()
 
                 // ==========================================
-                // USUARIOS Y AUTENTICACIÓN
+                // USUARIOS Y AUTENTICACI\u00d3N
                 // ==========================================
-                // Patrones de Usuario - Info pública, creación pública, resto ADMIN
+                // Patrones de Usuario - Info p\u00fablica, creaci\u00f3n p\u00fablica, resto ADMIN
                 .requestMatchers(HttpMethod.GET, "/api/usuarios/patrones/info").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/usuarios/patrones/crear-cliente").permitAll()
                 .requestMatchers("/api/usuarios/patrones/**").hasRole("ADMIN")
@@ -137,13 +162,14 @@ public class SecurityConfig {
                 // Usuario Actual - Cualquier usuario autenticado
                 .requestMatchers(HttpMethod.GET, "/api/usuarios/me").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/usuarios/me").authenticated()
+                .requestMatchers("/api/usuarios/me/**").authenticated()
 
-                // Gestión de Usuarios - Solo ADMIN
+                // Gesti\u00f3n de Usuarios - Solo ADMIN
                 .requestMatchers(HttpMethod.PATCH, "/api/usuarios/{id}/cambiar-password").authenticated()
                 .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
 
                 // ==========================================
-                // MÉTODOS DE PAGO
+                // M\u00c9TODOS DE PAGO
                 // ==========================================
                 .requestMatchers(HttpMethod.GET, "/api/payment-methods/active").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/payment-methods").hasAnyRole("ADMIN", "CUSTOMER")
@@ -187,7 +213,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/payments/**").hasRole("ADMIN")
 
                 // ==========================================
-                // RESEÑAS (Reviews)
+                // RESE\u00d1AS (Reviews)
                 // ==========================================
                 .requestMatchers(HttpMethod.GET, "/api/reviews", "/api/reviews/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/reviews").hasAnyRole("ADMIN", "CUSTOMER")
@@ -205,7 +231,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/favorites", "/api/favorites/**").authenticated()
 
                 // ==========================================
-                // AUDITORÍA Y SESIONES (Solo ADMIN)
+                // AUDITOR\u00cdA Y SESIONES (Solo ADMIN)
                 // ==========================================
                 .requestMatchers("/api/audit-logs", "/api/audit-logs/**").hasRole("ADMIN")
                 .requestMatchers("/api/sessions", "/api/sessions/**").hasRole("ADMIN")
@@ -215,8 +241,10 @@ public class SecurityConfig {
                 // ==========================================
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(xssProtectionFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterAfter(new GlobalAuditFilter(auditLogService), JwtAuthenticationFilter.class);
+            .addFilterAfter(new GlobalAuditFilter(auditLogService), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
@@ -224,15 +252,15 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Permitir orígenes configurados (Angular u otros frontends)
+        // Permitir or\u00edgenes configurados (Angular u otros frontends)
         configuration.setAllowedOriginPatterns(Arrays.asList(allowedOrigins));
 
-        // Permitir todos los métodos HTTP necesarios
+        // Permitir todos los m\u00e9todos HTTP necesarios
         configuration.setAllowedMethods(Arrays.asList(
             "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"
         ));
 
-        // Permitir headers específicos y wildcard para flexibilidad
+        // Permitir headers espec\u00edficos y wildcard para flexibilidad
         configuration.setAllowedHeaders(Arrays.asList(
             "Authorization",
             "Content-Type",
@@ -251,7 +279,10 @@ public class SecurityConfig {
             "Authorization",
             "Content-Type",
             "X-Total-Count",
-            "X-Total-Pages"
+            "X-Total-Pages",
+            "X-RateLimit-Limit",
+            "X-RateLimit-Remaining",
+            "Retry-After"
         ));
 
         // Tiempo de cache para pre-flight requests (OPTIONS) - 1 hora

@@ -30,6 +30,9 @@ export interface OrderDTO {
   notes?: string | null;
   estimatedDelivery?: string | null;
   createdAt?: string;
+  emailSent?: boolean;
+  emailSentTo?: string | null;
+  adminEmailSent?: boolean;
 }
 
 // OrderItem (Items de pedido)
@@ -214,6 +217,35 @@ export interface StockOperationRequestDTO {
   unitCost?: number | null;
   minStock?: number | null;
   reason?: string;
+}
+
+export interface TriggerStockAlertDTO {
+  id: number;
+  itemType: 'INGREDIENT' | 'EXTRA' | 'SIZE';
+  itemId: number;
+  itemName: string;
+  unit: string;
+  newStock: number;
+  minStock: number;
+  deficitAmount?: number;
+  alertLevel: 'LOW_STOCK' | 'OUT_OF_STOCK';
+  resolved: boolean;
+  emailSent: boolean;
+  emailRecipients?: string | null;
+  emailError?: string | null;
+  createdAt?: string | null;
+  sentAt?: string | null;
+}
+
+export interface StockAlertBatchStatusDTO {
+  mailOperational: boolean;
+  batchWindowSeconds: number;
+  pendingBatchCount: number;
+  secondsRemaining: number;
+  notifiedActiveCount: number;
+  lastSentAt?: string | null;
+  lastRecipients?: string | null;
+  activeAlerts: TriggerStockAlertDTO[];
 }
 
 // ===================================

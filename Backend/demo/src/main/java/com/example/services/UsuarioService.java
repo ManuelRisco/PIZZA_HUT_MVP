@@ -2,6 +2,7 @@ package com.example.services;
 
 import com.example.models.Usuario;
 import com.example.repositories.UsuarioRepository;
+import com.example.exceptions.BadRequestException;
 import com.example.patterns.users.creacionales.UsuarioFactory;
 import com.example.patterns.users.comportamiento.EmailValidationStrategy;
 import com.example.patterns.users.comportamiento.PasswordValidationStrategy;
@@ -71,7 +72,7 @@ public class UsuarioService {
         if (guardado.getId() == null) {
             throw new IllegalStateException("No se pudo crear el usuario en la base de datos");
         }
-        return "¡Acabas de registrarte con \u00e9xito!";
+        return "\u00a1Acabas de registrarte con \u00e9xito!";
     }
 
     /**
@@ -104,9 +105,9 @@ public class UsuarioService {
     }
 
     /**
-     * Persiste la sesión sobre la fila ya guardada. El login recibía un
+     * Persiste la sesi\u00f3n sobre la fila ya guardada. El login recib\u00eda un
      * usuario desconectado y actualizarUsuario no copiaba refresh token ni
-     * último acceso, así que la fila quedaba sin sesión.
+     * \u00faltimo acceso, as\u00ed que la fila quedaba sin sesi\u00f3n.
      */
     @CacheEvict(value = "users", key = "#p0")
     public Usuario guardarDatosDeSesion(@NonNull Long id, String refreshToken, LocalDateTime refreshTokenExpiry,
@@ -188,13 +189,13 @@ public class UsuarioService {
                     !usuarioActualizado.getPasswordHash().startsWith("$2y$")) {
                 // Es una contrase\u00f1a en texto plano, encriptarla
                 usuario.setPasswordHash(passwordEncoder.encode(usuarioActualizado.getPasswordHash()));
+                usuario.setPasswordSet(true);
 
                 // Si cambia la contrase\u00f1a, invalidar tokens anteriores
                 usuario.incrementTokenVersion();
                 usuario.setRefreshToken(null);
                 usuario.setRefreshTokenExpiry(null);
             }
-            // Si ya es un hash (empieza con $2a$), no hacer nada con la contrase\u00f1a
 
             return usuarioRepository.save(usuario);
         }
@@ -225,9 +226,10 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-        /**
-     * Eliminación Lógica (Soft Delete).
-     * Nunca se borra físicamente de la base de datos para mantener integridad referencial e historial.
+    /**
+     * Eliminaci\u00f3n L\u00f3gica (Soft Delete).
+     * Nunca se borra f\u00edsicamente de la base de datos para mantener integridad
+     * referencial e historial.
      */
     @CacheEvict(value = "users", key = "#p0")
     public boolean eliminarUsuario(@NonNull Long id) {
@@ -282,14 +284,37 @@ public class UsuarioService {
     }
 
     /**
-     * Cambia la contrase\u00f1a de un usuario
+     * Cambia la contrase\u00f1a de un usuario (sin requerir contrase\u00f1a actual,
+     * para uso administrativo/interno)
      */
     @CacheEvict(value = "users", key = "#p0")
     public boolean cambiarPassword(@NonNull Long id, String nuevaPassword) {
+        return cambiarPassword(id, null, nuevaPassword, true);
+    }
+
+    /**
+     * Cambia la contrase\u00f1a de un usuario validando su contrase\u00f1a actual
+     * cuando corresponde
+     */
+    @CacheEvict(value = "users", key = "#p0")
+    public boolean cambiarPassword(@NonNull Long id, String currentPassword, String nuevaPassword,
+            boolean skipCurrentPasswordCheck) {
         Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
         if (usuarioOpt.isPresent()) {
             Usuario usuario = usuarioOpt.get();
+            if (!skipCurrentPasswordCheck && !Boolean.FALSE.equals(usuario.getPasswordSet())) {
+                if (currentPassword == null || currentPassword.trim().isEmpty()) {
+                    throw new BadRequestException("Debes ingresar tu contrase\u00f1a actual para confirmar el cambio");
+                }
+                if (!passwordEncoder.matches(currentPassword, usuario.getPasswordHash())) {
+                    throw new BadRequestException("La contrase\u00f1a actual ingresada es incorrecta");
+                }
+                if (passwordEncoder.matches(nuevaPassword, usuario.getPasswordHash())) {
+                    throw new BadRequestException("La nueva contrase\u00f1a debe ser diferente a la actual");
+                }
+            }
             usuario.setPasswordHash(passwordEncoder.encode(nuevaPassword));
+            usuario.setPasswordSet(true);
 
             // Invalidar tokens anteriores al cambiar contrase\u00f1a
             usuario.incrementTokenVersion();

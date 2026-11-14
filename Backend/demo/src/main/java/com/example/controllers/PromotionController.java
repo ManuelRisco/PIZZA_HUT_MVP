@@ -18,7 +18,6 @@ import org.springframework.security.access.AccessDeniedException;
 
 @RestController
 @RequestMapping("/api/promociones")
-@CrossOrigin(origins = "http://localhost:4200")
 public class PromotionController {
 
     private static final String MSG_KEY = "message";

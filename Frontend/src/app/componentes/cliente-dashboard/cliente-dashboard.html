@@ -23,11 +23,12 @@
           class="text-gray-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-gray-900 cursor-pointer"
           (click)="toggleSidebar()"
           [attr.aria-label]="sidebarCollapsed ? 'Expandir menú' : 'Contraer menú'"
+          [attr.aria-expanded]="!sidebarCollapsed"
         >
           <i class="bi bi-list text-2xl" aria-hidden="true"></i>
         </button>
         <h5 class="text-red-600 font-black text-lg mb-0 tracking-wider whitespace-nowrap overflow-hidden" *ngIf="!sidebarCollapsed">
-          MI CUENTA
+          PANEL CLIENTE
         </h5>
       </div>
       <button
@@ -51,43 +52,74 @@
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Dashboard</span>
       </a>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
-         [ngClass]="vistaActual === 'perfil' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
-         [title]="sidebarCollapsed ? 'Mi Perfil' : ''"
-         (click)="cambiarVista('perfil')">
-        <i class="bi bi-person-circle text-lg min-w-[24px] text-center"></i>
-        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Mi Perfil</span>
-      </a>
+      <!-- Sección: Pedidos y Actividad -->
+      <div *ngIf="!sidebarCollapsed" class="pt-3 pb-1 px-3">
+        <span class="text-[10px] font-black uppercase tracking-widest text-gray-500">Actividad y Pedidos</span>
+      </div>
+      <div *ngIf="sidebarCollapsed" class="my-2 border-t border-gray-800"></div>
 
-      <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+      <a class="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
          [ngClass]="vistaActual === 'pedidos' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
          [title]="sidebarCollapsed ? 'Mis Pedidos' : ''"
          (click)="cambiarVista('pedidos')">
-        <i class="bi bi-bag-fill text-lg min-w-[24px] text-center"></i>
-        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Mis Pedidos</span>
+        <div class="flex items-center gap-3 min-w-0">
+          <i class="bi bi-bag-check text-lg min-w-[24px] text-center"></i>
+          <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap truncate">Mis Pedidos</span>
+        </div>
+        <span
+          *ngIf="!sidebarCollapsed && pedidosActivos > 0"
+          class="px-2 py-0.5 rounded-full text-[10px] font-black"
+          [ngClass]="vistaActual === 'pedidos' ? 'bg-white text-red-600' : 'bg-amber-500/20 text-amber-400'"
+        >
+          {{ pedidosActivos }}
+        </span>
+      </a>
+
+      <a class="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
+         [ngClass]="vistaActual === 'favoritos' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Mis Favoritos' : ''"
+         (click)="cambiarVista('favoritos')">
+        <div class="flex items-center gap-3 min-w-0">
+          <i class="bi bi-heart text-lg min-w-[24px] text-center"></i>
+          <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap truncate">Mis Favoritos</span>
+        </div>
+        <span
+          *ngIf="!sidebarCollapsed && totalFavoritos > 0"
+          class="px-2 py-0.5 rounded-full text-[10px] font-black"
+          [ngClass]="vistaActual === 'favoritos' ? 'bg-white text-red-600' : 'bg-gray-800 text-gray-300'"
+        >
+          {{ totalFavoritos }}
+        </span>
       </a>
 
       <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
          [ngClass]="vistaActual === 'resenas' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
          [title]="sidebarCollapsed ? 'Mis Reseñas' : ''"
          (click)="cambiarVista('resenas')">
-        <i class="bi bi-star-fill text-lg min-w-[24px] text-center"></i>
+        <i class="bi bi-star text-lg min-w-[24px] text-center"></i>
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Mis Reseñas</span>
       </a>
 
+      <!-- Sección: Cuenta y Seguridad -->
+      <div *ngIf="!sidebarCollapsed" class="pt-3 pb-1 px-3">
+        <span class="text-[10px] font-black uppercase tracking-widest text-gray-500">Cuenta y Seguridad</span>
+      </div>
+      <div *ngIf="sidebarCollapsed" class="my-2 border-t border-gray-800"></div>
+
       <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
-         [ngClass]="vistaActual === 'favoritos' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
-         [title]="sidebarCollapsed ? 'Favoritos' : ''"
-         (click)="cambiarVista('favoritos')">
-        <i class="bi bi-heart-fill text-lg min-w-[24px] text-center"></i>
-        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Favoritos</span>
+         [ngClass]="vistaActual === 'perfil' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
+         [title]="sidebarCollapsed ? 'Mi Perfil' : ''"
+         (click)="cambiarVista('perfil')">
+        <i class="bi bi-person-gear text-lg min-w-[24px] text-center"></i>
+        <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Mi Perfil</span>
       </a>
     </nav>
 
     <!-- User Profile & Logout (Bottom) -->
     <div class="border-t border-gray-800 p-3 shrink-0">
       <div
-        class="flex items-center gap-3 cursor-pointer hover:bg-gray-800 p-2 rounded-xl transition-colors"
+        class="flex items-center gap-3 cursor-pointer p-2 rounded-xl transition-colors"
+        [ngClass]="vistaActual === 'perfil' ? 'bg-gray-800' : 'hover:bg-gray-800'"
         (click)="cambiarVista('perfil')"
         *ngIf="currentUser"
       >
@@ -96,7 +128,16 @@
         </div>
         <div *ngIf="!sidebarCollapsed" class="flex-1 overflow-hidden">
           <p class="text-sm font-bold text-white truncate m-0">{{ currentUser?.name || 'Cliente' }}</p>
-          <p class="text-[11px] text-gray-400 uppercase tracking-wider m-0">Cliente</p>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <p class="text-[11px] text-gray-400 uppercase tracking-wider m-0">CLIENTE</p>
+            <span
+              *ngIf="currentUser?.googleLinked || currentUser?.authProvider === 'GOOGLE'"
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[9px] font-bold"
+              title="Sesión vinculada con Google"
+            >
+              <i class="bi bi-google text-[9px]"></i> Google
+            </span>
+          </div>
         </div>
       </div>
       <button
@@ -124,103 +165,294 @@
           <i class="bi bi-list text-xl"></i>
         </button>
         <div class="min-w-0">
-          <p class="text-[10px] font-black uppercase tracking-widest text-red-600 m-0 leading-none">Mi Cuenta</p>
+          <p class="text-[10px] font-black uppercase tracking-widest text-red-600 m-0 leading-none">Panel Cliente</p>
           <h2 class="font-black text-gray-900 text-sm truncate m-0 mt-0.5">{{ getVistaTituloActual() }}</h2>
         </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <span
+          *ngIf="pedidosActivos > 0"
+          (click)="cambiarVista('pedidos')"
+          class="px-2.5 py-1 rounded-full text-[11px] font-black bg-amber-100 text-amber-800 cursor-pointer"
+        >
+          <i class="bi bi-clock-history mr-1"></i>{{ pedidosActivos }}
+        </span>
+        <button
+          type="button"
+          class="bg-red-600 hover:bg-red-700 text-white font-bold py-1.5 px-3 rounded-xl text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+          (click)="navegarA('/menu')"
+        >
+          <i class="bi bi-cart-plus"></i> Menú
+        </button>
       </div>
     </div>
 
     <!-- Scrollable Content -->
     <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 min-w-0 w-full">
-      <!-- Dashboard View -->
+      <!-- Vista Dashboard HOME -->
       <div *ngIf="vistaActual === 'dashboard'" class="max-w-7xl mx-auto space-y-6">
         <!-- Executive v2 Header Card -->
         <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel de Cliente</p>
             <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">¡Hola, {{ primerNombre }}!</h2>
-            <p class="text-sm text-gray-500 mt-1 mb-0">Gestiona tus pedidos, reseñas, pizzas favoritas y datos personales desde un solo lugar</p>
+            <p class="text-sm text-gray-500 mt-1 mb-0">Resumen en tiempo real de tus pedidos, especialidades favoritas y seguridad de cuenta</p>
           </div>
           <div class="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              (click)="recargarDashboard()"
+              [disabled]="loading || loadingMetricas"
+              class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer"
+            >
+              <i class="bi bi-arrow-clockwise" [class.animate-spin]="loading || loadingMetricas"></i>
+              Actualizar
+            </button>
             <button
               type="button"
               (click)="navegarA('/menu')"
               class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
             >
-              <i class="bi bi-cart-plus"></i> Ordenar Ahora
+              <i class="bi bi-cart-plus"></i> Ir al Menú
             </button>
           </div>
         </div>
 
-        <div
-          *ngIf="loadError"
-          class="bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-          role="alert"
-        >
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+        <!-- Banner de desconexión -->
+        <div *ngIf="loadError" class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3" role="alert">
+          <div class="flex items-start sm:items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
               <i class="bi bi-wifi-off text-lg"></i>
             </div>
-            <p class="text-xs sm:text-sm font-medium text-amber-900 m-0">{{ loadError }}</p>
+            <div>
+              <p class="text-sm font-black text-red-900 m-0">Conexión limitada con el servidor</p>
+              <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ loadError }}</p>
+            </div>
           </div>
           <button
             type="button"
-            (click)="cargarUsuarioActual()"
-            class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors shrink-0 cursor-pointer"
+            (click)="recargarDashboard()"
+            class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
           >
-            <i class="bi bi-arrow-clockwise mr-1"></i> Reintentar
+            <i class="bi bi-arrow-clockwise"></i> Reintentar
           </button>
         </div>
 
-        <!-- Quick Navigation Cards -->
+        <!-- ==================== KPI CARDS ROW (Idéntico a Panel Admin) ==================== -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 hover:shadow-md transition-all cursor-pointer group" (click)="cambiarVista('pedidos')">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center text-red-600 group-hover:scale-110 transition-transform">
-                <i class="bi bi-bag-check text-xl"></i>
+          <!-- Total Invertido / Pedidos -->
+          <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+               (click)="cambiarVista('pedidos')">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <i class="bi bi-bag-check-fill text-emerald-600 text-xl"></i>
               </div>
-              <i class="bi bi-arrow-up-right text-gray-400 group-hover:text-red-600"></i>
+              <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+                   [ngClass]="totalPedidos > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'">
+                <i class="bi bi-receipt text-[10px]"></i>
+                S/ {{ gastoTotal | number:'1.2-2' }}
+              </div>
             </div>
-            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Mis Pedidos</p>
-            <h3 class="text-lg font-black text-gray-900 m-0">Ver historial</h3>
+            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total de Pedidos</p>
+            <p class="text-2xl font-black text-gray-900 m-0">{{ totalPedidos }}</p>
           </div>
 
-          <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 hover:shadow-md transition-all cursor-pointer group" (click)="cambiarVista('resenas')">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-11 h-11 rounded-xl bg-yellow-50 flex items-center justify-center text-yellow-500 group-hover:scale-110 transition-transform">
-                <i class="bi bi-star-fill text-xl"></i>
+          <!-- Pedidos en Curso -->
+          <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+               (click)="cambiarVista('pedidos')">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <i class="bi bi-clock-history text-amber-600 text-xl"></i>
               </div>
-              <i class="bi bi-arrow-up-right text-gray-400 group-hover:text-red-600"></i>
+              <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+                   [ngClass]="pedidosActivos > 0 ? 'bg-amber-50 text-amber-700 animate-pulse' : 'bg-gray-100 text-gray-500'">
+                <i class="bi bi-scooter text-[10px]"></i>
+                {{ pedidosActivos > 0 ? 'En preparación / envío' : 'Al día' }}
+              </div>
             </div>
-            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Mis Reseñas</p>
-            <h3 class="text-lg font-black text-gray-900 m-0">Calificaciones</h3>
+            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pedidos en Curso</p>
+            <p class="text-2xl font-black m-0" [ngClass]="pedidosActivos > 0 ? 'text-amber-600' : 'text-gray-900'">{{ pedidosActivos }}</p>
           </div>
 
-          <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 hover:shadow-md transition-all cursor-pointer group" (click)="cambiarVista('favoritos')">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 group-hover:scale-110 transition-transform">
-                <i class="bi bi-heart-fill text-xl"></i>
+          <!-- Pizzas Favoritas -->
+          <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+               (click)="cambiarVista('favoritos')">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <i class="bi bi-heart-fill text-red-600 text-xl"></i>
               </div>
-              <i class="bi bi-arrow-up-right text-gray-400 group-hover:text-red-600"></i>
+              <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-red-50 text-red-700">
+                Guardadas
+              </div>
             </div>
-            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Favoritos</p>
-            <h3 class="text-lg font-black text-gray-900 m-0">Tus preferidas</h3>
+            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pizzas Favoritas</p>
+            <p class="text-2xl font-black text-gray-900 m-0">{{ totalFavoritos }}</p>
           </div>
 
-          <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 hover:shadow-md transition-all cursor-pointer group" (click)="cambiarVista('perfil')">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-gray-800 group-hover:scale-110 transition-transform">
-                <i class="bi bi-person-gear text-xl"></i>
+          <!-- Mis Reseñas -->
+          <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+               (click)="cambiarVista('resenas')">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-xl bg-yellow-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <i class="bi bi-star-fill text-yellow-500 text-xl"></i>
+              </div>
+              <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-700">
+                {{ totalResenas }} reseñas
+              </div>
+            </div>
+            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Mi Calificación Media</p>
+            <p class="text-2xl font-black text-gray-900 m-0">
+              {{ promedioResenas | number:'1.1-1' }}
+              <span class="text-sm font-bold text-gray-400">/ 5</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- ==================== ACCESOS RÁPIDOS (Idéntico a Panel Admin) ==================== -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <button
+            type="button"
+            (click)="navegarA('/menu')"
+            class="text-left bg-gray-900 text-white rounded-2xl p-5 shadow-sm hover:bg-black transition-all group cursor-pointer"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="bi bi-cart-plus-fill text-white text-lg"></i>
+              </div>
+              <i class="bi bi-arrow-up-right text-gray-400 group-hover:text-white"></i>
+            </div>
+            <p class="text-sm font-black m-0">Ordenar Ahora</p>
+            <p class="text-xs text-gray-400 mt-1 mb-0">Explora el catálogo completo de pizzas y promociones</p>
+          </button>
+
+          <button
+            type="button"
+            (click)="cambiarVista('pedidos')"
+            class="text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 transition-all group cursor-pointer"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="bi bi-bag-check text-lg"></i>
+              </div>
+              <span
+                *ngIf="pedidosActivos > 0"
+                class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800"
+              >
+                {{ pedidosActivos }} activo{{ pedidosActivos === 1 ? '' : 's' }}
+              </span>
+              <i *ngIf="pedidosActivos === 0" class="bi bi-arrow-up-right text-gray-400 group-hover:text-red-600"></i>
+            </div>
+            <p class="text-sm font-black text-gray-900 m-0">Historial de Pedidos</p>
+            <p class="text-xs text-gray-500 mt-1 mb-0">Seguimiento en vivo, estados y comprobantes</p>
+          </button>
+
+          <button
+            type="button"
+            (click)="cambiarVista('favoritos')"
+            class="text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 transition-all group cursor-pointer"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="bi bi-heart-fill text-lg"></i>
               </div>
               <i class="bi bi-arrow-up-right text-gray-400 group-hover:text-red-600"></i>
             </div>
-            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Mi Perfil</p>
-            <h3 class="text-lg font-black text-gray-900 m-0">Datos y seguridad</h3>
+            <p class="text-sm font-black text-gray-900 m-0">Mis Pizzas Favoritas</p>
+            <p class="text-xs text-gray-500 mt-1 mb-0">Reordena tus especialidades preferidas en segundos</p>
+          </button>
+
+          <button
+            type="button"
+            (click)="cambiarVista('perfil')"
+            class="text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 transition-all group cursor-pointer"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-gray-100 text-gray-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="bi bi-shield-lock-fill text-lg"></i>
+              </div>
+              <i class="bi bi-arrow-up-right text-gray-400 group-hover:text-red-600"></i>
+            </div>
+            <p class="text-sm font-black text-gray-900 m-0">Perfil y Seguridad</p>
+            <p class="text-xs text-gray-500 mt-1 mb-0">Datos personales, contraseña y cuenta Google</p>
+          </button>
+        </div>
+
+        <!-- ==================== PEDIDOS RECIENTES DEL CLIENTE ==================== -->
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="p-5 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="text-lg sm:text-xl font-black text-gray-900 m-0">Mis Pedidos Recientes</h3>
+              <p class="text-sm text-gray-500 m-0 mt-0.5">Últimas 5 órdenes realizadas con tu cuenta</p>
+            </div>
+            <button
+              type="button"
+              class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl text-sm transition-colors self-start sm:self-auto cursor-pointer"
+              (click)="cambiarVista('pedidos')"
+            >
+              Ver todos mis pedidos
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[680px]">
+              <thead>
+                <tr class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-4">ID Pedido</th>
+                  <th class="py-3.5 px-4">Modalidad</th>
+                  <th class="py-3.5 px-4">Estado</th>
+                  <th class="py-3.5 px-4">Total</th>
+                  <th class="py-3.5 px-4">Fecha</th>
+                  <th class="py-3.5 px-4 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="text-sm divide-y divide-gray-100">
+                <tr class="hover:bg-gray-50 transition-colors" *ngFor="let pedido of pedidosRecientes; trackBy: trackByPedido">
+                  <td class="py-3.5 px-4 font-black text-gray-900">#PH-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
+                  <td class="py-3.5 px-4">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-700">
+                      <i class="bi" [ngClass]="esPickup(pedido) ? 'bi-shop text-gray-600' : 'bi-scooter text-red-600'"></i>
+                      {{ esPickup(pedido) ? 'Recojo en tienda' : 'Delivery' }}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase"
+                          [ngClass]="{
+                            'bg-amber-100 text-amber-800': pedido.status === 'PENDING' || pedido.status === 'PREPARING',
+                            'bg-blue-100 text-blue-800': pedido.status === 'CONFIRMED' || pedido.status === 'OUT_FOR_DELIVERY' || pedido.status === 'IN_DELIVERY',
+                            'bg-emerald-100 text-emerald-800': pedido.status === 'DELIVERED',
+                            'bg-red-100 text-red-800': pedido.status === 'CANCELLED'
+                          }">
+                      {{ getEstadoTexto(pedido.status) }}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 font-black text-gray-900">S/ {{ pedido.total | number:'1.2-2' }}</td>
+                  <td class="py-3.5 px-4 text-gray-500 text-xs whitespace-nowrap">
+                    {{ pedido.createdAt | date:'dd/MM/yy HH:mm' }}
+                  </td>
+                  <td class="py-3.5 px-4 text-center">
+                    <button
+                      type="button"
+                      class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 inline-flex items-center justify-center transition-colors cursor-pointer"
+                      (click)="cambiarVista('pedidos')"
+                      title="Ver detalle en Mis Pedidos"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="!loadingMetricas && pedidosRecientes.length === 0">
+                  <td colspan="6" class="py-10 text-center text-gray-400">
+                    <i class="bi bi-bag-x text-3xl block mb-2"></i>
+                    Aún no has realizado pedidos. ¡Explora nuestro menú y haz tu primera orden!
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      <!-- Vistas Secundarias (cada módulo renderiza su propio encabezado Executive v2) -->
+      <!-- Otras Vistas -->
       <div class="max-w-7xl mx-auto" *ngIf="vistaActual !== 'dashboard'">
         <div *ngIf="vistaActual === 'perfil'"><app-cliente-perfil></app-cliente-perfil></div>
         <div *ngIf="vistaActual === 'pedidos'"><app-cliente-pedidos></app-cliente-pedidos></div>
@@ -229,4 +461,58 @@
       </div>
     </div>
   </section>
+
+  <!-- Modal Unificado de Confirmación de Cierre de Sesión -->
+  <div
+    *ngIf="mostrarModalLogout"
+    class="fixed inset-0 bg-black/60 z-[6000] flex items-center justify-center p-4 backdrop-blur-xs"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="logout-modal-title-cliente"
+  >
+    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-fade-in-up border border-gray-200">
+      <div class="px-6 py-4 bg-gray-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-red-600 flex items-center justify-center text-white">
+            <i class="bi bi-box-arrow-left text-sm"></i>
+          </div>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-widest text-red-400 m-0">Seguridad de Sesión</p>
+            <h3 id="logout-modal-title-cliente" class="text-base font-black text-white m-0">Cerrar Sesión</h3>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="cancelarLogout()"
+          class="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors cursor-pointer"
+          aria-label="Cancelar"
+        >
+          <i class="bi bi-x-lg text-xs"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <p class="text-sm text-gray-600 m-0 leading-relaxed">
+          ¿Estás seguro de que deseas cerrar tu sesión, <strong class="text-gray-900">{{ primerNombre }}</strong>? Podrás volver a ingresar cuando quieras.
+        </p>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button
+            type="button"
+            (click)="cancelarLogout()"
+            class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-sm transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            (click)="confirmarLogout()"
+            class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+          >
+            <i class="bi bi-box-arrow-left"></i> Sí, Cerrar Sesión
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

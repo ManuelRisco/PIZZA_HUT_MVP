@@ -9,7 +9,7 @@
     <div class="alert alert-danger" role="alert" aria-live="assertive">{{ checkoutError }}</div>
   }
 
-  @if (items.length === 0) {
+  @if (items.length === 0 && !isProcessing && !isSuccess) {
     <output class="empty-state" aria-live="polite" aria-label="Carrito vacío">
       <i class="bi bi-cart-x" aria-hidden="true"></i>
       <h2>Tu carrito está vacío</h2>
@@ -505,20 +505,78 @@
     </div>
   }
 
-  <!-- Overlay de Procesamiento -->
+  <!-- Overlay de Procesamiento Sincronizado con Pedido y Envío de Correo -->
   @if (isProcessing && !isSuccess) {
-    <div class="processing-overlay">
+    <div class="processing-overlay" role="status" aria-live="polite" aria-busy="true">
       <div class="processing-content">
-        <div class="pizza-loader"></div>
-        <h3>Procesando tu pedido...</h3>
-        <p>Por favor no cierres esta ventana</p>
+        <div class="processing-visual" [class.mail-stage]="processingStep === 3" [class.done-stage]="processingStep === 4">
+          <div class="pizza-loader"></div>
+          <div class="processing-center-icon" aria-hidden="true">
+            @if (processingStep === 1) {
+              <i class="bi bi-bag-check-fill"></i>
+            } @else if (processingStep === 2) {
+              <i class="bi bi-shield-check"></i>
+            } @else if (processingStep === 3) {
+              <i class="bi bi-envelope-fill mail-pulse-icon"></i>
+            } @else {
+              <i class="bi bi-check-circle-fill"></i>
+            }
+          </div>
+        </div>
+
+        <div class="processing-header-copy">
+          <h3>{{ processingTitle }}</h3>
+          <p>{{ processingSubtitle }}</p>
+        </div>
+
+        <div class="processing-progress-wrapper" aria-hidden="true">
+          <div class="processing-progress-track">
+            <div class="processing-progress-fill" [style.width.%]="processingProgress"></div>
+          </div>
+          <span class="processing-progress-label">{{ processingProgress | number:'1.0-0' }}%</span>
+        </div>
+
+        <ul class="processing-steps" aria-label="Etapas del procesamiento del pedido">
+          <li class="processing-step-item" [class.active]="processingStep === 1" [class.completed]="processingStep > 1">
+            <span class="step-badge" aria-hidden="true">
+              @if (processingStep > 1) {
+                <i class="bi bi-check-circle-fill"></i>
+              } @else {
+                <span class="step-dot"></span>
+              }
+            </span>
+            <span>Validando pedido y stock en cocina</span>
+          </li>
+          <li class="processing-step-item" [class.active]="processingStep === 2" [class.completed]="processingStep > 2">
+            <span class="step-badge" aria-hidden="true">
+              @if (processingStep > 2) {
+                <i class="bi bi-check-circle-fill"></i>
+              } @else {
+                <span class="step-dot"></span>
+              }
+            </span>
+            <span>Confirmando pago y registrando orden</span>
+          </li>
+          <li class="processing-step-item" [class.active]="processingStep === 3" [class.completed]="processingStep > 3">
+            <span class="step-badge" aria-hidden="true">
+              @if (processingStep > 3) {
+                <i class="bi bi-check-circle-fill"></i>
+              } @else {
+                <span class="step-dot"></span>
+              }
+            </span>
+            <span>Enviando comprobante a tu correo electrónico</span>
+          </li>
+        </ul>
+
+        <small class="processing-footnote">Por favor, no cierres ni recargues esta ventana</small>
       </div>
     </div>
   }
 
   <!-- Overlay de Éxito -->
   @if (isSuccess) {
-    <div class="success-overlay">
+    <div class="success-overlay" role="dialog" aria-modal="true" aria-label="Pedido confirmado">
       <div class="success-content">
         <div class="success-icon-container">
           <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
@@ -526,8 +584,36 @@
             <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
           </svg>
         </div>
-        <h2>¡Pedido Confirmado!</h2>
-        <p>Tu deliciosa pizza está empezando a prepararse. Te enviaremos los detalles a tu correo.</p>
+        <h2>¡Pedido {{ confirmedOrderId ? '#' + confirmedOrderId + ' ' : '' }}Confirmado!</h2>
+        <p>Tu deliciosa pizza ya entró en preparación en nuestra cocina.</p>
+
+        @if (confirmedEmailSent) {
+          <div class="email-status-banner sent" role="status" aria-live="polite">
+            <div class="email-status-icon">
+              <i class="bi bi-envelope-check-fill" aria-hidden="true"></i>
+            </div>
+            <div class="email-status-copy">
+              <strong>¡Se envió el correo de confirmación!</strong>
+              <span>
+                Enviamos el detalle de tu pedido a
+                <b>{{ confirmedEmailAddress || 'tu correo registrado' }}</b>@if (confirmedAdminEmailSent) { y notificamos a los administradores}.
+              </span>
+            </div>
+          </div>
+        } @else {
+          <div class="email-status-banner pending" role="status" aria-live="polite">
+            <div class="email-status-icon">
+              <i class="bi bi-envelope-exclamation-fill" aria-hidden="true"></i>
+            </div>
+            <div class="email-status-copy">
+              <strong>Pedido registrado en cocina</strong>
+              <span>
+                El envío de correo a <b>{{ confirmedEmailAddress || 'tu cuenta' }}</b> está pendiente de verificación SMTP.
+              </span>
+            </div>
+          </div>
+        }
+
         <button class="btn-primary" (click)="cerrarExito()">Aceptar</button>
       </div>
     </div>

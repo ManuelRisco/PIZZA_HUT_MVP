@@ -2,11 +2,15 @@
   <!-- Executive v2 Header Card -->
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Feedback y Calidad</p>
+      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">
+        {{ isAdmin ? 'Panel Ejecutivo' : 'Panel de Cliente' }}
+      </p>
       <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">
         {{ isAdmin ? 'Gestión y Moderación de Reseñas' : 'Mis Reseñas de Pedidos' }}
       </h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Supervisa las calificaciones de clientes, opiniones de órdenes y visibilidad en el menú.</p>
+      <p class="text-sm text-gray-500 mt-1 mb-0">
+        {{ isAdmin ? 'Supervisa las calificaciones de clientes, opiniones de órdenes y visibilidad en el menú.' : 'Consulta las calificaciones y comentarios que has registrado en tus órdenes entregadas.' }}
+      </p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button
@@ -214,10 +218,10 @@
           <div class="flex items-start justify-between gap-2 border-b border-gray-100 pb-2.5">
             <div>
               <p class="font-bold text-gray-900 text-sm m-0 flex items-center gap-1.5">
-                <i class="bi bi-person-circle text-gray-400"></i>
-                Usuario #{{ review.userId }}
+                <i class="bi bi-person-circle text-red-600"></i>
+                {{ isAdmin ? ('Usuario #' + review.userId) : 'Mi Calificación' }}
               </p>
-              <p class="text-[11px] text-gray-500 font-mono m-0 mt-0.5">Orden #{{ review.orderId }}</p>
+              <p class="text-[11px] text-gray-500 font-bold m-0 mt-0.5">#PH-{{ review.orderId.toString().padStart(4, '0') }}</p>
             </div>
             <div class="flex items-center gap-0.5 text-amber-400 text-sm">
               <i *ngFor="let active of getStarArray(review.rating)" class="bi" [ngClass]="active ? 'bi-star-fill' : 'bi-star text-gray-200'"></i>

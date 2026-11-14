@@ -7,7 +7,6 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "e2e": "node run-e2e.js",
     "test:coverage": "ng test --no-watch --code-coverage",
     "sonar": "sonar-scanner"
   },

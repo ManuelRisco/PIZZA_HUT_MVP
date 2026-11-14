@@ -19,7 +19,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/order-items")
-@CrossOrigin(origins = "http://localhost:4200")
 public class OrderItemController {
 
     private static final String MSG_KEY = "message";

@@ -139,6 +139,16 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
 
   isProcessing = false;
   isSuccess = false;
+  confirmedOrderId: number | null = null;
+  confirmedEmailSent = false;
+  confirmedEmailAddress = '';
+  confirmedAdminEmailSent = false;
+  processingStep: 1 | 2 | 3 | 4 = 1;
+  processingProgress = 12;
+  processingTitle = 'Registrando tu pedido...';
+  processingSubtitle = 'Verificando disponibilidad de ingredientes en cocina';
+  private processingTimers: Array<ReturnType<typeof setTimeout>> = [];
+  private progressInterval: ReturnType<typeof setInterval> | null = null;
   private readonly subs: Subscription[] = [];
   direcciones: AddressDTO[] = [];
   selectedAddressId: number | null = null;
@@ -192,7 +202,9 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         this.recalcularTotales(); // Recalcular según el tipo de delivery
         // Announce cart update
         if (items.length === 0) {
-          this.accessibility.announce('Carrito vacío');
+          if (!this.isProcessing && !this.isSuccess) {
+            this.accessibility.announce('Carrito vacío');
+          }
         } else {
           this.accessibility.announceCartTotal(this.totals.total);
         }
@@ -231,6 +243,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnDestroy(): void {
+    this.clearProcessingTimers();
     this.subs.forEach((sub) => sub.unsubscribe());
   }
 
@@ -383,18 +396,109 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
 
 
 
-  finalizarCheckoutBackend(payload: CheckoutPayload): void {
+  private clearProcessingTimers(): void {
+    this.processingTimers.forEach((timerId) => clearTimeout(timerId));
+    this.processingTimers = [];
+    if (this.progressInterval !== null) {
+      clearInterval(this.progressInterval);
+      this.progressInterval = null;
+    }
+  }
+
+  private startProcessingAnimation(): void {
+    this.clearProcessingTimers();
     this.isProcessing = true;
-    
+    this.processingStep = 1;
+    this.processingProgress = 12;
+    this.processingTitle = 'Registrando tu pedido...';
+    this.processingSubtitle = 'Verificando disponibilidad de ingredientes en cocina';
+
+    this.processingTimers.push(
+      setTimeout(() => {
+        if (!this.isProcessing || this.processingStep >= 4) return;
+        this.processingStep = 2;
+        this.processingProgress = Math.max(this.processingProgress, 42);
+        this.processingTitle = 'Confirmando pago y preparando orden...';
+        this.processingSubtitle = 'Asegurando los detalles de tu pedido';
+      }, 1100),
+      setTimeout(() => {
+        if (!this.isProcessing || this.processingStep >= 4) return;
+        this.processingStep = 3;
+        this.processingProgress = Math.max(this.processingProgress, 70);
+        this.processingTitle = 'Enviando confirmación a tu correo...';
+        this.processingSubtitle = 'Despachando el comprobante a tu bandeja y avisando a tienda';
+      }, 2200),
+    );
+
+    this.progressInterval = setInterval(() => {
+      if (!this.isProcessing || this.processingStep >= 4) {
+        return;
+      }
+      if (this.processingStep === 1 && this.processingProgress < 38) {
+        this.processingProgress = Math.min(38, this.processingProgress + 3);
+      } else if (this.processingStep === 2 && this.processingProgress < 66) {
+        this.processingProgress = Math.min(66, this.processingProgress + 3);
+      } else if (this.processingStep === 3 && this.processingProgress < 93) {
+        const stepIncrement = this.processingProgress < 85 ? 2 : 0.6;
+        this.processingProgress = Number(Math.min(93, this.processingProgress + stepIncrement).toFixed(1));
+      }
+    }, 140);
+  }
+
+  finalizarCheckoutBackend(payload: CheckoutPayload): void {
+    const startTime = Date.now();
+    const MIN_ANIMATION_MS = 3300;
+    this.startProcessingAnimation();
+
     const sub = this.checkoutService.checkout(payload).subscribe({
       next: (result) => {
-        this.isProcessing = false;
-        this.isSuccess = true;
-        this.accessibility.announceSuccess('Pedido confirmado con éxito.');
-        this.resetPaymentForms();
-        this.limpiarPromocionDeStorage();
+        this.confirmedOrderId = result?.order?.id ?? null;
+        this.confirmedEmailSent = Boolean(result?.order?.emailSent);
+        this.confirmedEmailAddress =
+          result?.order?.emailSentTo || this.authService.getCurrentUser()?.email || '';
+        this.confirmedAdminEmailSent = Boolean(result?.order?.adminEmailSent);
+
+        const elapsed = Date.now() - startTime;
+        const waitBeforeCompleteMs = Math.max(0, MIN_ANIMATION_MS - elapsed);
+
+        this.processingTimers.push(
+          setTimeout(() => {
+            this.processingStep = 4;
+            this.processingProgress = 100;
+            this.processingTitle = this.confirmedEmailSent
+              ? '¡Pedido confirmado y correo enviado!'
+              : '¡Pedido registrado con éxito!';
+            this.processingSubtitle = this.confirmedEmailSent
+              ? `Comprobante enviado a ${this.confirmedEmailAddress || 'tu correo electrónico'}`
+              : 'Tu orden ya entró en preparación en cocina';
+
+            this.processingTimers.push(
+              setTimeout(() => {
+                this.clearProcessingTimers();
+                this.isProcessing = false;
+                this.isSuccess = true;
+                if (this.confirmedEmailSent) {
+                  this.toastService.showSuccess(
+                    `¡Se envió el correo de confirmación a ${this.confirmedEmailAddress || 'tu bandeja'}!`,
+                  );
+                  this.accessibility.announceSuccess(
+                    'Pedido confirmado con éxito. Se envió el correo de confirmación.',
+                  );
+                } else {
+                  this.toastService.showInfo(
+                    'Pedido registrado en cocina. El envío de correo quedó pendiente de conexión SMTP.',
+                  );
+                  this.accessibility.announceSuccess('Pedido confirmado con éxito.');
+                }
+                this.resetPaymentForms();
+                this.limpiarPromocionDeStorage();
+              }, 450),
+            );
+          }, waitBeforeCompleteMs),
+        );
       },
       error: (err) => {
+        this.clearProcessingTimers();
         this.checkoutError = err?.message ?? 'No se pudo completar el pedido.';
         this.isProcessing = false;
         this.accessibility.announceError(this.checkoutError);

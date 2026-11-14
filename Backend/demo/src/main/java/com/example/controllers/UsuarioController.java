@@ -25,7 +25,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:4200")
 public class UsuarioController {
 
     private static final String MSG_USUARIO_NO_ENCONTRADO = "Usuario no encontrado";
@@ -58,7 +57,7 @@ public class UsuarioController {
             usuario.setPasswordHash(usuarioDTO.getPassword());
         }
 
-        // PREVENCIÓN DE ESCALADA DE PRIVILEGIOS: Todo registro por este endpoint público siempre será CUSTOMER
+        // PREVENCION DE ESCALADA DE PRIVILEGIOS: Todo registro por este endpoint publico siempre sera CUSTOMER
         usuario.setRole(Usuario.Role.CUSTOMER);
 
         String mensaje = usuarioService.registrarUsuario(usuario);
@@ -90,6 +89,11 @@ public class UsuarioController {
         if (user.isAccountLocked()) {
             throw new BadRequestException(
                     "Cuenta bloqueada por m\u00faltiples intentos fallidos. Intente m\u00e1s tarde.");
+        }
+
+        if (Boolean.FALSE.equals(user.getPasswordSet())) {
+            throw new BadRequestException(
+                    "Esta cuenta fue creada con Google y a\u00fan no tiene una contrase\u00f1a definida. Ingrese con el bot\u00f3n 'Continuar con Google' o use '\u00bfOlvidaste tu contrase\u00f1a?' para crear una.");
         }
 
         if (usuarioService.validarPassword(loginDTO.getPassword(), user.getPasswordHash())) {
@@ -269,7 +273,7 @@ public class UsuarioController {
                 getCurrentUserId(),
                 ENTITY_USUARIO,
                 id.intValue(),
-                "Usuario eliminado lógicamente (Soft Delete)");
+                "Usuario eliminado l\u00f3gicamente (Soft Delete)");
         return ResponseEntity.ok(ApiResponse.success(null, "Usuario eliminado correctamente"));
     }
 
@@ -320,19 +324,25 @@ public class UsuarioController {
         String role = jwtTokenProvider.getRoleFromToken(token);
 
         if (tokenUserId == null || (!tokenUserId.equals(id) && !"ADMIN".equals(role))) {
-            throw new BadRequestException("No autorizado para cambiar esta contraseña");
+            throw new BadRequestException("No autorizado para cambiar esta contrase\u00f1a");
         }
         String nuevaPassword = body.get("password");
         if (nuevaPassword == null || nuevaPassword.trim().isEmpty()) {
-            throw new BadRequestException("La nueva contraseña es obligatoria");
+            throw new BadRequestException("La nueva contrase\u00f1a es obligatoria");
+        }
+        if (nuevaPassword.length() < 6 || nuevaPassword.length() > 20) {
+            throw new BadRequestException("La nueva contrase\u00f1a debe tener entre 6 y 20 caracteres");
         }
 
-        boolean actualizado = usuarioService.cambiarPassword(id, nuevaPassword);
+        String currentPassword = body.getOrDefault("currentPassword", body.get("passwordActual"));
+        boolean isAdminOverrideOtherUser = "ADMIN".equals(role) && !tokenUserId.equals(id);
+
+        boolean actualizado = usuarioService.cambiarPassword(id, currentPassword, nuevaPassword, isAdminOverrideOtherUser);
         if (!actualizado) {
             throw new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO);
         }
 
-        return ResponseEntity.ok(ApiResponse.success(true, "Contraseña cambiada correctamente"));
+        return ResponseEntity.ok(ApiResponse.success(true, "Contrase\u00f1a cambiada correctamente"));
     }
 
     private String obtenerIP(HttpServletRequest request) {
@@ -360,3 +370,4 @@ public class UsuarioController {
         return null;
     }
 }
+

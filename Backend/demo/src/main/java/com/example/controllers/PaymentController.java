@@ -19,7 +19,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/payments")
-@CrossOrigin(origins = "http://localhost:4200")
 public class PaymentController {
 
     private static final String MSG_NOT_FOUND = "Pago no encontrado";

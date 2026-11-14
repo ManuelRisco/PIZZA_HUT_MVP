@@ -14,11 +14,14 @@ public class UsuarioDTO {
     private LocalDateTime lastLogin;
     private Integer loginAttempts;
     private LocalDateTime lockedUntil;
+    private Boolean googleLinked;
+    private String authProvider;
+    private Boolean passwordSet;
 
-    // Constructor vac\u00edo
+    // Constructor vacio
     public UsuarioDTO() {}
 
-    // Constructor desde entidad (sin informaci\u00f3n sensible)
+    // Constructor desde entidad (sin informacion sensible)
     public UsuarioDTO(Usuario usuario) {
         this.id = usuario.getId();
         this.email = usuario.getEmail();
@@ -30,6 +33,9 @@ public class UsuarioDTO {
         this.lastLogin = usuario.getLastLogin();
         this.loginAttempts = usuario.getLoginAttempts();
         this.lockedUntil = usuario.getLockedUntil();
+        this.googleLinked = Boolean.TRUE.equals(usuario.getGoogleLinked());
+        this.authProvider = usuario.getAuthProvider() != null ? usuario.getAuthProvider() : "LOCAL";
+        this.passwordSet = usuario.getPasswordSet() == null ? true : usuario.getPasswordSet();
     }
 
     // Getters y setters
@@ -62,4 +68,13 @@ public class UsuarioDTO {
     
     public LocalDateTime getLockedUntil() { return lockedUntil; }
     public void setLockedUntil(LocalDateTime lockedUntil) { this.lockedUntil = lockedUntil; }
+
+    public Boolean getGoogleLinked() { return googleLinked; }
+    public void setGoogleLinked(Boolean googleLinked) { this.googleLinked = googleLinked; }
+
+    public String getAuthProvider() { return authProvider; }
+    public void setAuthProvider(String authProvider) { this.authProvider = authProvider; }
+
+    public Boolean getPasswordSet() { return passwordSet; }
+    public void setPasswordSet(Boolean passwordSet) { this.passwordSet = passwordSet; }
 }

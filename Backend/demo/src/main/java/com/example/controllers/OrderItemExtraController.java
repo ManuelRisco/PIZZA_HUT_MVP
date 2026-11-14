@@ -20,7 +20,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/order-item-extras")
-@CrossOrigin(origins = "http://localhost:4200")
 public class OrderItemExtraController {
 
     private final OrderItemExtraService orderItemExtraService;

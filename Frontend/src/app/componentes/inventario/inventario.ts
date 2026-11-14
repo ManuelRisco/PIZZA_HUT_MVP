@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { finalize, forkJoin } from 'rxjs';
+import { catchError, finalize, forkJoin, of } from 'rxjs';
 import { InventoryService } from '../../services/inventory.service';
 import { IngredientService } from '../../services/ingredient.service';
 import { ExtraService, Extra } from '../../services/extra.service';
@@ -10,9 +10,11 @@ import { PaginationComponent } from '../pagination/pagination';
 import {
   IngredientDTO,
   InventorySummaryDTO,
+  StockAlertBatchStatusDTO,
   StockAlertItemDTO,
   StockMovementDTO,
-  StockOperationRequestDTO
+  StockOperationRequestDTO,
+  TriggerStockAlertDTO
 } from '../../models/admin.interface';
 
 interface UnifiedStockRow {
@@ -35,11 +37,14 @@ interface UnifiedStockRow {
   templateUrl: './inventario.html',
   styleUrls: ['./inventario.css']
 })
-export class InventarioComponent implements OnInit {
+export class InventarioComponent implements OnInit, OnDestroy {
+  private static readonly ACK_SENT_AT_KEY = 'pizzahut_ack_stock_alert_sent_at';
+
   activeTab: 'alertas' | 'existencias' | 'kardex' = 'alertas';
   loading = false;
   loadingMovements = false;
   savingOperation = false;
+  sendingBatchNow = false;
   errorMessage = '';
   hasLoadedOnce = false;
 
@@ -54,16 +59,25 @@ export class InventarioComponent implements OnInit {
     alerts: []
   };
 
+  batchStatus: StockAlertBatchStatusDTO = this.crearBatchStatusPorDefecto();
+  activeAlertMailMap: Map<string, TriggerStockAlertDTO> = new Map();
+  showSentBanner = false;
+  lastDispatchedBatchCount = 0;
+
+  private batchCountdownInterval: ReturnType<typeof setInterval> | null = null;
+  private sentBannerTimeout: ReturnType<typeof setTimeout> | null = null;
+  private zeroCountdownPollTicks = 0;
+
   ingredientes: IngredientDTO[] = [];
   extras: Extra[] = [];
   unifiedStock: UnifiedStockRow[] = [];
 
-  // Paginación Tab 1: Alertas (cacheada)
+  // Paginacion Tab 1: Alertas (cacheada)
   alertsPage = 1;
   alertsPerPage = 10;
   paginatedAlertsList: StockAlertItemDTO[] = [];
 
-  // Filtros y Paginación Tab 2: Existencias (cacheadas)
+  // Filtros y Paginacion Tab 2: Existencias (cacheadas)
   stockTypeFilter: 'TODOS' | 'INGREDIENT' | 'EXTRA' = 'TODOS';
   stockStatusFilter: 'TODOS' | 'OK' | 'LOW_STOCK' | 'OUT_OF_STOCK' = 'TODOS';
   stockSearch = '';
@@ -72,7 +86,7 @@ export class InventarioComponent implements OnInit {
   filteredStockList: UnifiedStockRow[] = [];
   paginatedStockList: UnifiedStockRow[] = [];
 
-  // Filtros y Paginación Tab 3: Kardex (cacheados)
+  // Filtros y Paginacion Tab 3: Kardex (cacheados)
   movements: StockMovementDTO[] = [];
   kardexItemType: 'TODOS' | 'INGREDIENT' | 'EXTRA' = 'TODOS';
   kardexMovementType: 'TODOS' | 'PURCHASE' | 'SALE' | 'LOSS' | 'ADJUSTMENT' | 'RETURN' = 'TODOS';
@@ -83,7 +97,7 @@ export class InventarioComponent implements OnInit {
   filteredMovementsList: StockMovementDTO[] = [];
   paginatedMovementsList: StockMovementDTO[] = [];
 
-  // Modal Operación Rápida (Reabastecer / Ajuste Físico)
+  // Modal Operacion Rapida (Reabastecer / Ajuste Fisico)
   showOperationModal = false;
   operationMode: 'RESTOCK' | 'ADJUST' = 'RESTOCK';
   operationForm: {
@@ -113,10 +127,209 @@ export class InventarioComponent implements OnInit {
     this.recargarTodo();
   }
 
+  ngOnDestroy(): void {
+    this.clearBatchTimers();
+    this.clearSentBannerTimer();
+  }
+
+  private crearBatchStatusPorDefecto(): StockAlertBatchStatusDTO {
+    return {
+      mailOperational: false,
+      batchWindowSeconds: 60,
+      pendingBatchCount: 0,
+      secondsRemaining: 0,
+      notifiedActiveCount: 0,
+      lastSentAt: null,
+      lastRecipients: null,
+      activeAlerts: []
+    };
+  }
+
+  private clearBatchTimers(): void {
+    if (this.batchCountdownInterval !== null) {
+      clearInterval(this.batchCountdownInterval);
+      this.batchCountdownInterval = null;
+    }
+    this.zeroCountdownPollTicks = 0;
+  }
+
+  private clearSentBannerTimer(): void {
+    if (this.sentBannerTimeout !== null) {
+      clearTimeout(this.sentBannerTimeout);
+      this.sentBannerTimeout = null;
+    }
+  }
+
+  private mostrarBannerCorreoTemporal(count: number, sentAtKey?: string | null): void {
+    this.lastDispatchedBatchCount = Math.max(1, count);
+    this.showSentBanner = true;
+    if (sentAtKey) {
+      try {
+        sessionStorage.setItem(InventarioComponent.ACK_SENT_AT_KEY, sentAtKey);
+      } catch {
+        // Ignorar si sessionStorage no esta disponible
+      }
+    }
+    this.clearSentBannerTimer();
+    this.sentBannerTimeout = setTimeout(() => {
+      this.showSentBanner = false;
+      this.sentBannerTimeout = null;
+    }, 8000);
+  }
+
+  cerrarBannerCorreoEnviado(): void {
+    this.clearSentBannerTimer();
+    this.showSentBanner = false;
+  }
+
+  private aplicarBatchStatus(
+    nextStatus: StockAlertBatchStatusDTO | null | undefined,
+    emitToastWhenDispatched = false
+  ): void {
+    const prevPending = this.batchStatus?.pendingBatchCount ?? 0;
+    const prevNotified = this.batchStatus?.notifiedActiveCount ?? 0;
+
+    const normalized: StockAlertBatchStatusDTO = {
+      ...this.crearBatchStatusPorDefecto(),
+      ...(nextStatus || {}),
+      activeAlerts: Array.isArray(nextStatus?.activeAlerts) ? nextStatus!.activeAlerts : []
+    };
+
+    this.batchStatus = normalized;
+    this.activeAlertMailMap.clear();
+    for (const alert of normalized.activeAlerts) {
+      this.activeAlertMailMap.set(`${alert.itemType}:${alert.itemId}`, alert);
+    }
+
+    if (normalized.pendingBatchCount > 0) {
+      this.cerrarBannerCorreoEnviado();
+    } else if (
+      emitToastWhenDispatched &&
+      prevPending > 0 &&
+      normalized.notifiedActiveCount > prevNotified
+    ) {
+      const newlyNotified = Math.max(1, normalized.notifiedActiveCount - prevNotified);
+      const recipientsText = normalized.lastRecipients
+        ? ` a ${normalized.lastRecipients}`
+        : ' a los administradores';
+      this.toastService.showSuccess(
+        `\u00a1Se envi\u00f3 el correo consolidado de alerta de stock (${newlyNotified} producto(s))${recipientsText}!`
+      );
+      this.mostrarBannerCorreoTemporal(newlyNotified, normalized.lastSentAt);
+    } else if (normalized.lastSentAt && normalized.notifiedActiveCount > 0) {
+      let alreadyAck = false;
+      try {
+        alreadyAck = sessionStorage.getItem(InventarioComponent.ACK_SENT_AT_KEY) === normalized.lastSentAt;
+      } catch {
+        alreadyAck = true;
+      }
+      if (!alreadyAck) {
+        const sentMs = Date.parse(normalized.lastSentAt);
+        if (!Number.isNaN(sentMs) && Math.abs(Date.now() - sentMs) <= 30000) {
+          this.mostrarBannerCorreoTemporal(normalized.notifiedActiveCount, normalized.lastSentAt);
+        } else {
+          try {
+            sessionStorage.setItem(InventarioComponent.ACK_SENT_AT_KEY, normalized.lastSentAt);
+          } catch {
+            // Ignorar
+          }
+        }
+      }
+    }
+
+    this.syncBatchCountdownTimer();
+  }
+
+  private syncBatchCountdownTimer(): void {
+    if (this.batchStatus.pendingBatchCount <= 0) {
+      this.clearBatchTimers();
+      return;
+    }
+
+    if (this.batchCountdownInterval !== null) {
+      return;
+    }
+
+    this.zeroCountdownPollTicks = 0;
+    this.batchCountdownInterval = setInterval(() => {
+      if (this.batchStatus.pendingBatchCount <= 0) {
+        this.clearBatchTimers();
+        return;
+      }
+
+      if (this.batchStatus.secondsRemaining > 0) {
+        this.batchStatus.secondsRemaining = Math.max(0, this.batchStatus.secondsRemaining - 1);
+        this.zeroCountdownPollTicks = 0;
+        return;
+      }
+
+      if (!this.batchStatus.mailOperational) {
+        this.clearBatchTimers();
+        return;
+      }
+
+      this.zeroCountdownPollTicks += 1;
+      if (this.zeroCountdownPollTicks % 4 === 2) {
+        this.cargarEstadoNotificaciones(true);
+      }
+      if (this.zeroCountdownPollTicks >= 20) {
+        this.clearBatchTimers();
+      }
+    }, 1000);
+  }
+
+  cargarEstadoNotificaciones(emitToastWhenDispatched = false): void {
+    this.inventoryService
+      .obtenerEstadoNotificacionesAlertas()
+      .pipe(catchError(() => of(null)))
+      .subscribe((status) => {
+        if (status) {
+          this.aplicarBatchStatus(status, emitToastWhenDispatched);
+        }
+      });
+  }
+
+  enviarLoteCorreoAhora(): void {
+    if (this.sendingBatchNow) return;
+    this.sendingBatchNow = true;
+    this.inventoryService
+      .despacharAlertasPendientesCorreo()
+      .pipe(finalize(() => (this.sendingBatchNow = false)))
+      .subscribe({
+        next: (res) => {
+          if (res.dispatchedCount > 0) {
+            this.toastService.showSuccess(
+              res.message ||
+                `\u00a1Se envi\u00f3 el correo consolidado (${res.dispatchedCount} producto(s) en alerta)!`
+            );
+            this.mostrarBannerCorreoTemporal(res.dispatchedCount, new Date().toISOString());
+          } else if (!this.batchStatus.mailOperational) {
+            this.toastService.showWarning(
+              'El env\u00edo SMTP a\u00fan no est\u00e1 operativo. Verifica las credenciales de Gmail en el archivo .env.'
+            );
+          } else {
+            this.toastService.showInfo(
+              res.message || 'No hay alertas pendientes de env\u00edo en este momento.'
+            );
+          }
+          this.cargarEstadoNotificaciones(false);
+        },
+        error: (err) => {
+          this.toastService.showError(
+            this.resolverMensajeError(err, 'No se pudo enviar el lote consolidado de alertas.')
+          );
+        }
+      });
+  }
+
+  getMailAlertFor(alert: StockAlertItemDTO): TriggerStockAlertDTO | undefined {
+    return this.activeAlertMailMap.get(`${alert.itemType}:${alert.itemId}`);
+  }
+
   private resolverMensajeError(err: unknown, fallback: string): string {
     const httpErr = err as { status?: number; error?: { message?: string } };
     if (httpErr?.status === 0) {
-      return 'No hay conexión con el servidor (Backend desconectado). Verifique que el servicio esté activo.';
+      return 'No hay conexi\u00f3n con el servidor (Backend desconectado). Verifique que el servicio est\u00e9 activo.';
     }
     return httpErr?.error?.message || fallback;
   }
@@ -137,11 +350,14 @@ export class InventarioComponent implements OnInit {
         this.kardexItemType,
         this.kardexMovementType,
         this.kardexLimit
-      )
+      ),
+      batchStatus: this.inventoryService
+        .obtenerEstadoNotificacionesAlertas()
+        .pipe(catchError(() => of(this.crearBatchStatusPorDefecto())))
     })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: ({ summary, ingredientes, extras, movements }) => {
+        next: ({ summary, ingredientes, extras, movements, batchStatus }) => {
           this.summary = summary || {
             totalInventoryValue: 0,
             ingredientsInventoryValue: 0,
@@ -160,6 +376,7 @@ export class InventarioComponent implements OnInit {
           this.movements = movements || [];
           this.hasLoadedOnce = true;
 
+          this.aplicarBatchStatus(batchStatus, false);
           this.recalcularAlertas();
           this.reconstruirExistenciasUnificadas();
           this.recalcularMovimientos();
@@ -186,7 +403,7 @@ export class InventarioComponent implements OnInit {
       error: (err) => {
         this.errorMessage = this.resolverMensajeError(
           err,
-          'Error al actualizar los catálogos de ingredientes y extras.'
+          'Error al actualizar los cat\u00e1logos de ingredientes y extras.'
         );
       }
     });
@@ -227,7 +444,7 @@ export class InventarioComponent implements OnInit {
         itemType: 'EXTRA',
         itemId: ext.id,
         name: ext.name,
-        categoryLabel: `Extra · ${ext.category}`,
+        categoryLabel: `Extra \u00b7 ${ext.category}`,
         unit: 'und',
         stockQuantity: stock,
         minStock: min,
@@ -269,7 +486,7 @@ export class InventarioComponent implements OnInit {
       });
   }
 
-  // ==================== RECÁLCULOS CACHEADOS ====================
+  // ==================== RECALCULOS CACHEADOS ====================
   recalcularAlertas(): void {
     const alerts = this.summary?.alerts || [];
     const totalPages = Math.max(1, Math.ceil(alerts.length / this.alertsPerPage));
@@ -415,7 +632,7 @@ export class InventarioComponent implements OnInit {
         unitCost: preset.unitCost !== undefined ? Number(preset.unitCost) : null,
         minStock: preset.minStock !== undefined ? Number(preset.minStock) : null,
         reason:
-          mode === 'RESTOCK' ? 'Compra / reposición de almacén' : 'Conteo físico de inventario'
+          mode === 'RESTOCK' ? 'Compra / reposici\u00f3n de almac\u00e9n' : 'Conteo f\u00edsico de inventario'
       };
     } else {
       const firstIng = this.ingredientes[0];
@@ -426,7 +643,7 @@ export class InventarioComponent implements OnInit {
         unitCost: firstIng?.unitCost !== undefined ? Number(firstIng.unitCost) : null,
         minStock: firstIng?.minStock !== undefined ? Number(firstIng.minStock) : null,
         reason:
-          mode === 'RESTOCK' ? 'Compra / reposición de almacén' : 'Conteo físico de inventario'
+          mode === 'RESTOCK' ? 'Compra / reposici\u00f3n de almac\u00e9n' : 'Conteo f\u00edsico de inventario'
       };
     }
     this.showOperationModal = true;
@@ -533,9 +750,17 @@ export class InventarioComponent implements OnInit {
       return;
     }
     if (this.operationMode === 'ADJUST' && (Number.isNaN(qty) || qty < 0)) {
-      this.toastService.showWarning('El conteo físico no puede ser negativo.');
+      this.toastService.showWarning('El conteo f\u00edsico no puede ser negativo.');
       return;
     }
+
+    const itemKey = `${this.operationForm.itemType}:${Number(this.operationForm.itemId)}`;
+    const activeMailAlert = this.activeAlertMailMap.get(itemKey);
+    const effectiveMinStock =
+      this.operationForm.minStock !== null && this.operationForm.minStock !== undefined
+        ? Number(this.operationForm.minStock)
+        : Number(this.selectedCatalogItem?.minStock ?? 0);
+    const projectedStock = this.projectedStockAfterOperation;
 
     const payload: StockOperationRequestDTO = {
       itemType: this.operationForm.itemType,
@@ -555,16 +780,26 @@ export class InventarioComponent implements OnInit {
     obs.pipe(finalize(() => (this.savingOperation = false))).subscribe({
       next: () => {
         this.showOperationModal = false;
-        this.toastService.showSuccess(
-          this.operationMode === 'RESTOCK'
-            ? 'Stock reabastecido y registrado en Kardex'
-            : 'Ajuste físico aplicado y registrado en Kardex'
-        );
+        if (this.operationMode === 'RESTOCK') {
+          if (activeMailAlert && projectedStock > effectiveMinStock && projectedStock > 0) {
+            this.toastService.showSuccess(
+              'Stock reabastecido sobre el m\u00ednimo \u00b7 Alerta de correo restablecida'
+            );
+          } else if (activeMailAlert?.emailSent && projectedStock <= effectiveMinStock) {
+            this.toastService.showInfo(
+              'Stock actualizado (sigue \u2264 m\u00ednimo: no se reenviar\u00e1 correo duplicado)'
+            );
+          } else {
+            this.toastService.showSuccess('Stock reabastecido y registrado en Kardex');
+          }
+        } else {
+          this.toastService.showSuccess('Ajuste f\u00edsico aplicado y registrado en Kardex');
+        }
         this.recargarTodo();
       },
       error: (err) => {
         this.toastService.showError(
-          this.resolverMensajeError(err, 'No se pudo aplicar la operación de inventario.')
+          this.resolverMensajeError(err, 'No se pudo aplicar la operaci\u00f3n de inventario.')
         );
       }
     });
@@ -577,11 +812,11 @@ export class InventarioComponent implements OnInit {
       case 'SALE':
         return 'Venta Pedido';
       case 'LOSS':
-        return 'Merma / Pérdida';
+        return 'Merma / P\u00e9rdida';
       case 'ADJUSTMENT':
-        return 'Ajuste Físico';
+        return 'Ajuste F\u00edsico';
       case 'RETURN':
-        return 'Devolución';
+        return 'Devoluci\u00f3n';
       default:
         return type;
     }
@@ -604,3 +839,4 @@ export class InventarioComponent implements OnInit {
     }
   }
 }
+

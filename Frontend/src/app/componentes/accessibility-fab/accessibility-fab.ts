@@ -1,6 +1,6 @@
 import { Component, OnInit, HostListener, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { AccessibilityService } from '../../services/accessibility.service';
+import { AccessibilityService, ColorblindMode, FontSizeMode } from '../../services/accessibility.service';
 
 @Component({
   selector: 'app-accessibility-fab',
@@ -12,10 +12,13 @@ import { AccessibilityService } from '../../services/accessibility.service';
 export class AccessibilityFabComponent implements OnInit {
   isPanelOpen: boolean = false;
 
+  readonly colorblindModes: ColorblindMode[] = ['none', 'protanopia', 'deuteranopia', 'tritanopia'];
+  readonly fontSizes: FontSizeMode[] = ['pequena', 'normal', 'grande', 'extra-grande'];
+
   // Estados de accesibilidad
   contrasteAlto: boolean = false;
-  modoColorblind: 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' = 'none';
-  tamanoFuente: 'pequena' | 'normal' | 'grande' | 'extra-grande' = 'normal';
+  modoColorblind: ColorblindMode = 'none';
+  tamanoFuente: FontSizeMode = 'normal';
   modoDislexia: boolean = false;
   reducirMovimiento: boolean = false;
 
@@ -58,54 +61,35 @@ export class AccessibilityFabComponent implements OnInit {
   // ===== ACCESIBILIDAD =====
 
   cargarEstadosAccesibilidad(): void {
-    if (typeof window !== 'undefined') {
-      this.contrasteAlto = (window as any).getEstadoContraste?.() || false;
-      this.modoColorblind = ((window as any).getColorblindMode?.() || 'none') as any;
-      this.tamanoFuente = ((window as any).getFontSize?.() || 'normal') as any;
-      this.modoDislexia = (window as any).getDyslexiaMode?.() || false;
-      this.reducirMovimiento = (window as any).getReduceMotion?.() || false;
-    }
+    this.contrasteAlto = this.accessibilityService.getHighContrast();
+    this.modoColorblind = this.accessibilityService.getColorblindMode();
+    this.tamanoFuente = this.accessibilityService.getFontSize();
+    this.modoDislexia = this.accessibilityService.getDyslexiaMode();
+    this.reducirMovimiento = this.accessibilityService.getReduceMotion();
   }
 
   toggleAltoContraste(): void {
-    if (typeof window !== 'undefined' && (window as any).toggleAltoContraste) {
-      (window as any).toggleAltoContraste();
-      this.contrasteAlto = (window as any).getEstadoContraste();
-      const estado = this.contrasteAlto ? 'activado' : 'desactivado';
-      this.accessibilityService.announce(`Alto contraste ${estado}`, 'polite');
-    }
+    this.contrasteAlto = this.accessibilityService.toggleHighContrast();
   }
 
-  setColorblindMode(mode: 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia'): void {
-    if (typeof window !== 'undefined' && (window as any).setColorblindMode) {
-      (window as any).setColorblindMode(mode);
-      this.modoColorblind = mode;
-      this.accessibilityService.setColorblindMode(mode);
-    }
+  setColorblindMode(mode: ColorblindMode): void {
+    this.modoColorblind = mode;
+    this.accessibilityService.setColorblindMode(mode);
   }
 
-  setFontSize(size: 'pequena' | 'normal' | 'grande' | 'extra-grande'): void {
-    if (typeof window !== 'undefined' && (window as any).setFontSize) {
-      (window as any).setFontSize(size);
-      this.tamanoFuente = size;
-      this.accessibilityService.setFontSize(size);
-    }
+  setFontSize(size: FontSizeMode): void {
+    this.tamanoFuente = size;
+    this.accessibilityService.setFontSize(size);
   }
 
   toggleDyslexiaMode(): void {
-    if (typeof window !== 'undefined' && (window as any).toggleDyslexiaMode) {
-      (window as any).toggleDyslexiaMode();
-      this.modoDislexia = (window as any).getDyslexiaMode();
-      this.accessibilityService.setDyslexiaMode(this.modoDislexia);
-    }
+    this.modoDislexia = !this.modoDislexia;
+    this.accessibilityService.setDyslexiaMode(this.modoDislexia);
   }
 
   toggleReduceMotion(): void {
-    if (typeof window !== 'undefined' && (window as any).toggleReduceMotion) {
-      (window as any).toggleReduceMotion();
-      this.reducirMovimiento = (window as any).getReduceMotion();
-      this.accessibilityService.setReduceMotion(this.reducirMovimiento);
-    }
+    this.reducirMovimiento = !this.reducirMovimiento;
+    this.accessibilityService.setReduceMotion(this.reducirMovimiento);
   }
 
   toggleGuia(): void {
@@ -118,24 +102,23 @@ export class AccessibilityFabComponent implements OnInit {
 
   // ===== LABELS =====
 
-  getColorblindLabel(mode: string): string {
-    const labels: { [key: string]: string } = {
+  getColorblindLabel(mode: ColorblindMode): string {
+    const labels: Record<ColorblindMode, string> = {
       'none': 'Sin filtro',
       'protanopia': 'Protanopia (Rojo-Verde)',
       'deuteranopia': 'Deuteranopia (Rojo-Verde)',
       'tritanopia': 'Tritanopia (Azul-Amarillo)'
     };
-    return labels[mode] || mode;
+    return labels[mode];
   }
 
-  getFontSizeLabel(size: string): string {
-    const labels: { [key: string]: string } = {
+  getFontSizeLabel(size: FontSizeMode): string {
+    const labels: Record<FontSizeMode, string> = {
       'pequena': 'Pequeña (90%)',
       'normal': 'Normal',
       'grande': 'Grande (125%)',
       'extra-grande': 'Extra Grande (150%)'
     };
-    return labels[size] || size;
+    return labels[size];
   }
 }
-

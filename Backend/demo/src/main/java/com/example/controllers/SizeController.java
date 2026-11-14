@@ -16,7 +16,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/sizes")
-@CrossOrigin(origins = "http://localhost:4200")
 public class SizeController {
 
     private static final String MSG_KEY = "message";

@@ -652,19 +652,3 @@
     display: block;
   }
 }
-
-/* =========================================================================
-   ALTO CONTRASTE (HIGH CONTRAST MODE)
-   ========================================================================= */
-
-
-:host-context(html[data-contraste="alto"]) .cart-badge {
-  border-color: #000000 !important;
-  background: #000 !important;
-}
-
-:host-context(html[data-contraste="alto"]) .user-avatar {
-  background: #000 !important;
-  color: #ffffff !important;
-  border: 2px solid #ffffff !important;
-}

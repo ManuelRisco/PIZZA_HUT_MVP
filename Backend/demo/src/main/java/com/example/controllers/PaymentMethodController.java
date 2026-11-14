@@ -16,7 +16,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/payment-methods")
-@CrossOrigin(origins = "http://localhost:4200")
 public class PaymentMethodController {
 
     private static final String MSG_KEY = "message";

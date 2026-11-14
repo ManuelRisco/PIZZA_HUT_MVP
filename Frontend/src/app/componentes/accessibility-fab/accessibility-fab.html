@@ -46,9 +46,10 @@
         </div>
         <div class="option-grid" role="radiogroup" aria-label="Filtros para daltonismo">
           <button
-            *ngFor="let mode of ['none', 'protanopia', 'deuteranopia', 'tritanopia']"
+            *ngFor="let mode of colorblindModes"
             class="chip-option"
-            (click)="setColorblindMode($any(mode))"
+            role="radio"
+            (click)="setColorblindMode(mode)"
             [class.active]="modoColorblind === mode"
             [attr.aria-checked]="modoColorblind === mode">
             {{ getColorblindLabel(mode) }}
@@ -66,9 +67,10 @@
         </div>
         <div class="font-size-options" role="radiogroup" aria-label="Tamaño de fuente">
           <button
-            *ngFor="let size of ['pequena', 'normal', 'grande', 'extra-grande']"
+            *ngFor="let size of fontSizes"
             class="font-option"
-            (click)="setFontSize($any(size))"
+            role="radio"
+            (click)="setFontSize(size)"
             [class.active]="tamanoFuente === size"
             [attr.aria-checked]="tamanoFuente === size">
             <span class="font-label">{{ getFontSizeLabel(size) }}</span>

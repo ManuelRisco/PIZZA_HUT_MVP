@@ -213,7 +213,16 @@
         </div>
         <div *ngIf="!sidebarCollapsed" class="flex-1 overflow-hidden">
           <p class="text-sm font-bold text-white truncate m-0">{{ currentUser?.name || 'Administrador' }}</p>
-          <p class="text-[11px] text-gray-400 uppercase tracking-wider m-0">{{ currentUser?.role || 'ADMIN' }}</p>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <p class="text-[11px] text-gray-400 uppercase tracking-wider m-0">{{ currentUser?.role || 'ADMIN' }}</p>
+            <span
+              *ngIf="currentUser?.googleLinked || currentUser?.authProvider === 'GOOGLE'"
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[9px] font-bold"
+              title="Sesión vinculada con Google"
+            >
+              <i class="bi bi-google text-[9px]"></i> Google
+            </span>
+          </div>
         </div>
       </div>
       <button
@@ -721,6 +730,60 @@
               (itemsPerPageChange)="onDiaModalPerPageChange($event)"
             ></app-pagination>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Unificado de Confirmación de Cierre de Sesión -->
+  <div
+    *ngIf="mostrarModalLogout"
+    class="fixed inset-0 bg-black/60 z-[6000] flex items-center justify-center p-4 backdrop-blur-xs"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="logout-modal-title-admin"
+  >
+    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-fade-in-up border border-gray-200">
+      <div class="px-6 py-4 bg-gray-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-red-600 flex items-center justify-center text-white">
+            <i class="bi bi-box-arrow-left text-sm"></i>
+          </div>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-widest text-red-400 m-0">Seguridad de Sesión</p>
+            <h3 id="logout-modal-title-admin" class="text-base font-black text-white m-0">Cerrar Sesión</h3>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="cancelarLogout()"
+          class="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors cursor-pointer"
+          aria-label="Cancelar"
+        >
+          <i class="bi bi-x-lg text-xs"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <p class="text-sm text-gray-600 m-0 leading-relaxed">
+          ¿Estás seguro de que deseas cerrar tu sesión de <strong class="text-gray-900">Administrador</strong>? Tendrás que volver a autenticarte para acceder al panel.
+        </p>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button
+            type="button"
+            (click)="cancelarLogout()"
+            class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-sm transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            (click)="confirmarLogout()"
+            class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+          >
+            <i class="bi bi-box-arrow-left"></i> Sí, Cerrar Sesión
+          </button>
         </div>
       </div>
     </div>

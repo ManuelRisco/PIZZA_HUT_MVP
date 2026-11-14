@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { LoginDTO } from '../../models/usuario.interface';
 
-import { CommonModule } from '@angular/common';
+declare const google: any;
 
 interface ValidationError {
   field: string;
@@ -24,7 +24,7 @@ interface ValidationError {
   templateUrl: './join.html',
   styleUrls: ['./join.css']
 })
-export class Join {
+export class Join implements OnInit {
 
   usuario: LoginDTO = {
     email: '',
@@ -32,10 +32,34 @@ export class Join {
   };
 
   loginError: string = '';
+  loginSuccess: string = '';
   fieldErrors: { [key: string]: string } = {};
   loading = false;
   serverError = false;
   showPassword = false;
+
+  // Google Sign-In state
+  googleLoading = false;
+  googleClientId = '';
+  googleCloudConfigured = false;
+  showGoogleModal = false;
+  googleEmail = '';
+  googleName = '';
+  googleModalError = '';
+
+  // Password Recovery state
+  showRecoveryModal = false;
+  recoveryStep: 1 | 2 = 1;
+  recoveryEmail = '';
+  recoveryMaskedEmail = '';
+  recoveryCode = '';
+  recoveryNewPassword = '';
+  recoveryConfirmPassword = '';
+  showRecoveryPassword = false;
+  showRecoveryConfirmPassword = false;
+  recoveryLoading = false;
+  recoveryError = '';
+  recoveryInfoMessage = '';
 
   constructor(
     private readonly authService: AuthService,
@@ -48,44 +72,69 @@ export class Join {
     }
   }
 
-  // Mismo criterio que el registro y que el backend: un correo válido, hasta 255.
+  ngOnInit(): void {
+    this.authService.obtenerConfiguracionGoogle().subscribe({
+      next: (cfg) => {
+        if (cfg) {
+          this.googleClientId = cfg.clientId || '';
+          this.googleCloudConfigured = !!cfg.googleCloudConfigured;
+          if (this.googleCloudConfigured && this.googleClientId) {
+            this.loadGoogleGsiScript();
+          }
+        }
+      },
+      error: () => {
+        // Fallback silencioso a selector interactivo de cuenta Google
+      }
+    });
+  }
+
+  private loadGoogleGsiScript(): void {
+    if (document.getElementById('google-gsi-client-script')) {
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = 'google-gsi-client-script';
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }
+
   isValidEmail(email: string): boolean {
     const value = email.trim();
     const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
     return emailRegex.test(value) && value.length <= 255;
   }
 
-  // Validar contraseña (mínimo 6, máximo 20 caracteres)
   isValidPassword(password: string): boolean {
     return password.length >= 6 && password.length <= 20;
   }
 
-  // Validaciones del formulario
   validateForm(): ValidationError[] {
     const errors: ValidationError[] = [];
     this.fieldErrors = {};
 
-    // Validar email
     if (!this.usuario.email || this.usuario.email.trim() === '') {
-      errors.push({ field: 'email', message: 'Complete el campo correo electrónico.', code: 'CP02' });
-      this.fieldErrors['email'] = 'Correo electrónico requerido';
+      errors.push({ field: 'email', message: 'Complete el campo correo electr\u00f3nico.', code: 'CP02' });
+      this.fieldErrors['email'] = 'Correo electr\u00f3nico requerido';
     } else if (!this.isValidEmail(this.usuario.email)) {
-      errors.push({ field: 'email', message: 'Ingrese un correo electrónico válido.', code: 'CP03' });
-      this.fieldErrors['email'] = 'Ingrese un correo electrónico válido';
+      errors.push({ field: 'email', message: 'Ingrese un correo electr\u00f3nico v\u00e1lido.', code: 'CP03' });
+      this.fieldErrors['email'] = 'Ingrese un correo electr\u00f3nico v\u00e1lido';
     }
-    // Validar contraseña
+
     if (!this.usuario.password || this.usuario.password.trim() === '') {
-      errors.push({ field: 'password', message: 'Complete el campo contraseña.', code: 'CP06' });
-      this.fieldErrors['password'] = 'Contraseña requerida';
+      errors.push({ field: 'password', message: 'Complete el campo contrase\u00f1a.', code: 'CP06' });
+      this.fieldErrors['password'] = 'Contrase\u00f1a requerida';
     } else if (!this.isValidPassword(this.usuario.password)) {
-      errors.push({ field: 'password', message: 'La contraseña debe tener entre 6 y 20 caracteres.', code: 'CP07' });
-      this.fieldErrors['password'] = 'Contraseña debe tener entre 6 y 20 caracteres';
+      errors.push({ field: 'password', message: 'La contrase\u00f1a debe tener entre 6 y 20 caracteres.', code: 'CP07' });
+      this.fieldErrors['password'] = 'Contrase\u00f1a debe tener entre 6 y 20 caracteres';
     }
 
     return errors;
   }
 
-  onLogin(event: Event) {
+  onLogin(event: Event): void {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
     const emailInput = form.querySelector<HTMLInputElement>('#email');
@@ -97,10 +146,10 @@ export class Join {
       this.usuario.password = passwordInput.value;
     }
     this.loginError = '';
+    this.loginSuccess = '';
     this.serverError = false;
     this.fieldErrors = {};
 
-    // Validar formulario
     const validationErrors = this.validateForm();
     if (validationErrors.length > 0) {
       this.loginError = validationErrors[0].message;
@@ -112,58 +161,214 @@ export class Join {
     this.authService.login(this.usuario.email.toLowerCase().trim(), this.usuario.password).subscribe({
       next: (response) => {
         this.loading = false;
-
-        // Validar rol asignado (CP10)
-        if (!response.usuario.role || (response.usuario.role !== 'ADMIN' && response.usuario.role !== 'CUSTOMER')) {
-          this.loginError = 'Usuario sin rol asignado. Contacte al administrador.';
-          return;
-        }
-
-        // Redirigir según el rol del usuario en la respuesta (CP08, CP09)
-        if (response.usuario.role === 'ADMIN') {
-          this.router.navigate(['/panel-admin']);
-        } else if (response.usuario.role === 'CUSTOMER') {
-          this.router.navigate(['/menu']);
-        }
+        this.redirectAfterAuth(response);
       },
       error: (error) => {
         this.loading = false;
-        console.error('Error en login:', error);
-
-        // Distinguir entre errores
         if (!error.status || error.status === 0) {
-          // CP11: Error de servidor o conexión
           this.serverError = true;
-          this.loginError = 'Error de conexión con el servidor. Intente más tarde.';
+          this.loginError = 'Error de conexi\u00f3n con el servidor. Intente m\u00e1s tarde.';
         } else if (error.status === 401) {
-          // CP05: Contraseña incorrecta
-          this.loginError = 'Contraseña incorrecta';
-          this.fieldErrors['password'] = 'Contraseña incorrecta';
+          this.loginError = 'Contrase\u00f1a incorrecta';
+          this.fieldErrors['password'] = 'Contrase\u00f1a incorrecta';
         } else if (error.status === 404) {
-          // CP04: Correo no registrado
           this.loginError = 'El correo no se encuentra registrado en el sistema.';
           this.fieldErrors['email'] = 'Correo no registrado';
         } else if (error.status === 403) {
-          // Usuario bloqueado o sin acceso
           this.loginError = error.error?.message || 'Acceso denegado. Su cuenta puede estar bloqueada.';
         } else {
-          this.loginError = error.error?.message || 'Correo o contraseña incorrectos';
+          this.loginError = error.error?.message || 'Correo o contrase\u00f1a incorrectos';
         }
       }
     });
   }
 
-  // Limpiar error cuando el usuario empieza a escribir
-  onEmailChange() {
+  // ==== INICIO DE SESION CON GOOGLE ====
+  onGoogleSignInClick(): void {
+    this.loginError = '';
+    this.loginSuccess = '';
+
+    if (this.googleCloudConfigured && this.googleClientId && typeof google !== 'undefined' && google?.accounts?.oauth2) {
+      this.googleLoading = true;
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: this.googleClientId,
+        scope: 'openid email profile',
+        callback: (tokenResponse: any) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            this.executeGoogleBackendLogin({ accessToken: tokenResponse.access_token });
+          } else {
+            this.googleLoading = false;
+            this.loginError = 'No se complet\u00f3 la autorizaci\u00f3n con Google.';
+          }
+        },
+        error_callback: () => {
+          this.googleLoading = false;
+        }
+      });
+      tokenClient.requestAccessToken({ prompt: 'select_account' });
+      return;
+    }
+
+    // Selector interactivo de cuenta de Google (entorno local o sin GOOGLE_CLIENT_ID)
+    this.googleEmail = this.usuario.email && this.usuario.email.includes('@') ? this.usuario.email.trim() : '';
+    this.googleName = '';
+    this.googleModalError = '';
+    this.showGoogleModal = true;
+  }
+
+  closeGoogleModal(): void {
+    if (this.googleLoading) return;
+    this.showGoogleModal = false;
+    this.googleModalError = '';
+  }
+
+  onConfirmGoogleModal(): void {
+    this.googleModalError = '';
+    const cleanEmail = (this.googleEmail || '').trim().toLowerCase();
+    if (!cleanEmail || !this.isValidEmail(cleanEmail)) {
+      this.googleModalError = 'Ingrese un correo de Google v\u00e1lido (ej: usuario@gmail.com).';
+      return;
+    }
+    const cleanName = (this.googleName || '').trim();
+    this.executeGoogleBackendLogin({
+      email: cleanEmail,
+      name: cleanName
+    });
+  }
+
+  private executeGoogleBackendLogin(payload: { credential?: string; accessToken?: string; email?: string; name?: string }): void {
+    this.googleLoading = true;
+    this.authService.loginConGoogle(payload).subscribe({
+      next: (response) => {
+        this.googleLoading = false;
+        this.showGoogleModal = false;
+        this.redirectAfterAuth(response);
+      },
+      error: (err) => {
+        this.googleLoading = false;
+        const msg = err.error?.message || 'No se pudo iniciar sesi\u00f3n con Google.';
+        if (this.showGoogleModal) {
+          this.googleModalError = msg;
+        } else {
+          this.loginError = msg;
+        }
+      }
+    });
+  }
+
+  private redirectAfterAuth(response: any): void {
+    if (!response?.usuario?.role || (response.usuario.role !== 'ADMIN' && response.usuario.role !== 'CUSTOMER')) {
+      this.loginError = 'Usuario sin rol asignado. Contacte al administrador.';
+      return;
+    }
+    if (response.usuario.role === 'ADMIN') {
+      this.router.navigate(['/panel-admin']);
+    } else {
+      this.router.navigate(['/menu']);
+    }
+  }
+
+  // ==== RECUPERACION DE CONTRASENA ====
+  openRecoveryModal(): void {
+    this.loginError = '';
+    this.loginSuccess = '';
+    this.recoveryEmail = this.usuario.email ? this.usuario.email.trim() : '';
+    this.recoveryMaskedEmail = '';
+    this.recoveryCode = '';
+    this.recoveryNewPassword = '';
+    this.recoveryConfirmPassword = '';
+    this.recoveryError = '';
+    this.recoveryInfoMessage = '';
+    this.recoveryStep = 1;
+    this.showRecoveryModal = true;
+  }
+
+  closeRecoveryModal(): void {
+    if (this.recoveryLoading) return;
+    this.showRecoveryModal = false;
+    this.recoveryError = '';
+  }
+
+  onRequestRecoveryCode(): void {
+    this.recoveryError = '';
+    this.recoveryInfoMessage = '';
+    const cleanEmail = (this.recoveryEmail || '').trim().toLowerCase();
+    if (!cleanEmail || !this.isValidEmail(cleanEmail)) {
+      this.recoveryError = 'Por favor, ingrese un correo electr\u00f3nico v\u00e1lido.';
+      return;
+    }
+
+    this.recoveryLoading = true;
+    this.authService.solicitarRecuperacionPassword(cleanEmail).subscribe({
+      next: (res) => {
+        this.recoveryLoading = false;
+        this.recoveryMaskedEmail = res?.maskedEmail || cleanEmail;
+        this.recoveryInfoMessage = res?.message || ('Enviamos un c\u00f3digo de 6 d\u00edgitos a ' + this.recoveryMaskedEmail);
+        this.recoveryStep = 2;
+      },
+      error: (err) => {
+        this.recoveryLoading = false;
+        this.recoveryError = err.error?.message || 'No se pudo enviar el c\u00f3digo de recuperaci\u00f3n.';
+      }
+    });
+  }
+
+  onResendRecoveryCode(): void {
+    if (this.recoveryLoading) return;
+    this.recoveryCode = '';
+    this.onRequestRecoveryCode();
+  }
+
+  onBackToRecoveryStep1(): void {
+    if (this.recoveryLoading) return;
+    this.recoveryStep = 1;
+    this.recoveryError = '';
+    this.recoveryInfoMessage = '';
+  }
+
+  onConfirmPasswordReset(): void {
+    this.recoveryError = '';
+    const cleanEmail = (this.recoveryEmail || '').trim().toLowerCase();
+    const cleanCode = (this.recoveryCode || '').trim();
+
+    if (!/^\d{6}$/.test(cleanCode)) {
+      this.recoveryError = 'Ingrese el c\u00f3digo de 6 d\u00edgitos enviado a su correo.';
+      return;
+    }
+    if (!this.recoveryNewPassword || !this.isValidPassword(this.recoveryNewPassword)) {
+      this.recoveryError = 'La nueva contrase\u00f1a debe tener entre 6 y 20 caracteres.';
+      return;
+    }
+    if (this.recoveryNewPassword !== this.recoveryConfirmPassword) {
+      this.recoveryError = 'Las contrase\u00f1as no coinciden.';
+      return;
+    }
+
+    this.recoveryLoading = true;
+    this.authService.confirmarRecuperacionPassword(cleanEmail, cleanCode, this.recoveryNewPassword).subscribe({
+      next: (res) => {
+        this.recoveryLoading = false;
+        this.showRecoveryModal = false;
+        this.usuario.email = cleanEmail;
+        this.usuario.password = '';
+        this.loginSuccess = res?.message || '\u00a1Contrase\u00f1a restablecida con \u00e9xito! Ahora puedes iniciar sesi\u00f3n.';
+      },
+      error: (err) => {
+        this.recoveryLoading = false;
+        this.recoveryError = err.error?.message || 'No se pudo restablecer la contrase\u00f1a. Verifique el c\u00f3digo.';
+      }
+    });
+  }
+
+  onEmailChange(): void {
     if (this.fieldErrors['email']) {
       delete this.fieldErrors['email'];
     }
   }
 
-  onPasswordChange() {
+  onPasswordChange(): void {
     if (this.fieldErrors['password']) {
       delete this.fieldErrors['password'];
     }
   }
 }
-

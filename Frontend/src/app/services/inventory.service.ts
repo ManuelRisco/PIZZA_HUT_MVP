@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   InventorySummaryDTO,
+  StockAlertBatchStatusDTO,
   StockAlertItemDTO,
   StockMovementDTO,
   StockOperationRequestDTO
@@ -27,6 +28,21 @@ export class InventoryService {
   obtenerAlertas(): Observable<StockAlertItemDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/alerts`).pipe(
       map(res => (res.data !== undefined ? res.data : res))
+    );
+  }
+
+  obtenerEstadoNotificacionesAlertas(): Observable<StockAlertBatchStatusDTO> {
+    return this.http.get<any>(`${this.apiUrl}/trigger-alerts/status`).pipe(
+      map(res => (res.data !== undefined ? res.data : res))
+    );
+  }
+
+  despacharAlertasPendientesCorreo(): Observable<{ dispatchedCount: number; message?: string }> {
+    return this.http.post<any>(`${this.apiUrl}/trigger-alerts/dispatch`, {}).pipe(
+      map(res => ({
+        dispatchedCount: Number(res?.data?.dispatchedCount ?? res?.dispatchedCount ?? 0),
+        message: res?.message
+      }))
     );
   }
 
@@ -55,4 +71,3 @@ export class InventoryService {
     );
   }
 }
-

@@ -4,7 +4,7 @@
     <div>
       <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel de Cliente</p>
       <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Mi Perfil y Seguridad</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Actualiza tus datos de contacto y credenciales de acceso</p>
+      <p class="text-sm text-gray-500 mt-1 mb-0">Actualiza tus datos de contacto, credenciales de acceso y vinculación con Google</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button
@@ -48,41 +48,79 @@
   }
 
   @if (!loading && usuario) {
-    @if (mensajeExito) {
-      <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-2xl flex items-center gap-3 font-medium text-sm shadow-2xs">
-        <i class="bi bi-check-circle-fill text-emerald-500 text-lg"></i>
-        <span>{{ mensajeExito }}</span>
+    @if (mensajeExito || mensajeSeguridadExito) {
+      <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-2xl flex items-center justify-between gap-3 font-medium text-sm shadow-2xs">
+        <div class="flex items-center gap-3">
+          <i class="bi bi-check-circle-fill text-emerald-500 text-lg"></i>
+          <span>{{ mensajeExito || mensajeSeguridadExito }}</span>
+        </div>
+        <button type="button" (click)="mensajeExito = ''; mensajeSeguridadExito = ''" class="hover:opacity-75 cursor-pointer">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
     }
 
     @if (mensajeError) {
-      <div class="bg-red-50 border border-red-200 text-red-800 px-5 py-3.5 rounded-2xl flex items-center gap-3 font-medium text-sm shadow-2xs">
-        <i class="bi bi-exclamation-triangle-fill text-red-500 text-lg"></i>
-        <span>{{ mensajeError }}</span>
+      <div class="bg-red-50 border border-red-200 text-red-800 px-5 py-3.5 rounded-2xl flex items-center justify-between gap-3 font-medium text-sm shadow-2xs">
+        <div class="flex items-center gap-3">
+          <i class="bi bi-exclamation-triangle-fill text-red-500 text-lg"></i>
+          <span>{{ mensajeError }}</span>
+        </div>
+        <button type="button" (click)="mensajeError = ''" class="hover:opacity-75 cursor-pointer">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
     }
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Left Column: Avatar & Status -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <!-- Left Column: Identity & Account Status (Idéntico a Perfil Admin) -->
       <div class="space-y-6">
         <div class="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm flex flex-col items-center text-center">
-          <div class="w-24 h-24 rounded-full bg-gradient-to-br from-red-600 to-red-800 text-white flex items-center justify-center text-3xl font-black shadow-md mb-4 ring-4 ring-red-50">
+          <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 text-white flex items-center justify-center text-3xl font-black shadow-md mb-4 ring-4 ring-red-50">
             {{ getIniciales() }}
           </div>
-          <h3 class="text-lg font-black text-gray-900 mb-1 truncate max-w-full">{{ usuario?.name }}</h3>
-          <span class="text-xs font-bold text-gray-600 flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-full">
-            <i class="bi bi-person-badge-fill text-red-600"></i> Cliente Registrado
-          </span>
+          <h3 class="text-lg font-black text-gray-900 mb-0.5 truncate max-w-full">{{ usuario?.name }}</h3>
+          <p class="text-xs text-gray-500 font-medium mb-3 truncate max-w-full">{{ usuario?.email }}</p>
+          <div class="flex flex-wrap items-center justify-center gap-2">
+            <span class="text-xs font-bold text-gray-700 flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-full">
+              <i class="bi bi-person-badge-fill text-red-600"></i> Cliente Registrado
+            </span>
+            @if (esCuentaGoogle) {
+              <span class="text-xs font-bold text-blue-700 flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full shadow-2xs">
+                <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.8-5.5 3.8-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.2 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12s4.4 9.8 9.8 9.8c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12z"/>
+                  <path fill="#34A853" d="M3.3 7.4l3.2 2.4C7.4 7.7 9.5 6.1 12 6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.2 14.6 2.2 12 2.2 8.2 2.2 4.9 4.3 3.3 7.4z"/>
+                  <path fill="#FBBC05" d="M12 21.8c2.5 0 4.7-.8 6.3-2.3l-2.9-2.4c-.8.6-1.9 1-3.4 1-2.6 0-4.8-1.7-5.6-4.1l-3.2 2.5c1.6 3.2 4.9 5.3 8.8 5.3z"/>
+                  <path fill="#4285F4" d="M21.4 12.2c0-.6-.1-1.1-.2-1.6H12v3.9h5.5c-.3 1.4-1.1 2.5-2.1 3.2l2.9 2.4c1.7-1.6 3.1-4 3.1-7.9z"/>
+                </svg>
+                Conectado con Google
+              </span>
+            } @else {
+              <span class="text-xs font-bold text-gray-500 flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-full">
+                <i class="bi bi-envelope-check-fill text-gray-500"></i> Acceso con Contraseña
+              </span>
+            }
+          </div>
         </div>
 
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden divide-y divide-gray-100">
+          <div class="p-4 sm:p-5 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-lg shrink-0">
+              <i class="bi bi-person-vcard-fill"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">ID de Usuario</p>
+              <p class="font-bold text-gray-900 text-sm m-0 mt-0.5">#{{ usuario?.id || '---' }}</p>
+            </div>
+          </div>
+
           <div class="p-4 sm:p-5 flex items-center gap-3.5">
             <div class="w-10 h-10 rounded-xl bg-gray-100 text-gray-700 flex items-center justify-center text-lg shrink-0">
               <i class="bi bi-calendar-check-fill"></i>
             </div>
             <div>
               <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Miembro desde</p>
-              <p class="font-bold text-gray-900 text-sm m-0 mt-0.5">{{ usuario?.createdAt ? (usuario.createdAt | date:'dd/MM/yyyy') : 'No disponible' }}</p>
+              <p class="font-bold text-gray-900 text-sm m-0 mt-0.5">{{ usuario?.createdAt ? (usuario.createdAt | date:'dd/MM/yyyy') : 'Reciente' }}</p>
             </div>
           </div>
 
@@ -100,14 +138,58 @@
               </div>
             </div>
           </div>
+
+          <div class="p-4 sm:p-5 flex items-center justify-between gap-3.5">
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
+                   [ngClass]="esCuentaGoogle ? 'bg-blue-50 border border-blue-100' : 'bg-gray-100 text-gray-600'">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.8-5.5 3.8-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.2 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12s4.4 9.8 9.8 9.8c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12z"/>
+                  <path fill="#34A853" d="M3.3 7.4l3.2 2.4C7.4 7.7 9.5 6.1 12 6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.2 14.6 2.2 12 2.2 8.2 2.2 4.9 4.3 3.3 7.4z"/>
+                  <path fill="#FBBC05" d="M12 21.8c2.5 0 4.7-.8 6.3-2.3l-2.9-2.4c-.8.6-1.9 1-3.4 1-2.6 0-4.8-1.7-5.6-4.1l-3.2 2.5c1.6 3.2 4.9 5.3 8.8 5.3z"/>
+                  <path fill="#4285F4" d="M21.4 12.2c0-.6-.1-1.1-.2-1.6H12v3.9h5.5c-.3 1.4-1.1 2.5-2.1 3.2l2.9 2.4c1.7-1.6 3.1-4 3.1-7.9z"/>
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider m-0">Cuenta de Google</p>
+                @if (esCuentaGoogle) {
+                  <div class="flex items-center gap-1.5 mt-0.5">
+                    <span class="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
+                    <p class="font-bold text-sm text-blue-700 m-0 truncate">Vinculada ({{ usuario?.email }})</p>
+                  </div>
+                } @else {
+                  <p class="font-bold text-sm text-gray-600 m-0 mt-0.5">No vinculada</p>
+                }
+              </div>
+            </div>
+            @if (!esCuentaGoogle) {
+              <button
+                type="button"
+                (click)="vincularConGoogle()"
+                [disabled]="vinculandoGoogle"
+                class="shrink-0 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 font-bold px-3 py-1.5 rounded-xl text-xs transition-colors shadow-2xs cursor-pointer"
+              >
+                {{ vinculandoGoogle ? 'Vinculando...' : 'Vincular' }}
+              </button>
+            }
+          </div>
         </div>
       </div>
 
-      <!-- Right Column: Forms -->
+      <!-- Right Column: Personal Info & Security Forms -->
       <div class="lg:col-span-2 space-y-6">
+        <!-- Información Personal -->
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/70">
-            <h3 class="text-base font-black text-gray-900 m-0">Información Personal</h3>
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                <i class="bi bi-person-lines-fill text-base"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-black text-gray-900 m-0">Información Personal</h3>
+                <p class="text-xs text-gray-500 m-0">Datos principales de identificación y contacto</p>
+              </div>
+            </div>
             @if (!editando) {
               <button
                 type="button"
@@ -120,36 +202,67 @@
           </div>
 
           <div class="p-5 sm:p-6">
-            <div class="space-y-4">
-              <div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="sm:col-span-2">
                 <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Nombre Completo</label>
-                <input
-                  type="text"
-                  class="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500"
-                  [(ngModel)]="usuario.name"
-                  [disabled]="!editando"
-                >
+                <div class="relative">
+                  <i class="bi bi-person absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                  <input
+                    type="text"
+                    class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500"
+                    [(ngModel)]="usuario.name"
+                    [disabled]="!editando"
+                    placeholder="Nombre completo"
+                  >
+                </div>
+              </div>
+
+              <div class="sm:col-span-2">
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider m-0">Correo Electrónico</label>
+                  @if (esCuentaGoogle) {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                      <i class="bi bi-patch-check-fill text-blue-600"></i> Verificado con Google
+                    </span>
+                  }
+                </div>
+                <div class="relative">
+                  <i class="bi bi-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                  <input
+                    type="email"
+                    class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500"
+                    [(ngModel)]="usuario.email"
+                    [disabled]="!editando"
+                    placeholder="correo@ejemplo.com"
+                  >
+                </div>
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Correo Electrónico</label>
-                <input
-                  type="email"
-                  class="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500"
-                  [(ngModel)]="usuario.email"
-                  [disabled]="!editando"
-                >
+                <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Teléfono de Contacto</label>
+                <div class="relative">
+                  <i class="bi bi-telephone absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                  <input
+                    type="tel"
+                    class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500"
+                    [(ngModel)]="usuario.phone"
+                    [disabled]="!editando"
+                    placeholder="Agregar teléfono"
+                  >
+                </div>
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Teléfono</label>
-                <input
-                  type="tel"
-                  class="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500"
-                  [(ngModel)]="usuario.phone"
-                  [disabled]="!editando"
-                  placeholder="Agregar teléfono"
-                >
+                <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Rol en el Sistema</label>
+                <div class="relative">
+                  <i class="bi bi-shield-check absolute left-3.5 top-1/2 -translate-y-1/2 text-red-600"></i>
+                  <input
+                    type="text"
+                    [value]="usuario?.role || 'CUSTOMER'"
+                    disabled
+                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm font-bold text-gray-500 uppercase cursor-not-allowed"
+                  >
+                </div>
               </div>
             </div>
 
@@ -180,14 +293,23 @@
         <!-- Configuración de Seguridad -->
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap justify-between items-center gap-2 bg-gray-50/70">
-            <h3 class="text-base font-black text-gray-900 m-0">Configuración de Seguridad</h3>
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <i class="bi bi-shield-lock-fill text-base"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-black text-gray-900 m-0">Configuración de Seguridad</h3>
+                <p class="text-xs text-gray-500 m-0">Contraseña y protección de tu cuenta</p>
+              </div>
+            </div>
             @if (!editandoPassword) {
               <button
                 type="button"
-                class="bg-white border border-gray-200 hover:border-gray-900 text-gray-800 font-bold py-2 px-4 rounded-xl text-xs sm:text-sm transition-colors flex items-center gap-2 cursor-pointer"
+                class="font-bold py-2 px-4 rounded-xl text-xs sm:text-sm transition-colors flex items-center gap-2 cursor-pointer"
+                [ngClass]="tienePasswordDefinida ? 'bg-white border border-gray-200 hover:border-gray-900 text-gray-800' : 'bg-red-600 hover:bg-red-700 text-white shadow-2xs'"
                 (click)="toggleEdicionPassword()"
               >
-                <i class="bi bi-key"></i> Cambiar Contraseña
+                <i class="bi bi-key"></i> {{ tienePasswordDefinida ? 'Cambiar Contraseña' : 'Definir Contraseña' }}
               </button>
             }
           </div>
@@ -201,38 +323,60 @@
             }
 
             @if (!editandoPassword) {
-              <div class="flex items-center gap-3 text-gray-600">
-                <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500">
-                  <i class="bi bi-lock-fill"></i>
-                </div>
-                <div>
-                  <p class="m-0 text-sm font-bold text-gray-900">Contraseña protegida</p>
-                  <p class="m-0 text-xs text-gray-500">Al cambiar tu contraseña se cerrará la sesión actual por seguridad.</p>
-                </div>
-              </div>
-            } @else {
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Contraseña Actual</label>
-                  <div class="relative">
-                    <input
-                      [type]="showPasswordActual ? 'text' : 'password'"
-                      class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
-                      [(ngModel)]="passwordActual"
-                      placeholder="Ingresa tu contraseña actual"
-                    >
-                    <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 cursor-pointer" (click)="showPasswordActual = !showPasswordActual">
-                      <i class="bi" [ngClass]="showPasswordActual ? 'bi-eye-slash' : 'bi-eye'"></i>
-                    </button>
+              @if (tienePasswordDefinida) {
+                <div class="flex items-center gap-3 text-gray-600">
+                  <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 shrink-0">
+                    <i class="bi bi-lock-fill"></i>
+                  </div>
+                  <div>
+                    <p class="m-0 text-sm font-bold text-gray-900">Contraseña protegida</p>
+                    <p class="m-0 text-xs text-gray-500">Al cambiar tu contraseña se cerrará la sesión actual por seguridad.</p>
                   </div>
                 </div>
+              } @else {
+                <div class="flex items-start sm:items-center gap-3.5 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                    <i class="bi bi-shield-exclamation text-lg"></i>
+                  </div>
+                  <div>
+                    <p class="m-0 text-sm font-bold text-amber-900">Aún no has definido una contraseña local</p>
+                    <p class="m-0 text-xs text-amber-800 mt-0.5">
+                      Tu cuenta fue creada con Google. Haz clic en <strong>Definir Contraseña</strong> si deseas poder iniciar sesión también con tu correo electrónico.
+                    </p>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="space-y-4">
+                @if (tienePasswordDefinida) {
+                  <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Contraseña Actual</label>
+                    <div class="relative">
+                      <i class="bi bi-key absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                      <input
+                        [type]="showPasswordActual ? 'text' : 'password'"
+                        class="w-full pl-10 pr-10 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                        [(ngModel)]="passwordActual"
+                        placeholder="Ingresa tu contraseña actual"
+                      >
+                      <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 cursor-pointer" (click)="showPasswordActual = !showPasswordActual">
+                        <i class="bi" [ngClass]="showPasswordActual ? 'bi-eye-slash' : 'bi-eye'"></i>
+                      </button>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="bg-blue-50 border border-blue-200 text-blue-900 px-4 py-3 rounded-xl text-xs font-medium">
+                    Como tu cuenta se creó con Google, solo necesitas ingresar tu nueva contraseña (no se requiere contraseña anterior).
+                  </div>
+                }
 
                 <div>
                   <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Nueva Contraseña</label>
                   <div class="relative">
+                    <i class="bi bi-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
                     <input
                       [type]="showNuevaPassword ? 'text' : 'password'"
-                      class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                      class="w-full pl-10 pr-10 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
                       [(ngModel)]="nuevaPassword"
                       placeholder="Mínimo 6 caracteres"
                     >
@@ -245,9 +389,10 @@
                 <div>
                   <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Confirmar Nueva Contraseña</label>
                   <div class="relative">
+                    <i class="bi bi-shield-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
                     <input
                       [type]="showConfirmarPassword ? 'text' : 'password'"
-                      class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                      class="w-full pl-10 pr-10 py-2.5 bg-white border border-gray-200 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
                       [(ngModel)]="confirmarPassword"
                       placeholder="Repite la nueva contraseña"
                     >
@@ -273,7 +418,7 @@
                     (click)="cambiarPassword()"
                   >
                     <i class="bi" [ngClass]="guardandoPassword ? 'bi-arrow-repeat animate-spin' : 'bi-check2-circle'"></i>
-                    {{ guardandoPassword ? 'Actualizando...' : 'Actualizar Contraseña' }}
+                    {{ guardandoPassword ? 'Guardando...' : (tienePasswordDefinida ? 'Actualizar Contraseña' : 'Guardar Contraseña') }}
                   </button>
                 </div>
               </div>

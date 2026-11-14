@@ -7,42 +7,44 @@ import java.time.LocalDateTime;
 
 public class OrderDTO {
     private Integer id;
-    
+
     private Integer userId;
-    
+
     private Integer addressId;
-    
+
     private String status;
-    private String deliveryType;  // PICKUP o DELIVERY
-    
-    @NotNull(message = "El ID del método de pago es obligatorio")
+    private String deliveryType;
+
+    @NotNull(message = "El ID del m\u00e9todo de pago es obligatorio")
     private Integer paymentMethodId;
-    
-    private Integer promotionId;  // ID de la promoción aplicada
-    
+
+    private Integer promotionId;
+
     @NotNull(message = "El subtotal es obligatorio")
     @DecimalMin(value = "0.0", inclusive = true, message = "El subtotal no puede ser negativo")
     private BigDecimal subtotal;
-    
+
     @NotNull(message = "La tarifa de entrega es obligatoria")
     @DecimalMin(value = "0.0", inclusive = true, message = "La tarifa de entrega no puede ser negativa")
     private BigDecimal deliveryFee;
-    
+
     private BigDecimal discount;
-    
+
     @NotNull(message = "El total es obligatorio")
     @DecimalMin(value = "0.0", inclusive = true, message = "El total no puede ser negativo")
     private BigDecimal total;
-    
+
     private String notes;
     private String promoCode;
     private LocalDateTime estimatedDelivery;
     private LocalDateTime createdAt;
 
-    // Constructor vacío
+    private Boolean emailSent;
+    private String emailSentTo;
+    private Boolean adminEmailSent;
+
     public OrderDTO() {}
 
-    // Constructor desde entidad
     public OrderDTO(Order order) {
         this.id = order.getId();
         this.userId = order.getUserId();
@@ -61,7 +63,6 @@ public class OrderDTO {
         this.createdAt = order.getCreatedAt();
     }
 
-    // Getters y Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
@@ -106,4 +107,13 @@ public class OrderDTO {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public Boolean getEmailSent() { return emailSent; }
+    public void setEmailSent(Boolean emailSent) { this.emailSent = emailSent; }
+
+    public String getEmailSentTo() { return emailSentTo; }
+    public void setEmailSentTo(String emailSentTo) { this.emailSentTo = emailSentTo; }
+
+    public Boolean getAdminEmailSent() { return adminEmailSent; }
+    public void setAdminEmailSent(Boolean adminEmailSent) { this.adminEmailSent = adminEmailSent; }
 }

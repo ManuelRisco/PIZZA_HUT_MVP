@@ -53,6 +53,15 @@ public class Usuario {
     @JsonIgnore
     private LocalDateTime lockedUntil;
 
+    @Column(name = "google_linked", nullable = false)
+    private Boolean googleLinked = false;
+
+    @Column(name = "auth_provider", length = 30)
+    private String authProvider = "LOCAL";
+
+    @Column(name = "password_set", nullable = false)
+    private Boolean passwordSet = true;
+
     // ==== Campos de auditor\u00eda ====
     @Column(name = "created_at")
     @JsonIgnore  // Ocultar metadatos internos
@@ -73,6 +82,15 @@ public class Usuario {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        if (this.googleLinked == null) {
+            this.googleLinked = false;
+        }
+        if (this.authProvider == null || this.authProvider.isBlank()) {
+            this.authProvider = Boolean.TRUE.equals(this.googleLinked) ? "GOOGLE" : "LOCAL";
+        }
+        if (this.passwordSet == null) {
+            this.passwordSet = true;
+        }
     }
 
     @PreUpdate
@@ -130,6 +148,15 @@ public class Usuario {
 
     public LocalDateTime getLockedUntil() { return lockedUntil; }
     public void setLockedUntil(LocalDateTime lockedUntil) { this.lockedUntil = lockedUntil; }
+
+    public Boolean getGoogleLinked() { return googleLinked; }
+    public void setGoogleLinked(Boolean googleLinked) { this.googleLinked = googleLinked; }
+
+    public String getAuthProvider() { return authProvider; }
+    public void setAuthProvider(String authProvider) { this.authProvider = authProvider; }
+
+    public Boolean getPasswordSet() { return passwordSet; }
+    public void setPasswordSet(Boolean passwordSet) { this.passwordSet = passwordSet; }
 
     // ==== M\u00e9todos de utilidad ====
     public boolean isAccountLocked() {

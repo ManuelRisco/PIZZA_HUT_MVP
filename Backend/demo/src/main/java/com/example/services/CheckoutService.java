@@ -121,7 +121,7 @@ public class CheckoutService {
 
         for (CheckoutRequestDTO.CheckoutItemDTO itemDTO : req.getItems()) {
             if (itemDTO.getQuantity() == null || itemDTO.getQuantity() <= 0) {
-                throw new IllegalArgumentException("Cantidad inválida. Debe ser mayor a cero.");
+                throw new IllegalArgumentException("Cantidad inv\u00e1lida. Debe ser mayor a cero.");
             }
         }
 
@@ -168,7 +168,7 @@ public class CheckoutService {
 
             if (itemDTO.getSizeId() != null) {
                 Size size = sizeService.obtenerPorId(itemDTO.getSizeId())
-                        .orElseThrow(() -> new IllegalArgumentException("Tamaño no encontrado"));
+                        .orElseThrow(() -> new IllegalArgumentException("Tama\u00f1o no encontrado"));
                 sizeExtra = size.getExtraCost();
             }
         } else if ("EXTRA".equalsIgnoreCase(itemDTO.getItemType())) {
@@ -212,7 +212,7 @@ public class CheckoutService {
     }
 
     private void processItemExtras(CheckoutRequestDTO.CheckoutItemDTO itemDTO, Integer savedItemId) {
-        if (itemDTO.getExtraIngredientIds() != null && !itemDTO.getExtraIngredientIds().isEmpty()) {
+        if (reqHasExtras(itemDTO)) {
             for (Integer ingId : itemDTO.getExtraIngredientIds()) {
                 ingredientService.obtenerPorId(ingId).ifPresent(ingredient -> {
                     OrderItemExtra orderItemExtra = new OrderItemExtra();
@@ -224,6 +224,10 @@ public class CheckoutService {
                 });
             }
         }
+    }
+
+    private boolean reqHasExtras(CheckoutRequestDTO.CheckoutItemDTO itemDTO) {
+        return itemDTO.getExtraIngredientIds() != null && !itemDTO.getExtraIngredientIds().isEmpty();
     }
 
     private Order finalizeOrderTotals(Order savedOrder, CheckoutRequestDTO req, BigDecimal realSubtotal, Promotion promotionAUsar) {
@@ -245,7 +249,7 @@ public class CheckoutService {
         if (req.getPayment() != null && req.getPayment().getPaymentMethodId() != null) {
             Payment payment = new Payment();
             payment.setOrderId(savedOrder.getId());
-            payment.setAmount(req.getPayment().getAmount() != null ? req.getPayment().getAmount() : savedOrder.getTotal());
+            payment.setAmount(savedOrder.getTotal());
             payment.setPaymentMethodId(req.getPayment().getPaymentMethodId());
             payment.setStatus(Payment.PaymentStatus.valueOf(req.getPayment().getStatus() != null ? req.getPayment().getStatus().toUpperCase() : "PENDING"));
             payment.setTransactionId(req.getPayment().getTransactionId());
@@ -257,9 +261,10 @@ public class CheckoutService {
         if (promotionAUsar != null) {
             try {
                 promotionService.incrementarUsoPromocion(promotionAUsar.getCode());
-            } catch (Exception e) {
-                logger.error("Error al incrementar uso de promoción", e);
+            } catch (Exception ex) {
+                logger.error("Error al incrementar uso de promoci\u00f3n", ex);
             }
         }
     }
 }
+

@@ -65,6 +65,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         case 413:
           toastService.showError(extractServerMessage(error, 'El archivo supera el tamaño máximo permitido (5MB).'));
           break;
+        case 429:
+          toastService.showError(extractServerMessage(error, 'Demasiadas solicitudes seguidas. Por favor espera unos segundos antes de intentar nuevamente.'));
+          break;
         case 500:
           toastService.showError(extractServerMessage(error, 'Error interno del servidor.'));
           break;

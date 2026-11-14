@@ -63,6 +63,75 @@
       "type": "java.lang.Integer",
       "description": "Alto del thumbnail en píxeles.",
       "defaultValue": 200
+    },
+    {
+      "name": "app.mail.from",
+      "type": "java.lang.String",
+      "description": "Dirección de correo remitente cargada desde .env (MAIL_FROM)."
+    },
+    {
+      "name": "app.mail.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Habilita o deshabilita el envío de notificaciones por correo electrónico.",
+      "defaultValue": true
+    },
+    {
+      "name": "app.stock-alerts.poll-enabled",
+      "type": "java.lang.Boolean",
+      "description": "Habilita el sondeo periódico de la tabla dbo.stock_alerts generada por triggers T-SQL.",
+      "defaultValue": true
+    },
+    {
+      "name": "app.stock-alerts.poll-ms",
+      "type": "java.lang.Long",
+      "description": "Intervalo en milisegundos para revisar alertas pendientes en dbo.stock_alerts.",
+      "defaultValue": 5000
+    },
+    {
+      "name": "app.stock-alerts.batch-window-seconds",
+      "type": "java.lang.Integer",
+      "description": "Ventana en segundos (por defecto 60s = 1 min) para consolidar múltiples productos en alerta en un solo correo.",
+      "defaultValue": 60
+    },
+    {
+      "name": "app.google.client-id",
+      "type": "java.lang.String",
+      "description": "Google OAuth2 Client ID cargado desde .env (GOOGLE_CLIENT_ID)."
+    },
+    {
+      "name": "app.google.client-secret",
+      "type": "java.lang.String",
+      "description": "Google OAuth2 Client Secret cargado desde .env (GOOGLE_CLIENT_SECRET)."
+    },
+    {
+      "name": "app.google.allow-dev-mode",
+      "type": "java.lang.Boolean",
+      "description": "Permite modo de desarrollo para inicio rápido con cuenta Google en entorno local.",
+      "defaultValue": true
+    },
+    {
+      "name": "app.security.rate-limit.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Habilita el filtro Anti-DDoS y Rate Limiting por IP.",
+      "defaultValue": true
+    },
+    {
+      "name": "app.security.rate-limit.auth-per-minute",
+      "type": "java.lang.Integer",
+      "description": "Maximo de solicitudes de autenticacion/OTP por minuto por IP.",
+      "defaultValue": 15
+    },
+    {
+      "name": "app.security.rate-limit.write-per-minute",
+      "type": "java.lang.Integer",
+      "description": "Maximo de solicitudes de escritura (POST/PUT/PATCH/DELETE) por minuto por IP.",
+      "defaultValue": 60
+    },
+    {
+      "name": "app.security.rate-limit.general-per-minute",
+      "type": "java.lang.Integer",
+      "description": "Maximo de solicitudes generales de lectura por minuto por IP.",
+      "defaultValue": 240
     }
   ]
 }

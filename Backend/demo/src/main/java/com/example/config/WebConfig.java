@@ -3,14 +3,12 @@ package com.example.config;
 import com.example.services.FileUploadService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Configuración adicional de CORS a nivel de aplicación
- * Esta configuración complementa la configuración de CORS en SecurityConfig
- * Permite que el frontend (Angular en localhost:4200) se comunique con el backend
+ * Configuracion MVC para servir archivos estaticos de imagenes desde uploads/.
+ * La configuracion de CORS se gestiona de forma centralizada en SecurityConfig.
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -19,49 +17,13 @@ public class WebConfig implements WebMvcConfigurer {
     private String uploadDir;
 
     @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                // Orígenes permitidos - Angular dev server
-                .allowedOriginPatterns(
-                    "http://localhost:4200",
-                    "http://localhost:*",
-                    "http://127.0.0.1:4200",
-                    "http://127.0.0.1:*"
-                )
-                // Métodos HTTP permitidos
-                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD")
-                // Headers permitidos
-                .allowedHeaders(
-                    "Authorization",
-                    "Content-Type",
-                    "Accept",
-                    "Origin",
-                    "X-Requested-With",
-                    "Access-Control-Request-Method",
-                    "Access-Control-Request-Headers"
-                )
-                // Headers expuestos al cliente
-                .exposedHeaders(
-                    "Authorization",
-                    "Content-Type",
-                    "X-Total-Count",
-                    "X-Total-Pages"
-                )
-                // Permitir credenciales (cookies, authorization headers, etc.)
-                .allowCredentials(true)
-                // Cache de configuración CORS preflight (1 hora)
-                .maxAge(3600);
-    }
-
-    @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Servir archivos estáticos desde la carpeta uploads/ usando URI absoluta
         String uploadUri = FileUploadService.resolveUploadRoot(uploadDir).toUri().toString();
         if (!uploadUri.endsWith("/")) {
             uploadUri = uploadUri + "/";
         }
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(uploadUri)
-                .setCachePeriod(3600); // Cache de 1 hora
+                .setCachePeriod(3600);
     }
 }

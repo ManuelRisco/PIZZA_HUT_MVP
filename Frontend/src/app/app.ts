@@ -1,5 +1,6 @@
 import { Component, signal, OnInit, OnDestroy, Inject, PLATFORM_ID, inject, NgZone } from '@angular/core';
-import { isPlatformBrowser, AsyncPipe, Location } from '@angular/common';
+import { isPlatformBrowser, AsyncPipe, CommonModule, Location } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
 import { NavbarComponent } from './componentes/navbar/navbar';
@@ -9,6 +10,8 @@ import { IdleTimeoutService } from './services/idle-timeout.service';
 import { AfkModalComponent } from './componentes/afk-modal/afk-modal.component';
 import { AccessibilityFabComponent } from './componentes/accessibility-fab/accessibility-fab';
 import { AccessibilityService } from './services/accessibility.service';
+import { AuthService } from './services/auth.service';
+import { ToastService } from './services/toast.service';
 
 const PANEL_EXACT_PATHS = new Set<string>([
   '/panel-admin',
@@ -32,6 +35,8 @@ const PANEL_EXACT_PATHS = new Set<string>([
   selector: 'app-root',
   standalone: true,
   imports: [
+    CommonModule,
+    FormsModule,
     NavbarComponent,
     FooterComponent,
     ToastComponent,
@@ -57,6 +62,15 @@ export class App implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly location = inject(Location);
   public readonly accessibilityService = inject(AccessibilityService);
+  public readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
+
+  initialGooglePassword = '';
+  initialGoogleConfirmPassword = '';
+  showInitialGooglePassword = false;
+  showInitialGoogleConfirmPassword = false;
+  savingInitialGooglePassword = false;
+  initialGooglePasswordError = '';
 
   private readonly boundKeydownHandler = (event: KeyboardEvent) => {
     if (event.key !== 'Escape' && event.key !== 'Tab') return;
@@ -97,6 +111,46 @@ export class App implements OnInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       document.removeEventListener('keydown', this.boundKeydownHandler);
     }
+  }
+
+  posponerPasswordInicialGoogle(): void {
+    this.initialGooglePassword = '';
+    this.initialGoogleConfirmPassword = '';
+    this.initialGooglePasswordError = '';
+    this.authService.dismissPasswordSetupModal();
+  }
+
+  guardarPasswordInicialGoogle(): void {
+    if (this.savingInitialGooglePassword) return;
+    this.initialGooglePasswordError = '';
+
+    if (!this.initialGooglePassword || !this.initialGoogleConfirmPassword) {
+      this.initialGooglePasswordError = 'Ambos campos de contrase\u00f1a son obligatorios.';
+      return;
+    }
+    if (this.initialGooglePassword.length < 6 || this.initialGooglePassword.length > 20) {
+      this.initialGooglePasswordError = 'La contrase\u00f1a debe tener entre 6 y 20 caracteres.';
+      return;
+    }
+    if (this.initialGooglePassword !== this.initialGoogleConfirmPassword) {
+      this.initialGooglePasswordError = 'Las contrase\u00f1as no coinciden.';
+      return;
+    }
+
+    this.savingInitialGooglePassword = true;
+    this.authService.definirPasswordCuentaGoogle(this.initialGooglePassword).subscribe({
+      next: () => {
+        this.savingInitialGooglePassword = false;
+        this.initialGooglePassword = '';
+        this.initialGoogleConfirmPassword = '';
+        this.initialGooglePasswordError = '';
+        this.toastService.showSuccess('Contrase\u00f1a definida correctamente. Ahora tambi\u00e9n puedes iniciar sesi\u00f3n con tu correo.');
+      },
+      error: (err) => {
+        this.savingInitialGooglePassword = false;
+        this.initialGooglePasswordError = err?.error?.message || 'No se pudo guardar la contrase\u00f1a.';
+      }
+    });
   }
 
   private updatePanelViewFlag(rawUrl: string): void {

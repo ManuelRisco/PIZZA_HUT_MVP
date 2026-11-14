@@ -220,6 +220,78 @@
 
       <!-- ==================== TAB 1: ALERTAS ==================== -->
       <div *ngIf="activeTab === 'alertas'" class="p-5 sm:p-6 space-y-4">
+        <!-- Banner de Consolidación de Lote (1 minuto) / Confirmación de Correo Enviado -->
+        <div
+          *ngIf="batchStatus.pendingBatchCount > 0"
+          class="rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="flex items-start sm:items-center gap-3.5">
+            <div class="w-11 h-11 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+              <i class="bi bi-clock-history text-xl"></i>
+            </div>
+            <div>
+              <p class="text-sm font-black text-amber-950 m-0">
+                Consolidando lote de alertas por correo ({{ batchStatus.pendingBatchCount }}
+                {{ batchStatus.pendingBatchCount === 1 ? 'producto detectado' : 'productos detectados' }})
+              </p>
+              <p class="text-xs sm:text-sm text-amber-800 m-0 mt-0.5" *ngIf="batchStatus.secondsRemaining > 0">
+                Ventana de agrupación de 1 minuto activa: se enviará <strong>1 solo correo conjunto</strong> con todos los productos en stock mínimo en
+                <strong>{{ batchStatus.secondsRemaining }}s</strong>.
+              </p>
+              <p class="text-xs sm:text-sm text-amber-800 m-0 mt-0.5" *ngIf="batchStatus.secondsRemaining === 0 && batchStatus.mailOperational">
+                Ventana de 1 minuto completada · Despachando correo consolidado a los administradores...
+              </p>
+              <p class="text-xs sm:text-sm text-amber-800 m-0 mt-0.5" *ngIf="batchStatus.secondsRemaining === 0 && !batchStatus.mailOperational">
+                Lote consolidado listo ({{ batchStatus.pendingBatchCount }} producto(s)), en espera de credenciales SMTP Gmail válidas en <code>.env</code>.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            [disabled]="sendingBatchNow"
+            (click)="enviarLoteCorreoAhora()"
+            class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm disabled:opacity-60 cursor-pointer"
+          >
+            <i class="bi" [ngClass]="sendingBatchNow ? 'bi-arrow-repeat animate-spin' : 'bi-send-check-fill'"></i>
+            <span>{{ sendingBatchNow ? 'Enviando lote...' : 'Enviar correo ahora' }}</span>
+          </button>
+        </div>
+
+        <div
+          *ngIf="showSentBanner && batchStatus.pendingBatchCount === 0"
+          class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5 flex items-start sm:items-center justify-between gap-3.5 shadow-2xs"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="flex items-start sm:items-center gap-3.5">
+            <div class="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+              <i class="bi bi-envelope-check-fill text-xl"></i>
+            </div>
+            <div>
+              <p class="text-sm font-black text-emerald-950 m-0">
+                ¡Se envió el correo consolidado de alerta de stock! ({{ lastDispatchedBatchCount }}
+                {{ lastDispatchedBatchCount === 1 ? 'producto notificado' : 'productos notificados' }})
+              </p>
+              <p class="text-xs sm:text-sm text-emerald-800 m-0 mt-0.5">
+                Notificación enviada{{ batchStatus.lastRecipients ? ' a ' + batchStatus.lastRecipients : ' a los administradores' }}.
+                <strong>No se volverá a enviar otro correo</strong> por estos productos hasta que su stock se restablezca superando el mínimo.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            (click)="cerrarBannerCorreoEnviado()"
+            class="w-8 h-8 rounded-lg hover:bg-emerald-200/60 text-emerald-800 flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+            aria-label="Cerrar aviso de correo enviado"
+            title="Cerrar aviso"
+          >
+            <i class="bi bi-x-lg text-xs"></i>
+          </button>
+        </div>
+
         <div
           *ngIf="!loading && !errorMessage && summary.alerts.length === 0"
           class="py-12 text-center"
@@ -238,7 +310,7 @@
           class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden"
         >
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[780px]">
+            <table class="w-full text-left border-collapse min-w-[920px]">
               <thead>
                 <tr class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
                   <th class="py-3.5 px-4 font-bold">Tipo</th>
@@ -247,6 +319,7 @@
                   <th class="py-3.5 px-4 font-bold text-right">Stock Mínimo</th>
                   <th class="py-3.5 px-4 font-bold text-right">Costo Unitario</th>
                   <th class="py-3.5 px-4 font-bold text-center">Estado</th>
+                  <th class="py-3.5 px-4 font-bold text-center">Notificación Correo</th>
                   <th class="py-3.5 px-4 font-bold text-center">Acción Rápida</th>
                 </tr>
               </thead>
@@ -284,6 +357,46 @@
                     >
                       {{ alert.status === 'OUT_OF_STOCK' ? 'AGOTADO' : 'STOCK BAJO' }}
                     </span>
+                  </td>
+                  <td class="py-3.5 px-4 text-center">
+                    <ng-container *ngIf="getMailAlertFor(alert) as mailInfo; else sinDisparoTpl">
+                      <div *ngIf="mailInfo.emailSent" class="inline-flex flex-col items-center">
+                        <span
+                          class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 inline-flex items-center gap-1"
+                          [title]="'Correo enviado' + (mailInfo.emailRecipients ? ' a ' + mailInfo.emailRecipients : '')"
+                        >
+                          <i class="bi bi-envelope-check-fill"></i>
+                          <span>Correo enviado</span>
+                        </span>
+                        <span class="text-[10px] text-gray-500 mt-0.5 font-medium">
+                          Bloqueado hasta &gt; mín.
+                        </span>
+                      </div>
+
+                      <div *ngIf="!mailInfo.emailSent" class="inline-flex flex-col items-center">
+                        <span
+                          *ngIf="batchStatus.secondsRemaining > 0 || batchStatus.mailOperational"
+                          class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-800 inline-flex items-center gap-1"
+                        >
+                          <i class="bi bi-clock-history"></i>
+                          <span>Lote 1m ({{ batchStatus.secondsRemaining }}s)</span>
+                        </span>
+                        <span
+                          *ngIf="batchStatus.secondsRemaining === 0 && !batchStatus.mailOperational"
+                          class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-800 inline-flex items-center gap-1"
+                          [title]="mailInfo.emailError || 'Pendiente de conexión SMTP'"
+                        >
+                          <i class="bi bi-envelope-exclamation-fill"></i>
+                          <span>En cola SMTP</span>
+                        </span>
+                      </div>
+                    </ng-container>
+                    <ng-template #sinDisparoTpl>
+                      <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600 inline-flex items-center gap-1">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Monitoreado</span>
+                      </span>
+                    </ng-template>
                   </td>
                   <td class="py-3.5 px-4 text-center">
                     <div class="flex items-center justify-center gap-2">

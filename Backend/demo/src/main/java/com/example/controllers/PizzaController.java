@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/pizzas")
-@CrossOrigin(origins = "http://localhost:4200")
 public class PizzaController {
 
     private static final String MSG_NOT_FOUND_PREFIX = "Pizza no encontrada con id: ";

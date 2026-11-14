@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject } from 'rxjs';
 
+export type ColorblindMode = 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia';
+export type FontSizeMode = 'pequena' | 'normal' | 'grande' | 'extra-grande';
+
 export interface AccessibilityAnnouncement {
   message: string;
   type: 'polite' | 'assertive';
@@ -179,10 +182,50 @@ export class AccessibilityService {
   }
 
   /**
+   * Activa o desactiva el filtro de alto contraste
+   */
+  public setHighContrast(active: boolean): void {
+    if (typeof document !== 'undefined') {
+      const html = document.documentElement;
+
+      if (active) {
+        html.dataset['contraste'] = 'alto';
+      } else {
+        delete html.dataset['contraste'];
+      }
+
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('alta-contraste', active ? 'true' : 'false');
+      }
+
+      this.announce(active ? 'Filtro de alto contraste activado' : 'Filtro de alto contraste desactivado', 'polite');
+    }
+  }
+
+  /**
+   * Alterna el filtro de alto contraste y devuelve el nuevo estado
+   */
+  public toggleHighContrast(): boolean {
+    const newState = !this.getHighContrast();
+    this.setHighContrast(newState);
+    return newState;
+  }
+
+  /**
+   * Obtiene el estado actual de alto contraste
+   */
+  public getHighContrast(): boolean {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.dataset['contraste'] === 'alto';
+    }
+    return false;
+  }
+
+  /**
    * Establece el modo de visión de color (filtro para daltonismo)
    * @param mode - 'none', 'protanopia', 'deuteranopia', 'tritanopia'
    */
-  public setColorblindMode(mode: 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia'): void {
+  public setColorblindMode(mode: ColorblindMode): void {
     if (typeof document !== 'undefined') {
       const html = document.documentElement;
 
@@ -195,7 +238,9 @@ export class AccessibilityService {
       }
 
       // Guardar preferencia
-      localStorage.setItem('colorblind-mode', mode);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('colorblind-mode', mode);
+      }
 
       // Anunciar cambio
       const mensajes: { [key: string]: string } = {
@@ -212,10 +257,12 @@ export class AccessibilityService {
   /**
    * Obtiene el modo actual de daltonismo
    */
-  public getColorblindMode(): string {
+  public getColorblindMode(): ColorblindMode {
     if (typeof document !== 'undefined') {
-      const mode = document.documentElement.dataset['colorblind'] || 'none';
-      return mode;
+      const mode = document.documentElement.dataset['colorblind'];
+      if (mode === 'protanopia' || mode === 'deuteranopia' || mode === 'tritanopia') {
+        return mode;
+      }
     }
     return 'none';
   }
@@ -224,7 +271,7 @@ export class AccessibilityService {
    * Establece el tamaño de fuente
    * @param size - 'pequena', 'normal', 'grande', 'extra-grande'
    */
-  public setFontSize(size: 'pequena' | 'normal' | 'grande' | 'extra-grande'): void {
+  public setFontSize(size: FontSizeMode): void {
     if (typeof document !== 'undefined') {
       const html = document.documentElement;
 
@@ -237,7 +284,9 @@ export class AccessibilityService {
       }
 
       // Guardar preferencia
-      localStorage.setItem('font-size', size);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('font-size', size);
+      }
 
       // Anunciar cambio
       const mensajes: { [key: string]: string } = {
@@ -254,10 +303,12 @@ export class AccessibilityService {
   /**
    * Obtiene el tamaño de fuente actual
    */
-  public getFontSize(): string {
+  public getFontSize(): FontSizeMode {
     if (typeof document !== 'undefined') {
-      const size = document.documentElement.dataset['fontSize'] || 'normal';
-      return size;
+      const size = document.documentElement.dataset['fontSize'];
+      if (size === 'pequena' || size === 'grande' || size === 'extra-grande') {
+        return size;
+      }
     }
     return 'normal';
   }
@@ -273,9 +324,21 @@ export class AccessibilityService {
       } else {
         delete html.dataset['dyslexia'];
       }
-      localStorage.setItem('dyslexia-mode', active ? 'true' : 'false');
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('dyslexia-mode', active ? 'true' : 'false');
+      }
       this.announce(active ? 'Modo lectura fácil activado' : 'Modo lectura fácil desactivado', 'polite');
     }
+  }
+
+  /**
+   * Obtiene el estado actual del modo dislexia
+   */
+  public getDyslexiaMode(): boolean {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.dataset['dyslexia'] === 'true';
+    }
+    return false;
   }
 
   /**
@@ -289,8 +352,20 @@ export class AccessibilityService {
       } else {
         delete html.dataset['reduceMotion'];
       }
-      localStorage.setItem('reduce-motion', active ? 'true' : 'false');
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('reduce-motion', active ? 'true' : 'false');
+      }
       this.announce(active ? 'Reducción de movimiento activada' : 'Reducción de movimiento desactivada', 'polite');
     }
+  }
+
+  /**
+   * Obtiene el estado actual de reducción de movimiento
+   */
+  public getReduceMotion(): boolean {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.dataset['reduceMotion'] === 'true';
+    }
+    return false;
   }
 }

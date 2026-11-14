@@ -16,7 +16,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/addresses")
-@CrossOrigin(origins = "http://localhost:4200")
 public class AddressController {
 
     private static final String MSG_KEY = "message";

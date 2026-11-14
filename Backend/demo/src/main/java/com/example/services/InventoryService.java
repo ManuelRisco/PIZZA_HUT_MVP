@@ -4,6 +4,7 @@ import com.example.dtos.CheckoutRequestDTO;
 import com.example.dtos.InventorySummaryDTO;
 import com.example.dtos.StockMovementDTO;
 import com.example.dtos.StockOperationRequestDTO;
+import com.example.events.StockChangedNotificationEvent;
 import com.example.exceptions.BadRequestException;
 import com.example.exceptions.InsufficientStockException;
 import com.example.exceptions.ResourceNotFoundException;
@@ -28,6 +29,7 @@ import com.example.repositories.UsuarioRepository;
 
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,17 +59,19 @@ public class InventoryService {
     private final OrderItemExtraRepository orderItemExtraRepository;
     private final UsuarioRepository usuarioRepository;
     private final CacheManager cacheManager;
+    private final ApplicationEventPublisher eventPublisher;
 
     public InventoryService(IngredientRepository ingredientRepository,
-                            ExtraRepository extraRepository,
-                            PizzaRepository pizzaRepository,
-                            PizzaIngredientRepository pizzaIngredientRepository,
-                            SizeRepository sizeRepository,
-                            StockMovementRepository stockMovementRepository,
-                            OrderItemRepository orderItemRepository,
-                            OrderItemExtraRepository orderItemExtraRepository,
-                            UsuarioRepository usuarioRepository,
-                            CacheManager cacheManager) {
+            ExtraRepository extraRepository,
+            PizzaRepository pizzaRepository,
+            PizzaIngredientRepository pizzaIngredientRepository,
+            SizeRepository sizeRepository,
+            StockMovementRepository stockMovementRepository,
+            OrderItemRepository orderItemRepository,
+            OrderItemExtraRepository orderItemExtraRepository,
+            UsuarioRepository usuarioRepository,
+            CacheManager cacheManager,
+            ApplicationEventPublisher eventPublisher) {
         this.ingredientRepository = ingredientRepository;
         this.extraRepository = extraRepository;
         this.pizzaRepository = pizzaRepository;
@@ -78,6 +82,7 @@ public class InventoryService {
         this.orderItemExtraRepository = orderItemExtraRepository;
         this.usuarioRepository = usuarioRepository;
         this.cacheManager = cacheManager;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -99,10 +104,12 @@ public class InventoryService {
 
             if (stock.compareTo(BigDecimal.ZERO) <= 0) {
                 outOfStock++;
-                alerts.add(buildAlert("INGREDIENT", ing.getId(), ing.getName(), ing.getUnit(), stock, min, cost, "OUT_OF_STOCK"));
+                alerts.add(buildAlert("INGREDIENT", ing.getId(), ing.getName(), ing.getUnit(), stock, min, cost,
+                        "OUT_OF_STOCK"));
             } else if (stock.compareTo(min) <= 0) {
                 lowStock++;
-                alerts.add(buildAlert("INGREDIENT", ing.getId(), ing.getName(), ing.getUnit(), stock, min, cost, "LOW_STOCK"));
+                alerts.add(buildAlert("INGREDIENT", ing.getId(), ing.getName(), ing.getUnit(), stock, min, cost,
+                        "LOW_STOCK"));
             }
         }
 
@@ -132,10 +139,12 @@ public class InventoryService {
 
             if (stockInt <= 0) {
                 outOfStock++;
-                alerts.add(buildAlert("SIZE", sz.getId(), "Masa " + sz.getName(), "und", stock, min, BigDecimal.ZERO, "OUT_OF_STOCK"));
+                alerts.add(buildAlert("SIZE", sz.getId(), "Masa " + sz.getName(), "und", stock, min, BigDecimal.ZERO,
+                        "OUT_OF_STOCK"));
             } else if (stockInt <= minInt) {
                 lowStock++;
-                alerts.add(buildAlert("SIZE", sz.getId(), "Masa " + sz.getName(), "und", stock, min, BigDecimal.ZERO, "LOW_STOCK"));
+                alerts.add(buildAlert("SIZE", sz.getId(), "Masa " + sz.getName(), "und", stock, min, BigDecimal.ZERO,
+                        "LOW_STOCK"));
             }
         }
 
@@ -177,8 +186,10 @@ public class InventoryService {
         int maxRows = (limit != null && limit > 0) ? Math.min(limit, 500) : 200;
 
         return movements.stream()
-                .filter(m -> itemType == null || itemType.isBlank() || m.getItemType().name().equalsIgnoreCase(itemType))
-                .filter(m -> movementType == null || movementType.isBlank() || m.getMovementType().name().equalsIgnoreCase(movementType))
+                .filter(m -> itemType == null || itemType.isBlank()
+                        || m.getItemType().name().equalsIgnoreCase(itemType))
+                .filter(m -> movementType == null || movementType.isBlank()
+                        || m.getMovementType().name().equalsIgnoreCase(movementType))
                 .limit(maxRows)
                 .map(m -> toMovementDto(m, ingMap, extMap, sizeMap, userMap))
                 .toList();
@@ -193,7 +204,8 @@ public class InventoryService {
         StockMovement sm = new StockMovement();
         sm.setMovementType(StockMovement.MovementType.PURCHASE);
         sm.setReferenceType("MANUAL_RESTOCK");
-        sm.setReason(req.getReason() != null && !req.getReason().isBlank() ? req.getReason().trim() : "Reabastecimiento de stock");
+        sm.setReason(req.getReason() != null && !req.getReason().isBlank() ? req.getReason().trim()
+                : "Reabastecimiento de stock");
         sm.setUserId(userId);
 
         if ("INGREDIENT".equalsIgnoreCase(req.getItemType())) {
@@ -284,7 +296,8 @@ public class InventoryService {
         StockMovement sm = new StockMovement();
         sm.setMovementType(StockMovement.MovementType.ADJUSTMENT);
         sm.setReferenceType("MANUAL_ADJUST");
-        sm.setReason(req.getReason() != null && !req.getReason().isBlank() ? req.getReason().trim() : "Ajuste físico de inventario");
+        sm.setReason(req.getReason() != null && !req.getReason().isBlank() ? req.getReason().trim()
+                : "Ajuste físico de inventario");
         sm.setUserId(userId);
 
         if ("INGREDIENT".equalsIgnoreCase(req.getItemType())) {
@@ -363,8 +376,10 @@ public class InventoryService {
 
     /**
      * Valida la disponibilidad acumulada de stock de todos los ítems del pedido,
-     * descuenta stock de ingredientes y extras, registra movimientos SALE en el Kardex
-     * y retorna la lista de costos unitarios directos (unitCost) por cada CheckoutItemDTO.
+     * descuenta stock de ingredientes y extras, registra movimientos SALE en el
+     * Kardex
+     * y retorna la lista de costos unitarios directos (unitCost) por cada
+     * CheckoutItemDTO.
      */
     public List<BigDecimal> deductCheckoutStockAndCalculateUnitCosts(
             List<CheckoutRequestDTO.CheckoutItemDTO> items,
@@ -394,7 +409,8 @@ public class InventoryService {
                 Pizza pizza = pizzaRepository.findById(item.getPizzaId())
                         .orElseThrow(() -> new IllegalArgumentException("Pizza no encontrada"));
                 if (!pizza.getIsAvailable() || pizza.getDeletedAt() != null) {
-                    throw new IllegalStateException("La pizza '" + pizza.getName() + "' no está disponible actualmente.");
+                    throw new IllegalStateException(
+                            "La pizza '" + pizza.getName() + "' no está disponible actualmente.");
                 }
 
                 BigDecimal multiplier = BigDecimal.ONE;
@@ -403,16 +419,19 @@ public class InventoryService {
                         Optional<Size> locked = sizeRepository.findByIdWithLock(id);
                         return (locked != null && locked.isPresent())
                                 ? locked.get()
-                                : sizeRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tamaño no encontrado"));
+                                : sizeRepository.findById(id)
+                                        .orElseThrow(() -> new IllegalArgumentException("Tamaño no encontrado"));
                     });
-                    if (size.getRecipeMultiplier() != null && size.getRecipeMultiplier().compareTo(BigDecimal.ZERO) > 0) {
+                    if (size.getRecipeMultiplier() != null
+                            && size.getRecipeMultiplier().compareTo(BigDecimal.ZERO) > 0) {
                         multiplier = size.getRecipeMultiplier();
                     }
                     requiredSizes.merge(size.getId(), qty, Integer::sum);
                 } else {
-                    Size defaultSize = loadedSizes.computeIfAbsent(-1, k ->
-                            sizeRepository.findByDeletedAtIsNull().stream()
-                                    .min(Comparator.comparing(s -> s.getDisplayOrder() != null ? s.getDisplayOrder() : s.getId()))
+                    Size defaultSize = loadedSizes.computeIfAbsent(-1,
+                            k -> sizeRepository.findByDeletedAtIsNull().stream()
+                                    .min(Comparator.comparing(
+                                            s -> s.getDisplayOrder() != null ? s.getDisplayOrder() : s.getId()))
                                     .orElse(null));
                     if (defaultSize != null) {
                         loadedSizes.put(defaultSize.getId(), defaultSize);
@@ -425,12 +444,14 @@ public class InventoryService {
 
                 for (PizzaIngredient pi : recipe) {
                     Integer ingId = pi.getId() != null ? pi.getId().getIngredientId() : null;
-                    if (ingId == null) continue;
+                    if (ingId == null)
+                        continue;
                     Ingredient ing = loadedIngredients.computeIfAbsent(ingId, id -> {
                         Optional<Ingredient> locked = ingredientRepository.findByIdWithLock(id);
                         return (locked != null && locked.isPresent())
                                 ? locked.get()
-                                : ingredientRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Ingrediente de receta no encontrado"));
+                                : ingredientRepository.findById(id).orElseThrow(
+                                        () -> new IllegalArgumentException("Ingrediente de receta no encontrado"));
                     });
                     BigDecimal perPizzaQty = (pi.getQuantity() != null ? pi.getQuantity() : new BigDecimal("50.00"))
                             .multiply(multiplier);
@@ -447,11 +468,13 @@ public class InventoryService {
                             Optional<Ingredient> locked = ingredientRepository.findByIdWithLock(id);
                             return (locked != null && locked.isPresent())
                                     ? locked.get()
-                                    : ingredientRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Topping extra no encontrado"));
+                                    : ingredientRepository.findById(id).orElseThrow(
+                                            () -> new IllegalArgumentException("Topping extra no encontrado"));
                         });
-                        BigDecimal portion = ing.getExtraPortionQuantity() != null && ing.getExtraPortionQuantity().compareTo(BigDecimal.ZERO) > 0
-                                ? ing.getExtraPortionQuantity()
-                                : new BigDecimal("50.00");
+                        BigDecimal portion = ing.getExtraPortionQuantity() != null
+                                && ing.getExtraPortionQuantity().compareTo(BigDecimal.ZERO) > 0
+                                        ? ing.getExtraPortionQuantity()
+                                        : new BigDecimal("50.00");
                         requiredIngredients.merge(extraIngId, portion.multiply(qtyDec), BigDecimal::add);
 
                         BigDecimal ingCost = ing.getUnitCost() != null ? ing.getUnitCost() : BigDecimal.ZERO;
@@ -466,7 +489,8 @@ public class InventoryService {
                     Optional<Extra> locked = extraRepository.findByIdWithLock(id);
                     return (locked != null && locked.isPresent())
                             ? locked.get()
-                            : extraRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Extra no encontrado"));
+                            : extraRepository.findById(id)
+                                    .orElseThrow(() -> new IllegalArgumentException("Extra no encontrado"));
                 });
                 if (extra.getIsAvailable() == null || !extra.getIsAvailable() || extra.getDeletedAt() != null) {
                     throw new IllegalStateException("El producto '" + extra.getName() + "' no está disponible.");
@@ -479,7 +503,8 @@ public class InventoryService {
             }
         }
 
-        // Validar disponibilidad de masa para todos los tamaños requeridos (stock compartido)
+        // Validar disponibilidad de masa para todos los tamaños requeridos (stock
+        // compartido)
         for (Map.Entry<Integer, Integer> entry : requiredSizes.entrySet()) {
             Size sz = loadedSizes.get(entry.getKey());
             int available = sz.getStockQuantity() != null ? sz.getStockQuantity() : 0;
@@ -611,7 +636,8 @@ public class InventoryService {
     }
 
     /**
-     * Devuelve el stock de un pedido cancelado antes de entrar a preparación (PENDING o CONFIRMED).
+     * Devuelve el stock de un pedido cancelado antes de entrar a preparación
+     * (PENDING o CONFIRMED).
      */
     public void returnOrderStock(Order order, Integer userId) {
         if (order == null || !"DEDUCTED".equalsIgnoreCase(order.getStockSettled())) {
@@ -638,13 +664,15 @@ public class InventoryService {
                             .orElse(BigDecimal.ONE);
                 } else {
                     sizeRepository.findByDeletedAtIsNull().stream()
-                            .min(Comparator.comparing(s -> s.getDisplayOrder() != null ? s.getDisplayOrder() : s.getId()))
+                            .min(Comparator
+                                    .comparing(s -> s.getDisplayOrder() != null ? s.getDisplayOrder() : s.getId()))
                             .ifPresent(defaultSize -> returnSizes.merge(defaultSize.getId(), qty, Integer::sum));
                 }
                 List<PizzaIngredient> recipe = pizzaIngredientRepository.findByPizzaId(item.getPizzaId());
                 for (PizzaIngredient pi : recipe) {
                     Integer ingId = pi.getId() != null ? pi.getId().getIngredientId() : null;
-                    if (ingId == null) continue;
+                    if (ingId == null)
+                        continue;
                     BigDecimal perPizza = (pi.getQuantity() != null ? pi.getQuantity() : new BigDecimal("50.00"))
                             .multiply(multiplier);
                     returnIngredients.merge(ingId, perPizza.multiply(qtyDec), BigDecimal::add);
@@ -652,7 +680,8 @@ public class InventoryService {
 
                 List<OrderItemExtra> itemExtras = orderItemExtraRepository.findByOrderItemId(item.getId());
                 for (OrderItemExtra oie : itemExtras) {
-                    if (oie.getIngredientId() == null) continue;
+                    if (oie.getIngredientId() == null)
+                        continue;
                     Ingredient ing = ingredientRepository.findById(oie.getIngredientId()).orElse(null);
                     BigDecimal portion = (ing != null && ing.getExtraPortionQuantity() != null)
                             ? ing.getExtraPortionQuantity()
@@ -743,12 +772,16 @@ public class InventoryService {
     }
 
     public void evictCatalogCaches() {
-        if (cacheManager == null) return;
-        for (String name : List.of("pizzas", "ingredients", "extras", "extrasDisponibles", "sizes")) {
-            Cache cache = cacheManager.getCache(name);
-            if (cache != null) {
-                cache.clear();
+        if (cacheManager != null) {
+            for (String name : List.of("pizzas", "ingredients", "extras", "extrasDisponibles", "sizes")) {
+                Cache cache = cacheManager.getCache(name);
+                if (cache != null) {
+                    cache.clear();
+                }
             }
+        }
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(new StockChangedNotificationEvent("INVENTORY_CHANGE"));
         }
     }
 
@@ -759,7 +792,7 @@ public class InventoryService {
     }
 
     private InventorySummaryDTO.AlertItemDTO buildAlert(String itemType, Integer itemId, String name, String unit,
-                                                        BigDecimal stock, BigDecimal min, BigDecimal cost, String status) {
+            BigDecimal stock, BigDecimal min, BigDecimal cost, String status) {
         InventorySummaryDTO.AlertItemDTO alert = new InventorySummaryDTO.AlertItemDTO();
         alert.setItemType(itemType);
         alert.setItemId(itemId);
@@ -791,17 +824,17 @@ public class InventoryService {
             });
         }
         if (sm.getUserId() != null) {
-            usuarioRepository.findById(sm.getUserId().longValue()).ifPresent(u ->
-                    dto.setUserName(u.getName() != null && !u.getName().isBlank() ? u.getName() : u.getEmail()));
+            usuarioRepository.findById(sm.getUserId().longValue()).ifPresent(
+                    u -> dto.setUserName(u.getName() != null && !u.getName().isBlank() ? u.getName() : u.getEmail()));
         }
         return dto;
     }
 
     private StockMovementDTO toMovementDto(StockMovement sm,
-                                           Map<Integer, Ingredient> ingMap,
-                                           Map<Integer, Extra> extMap,
-                                           Map<Integer, Size> sizeMap,
-                                           Map<Integer, String> userMap) {
+            Map<Integer, Ingredient> ingMap,
+            Map<Integer, Extra> extMap,
+            Map<Integer, Size> sizeMap,
+            Map<Integer, String> userMap) {
         StockMovementDTO dto = new StockMovementDTO(sm);
         if (sm.getIngredientId() != null) {
             Ingredient ing = ingMap.get(sm.getIngredientId());
@@ -822,4 +855,3 @@ public class InventoryService {
         return dto;
     }
 }
-

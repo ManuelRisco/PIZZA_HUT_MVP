@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ValidatorFn, AbstractControl, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ValidatorFn, AbstractControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { UsuarioService } from '../../services/usuario.service';
 import { UsuarioPatronesService } from '../../services/usuario-patrones.service';
@@ -8,12 +8,15 @@ import { AuthService } from '../../services/auth.service';
 import { AccessibilityService } from '../../services/accessibility.service';
 import { UsuarioDTO, UsuarioCreateDTO } from '../../models/usuario.interface';
 
+declare const google: any;
+
 @Component({
   selector: 'app-register',
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     RouterModule
   ],
   templateUrl: './register.html',
@@ -28,6 +31,14 @@ export class Register implements OnInit {
   usarPatrones = true;
   showPassword = false;
   showConfirmPassword = false;
+
+  googleLoading = false;
+  googleClientId = '';
+  googleCloudConfigured = false;
+  showGoogleModal = false;
+  googleEmail = '';
+  googleName = '';
+  googleModalError = '';
 
   constructor(
     private readonly formBuilder: FormBuilder,
@@ -65,6 +76,93 @@ export class Register implements OnInit {
 
   ngOnInit(): void {
     this.setupFormValidationListeners();
+    this.authService.obtenerConfiguracionGoogle().subscribe({
+      next: (cfg) => {
+        if (cfg) {
+          this.googleClientId = cfg.clientId || '';
+          this.googleCloudConfigured = !!cfg.googleCloudConfigured;
+          if (this.googleCloudConfigured && this.googleClientId && !document.getElementById('google-gsi-client-script')) {
+            const script = document.createElement('script');
+            script.id = 'google-gsi-client-script';
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+          }
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  onGoogleRegisterClick(): void {
+    this.limpiarMensajes();
+    if (this.googleCloudConfigured && this.googleClientId && typeof google !== 'undefined' && google?.accounts?.oauth2) {
+      this.googleLoading = true;
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: this.googleClientId,
+        scope: 'openid email profile',
+        callback: (tokenResponse: any) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            this.executeGoogleBackendAuth({ accessToken: tokenResponse.access_token });
+          } else {
+            this.googleLoading = false;
+            this.mostrarMensajeError('No se complet\u00f3 la autorizaci\u00f3n con Google.');
+          }
+        },
+        error_callback: () => {
+          this.googleLoading = false;
+        }
+      });
+      tokenClient.requestAccessToken({ prompt: 'select_account' });
+      return;
+    }
+
+    this.googleEmail = this.registerForm.get('email')?.value || '';
+    this.googleName = this.registerForm.get('name')?.value || '';
+    this.googleModalError = '';
+    this.showGoogleModal = true;
+  }
+
+  closeGoogleModal(): void {
+    if (this.googleLoading) return;
+    this.showGoogleModal = false;
+    this.googleModalError = '';
+  }
+
+  onConfirmGoogleModal(): void {
+    this.googleModalError = '';
+    const cleanEmail = (this.googleEmail || '').trim().toLowerCase();
+    const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      this.googleModalError = 'Ingrese un correo de Google v\u00e1lido.';
+      return;
+    }
+    this.executeGoogleBackendAuth({
+      email: cleanEmail,
+      name: (this.googleName || '').trim()
+    });
+  }
+
+  private executeGoogleBackendAuth(payload: { credential?: string; accessToken?: string; email?: string; name?: string }): void {
+    this.googleLoading = true;
+    this.authService.loginConGoogle(payload).subscribe({
+      next: (response) => {
+        this.googleLoading = false;
+        this.showGoogleModal = false;
+        const destino = response?.usuario?.role === 'ADMIN' ? '/panel-admin' : '/menu';
+        this.router.navigate([destino]);
+      },
+      error: (err) => {
+        this.googleLoading = false;
+        const msg = err.error?.message || 'Error al autenticar con Google.';
+        if (this.showGoogleModal) {
+          this.googleModalError = msg;
+        } else {
+          this.mostrarMensajeError(msg);
+        }
+      }
+    });
   }
 
   passwordsMatchValidator: ValidatorFn = (form: AbstractControl) => {

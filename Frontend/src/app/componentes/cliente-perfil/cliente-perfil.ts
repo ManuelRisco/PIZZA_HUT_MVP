@@ -22,6 +22,7 @@ export class ClientePerfilComponent implements OnInit {
   loading = true;
   guardandoPerfil = false;
   guardandoPassword = false;
+  vinculandoGoogle = false;
 
   editandoPassword = false;
   passwordActual: string = '';
@@ -66,16 +67,54 @@ export class ClientePerfilComponent implements OnInit {
       .pipe(finalize(() => { this.loading = false; }))
       .subscribe({
         next: (usuario) => {
-          this.usuario = usuario;
+          const isGoogle = this.authService.isGoogleLinked(usuario);
+          this.usuario = {
+            ...usuario,
+            googleLinked: isGoogle,
+            authProvider: isGoogle ? 'GOOGLE' : (usuario?.authProvider || 'LOCAL')
+          };
+          this.authService.updateCurrentUser(this.usuario);
         },
         error: (error) => {
-          console.error('Error al cargar información del usuario:', error);
+          console.error('Error al cargar informaci\u00f3n del usuario:', error);
+          const isGoogle = this.authService.isGoogleLinked(currentUser);
           this.usuario = currentUser
-            ? { ...currentUser, active: true, createdAt: null }
+            ? { ...currentUser, active: true, createdAt: null, googleLinked: isGoogle, authProvider: isGoogle ? 'GOOGLE' : 'LOCAL' }
             : null;
           this.loadError = error?.status === 0
-            ? 'No se pudo conectar con el servidor (Backend fuera de línea). Mostrando información en caché de tu sesión.'
+            ? 'No se pudo conectar con el servidor (Backend fuera de l\u00ednea). Mostrando informaci\u00f3n en cach\u00e9 de tu sesi\u00f3n.'
             : (error?.error?.message || 'No se pudo sincronizar tu perfil con el servidor.');
+        }
+      });
+  }
+
+  get esCuentaGoogle(): boolean {
+    return this.authService.isGoogleLinked(this.usuario);
+  }
+
+  get tienePasswordDefinida(): boolean {
+    return this.authService.hasPasswordDefined(this.usuario);
+  }
+
+  vincularConGoogle(): void {
+    if (this.vinculandoGoogle || this.esCuentaGoogle) return;
+    this.vinculandoGoogle = true;
+    this.authService.vincularCuentaConGoogle()
+      .pipe(finalize(() => { this.vinculandoGoogle = false; }))
+      .subscribe({
+        next: (actualizado) => {
+          this.usuario = {
+            ...this.usuario,
+            ...actualizado,
+            googleLinked: true,
+            authProvider: 'GOOGLE'
+          };
+          this.mensajeExito = 'Tu cuenta ha sido vinculada con Google correctamente';
+          setTimeout(() => this.mensajeExito = '', 4000);
+        },
+        error: (err) => {
+          this.mensajeError = err?.error?.message || 'No se pudo vincular la cuenta con Google.';
+          setTimeout(() => this.mensajeError = '', 4000);
         }
       });
   }
@@ -120,11 +159,11 @@ export class ClientePerfilComponent implements OnInit {
         error: (error) => {
           console.error('Error al actualizar perfil:', error);
           if (error.status === 0) {
-            this.mensajeError = 'Sin conexión con el servidor. Inténtalo nuevamente cuando el servicio esté en línea.';
+            this.mensajeError = 'Sin conexi\u00f3n con el servidor. Int\u00e9ntalo nuevamente cuando el servicio est\u00e9 en l\u00ednea.';
           } else if (error.status === 400) {
-            this.mensajeError = error.error?.message || 'Datos inválidos';
+            this.mensajeError = error.error?.message || 'Datos inv\u00e1lidos';
           } else if (error.status === 409) {
-            this.mensajeError = 'El correo electrónico ya está en uso';
+            this.mensajeError = 'El correo electr\u00f3nico ya est\u00e1 en uso';
           } else {
             this.mensajeError = error.error?.message || 'Error al actualizar el perfil';
           }
@@ -156,40 +195,68 @@ export class ClientePerfilComponent implements OnInit {
   cambiarPassword() {
     if (this.guardandoPassword || !this.usuario?.id) return;
 
-    if (!this.passwordActual || !this.nuevaPassword || !this.confirmarPassword) {
+    const requiereActual = this.tienePasswordDefinida;
+    if ((requiereActual && !this.passwordActual) || !this.nuevaPassword || !this.confirmarPassword) {
       this.mensajeSeguridadError = 'Todos los campos son obligatorios';
       setTimeout(() => this.mensajeSeguridadError = '', 3500);
       return;
     }
 
     if (this.nuevaPassword !== this.confirmarPassword) {
-      this.mensajeSeguridadError = 'Las contraseñas nuevas no coinciden';
+      this.mensajeSeguridadError = 'Las contrase\u00f1as nuevas no coinciden';
       setTimeout(() => this.mensajeSeguridadError = '', 3500);
       return;
     }
 
     if (this.nuevaPassword.length < 6) {
-      this.mensajeSeguridadError = 'La nueva contraseña debe tener al menos 6 caracteres';
+      this.mensajeSeguridadError = 'La nueva contrase\u00f1a debe tener al menos 6 caracteres';
       setTimeout(() => this.mensajeSeguridadError = '', 3500);
       return;
     }
 
     this.guardandoPassword = true;
-    this.usuarioService.cambiarPassword(this.usuario.id, { password: this.nuevaPassword })
+
+    if (!requiereActual) {
+      this.authService.definirPasswordCuentaGoogle(this.nuevaPassword)
+        .pipe(finalize(() => { this.guardandoPassword = false; }))
+        .subscribe({
+          next: (actualizado) => {
+            this.usuario = {
+              ...this.usuario,
+              ...actualizado,
+              passwordSet: true
+            };
+            this.mensajeExito = 'Contrase\u00f1a definida correctamente. Ahora tambi\u00e9n puedes iniciar sesi\u00f3n con tu correo y contrase\u00f1a.';
+            this.editandoPassword = false;
+            this.limpiarFormularioPassword();
+            setTimeout(() => this.mensajeExito = '', 4500);
+          },
+          error: (error) => {
+            this.mensajeSeguridadError = error?.error?.message || 'Error al definir la contrase\u00f1a';
+            setTimeout(() => this.mensajeSeguridadError = '', 5000);
+          }
+        });
+      return;
+    }
+
+    this.usuarioService.cambiarPassword(this.usuario.id, {
+      password: this.nuevaPassword,
+      currentPassword: this.passwordActual
+    })
       .pipe(finalize(() => { this.guardandoPassword = false; }))
       .subscribe({
         next: () => {
-          this.mensajeExito = 'Contraseña actualizada correctamente. Por seguridad, vuelve a iniciar sesión.';
+          this.mensajeExito = 'Contrase\u00f1a actualizada correctamente. Por seguridad, vuelve a iniciar sesi\u00f3n.';
           this.editandoPassword = false;
           setTimeout(() => {
             this.authService.logout();
           }, 2000);
         },
         error: (error) => {
-          console.error('Error al cambiar contraseña:', error);
+          console.error('Error al cambiar contrase\u00f1a:', error);
           this.mensajeSeguridadError = error?.status === 0
-            ? 'Sin conexión con el servidor. No se pudo actualizar la contraseña.'
-            : (error?.error?.message || 'Error al actualizar la contraseña');
+            ? 'Sin conexi\u00f3n con el servidor. No se pudo actualizar la contrase\u00f1a.'
+            : (error?.error?.message || 'Error al actualizar la contrase\u00f1a');
           setTimeout(() => this.mensajeSeguridadError = '', 5000);
         }
       });

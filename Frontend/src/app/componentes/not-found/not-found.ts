@@ -179,39 +179,6 @@ import { CommonModule } from '@angular/common';
         justify-content: center;
       }
     }
-
-    /* Alto Contraste */
-    :host-context(html[data-contraste="alto"]) .not-found-content {
-      background: #000;
-      border: 2px solid #ffff00;
-      box-shadow: none;
-    }
-
-    :host-context(html[data-contraste="alto"]) h1,
-    :host-context(html[data-contraste="alto"]) h2,
-    :host-context(html[data-contraste="alto"]) p,
-    :host-context(html[data-contraste="alto"]) h3,
-    :host-context(html[data-contraste="alto"]) .suggested-links a {
-      color: #ffff00 !important;
-      border: none !important;
-    }
-
-    :host-context(html[data-contraste="alto"]) .suggested-links {
-      border-top-color: #ffff00;
-    }
-
-    :host-context(html[data-contraste="alto"]) .btn-home,
-    :host-context(html[data-contraste="alto"]) .btn-menu {
-      background: #000 !important;
-      color: #ffff00 !important;
-      border: 2px solid #ffff00 !important;
-    }
-
-    :host-context(html[data-contraste="alto"]) .btn-home:hover,
-    :host-context(html[data-contraste="alto"]) .btn-menu:hover {
-      background: #ffff00 !important;
-      color: #000 !important;
-    }
   `]
 })
 export class NotFoundComponent {

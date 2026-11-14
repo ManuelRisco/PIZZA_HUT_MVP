@@ -14,7 +14,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/uploads")
-@CrossOrigin(origins = "http://localhost:4200")
 public class FileUploadController {
 
     private final FileUploadService fileUploadService;

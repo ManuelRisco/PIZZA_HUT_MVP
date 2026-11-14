@@ -5,11 +5,15 @@ export interface UsuarioDTO {
   name: string;
   phone?: string;
   role: 'CUSTOMER' | 'ADMIN';
-  createdAt?: string | null; // Fecha de creación del usuario
-  deletedAt?: string | null; // Para soft delete
-  lastLogin?: string | null; // Último inicio de sesión
-  loginAttempts?: number; // Intentos de login fallidos
-  lockedUntil?: string | null; // Fecha hasta la que está bloqueada la cuenta
+  createdAt?: string | null;
+  deletedAt?: string | null;
+  lastLogin?: string | null;
+  loginAttempts?: number;
+  lockedUntil?: string | null;
+  googleLinked?: boolean;
+  authProvider?: 'GOOGLE' | 'LOCAL' | string;
+  passwordSet?: boolean;
+  active?: boolean;
 }
 
 export interface UsuarioCreateDTO {
@@ -31,5 +35,5 @@ export interface AuthResponseDTO {
   message: string;
 }
 
-// Alias para compatibilidad con código existente
+// Alias para compatibilidad con codigo existente
 export interface Usuario extends UsuarioDTO {}
