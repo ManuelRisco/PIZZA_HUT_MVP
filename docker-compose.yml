@@ -1,7 +1,7 @@
-version: '3.8'
-
 services:
   backend:
+    image: pizzahut-backend:latest
+    container_name: pizzahut-backend-1
     build:
       context: ./Backend/demo
       dockerfile: Dockerfile
@@ -9,33 +9,23 @@ services:
       - "8089:8089"
     env_file:
       - ./Backend/demo/.env
+    environment:
+      - DB_URL=jdbc:sqlserver://host.docker.internal:1433;databaseName=pizzahut_bd;encrypt=true;trustServerCertificate=true;
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./Backend/demo/uploads:/app/uploads
-    # depends_on: 
-    #   - db # Descomentar si decides agregar una BD local en el futuro
+    restart: unless-stopped
 
   frontend:
+    image: pizzahut-frontend:latest
+    container_name: pizzahut-frontend-1
     build:
       context: ./Frontend
       dockerfile: Dockerfile
     ports:
       - "80:80"
+      - "4200:80"
     depends_on:
       - backend
-
-  sonarqube:
-    image: sonarqube:community
-    container_name: sonarqube
-    ports:
-      - "9000:9000"
-    volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_extensions:/opt/sonarqube/extensions
-      - sonarqube_logs:/opt/sonarqube/logs
-    environment:
-      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
-
-volumes:
-  sonarqube_data:
-  sonarqube_extensions:
-  sonarqube_logs:
+    restart: unless-stopped

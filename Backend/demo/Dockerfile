@@ -1,27 +1,18 @@
 FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
-# Copiar el wrapper de Gradle y archivos de configuración
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle settings.gradle ./
+RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew
 
-# Dar permisos de ejecución al wrapper
-RUN chmod +x ./gradlew
-
-# Descargar dependencias (opcional, ayuda al caché)
-# RUN ./gradlew dependencies --no-daemon
-
-# Copiar el código fuente y construir
 COPY src src
-RUN ./gradlew build -x test --no-daemon
+RUN ./gradlew bootJar -x test --no-daemon
 
-# Etapa de ejecución
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-
-# Copiar el JAR generado de la etapa anterior
-COPY --from=build /app/build/libs/*.jar app.jar
+RUN mkdir -p /app/uploads
+COPY --from=build /app/build/libs/demo-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8089
 ENTRYPOINT ["java", "-jar", "app.jar"]
