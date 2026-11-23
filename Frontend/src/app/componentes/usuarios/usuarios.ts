@@ -37,11 +37,9 @@ export class Usuarios implements OnInit, OnDestroy {
   currentPage: number = 1;
   itemsPerPage: number = 10;
 
-  // Búsqueda y filtros locales (0ms)
   busqueda: string = '';
   filtroActivo: FiltroUsuario = 'todos';
 
-  // KPIs precomputados
   kpiTotal: number = 0;
   kpiClientes: number = 0;
   kpiAdmins: number = 0;
@@ -58,17 +56,14 @@ export class Usuarios implements OnInit, OnDestroy {
   error = '';
   success = '';
 
-  // Variables para mostrar/ocultar contraseñas
   showPassword = false;
   showConfirmPassword = false;
   buscandoDni = false;
   dniMensaje = '';
   dniError = '';
 
-  // Variables para la modal de creación/edición
   mostrarModal: boolean = false;
 
-  // Variables para Logs del Sistema
   showLogsModal: boolean = false;
   activeLogTab: 'sesiones' | 'auditoria' = 'sesiones';
   sesionesActivas: SessionLog[] = [];
@@ -130,23 +125,19 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Limpiar todas las suscripciones
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   setupFormValidationListeners(): void {
-    // Limpiar suscripciones anteriores
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.subscriptions = [];
 
-    // Validar nombre en tiempo real
     const nameSub = this.usuarioForm.get('name')?.valueChanges.subscribe(value => {
       if (value?.trim()) {
         setTimeout(() => {
           if (this.verificarNombreDuplicado()) {
             this.usuarioForm.get('name')?.setErrors({ 'duplicado': true });
           } else {
-            // Limpiar error de duplicado si ya no existe
             const currentErrors = this.usuarioForm.get('name')?.errors;
             if (currentErrors?.['duplicado']) {
               delete currentErrors['duplicado'];
@@ -154,19 +145,17 @@ export class Usuarios implements OnInit, OnDestroy {
               this.usuarioForm.get('name')?.setErrors(hasOtherErrors ? currentErrors : null);
             }
           }
-        }, 300); // Debounce de 300ms
+        }, 300);
       }
     });
     if (nameSub) this.subscriptions.push(nameSub);
 
-    // Validar email en tiempo real
     const emailSub = this.usuarioForm.get('email')?.valueChanges.subscribe(value => {
       if (value?.trim()) {
         setTimeout(() => {
           if (this.verificarEmailDuplicado()) {
             this.usuarioForm.get('email')?.setErrors({ 'duplicado': true });
           } else {
-            // Limpiar error de duplicado si ya no existe
             const currentErrors = this.usuarioForm.get('email')?.errors;
             if (currentErrors?.['duplicado']) {
               delete currentErrors['duplicado'];
@@ -174,13 +163,12 @@ export class Usuarios implements OnInit, OnDestroy {
               this.usuarioForm.get('email')?.setErrors(hasOtherErrors ? currentErrors : null);
             }
           }
-        }, 300); // Debounce de 300ms
+        }, 300);
       }
     });
     if (emailSub) this.subscriptions.push(emailSub);
   }
 
-  // Validador personalizado para comparar contraseñas
   passwordsMatchValidator: ValidatorFn = (form: AbstractControl) => {
     const password = form.get('password')?.value;
     const confirm = form.get('confirmPassword')?.value;
@@ -242,9 +230,6 @@ export class Usuarios implements OnInit, OnDestroy {
     this.kpiActivos = activos;
   }
 
-  /**
-   * Aplica filtro de rol/estado y búsqueda de texto localmente en 0ms sin peticiones HTTP
-   */
   aplicarFiltroLocal(): void {
     let resultado = this.todosLosUsuarios;
 
@@ -283,9 +268,6 @@ export class Usuarios implements OnInit, OnDestroy {
     this.aplicarPaginacion();
   }
 
-  /**
-   * Aplica el filtro seleccionado (compatibilidad local inmediata)
-   */
   aplicarFiltro(): void {
     if (this.todosLosUsuarios.length === 0 && !this.loadError) {
       this.cargarUsuarios();
@@ -314,9 +296,6 @@ export class Usuarios implements OnInit, OnDestroy {
     this.aplicarFiltro();
   }
 
-  /**
-   * Cambia el filtro activo localmente en 0ms
-   */
   cambiarFiltro(filtro: FiltroUsuario): void {
     this.filtroActivo = filtro;
     this.currentPage = 1;
@@ -335,9 +314,6 @@ export class Usuarios implements OnInit, OnDestroy {
     this.aplicarFiltroLocal();
   }
 
-  /**
-   * Aplica paginación a los usuarios filtrados
-   */
   aplicarPaginacion(): void {
     const totalPages = Math.ceil(this.usuarios.length / this.itemsPerPage);
     if (this.currentPage > totalPages && totalPages > 0) {
@@ -351,9 +327,6 @@ export class Usuarios implements OnInit, OnDestroy {
     this.usuariosPaginados = this.usuarios.slice(startIndex, endIndex);
   }
 
-  /**
-   * Cambia de página
-   */
   onPageChange(page: number): void {
     this.currentPage = page;
     this.aplicarPaginacion();
@@ -397,7 +370,6 @@ export class Usuarios implements OnInit, OnDestroy {
     this.dniMensaje = '';
     this.dniError = '';
 
-    // Asegurar que todos los campos estén habilitados
     this.usuarioForm.get('email')?.enable();
     this.usuarioForm.get('name')?.enable();
     this.usuarioForm.get('phone')?.enable();
@@ -424,13 +396,11 @@ export class Usuarios implements OnInit, OnDestroy {
       role: usuario.role
     });
 
-    // Asegurar que todos los campos estén habilitados para edición
     this.usuarioForm.get('email')?.enable();
     this.usuarioForm.get('name')?.enable();
     this.usuarioForm.get('phone')?.enable();
     this.usuarioForm.get('role')?.enable();
 
-    // Deshabilitar el campo de rol si es el usuario actual
     if (this.esUsuarioActual(usuario.email)) {
       this.usuarioForm.get('role')?.disable();
     }
@@ -446,7 +416,6 @@ export class Usuarios implements OnInit, OnDestroy {
     this.selectedUsuarioId = undefined;
     this.usuarioForm.reset();
 
-    // Habilitar todos los campos al cancelar
     this.usuarioForm.get('email')?.enable();
     this.usuarioForm.get('name')?.enable();
     this.usuarioForm.get('phone')?.enable();
@@ -627,7 +596,6 @@ export class Usuarios implements OnInit, OnDestroy {
   eliminarUsuario(id: number, email: string): void {
     if (this.procesandoId === id) return;
 
-    // Verificar si es el usuario actual usando el token
     const userInfo = this.authService.getUserInfo();
     if (userInfo?.email === email) {
       this.mostrarMensajeError('Por seguridad, no puedes eliminar tu propio usuario mientras estás logueado como administrador');
@@ -653,9 +621,6 @@ export class Usuarios implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Inactiva un usuario (Soft Delete)
-   */
   inactivarUsuario(id: number, email: string): void {
     if (this.procesandoId === id) return;
 
@@ -684,9 +649,6 @@ export class Usuarios implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Reactiva un usuario previamente inactivado
-   */
   reactivarUsuario(id: number, email: string): void {
     if (this.procesandoId === id) return;
 
@@ -709,15 +671,11 @@ export class Usuarios implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Verifica si un usuario está activo
-   */
   estaActivo(usuario: UsuarioDTO): boolean {
     return usuario.deletedAt === null || usuario.deletedAt === undefined;
   }
 
   private setupFormValidators(): void {
-    // Para crear nuevo usuario, contraseña es requerida con patrón
     this.usuarioForm.get('password')?.setValidators([
       Validators.required,
       Validators.minLength(6),
@@ -730,12 +688,10 @@ export class Usuarios implements OnInit, OnDestroy {
   }
 
   private setupFormValidatorsForEdit(): void {
-    // Para editar usuario, contraseña es opcional
     this.usuarioForm.get('password')?.clearValidators();
     this.usuarioForm.get('confirmPassword')?.clearValidators();
     this.usuarioForm.clearValidators();
 
-    // Mantener validaciones básicas
     this.usuarioForm.get('email')?.setValidators([Validators.required, Validators.email]);
     this.usuarioForm.get('name')?.setValidators([
       Validators.required,
@@ -839,7 +795,6 @@ export class Usuarios implements OnInit, OnDestroy {
     return '';
   }
 
-  // Métodos para formateo de fechas
   formatearFechaRelativa(fecha: string | null | undefined): string {
     if (!fecha) return '-';
 
@@ -891,10 +846,6 @@ export class Usuarios implements OnInit, OnDestroy {
 
     return lockedUntil > ahora;
   }
-
-  // ==========================================
-  // LÓGICA DE LOGS DE SISTEMA
-  // ==========================================
 
   abrirModalLogs(): void {
     this.showLogsModal = true;
@@ -1045,7 +996,6 @@ export class Usuarios implements OnInit, OnDestroy {
             this.mostrarMensajeExito('Sesión cerrada remotamente.');
             this.cargarLogs();
 
-            // Si el admin cierra su propia sesión actual, desconectarlo inmediatamente
             const currentToken = this.authService.getToken();
             if (token === currentToken) {
               this.authService.logout();

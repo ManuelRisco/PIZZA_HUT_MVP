@@ -7,16 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   
-  <!-- Preconnect to CDNs -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
 
-  <!-- Async CSS for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"></noscript>
   
@@ -27,29 +24,24 @@
   <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"></noscript>
   
   <script>
-    // Cargar preferencias de accesibilidad antes de renderizar
     if (localStorage.getItem('alta-contraste') === 'true') {
       document.documentElement.dataset.contraste = 'alto';
     }
 
-    // Cargar modo de daltonismo
     const colorblindMode = localStorage.getItem('colorblind-mode') || 'none';
     if (colorblindMode !== 'none') {
       document.documentElement.dataset.colorblind = colorblindMode;
     }
 
-    // Cargar tamaño de fuente
     const fontSize = localStorage.getItem('font-size') || 'normal';
     if (fontSize !== 'normal') {
       document.documentElement.dataset.fontSize = fontSize;
     }
 
-    // Cargar modo dislexia
     if (localStorage.getItem('dyslexia-mode') === 'true') {
       document.documentElement.dataset.dyslexia = 'true';
     }
 
-    // Cargar reducción de movimiento
     if (localStorage.getItem('reduce-motion') === 'true') {
       document.documentElement.dataset.reduceMotion = 'true';
     }

@@ -20,7 +20,6 @@
 
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
 
-      <!-- DNI Opcional con Autocompletado RENIEC / SUNAT -->
       <div class="form-group" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
           <label for="dni" style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #1f2937;">
@@ -29,8 +28,8 @@
           </label>
           <span style="font-size: 0.72rem; background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 999px; font-weight: 700;">RENIEC</span>
         </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <div class="input-with-icon" style="flex: 1; margin: 0;">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <div class="input-with-icon" style="flex: 1; min-width: 165px; margin: 0;">
             <i class="fas fa-address-card" aria-hidden="true"></i>
             <input
               type="text"
@@ -64,7 +63,6 @@
           <span *ngIf="registerForm.get('dni')?.errors?.['pattern']">El DNI debe tener exactamente 8 dígitos numéricos</span>
         </div>
 
-        <!-- Declaración jurada de mayoría de edad (+18) y titularidad del DNI -->
         <div *ngIf="registerForm.get('dni')?.value" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #d1d5db;">
           <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.78rem; color: #111827; font-weight: 600; cursor: pointer; margin: 0;">
             <input
@@ -155,9 +153,8 @@
             aria-required="true"
             [attr.aria-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched ? 'true' : 'false'"
           />
-          <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'" 
-             (click)="showPassword = !showPassword" 
-             style="position: absolute; right: -15px; top: 12px; cursor: pointer; color: #888; left: auto;"></i>
+          <i class="fas password-toggle-icon" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"
+             (click)="showPassword = !showPassword"></i>
         </div>
         <div class="error-message" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
           <span *ngIf="registerForm.get('password')?.errors?.['required']">La contraseña es obligatoria</span>
@@ -180,9 +177,8 @@
             aria-required="true"
             [attr.aria-invalid]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched ? 'true' : 'false'"
           />
-          <i class="fas" [ngClass]="showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'" 
-             (click)="showConfirmPassword = !showConfirmPassword" 
-             style="position: absolute; right: -15px; top: 12px; cursor: pointer; color: #888; left: auto;"></i>
+          <i class="fas password-toggle-icon" [ngClass]="showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'"
+             (click)="showConfirmPassword = !showConfirmPassword"></i>
         </div>
         <div class="error-message" *ngIf="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched">
           <span *ngIf="registerForm.get('confirmPassword')?.errors?.['required']">La confirmación es requerida</span>
@@ -230,7 +226,6 @@
     </form>
   </div>
 
-  <!-- MODAL: REGISTRARSE CON GOOGLE -->
   <div class="auth-modal-backdrop" *ngIf="showGoogleModal" (click)="closeGoogleModal()">
     <div class="auth-modal-card" (click)="$event.stopPropagation()">
       <div class="auth-modal-header">

@@ -7,10 +7,6 @@ import { PizzaService } from './pizza.service';
 import { IngredientService } from './ingredient.service';
 import { environment } from '../../environments/environment';
 
-/**
- * Servicio que simulaba los patrones de diseño del backend para pizzas.
- * Ahora utiliza los endpoints estándar y filtra en el cliente para mantener la interfaz.
- */
 @Injectable({
   providedIn: 'root'
 })
@@ -23,45 +19,30 @@ export class PizzaPatronesService {
     private readonly ingredientService: IngredientService
   ) { }
 
-  /**
-   * SPECIFICATION PATTERN - Filtrar pizzas disponibles (Simulado)
-   */
   listarPizzasDisponibles(): Observable<PizzaDTO[]> {
     return this.pizzaService.listarPizzas().pipe(
       map(pizzas => pizzas.filter(p => p.isAvailable))
     );
   }
 
-  /**
-   * SPECIFICATION PATTERN - Filtrar pizzas populares (Simulado)
-   */
   listarPizzasPopulares(): Observable<PizzaDTO[]> {
     return this.pizzaService.listarPizzas().pipe(
       map(pizzas => pizzas.filter(p => p.isPopular))
     );
   }
 
-  /**
-   * SPECIFICATION PATTERN - Filtrar pizzas por categoría (Simulado)
-   */
   listarPizzasPorCategoria(categoryId: number): Observable<PizzaDTO[]> {
     return this.pizzaService.listarPizzas().pipe(
       map(pizzas => pizzas.filter((p: any) => p.categoryId === categoryId || p.category?.id === categoryId))
     );
   }
 
-  /**
-   * COMPOSITE PATTERN - Filtrar pizzas disponibles Y populares (Simulado)
-   */
   listarPizzasDisponiblesYPopulares(): Observable<PizzaDTO[]> {
     return this.pizzaService.listarPizzas().pipe(
       map(pizzas => pizzas.filter(p => p.isAvailable && p.isPopular))
     );
   }
 
-  /**
-   * DECORATOR PATTERN - Calcular precio con extras (Simulado localmente)
-   */
   calcularPrecioConExtras(pizzaId: number, extras: string[]): Observable<any> {
     return this.pizzaService.obtenerPizzaPorId(pizzaId).pipe(
       switchMap((pizza: PizzaDTO) => {
@@ -93,12 +74,8 @@ export class PizzaPatronesService {
     };
   }
 
-  /**
-   * BUILDER PATTERN - Crear pizza personalizada (Mapeado a endpoint normal)
-   */
   crearPizzaPersonalizada(pizzaData: any): Observable<PizzaDTO> {
     return this.pizzaService.crearPizza(pizzaData);
   }
 }
-
 

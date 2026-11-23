@@ -1,25 +1,61 @@
-<!-- Overlay para cerrar el panel -->
 <div class="fab-overlay" [class.active]="isPanelOpen" (click)="closePanel()"></div>
 
-<div class="accessibility-fab-container" [class.shifted-up]="accessibilityService.shortcutsGuide$ | async">
-  <!-- Panel de Accesibilidad -->
-  <div class="accessibility-panel" [class.open]="isPanelOpen" aria-label="Panel de accesibilidad" aria-modal="true">
-    
-    <!-- Header del Panel -->
+<div class="accessibility-fab-container" [class.mobile-mode]="isMobile" [class.shifted-up]="!isMobile && (accessibilityService.shortcutsGuide$ | async)">
+  <div class="accessibility-panel" [class.open]="isPanelOpen" [class.compact-panel]="isMobile" aria-label="Panel de accesibilidad" aria-modal="true">
+
     <div class="panel-header">
       <div class="panel-title">
         <img src="accessibility-icon.svg" alt="" class="panel-icon" aria-hidden="true">
         <span>Accesibilidad</span>
       </div>
-      <button class="panel-close" (click)="closePanel()" aria-label="Cerrar panel de accesibilidad">
-        <i class="bi bi-x-lg" aria-hidden="true"></i>
-      </button>
+      <div class="panel-header-actions">
+        <button *ngIf="tieneCambiosActivos" type="button" class="panel-reset" (click)="resetAccesibilidad()" title="Restablecer ajustes" aria-label="Restablecer ajustes">
+          <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="panel-close" (click)="closePanel()" aria-label="Cerrar panel de accesibilidad">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
 
     <div class="panel-body">
-      <!-- Sección: Alto Contraste -->
       <div class="panel-section">
-        <button 
+        <div class="section-title">
+          <i class="bi bi-fonts" aria-hidden="true"></i>
+          <span>Tamaño de Texto</span>
+        </div>
+        <div *ngIf="isMobile" class="font-segmented" role="radiogroup" aria-label="Tamaño de fuente">
+          <button
+            *ngFor="let size of mobileFontSizes"
+            type="button"
+            class="segmented-btn"
+            role="radio"
+            (click)="setFontSize(size)"
+            [class.active]="tamanoFuente === size"
+            [attr.aria-checked]="tamanoFuente === size"
+            [attr.aria-label]="getFontSizeLabel(size)">
+            {{ getCompactFontLabel(size) }}
+          </button>
+        </div>
+        <div *ngIf="!isMobile" class="font-size-grid" role="radiogroup" aria-label="Tamaño de fuente">
+          <button
+            *ngFor="let size of fontSizes"
+            type="button"
+            class="font-option"
+            role="radio"
+            (click)="setFontSize(size)"
+            [class.active]="tamanoFuente === size"
+            [attr.aria-checked]="tamanoFuente === size">
+            <span class="font-label">{{ getFontSizeLabel(size) }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <div class="panel-section">
+        <button
+          type="button"
           class="toggle-option"
           (click)="toggleAltoContraste()"
           [class.active]="contrasteAlto"
@@ -34,55 +70,9 @@
             <div class="toggle-knob"></div>
           </div>
         </button>
-      </div>
 
-      <div class="panel-divider"></div>
-
-      <!-- Sección: Filtros de Color (Daltonismo) -->
-      <div class="panel-section">
-        <div class="section-title">
-          <i class="bi bi-palette" aria-hidden="true"></i>
-          <span>Filtros de Color</span>
-        </div>
-        <div class="option-grid" role="radiogroup" aria-label="Filtros para daltonismo">
-          <button
-            *ngFor="let mode of colorblindModes"
-            class="chip-option"
-            role="radio"
-            (click)="setColorblindMode(mode)"
-            [class.active]="modoColorblind === mode"
-            [attr.aria-checked]="modoColorblind === mode">
-            {{ getColorblindLabel(mode) }}
-          </button>
-        </div>
-      </div>
-
-      <div class="panel-divider"></div>
-
-      <!-- Sección: Tamaño de Fuente -->
-      <div class="panel-section">
-        <div class="section-title">
-          <i class="bi bi-fonts" aria-hidden="true"></i>
-          <span>Tamaño de Letra</span>
-        </div>
-        <div class="font-size-options" role="radiogroup" aria-label="Tamaño de fuente">
-          <button
-            *ngFor="let size of fontSizes"
-            class="font-option"
-            role="radio"
-            (click)="setFontSize(size)"
-            [class.active]="tamanoFuente === size"
-            [attr.aria-checked]="tamanoFuente === size">
-            <span class="font-label">{{ getFontSizeLabel(size) }}</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="panel-divider"></div>
-
-      <!-- Sección: Ajustes Adicionales -->
-      <div class="panel-section">
-        <button 
+        <button
+          type="button"
           class="toggle-option"
           (click)="toggleDyslexiaMode()"
           [class.active]="modoDislexia"
@@ -98,7 +88,9 @@
           </div>
         </button>
 
-        <button 
+        <button
+          *ngIf="!isMobile"
+          type="button"
           class="toggle-option"
           (click)="toggleReduceMotion()"
           [class.active]="reducirMovimiento"
@@ -114,41 +106,60 @@
           </div>
         </button>
       </div>
-      
-      <div class="panel-divider"></div>
 
-      <!-- Sección: Atajos de Teclado -->
-      <div class="panel-section">
-        <ng-container *ngIf="!(accessibilityService.shortcutsGuide$ | async)">
-          <div class="section-title mb-2">
-            <i class="bi bi-keyboard" aria-hidden="true"></i>
-            <span>Atajos de Teclado</span>
+      <ng-container *ngIf="!isMobile">
+        <div class="panel-divider"></div>
+
+        <div class="panel-section">
+          <div class="section-title">
+            <i class="bi bi-palette" aria-hidden="true"></i>
+            <span>Filtros de Color</span>
           </div>
-          <div class="shortcuts-list" style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 8px; padding-left: 4px;">
-            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">I</kbd> <span style="white-space: nowrap;">Inicio</span></div>
-            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">M</kbd> <span style="white-space: nowrap;">Menú</span></div>
-            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">E</kbd> <span style="white-space: nowrap;">Extras</span></div>
-            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">O</kbd> <span style="white-space: nowrap;">Promociones</span></div>
-            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">C</kbd> <span style="white-space: nowrap;">Carrito</span></div>
-            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">P</kbd> <span style="white-space: nowrap;">Perfil</span></div>
-            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">U</kbd> <span style="white-space: nowrap;">Ubicación</span></div>
-            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">L</kbd> <span style="white-space: nowrap;">Idioma</span></div>
-            <div style="display: flex; align-items: center; gap: 6px;"><kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 28px; text-align: center;">Alt</kbd> <span>+</span> <kbd class="bg-gray-200 text-gray-800 px-1 rounded border shadow-sm" style="min-width: 24px; text-align: center;">Y</kbd> <span style="white-space: nowrap;">Guía de Atajos</span></div>
+          <div class="option-grid" role="radiogroup" aria-label="Filtros para daltonismo">
+            <button
+              *ngFor="let mode of colorblindModes"
+              type="button"
+              class="chip-option"
+              role="radio"
+              (click)="setColorblindMode(mode)"
+              [class.active]="modoColorblind === mode"
+              [attr.aria-checked]="modoColorblind === mode">
+              {{ getColorblindLabel(mode) }}
+            </button>
           </div>
-        </ng-container>
-        
-        <div class="mt-2 text-center">
-          <button class="btn btn-dark btn-sm w-100" (click)="toggleGuia()" style="font-weight: 500; letter-spacing: 1px;">
-            <i class="bi bi-layout-text-window-reverse me-2"></i> 
-            {{ (accessibilityService.shortcutsGuide$ | async) ? 'OCULTAR GUÍA GLOBAL' : 'MOSTRAR GUÍA GLOBAL' }}
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="panel-section">
+          <ng-container *ngIf="!(accessibilityService.shortcutsGuide$ | async)">
+            <div class="section-title">
+              <i class="bi bi-keyboard" aria-hidden="true"></i>
+              <span>Atajos de Teclado</span>
+            </div>
+            <div class="shortcuts-grid">
+              <div class="shortcut-item"><kbd>Alt</kbd>+<kbd>I</kbd><span>Inicio</span></div>
+              <div class="shortcut-item"><kbd>Alt</kbd>+<kbd>M</kbd><span>Menú</span></div>
+              <div class="shortcut-item"><kbd>Alt</kbd>+<kbd>E</kbd><span>Extras</span></div>
+              <div class="shortcut-item"><kbd>Alt</kbd>+<kbd>O</kbd><span>Promos</span></div>
+              <div class="shortcut-item"><kbd>Alt</kbd>+<kbd>C</kbd><span>Carrito</span></div>
+              <div class="shortcut-item"><kbd>Alt</kbd>+<kbd>P</kbd><span>Perfil</span></div>
+              <div class="shortcut-item"><kbd>Alt</kbd>+<kbd>U</kbd><span>Ubicación</span></div>
+              <div class="shortcut-item"><kbd>Alt</kbd>+<kbd>L</kbd><span>Idioma</span></div>
+            </div>
+          </ng-container>
+
+          <button type="button" class="guide-toggle-btn" (click)="toggleGuia()">
+            <i class="bi bi-layout-text-window-reverse" aria-hidden="true"></i>
+            {{ (accessibilityService.shortcutsGuide$ | async) ? 'Ocultar barra de atajos' : 'Mostrar barra de atajos' }}
           </button>
         </div>
-      </div>
+      </ng-container>
     </div>
   </div>
 
-  <!-- Botón FAB -->
-  <button 
+  <button
+    type="button"
     class="fab-button"
     (click)="togglePanel()"
     [class.active]="isPanelOpen"

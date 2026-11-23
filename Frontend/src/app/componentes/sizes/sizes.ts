@@ -33,13 +33,11 @@ export class Sizes implements OnInit {
   guardando = false;
   terminoBusqueda = '';
 
-  // KPIs
   kpiTotalSizes = 0;
   kpiAvgMultiplier = 1;
   kpiAvgExtraCost = 0;
   kpiTotalDough = 0;
 
-  // Paginación
   currentPage = 1;
   itemsPerPage = 10;
   pageSizeOptions: number[] = [10, 20, 50];
@@ -222,7 +220,6 @@ export class Sizes implements OnInit {
       });
     }
   }
-
 
   restaurar(id: number, nombre?: string): void {
     if (confirm('¿Desea restaurar el tamaño' + (nombre ? ` "${nombre}"` : '') + '?')) {

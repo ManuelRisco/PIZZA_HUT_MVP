@@ -7,7 +7,6 @@ import { UsuarioService } from './usuario.service';
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
 
-// Interface para los datos al crear cliente con Factory Pattern
 export interface CrearClienteDTO {
   email: string;
   password: string;
@@ -17,24 +16,18 @@ export interface CrearClienteDTO {
   ageVerified?: boolean;
 }
 
-// Interface para los datos al crear admin con Factory Pattern
 export interface CrearAdminDTO {
   email: string;
   password: string;
   name: string;
 }
 
-// Interface para la respuesta de información de patrones
 export interface PatronesInfo {
   patrones_implementados: string[];
   endpoints_disponibles: { [key: string]: string };
   documentacion: string;
 }
 
-/**
- * Servicio que simulaba los patrones de diseño del backend para usuarios.
- * Ahora utiliza los endpoints estándar y filtra en el cliente para mantener la interfaz.
- */
 @Injectable({
   providedIn: 'root'
 })
@@ -50,9 +43,6 @@ export class UsuarioPatronesService {
     private readonly authService: AuthService
   ) { }
 
-  /**
-   * Obtiene información sobre los patrones implementados (Simulado localmente)
-   */
   obtenerInformacionPatrones(): Observable<PatronesInfo> {
     return of({
       patrones_implementados: ['Factory Method', 'Specification', 'Composite'],
@@ -68,9 +58,6 @@ export class UsuarioPatronesService {
     });
   }
 
-  /**
-   * Crea un cliente usando Factory Pattern (Mapeado a /api/registro)
-   */
   crearCliente(datos: CrearClienteDTO): Observable<{ message: string }> {
     return this.http.post<any>(
       `${this.apiUrl}/registro`,
@@ -79,10 +66,6 @@ export class UsuarioPatronesService {
     ).pipe(map(res => ({ message: res.message || 'Cliente creado con éxito' })));
   }
 
-  /**
-   * Crea un administrador usando Factory Pattern (Mapeado a /api/usuarios)
-   * Requiere autenticación como ADMIN
-   */
   crearAdministrador(datos: CrearAdminDTO): Observable<{ message: string }> {
     const token = this.authService.getToken();
     const headers = new HttpHeaders({
@@ -96,27 +79,18 @@ export class UsuarioPatronesService {
     ).pipe(map(res => ({ message: res.message || 'Administrador creado con éxito' })));
   }
 
-  /**
-   * Lista solo usuarios administradores usando Specification Pattern (Simulado)
-   */
   listarAdministradores(): Observable<UsuarioDTO[]> {
     return this.usuarioService.listarUsuarios().pipe(
       map(usuarios => usuarios.filter((u: UsuarioDTO) => u.role === 'ADMIN'))
     );
   }
 
-  /**
-   * Lista solo usuarios activos (no eliminados) usando Specification Pattern (Simulado)
-   */
   listarUsuariosActivos(): Observable<UsuarioDTO[]> {
     return this.usuarioService.listarUsuarios().pipe(
       map(usuarios => usuarios.filter((u: UsuarioDTO) => u.deletedAt === null))
     );
   }
 
-  /**
-   * Lista administradores activos usando Composite Specification Pattern (Simulado)
-   */
   listarAdministradoresActivos(): Observable<UsuarioDTO[]> {
     return this.usuarioService.listarUsuarios().pipe(
       map(usuarios => usuarios.filter((u: UsuarioDTO) => u.role === 'ADMIN' && u.deletedAt === null))

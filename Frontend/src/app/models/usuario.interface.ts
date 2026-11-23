@@ -1,4 +1,3 @@
-// DTOs para el usuario - coinciden con el backend
 export interface UsuarioDTO {
   id?: number;
   email: string;
@@ -39,5 +38,4 @@ export interface AuthResponseDTO {
   message: string;
 }
 
-// Alias para compatibilidad con codigo existente
 export interface Usuario extends UsuarioDTO {}

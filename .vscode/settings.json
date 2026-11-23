@@ -32,10 +32,10 @@
   "java.debug.settings.onBuildFailureProceed": true,
   "java.gradle.buildServer.enabled": "off",
   "boot-java.boot-version-validation.check": "off",
-  "spring-boot.ls.problem.boot-version.BOOT_VERSION_VALIDATION_CODE": "IGNORE",
-  "spring-boot.ls.problem.version-validation.BOOT_VERSION_VALIDATION_CODE": "IGNORE",
-  "spring-boot.ls.problem.version-validation.UPDATE_AVAILABLE_MINOR": "IGNORE",
-  "spring-boot.ls.problem.version-validation.UPDATE_AVAILABLE_PATCH": "IGNORE",
-  "boot-java.version-validation.patch": "IGNORE",
-  "boot-java.version-validation.minor": "IGNORE"
+  "boot-java.validation.java.version-validation": "OFF",
+  "spring-boot.ls.problem.version-validation.UPDATE_LATEST_MAJOR_VERSION": "IGNORE",
+  "spring-boot.ls.problem.version-validation.UPDATE_LATEST_MINOR_VERSION": "IGNORE",
+  "spring-boot.ls.problem.version-validation.UPDATE_LATEST_PATCH_VERSION": "IGNORE",
+  "spring-boot.ls.problem.version-validation.UNSUPPORTED_OSS_VERSION": "IGNORE",
+  "spring-boot.ls.problem.version-validation.UNSUPPORTED_COMMERCIAL_VERSION": "IGNORE"
 }

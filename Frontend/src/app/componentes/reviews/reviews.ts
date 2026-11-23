@@ -24,19 +24,15 @@ export class Reviews implements OnInit {
   loadError = '';
   procesandoId: number | null = null;
 
-  // Filtros
   filtroRating: string = 'TODOS';
   filtroVisibilidad: string = 'TODAS';
   terminoBusqueda: string = '';
 
-  // Precomputed ratings O(1)
   ratingCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   promedioRating = 0;
 
-  // Static stars array
   readonly starNumbers = [5, 4, 3, 2, 1];
 
-  // Paginación (12 items fills 3-col grid evenly)
   currentPage = 1;
   itemsPerPage = 12;
   pageSizeOptions: number[] = [12, 24, 48];

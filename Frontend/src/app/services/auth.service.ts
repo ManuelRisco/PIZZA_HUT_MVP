@@ -6,7 +6,6 @@ import { Router } from '@angular/router';
 import { AuthResponseDTO, LoginDTO, UsuarioDTO } from '../models/usuario.interface';
 import { environment } from '../../environments/environment';
 
-// Alias para compatibilidad
 export interface AuthResponse extends AuthResponseDTO {}
 export interface User extends UsuarioDTO {}
 
@@ -23,17 +22,14 @@ export class AuthService {
   private userCheckSubscription?: Subscription;
 
   constructor(private readonly http: HttpClient, private readonly router: Router, private readonly ngZone: NgZone) {
-    // Verificar si hay un token almacenado al inicializar
     this.loadUserFromToken();
     this.startTokenRefresh();
     this.startUserStatusCheck();
     this.listenToStorageEvents();
   }
 
-  // Sincronizar login y logout entre pesta\u00f1as
   private listenToStorageEvents(): void {
     window.addEventListener('storage', (event) => {
-      // Si el token se elimin\u00f3 en otra pesta\u00f1a (por ej. al hacer logout o cambiar contrase\u00f1a)
       if (event.key === 'token' && !event.newValue) {
         this.ngZone.run(() => {
           this.currentUserSubject.next(null);
@@ -43,13 +39,10 @@ export class AuthService {
         });
       }
       
-      // Si el token se A\u00d1ADI\u00d3 en otra pesta\u00f1a (por ej. al hacer login)
       if (event.key === 'token' && event.newValue) {
         this.ngZone.run(() => {
-          // Recargar el usuario desde el nuevo token
           this.loadUserFromToken();
           
-          // Si estamos en la p\u00e1gina de login (/join), redirigir al panel correspondiente
           if (this.router.url.includes('/join') || this.router.url === '/') {
              const currentUser = this.currentUserSubject.value;
              if (currentUser) {
@@ -66,7 +59,6 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<any> {
-    // Limpiar cualquier sesi\u00f3n anterior antes de iniciar sesi\u00f3n
     this.clearSession();
 
     const loginData: LoginDTO = { email, password };
@@ -234,14 +226,12 @@ export class AuthService {
   }
 
   logout(): void {
-    // Limpiar TODAS las claves relacionadas con autenticaci\u00f3n
     const keysToRemove = ['token', 'refreshToken', 'currentUser', 'userRole', 'userId', 'userEmail', 'userName'];
     keysToRemove.forEach(key => {
       localStorage.removeItem(key);
       sessionStorage.removeItem(key);
     });
 
-    // Limpiar cualquier clave que empiece con 'auth', 'user' o 'token'
     const localStorageKeys = Object.keys(localStorage);
     localStorageKeys.forEach(key => {
       if (key.startsWith('auth') || key.startsWith('user') || key.startsWith('token')) {
@@ -249,29 +239,23 @@ export class AuthService {
       }
     });
 
-    // Limpiar estado del usuario
     sessionStorage.removeItem('googlePasswordPromptDismissed');
     this.needsPasswordSetupSubject.next(false);
     this.currentUserSubject.next(null);
 
-    // Detener procesos de refresh y verificaci\u00f3n
     this.stopTokenRefresh();
     this.stopUserStatusCheck();
 
-    // Redirigir a login
     this.router.navigate(['/join']);
   }
 
-  // M\u00e9todo privado para limpiar sesi\u00f3n sin redirigir (usado en login)
   private clearSession(): void {
-    // Limpiar TODAS las claves relacionadas con autenticaci\u00f3n
     const keysToRemove = ['token', 'refreshToken', 'currentUser', 'userRole', 'userId', 'userEmail', 'userName'];
     keysToRemove.forEach(key => {
       localStorage.removeItem(key);
       sessionStorage.removeItem(key);
     });
 
-    // Tambi\u00e9n limpiar cualquier clave que empiece con 'auth' o 'user'
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && (key.startsWith('auth') || key.startsWith('user') || key.startsWith('token'))) {
@@ -286,7 +270,6 @@ export class AuthService {
     this.stopUserStatusCheck();
   }
 
-  // M\u00e9todo p\u00fablico para limpiar sesi\u00f3n sin redirigir (usado por interceptor)
   clearSessionSilently(): void {
     this.clearSession();
   }
@@ -318,7 +301,6 @@ export class AuthService {
     return tokenData?.id || null;
   }
 
-  // Alias para compatibilidad
   estaAutenticado(): boolean {
     return this.isLoggedIn();
   }
@@ -327,7 +309,6 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
-  // M\u00e9todo para actualizar la informaci\u00f3n del usuario actual
   updateCurrentUser(usuario: UsuarioDTO): void {
     const currentUser = this.getCurrentUser();
     if (currentUser && usuario.id === currentUser.id) {
@@ -378,7 +359,6 @@ export class AuthService {
     }
   }
 
-  // M\u00e9todo para obtener informaci\u00f3n completa del usuario desde el token
   getUserInfo(): { email: string, name: string, role: string } | null {
     const tokenData = this.getTokenData();
     if (!tokenData) return null;
@@ -390,7 +370,6 @@ export class AuthService {
     };
   }
 
-  // M\u00e9todo para verificar si el usuario actual es el mismo que est\u00e1 en el token
   validateUserIntegrity(): boolean {
     const currentUser = this.getCurrentUser();
     const tokenData = this.getTokenData();
@@ -402,7 +381,6 @@ export class AuthService {
            currentUser.role === tokenData.role;
   }
 
-  // M\u00e9todo para obtener datos del token de manera segura
   private getTokenData(): any {
     const token = this.getToken();
     if (!token) return null;
@@ -416,7 +394,6 @@ export class AuthService {
       return;
     }
 
-    // Si el token est\u00e1 expirado, limpiar la sesi\u00f3n inmediatamente
     if (this.isTokenExpired()) {
       this.clearSession();
       return;
@@ -445,7 +422,6 @@ export class AuthService {
     }
   }
 
-  // M\u00e9todo para decodificar JWT (b\u00e1sico, sin validaci\u00f3n de firma)
   private decodeToken(token: string): any {
     try {
       const payload = token.split('.')[1];
@@ -457,7 +433,6 @@ export class AuthService {
     }
   }
 
-  // Verificar si el token ha expirado
   isTokenExpired(): boolean {
     const token = this.getToken();
     if (!token) return true;
@@ -469,16 +444,12 @@ export class AuthService {
     return decoded.exp < currentTime;
   }
 
-  // M\u00e9todo para debugging - mostrar contenido del token (solo en desarrollo)
-  // NOTA: Solo usar en desarrollo, no en producci\u00f3n
   debugTokenInfo(): void {
     const tokenData = this.getTokenData();
     if (!tokenData) {
-      // No token found
     }
   }
 
-  // Refresh Token - Renovar token autom\u00e1ticamente
   refreshToken(): Observable<any> {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) {
@@ -492,7 +463,6 @@ export class AuthService {
           localStorage.setItem('token', response.token);
           localStorage.setItem('refreshToken', response.refreshToken);
 
-          // Actualizar el usuario en memoria
           if (response.usuario) {
             this.currentUserSubject.next(response.usuario);
           }
@@ -501,11 +471,9 @@ export class AuthService {
     );
   }
 
-  // Iniciar refresh autom\u00e1tico del token cada 15 minutos
   private startTokenRefresh(): void {
-    this.stopTokenRefresh(); // Detener cualquier subscripci\u00f3n previa
+    this.stopTokenRefresh();
 
-    // Renovar token cada 15 minutos (900000 ms)
     this.refreshTokenSubscription = timer(900000, 900000).pipe(
       switchMap(() => {
         const token = this.getToken();
@@ -516,7 +484,6 @@ export class AuthService {
       })
     ).subscribe({
       next: (response) => {
-        // Token renovado
       },
       error: (error) => {
         console.error('Error al renovar token:', error);
@@ -533,11 +500,9 @@ export class AuthService {
     }
   }
 
-  // Verificar estado del usuario y token expirado cada 60 segundos
   private startUserStatusCheck(): void {
-    this.stopUserStatusCheck(); // Detener cualquier subscripci\u00f3n previa
+    this.stopUserStatusCheck();
 
-    // Verificar cada 60 segundos (60000 ms)
     this.userCheckSubscription = timer(60000, 60000).pipe(
       switchMap(() => {
         const token = this.getToken();
@@ -559,7 +524,6 @@ export class AuthService {
       })
     ).subscribe({
       next: (response) => {
-        // If it unwrapped a boolean or an object with activo
         const isInactive = (typeof response === 'boolean') ? !response : (response?.activo === false);
         if (isInactive) {
           this.logout();
@@ -579,7 +543,6 @@ export class AuthService {
     }
   }
 
-  // M\u00e9todo p\u00fablico para forzar verificaci\u00f3n de estado
   checkUserStatus(): Observable<any> {
     const token = this.getToken();
     if (!token) {
@@ -591,5 +554,4 @@ export class AuthService {
     }).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 }
-
 

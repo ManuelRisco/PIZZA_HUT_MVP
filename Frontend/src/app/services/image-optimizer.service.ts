@@ -7,10 +7,6 @@ import { environment } from '../../environments/environment';
 export class ImageOptimizerService {
   private readonly backendBaseUrl = environment.apiUrl.replace(/\/api\/?$/, '');
 
-  /**
-   * Resuelve rutas de archivos locales servidos por el backend (/uploads/**)
-   * hacia la URL real del servidor Spring Boot.
-   */
   resolveImageUrl(imageUrl?: string | null, useThumb = false): string {
     if (!imageUrl || !imageUrl.trim()) {
       return '/combo1.webp';
@@ -35,12 +31,6 @@ export class ImageOptimizerService {
     return trimmed;
   }
 
-  /**
-   * Optimiza y resuelve URLs de imágenes (priorizando archivos locales del backend /uploads/**)
-   * @param imageUrl URL o ruta relativa de la imagen
-   * @param quality Calidad deseada: 'low' | 'medium' | 'high'
-   * @returns URL lista para el navegador
-   */
   optimizeImageUrl(imageUrl: string | undefined, quality: 'low' | 'medium' | 'high' = 'medium'): string {
     if (!imageUrl || !imageUrl.trim()) {
       return '/combo1.webp';
@@ -54,7 +44,6 @@ export class ImageOptimizerService {
       return imageUrl;
     }
 
-    // Configuraciones de calidad para proveedores legados si existieran
     const qualitySettings = {
       low: {
         unsplashWidth: 400,

@@ -79,7 +79,15 @@ export class CheckoutService {
         paymentMethodId: payload.payment?.paymentMethodId ?? payload.paymentMethodId,
         amount: payload.payment?.amount ?? finalTotalWithDiscount,
         status: payload.payment?.status ?? 'PENDING',
-        transactionId: payload.payment?.transactionId ?? null
+        transactionId: payload.payment?.transactionId ?? null,
+        mercadoPagoToken: payload.payment?.mercadoPagoToken ?? null,
+        mercadoPagoPaymentMethodId: payload.payment?.mercadoPagoPaymentMethodId ?? null,
+        mercadoPagoIssuerId: payload.payment?.mercadoPagoIssuerId ?? null,
+        mercadoPagoInstallments: payload.payment?.mercadoPagoInstallments ?? null,
+        mercadoPagoPayerEmail: payload.payment?.mercadoPagoPayerEmail ?? null,
+        mercadoPagoPayerDocType: payload.payment?.mercadoPagoPayerDocType ?? null,
+        mercadoPagoPayerDocNumber: payload.payment?.mercadoPagoPayerDocNumber ?? null,
+        mercadoPagoPayerPhone: payload.payment?.mercadoPagoPayerPhone ?? null
       } : null
     };
 

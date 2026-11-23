@@ -1,8 +1,4 @@
-// ===================================
-// INTERFACES PARA ADMINISTRACIÓN, STOCK Y FINANZAS
-// ===================================
 
-// Size (Tamaños)
 export interface SizeDTO {
   id?: number;
   name: string;
@@ -15,7 +11,6 @@ export interface SizeDTO {
   deletedAt?: string | null;
 }
 
-// Order (Pedidos)
 export interface OrderDTO {
   id?: number;
   userId: number;
@@ -54,29 +49,26 @@ export interface OrderDTO {
   boletaEmitidaAt?: string | null;
 }
 
-// OrderItem (Items de pedido)
 export interface OrderItemDTO {
   id?: number;
   orderId: number;
-  pizzaId?: number; // Opcional porque puede ser un extra
-  pizzaName?: string; // Nombre de la pizza
-  extraId?: number; // ID del extra (bebida, postre, etc.)
-  extraName?: string; // Nombre del extra
-  itemType?: 'PIZZA' | 'EXTRA'; // Tipo de item
+  pizzaId?: number;
+  pizzaName?: string;
+  extraId?: number;
+  extraName?: string;
+  itemType?: 'PIZZA' | 'EXTRA';
   sizeId?: number;
-  sizeName?: string; // Nombre del tamaño
+  sizeName?: string;
   quantity: number;
   unitPrice: number;
   sizeExtra: number;
   lineTotal: number;
   unitCost?: number;
   lineCost?: number;
-  extras?: string[]; // Ingredientes extras (solo para pizzas)
+  extras?: string[];
 }
 
-// Pedido completo con toda la información
 export interface OrderCompleteDTO {
-  // Datos del pedido
   id?: number;
   userId: number;
   userName?: string;
@@ -84,36 +76,29 @@ export interface OrderCompleteDTO {
   userPhone?: string;
   userDni?: string | null;
 
-  // Dirección
   addressId?: number | null;
   addressLine1?: string;
   addressCity?: string;
   addressDistrict?: string;
   addressReference?: string;
 
-  // Estado y tipo
   deliveryType?: 'PICKUP' | 'DELIVERY';
   status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'OUT_FOR_DELIVERY' | 'IN_DELIVERY' | 'DELIVERED' | 'CANCELLED';
 
-  // Pago
   paymentMethodId?: number | null;
   paymentMethodName?: string;
 
-  // Totales
   subtotal: number;
   deliveryFee: number;
   discount: number;
   total: number;
 
-  // Promoción
   promoCode?: string | null;
 
-  // Adicionales
   notes?: string | null;
   estimatedDelivery?: string | null;
   createdAt?: string;
 
-  // Boleta de Venta Electrónica (SUNAT / Nubefact)
   wantsBoleta?: boolean;
   boletaTipoComprobante?: number | null;
   boletaSerie?: string | null;
@@ -134,11 +119,9 @@ export interface OrderCompleteDTO {
   boletaTotalIgv?: number | null;
   boletaEmitidaAt?: string | null;
 
-  // Items del pedido
   items?: OrderItemDTO[];
 }
 
-// Payment (Pagos)
 export interface PaymentDTO {
   id?: number;
   orderId: number;
@@ -150,7 +133,6 @@ export interface PaymentDTO {
   createdAt?: string;
 }
 
-// OrderTracking (Seguimiento)
 export interface OrderTrackingDTO {
   id?: number;
   orderId: number;
@@ -159,7 +141,6 @@ export interface OrderTrackingDTO {
   createdAt?: string;
 }
 
-// Review (Reseñas)
 export interface ReviewDTO {
   id?: number;
   userId: number;
@@ -171,13 +152,11 @@ export interface ReviewDTO {
   active?: boolean;
 }
 
-// Favorite (Favoritos)
 export interface FavoriteDTO {
   userId: number;
   pizzaId: number;
 }
 
-// Address (Direcciones) - Para clientes
 export interface AddressDTO {
   id?: number;
   userId: number;
@@ -188,7 +167,6 @@ export interface AddressDTO {
   isDefault?: boolean;
 }
 
-// Ingredient (Ingredientes e Insumos)
 export interface IngredientDTO {
   id?: number;
   name: string;
@@ -205,9 +183,6 @@ export interface IngredientDTO {
   deletedAt?: string | null;
 }
 
-// ===================================
-// INVENTARIO Y KARDEX
-// ===================================
 export interface StockAlertItemDTO {
   itemType: 'INGREDIENT' | 'EXTRA';
   itemId: number;
@@ -289,9 +264,6 @@ export interface StockAlertBatchStatusDTO {
   activeAlerts: TriggerStockAlertDTO[];
 }
 
-// ===================================
-// PÉRDIDAS DE PRODUCTOS (MERMAS)
-// ===================================
 export type LossCategory = 'EXPIRED' | 'DAMAGED' | 'KITCHEN_ERROR' | 'CANCELLED_ORDER' | 'OTHER';
 export type LossItemType = 'INGREDIENT' | 'EXTRA' | 'PIZZA';
 
@@ -337,9 +309,6 @@ export interface LossesSummaryDTO {
   byItemType?: { [key: string]: number };
 }
 
-// ===================================
-// ESTIMACIÓN DE COSTOS PARA PRODUCCIÓN
-// ===================================
 export interface RecipeLineCostDTO {
   ingredientId: number;
   ingredientName: string;
@@ -437,9 +406,6 @@ export interface ProductionEstimateResponseDTO {
   materials: MaterialRequirementDTO[];
 }
 
-// ===================================
-// DASHBOARD DE PÉRDIDAS Y GANANCIAS (P&L)
-// ===================================
 export interface ProfitLossTimelinePointDTO {
   period: string;
   ordersCount: number;

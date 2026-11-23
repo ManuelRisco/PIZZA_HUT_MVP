@@ -28,7 +28,6 @@ export class Ingredientes implements OnInit {
   loading: boolean = true;
   guardando: boolean = false;
 
-  // KPIs precalculados
   kpiTotalIngredientes = 0;
   kpiDisponibles = 0;
   kpiAlertasStock = 0;
@@ -36,7 +35,6 @@ export class Ingredientes implements OnInit {
 
   unidades = ['g', 'ml', 'und', 'kg', 'L'];
 
-  // Paginación
   currentPage = 1;
   itemsPerPage = 10;
   pageSizeOptions: number[] = [10, 25, 50];
@@ -246,7 +244,6 @@ export class Ingredientes implements OnInit {
       });
     }
   }
-
 
   restaurar(id: number, nombre?: string): void {
     if (confirm('¿Desea restaurar el ingrediente' + (nombre ? ` "${nombre}"` : '') + '?')) {

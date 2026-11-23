@@ -33,7 +33,7 @@ public class SecurityConfig {
     private final XssProtectionFilter xssProtectionFilter;
     private final AuditLogService auditLogService;
 
-    @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:http://localhost,http://localhost:4200,http://127.0.0.1:4200,http://172.28.192.1:4200,http://localhost:8080,http://localhost:8081}")
+    @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:http://localhost,http://localhost:4200,http://127.0.0.1:4200,http://172.28.192.1:4200,http://localhost:8080,http://localhost:8081,https://*.trycloudflare.com}")
     private String[] allowedOrigins;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
@@ -58,12 +58,12 @@ public class SecurityConfig {
                 .referrerPolicy(ref -> ref.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                 .contentSecurityPolicy(csp -> csp.policyDirectives(
                     "default-src 'self'; " +
-                    "script-src 'self' https://accounts.google.com https://apis.google.com; " +
-                    "frame-src 'self' https://accounts.google.com; " +
+                    "script-src 'self' https://accounts.google.com https://apis.google.com https://sdk.mercadopago.com https://*.mercadopago.com https://*.mlstatic.com; " +
+                    "frame-src 'self' https://accounts.google.com https://*.mercadopago.com https://*.mercadolibre.com; " +
                     "img-src 'self' data: blob: https:; " +
-                    "style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com; " +
-                    "font-src 'self' data: https://fonts.gstatic.com; " +
-                    "connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com; " +
+                    "style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com https://*.mlstatic.com https://*.mercadopago.com; " +
+                    "font-src 'self' data: https://fonts.gstatic.com https://*.mlstatic.com; " +
+                    "connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://api.mercadopago.com https://api.mercadolibre.com https://*.mercadopago.com https://*.mercadolibre.com; " +
                     "object-src 'none'; frame-ancestors 'none'; base-uri 'self';"
                 ))
             )
@@ -209,7 +209,8 @@ public class SecurityConfig {
                 // ==========================================
                 // PAGOS (Payments)
                 // ==========================================
-                .requestMatchers(HttpMethod.POST, "/api/payments").hasAnyRole("CUSTOMER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/payments/mercadopago/config").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/payments", "/api/payments/mercadopago/**").hasAnyRole("CUSTOMER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/payments/**").hasAnyRole("ADMIN", "CUSTOMER")
                 .requestMatchers(HttpMethod.PUT, "/api/payments/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/payments/**").hasRole("ADMIN")

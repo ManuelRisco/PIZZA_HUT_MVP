@@ -31,13 +31,15 @@ public class CheckoutService {
     private final SizeService sizeService;
     private final InventoryService inventoryService;
     private final SunatReniecService sunatReniecService;
+    private final MercadoPagoService mercadoPagoService;
 
     public CheckoutService(OrderService orderService, OrderItemService orderItemService, AddressService addressService,
                            PaymentService paymentService, PromotionService promotionService,
                            OrderItemExtraService orderItemExtraService, IngredientService ingredientService,
                            PizzaService pizzaService, ExtraService extraService, SizeService sizeService,
                            InventoryService inventoryService,
-                           @org.springframework.beans.factory.annotation.Autowired(required = false) SunatReniecService sunatReniecService) {
+                           @org.springframework.beans.factory.annotation.Autowired(required = false) SunatReniecService sunatReniecService,
+                           @org.springframework.beans.factory.annotation.Autowired(required = false) MercadoPagoService mercadoPagoService) {
         this.orderService = orderService;
         this.orderItemService = orderItemService;
         this.addressService = addressService;
@@ -50,6 +52,7 @@ public class CheckoutService {
         this.sizeService = sizeService;
         this.inventoryService = inventoryService;
         this.sunatReniecService = sunatReniecService;
+        this.mercadoPagoService = mercadoPagoService;
     }
 
     public Order checkout(CheckoutRequestDTO req) {
@@ -286,12 +289,30 @@ public class CheckoutService {
 
     private void processPayment(CheckoutRequestDTO req, Order savedOrder) {
         if (req.getPayment() != null && req.getPayment().getPaymentMethodId() != null) {
+            CheckoutRequestDTO.PaymentDTO payReq = req.getPayment();
+            Payment.PaymentStatus resolvedStatus = Payment.PaymentStatus.valueOf(
+                    payReq.getStatus() != null ? payReq.getStatus().toUpperCase() : "PENDING");
+            String resolvedTxId = payReq.getTransactionId();
+
+            // Si Mercado Pago está configurado y el medio elegido es Tarjeta o Yape, procesar cobro real contra Mercado Pago.
+            // Si Mercado Pago rechaza el cobro, lanza BadRequestException y @Transactional revierte pedido + stock (y no emite boleta SUNAT).
+            if (mercadoPagoService != null
+                    && mercadoPagoService.requiresGatewayProcessing(payReq.getPaymentMethodId(), payReq)) {
+                MercadoPagoService.MercadoPagoChargeResult mpResult = mercadoPagoService.procesarPago(savedOrder, payReq);
+                if (mpResult.processedViaMercadoPago()) {
+                    resolvedStatus = Payment.PaymentStatus.PAID;
+                    resolvedTxId = mpResult.transactionId();
+                    savedOrder.setStatus(Order.OrderStatus.CONFIRMED);
+                    orderService.actualizarOrder(savedOrder.getId(), savedOrder);
+                }
+            }
+
             Payment payment = new Payment();
             payment.setOrderId(savedOrder.getId());
             payment.setAmount(savedOrder.getTotal());
-            payment.setPaymentMethodId(req.getPayment().getPaymentMethodId());
-            payment.setStatus(Payment.PaymentStatus.valueOf(req.getPayment().getStatus() != null ? req.getPayment().getStatus().toUpperCase() : "PENDING"));
-            payment.setTransactionId(req.getPayment().getTransactionId());
+            payment.setPaymentMethodId(payReq.getPaymentMethodId());
+            payment.setStatus(resolvedStatus);
+            payment.setTransactionId(resolvedTxId);
             paymentService.crearPayment(payment);
         }
     }

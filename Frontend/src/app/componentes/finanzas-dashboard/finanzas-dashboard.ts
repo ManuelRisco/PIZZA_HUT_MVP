@@ -34,12 +34,10 @@ export class FinanzasDashboardComponent implements OnInit {
   groupBy: 'DAY' | 'MONTH' = 'DAY';
   onlyDelivered = false;
 
-  // Métricas precalculadas para evitar O(N²) durante change detection
   maxTimelineMagnitude = 1;
   cogsPercentOfRevenue = 0;
   lossesPercentOfRevenue = 0;
 
-  // Filtro y paginación de Ranking de Rentabilidad por Producto
   rankingSearch = '';
   rankingPage = 1;
   rankingPerPage = 10;
@@ -248,12 +246,10 @@ export class FinanzasDashboardComponent implements OnInit {
   formatTimelinePeriod(pt: ProfitLossTimelinePointDTO): string {
     if (!pt.period) return '';
     if (pt.period.length === 7) {
-      // YYYY-MM
       const [y, m] = pt.period.split('-');
       return `${m}/${y}`;
     }
     if (pt.period.length === 10) {
-      // YYYY-MM-DD
       const [, m, d] = pt.period.split('-');
       return `${d}/${m}`;
     }
@@ -288,7 +284,6 @@ export class FinanzasDashboardComponent implements OnInit {
       workbook.creator = 'Pizza Hut MVP - Finanzas';
       workbook.created = new Date();
 
-      // ==================== HOJA 1: ESTADO DE RESULTADOS (P&L) ====================
       const wsPl = workbook.addWorksheet('Estado de Resultados');
       wsPl.mergeCells('A1:C1');
       const title = wsPl.getCell('A1');
@@ -343,7 +338,6 @@ export class FinanzasDashboardComponent implements OnInit {
         }
       });
 
-      // ==================== HOJA 2: EVOLUCIÓN TEMPORAL ====================
       const wsTime = workbook.addWorksheet('Evolucion Temporal');
       wsTime.columns = [
         { header: 'Período', key: 'period', width: 16 },
@@ -360,7 +354,6 @@ export class FinanzasDashboardComponent implements OnInit {
         [3, 4, 5, 6, 7].forEach((c) => (r.getCell(c).numFmt = '"S/" #,##0.00;[Red]-"S/" #,##0.00'));
       });
 
-      // ==================== HOJA 3: RENTABILIDAD POR PRODUCTO ====================
       const wsProd = workbook.addWorksheet('Rentabilidad Productos');
       wsProd.columns = [
         { header: 'Tipo', key: 'itemType', width: 14 },
@@ -377,7 +370,6 @@ export class FinanzasDashboardComponent implements OnInit {
         [4, 5, 6].forEach((c) => (r.getCell(c).numFmt = '"S/" #,##0.00;[Red]-"S/" #,##0.00'));
       });
 
-      // ==================== HOJA 4: DESGLOSE DE PÉRDIDAS ====================
       const wsLoss = workbook.addWorksheet('Desglose Perdidas');
       wsLoss.columns = [
         { header: 'Código', key: 'category', width: 20 },

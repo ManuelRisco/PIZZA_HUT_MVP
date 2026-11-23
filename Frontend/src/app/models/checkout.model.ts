@@ -1,6 +1,15 @@
 import { CartItem, CartTotals } from './cart-item.model';
 import { OrderDTO, OrderItemDTO, PaymentDTO } from './admin.interface';
 
+export interface MercadoPagoConfigDTO {
+  configured: boolean;
+  publicKey: string;
+  sandboxMode: boolean;
+  currency: string;
+  locale: string;
+  supportedGateways: string[];
+}
+
 export interface CheckoutSizeConfig {
   sizeId?: number;
   extra?: number;
@@ -31,6 +40,14 @@ export interface CheckoutPayload {
     amount?: number;
     status?: PaymentDTO['status'];
     transactionId?: string;
+    mercadoPagoToken?: string;
+    mercadoPagoPaymentMethodId?: string;
+    mercadoPagoIssuerId?: string;
+    mercadoPagoInstallments?: number;
+    mercadoPagoPayerEmail?: string;
+    mercadoPagoPayerDocType?: string;
+    mercadoPagoPayerDocNumber?: string;
+    mercadoPagoPayerPhone?: string;
   };
 }
 

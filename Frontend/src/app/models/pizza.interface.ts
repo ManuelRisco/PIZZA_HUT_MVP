@@ -1,14 +1,12 @@
-// DTOs para categorías - coinciden con el backend
 export interface CategoryDTO {
   id?: number;
   name: string;
   description?: string;
   displayOrder?: number;
-  updatedAt?: string; // Fecha de actualización en formato ISO string
+  updatedAt?: string;
   deletedAt?: string | null;
 }
 
-// Ingrediente dentro de la receta de una pizza
 export interface PizzaIngredientDTO {
   pizzaId?: number;
   ingredientId: number;
@@ -21,7 +19,6 @@ export interface PizzaIngredientDTO {
   lineCost?: number;
 }
 
-// DTOs para pizzas - coinciden con el backend
 export interface PizzaDTO {
   id?: number;
   categoryId?: number;
@@ -40,7 +37,7 @@ export interface PizzaDTO {
   recipeCount?: number;
   lowStock?: boolean;
   outOfStock?: boolean;
-  imageError?: boolean; // Para manejar errores de carga de imagen
+  imageError?: boolean;
   deletedAt?: string | null;
 }
 
@@ -55,7 +52,6 @@ export interface PizzaCreateDTO {
   recipe?: PizzaIngredientDTO[];
 }
 
-// DTOs para ingredientes
 export interface IngredientDTO {
   id?: number;
   name: string;
@@ -72,8 +68,7 @@ export interface IngredientDTO {
   deletedAt?: string | null;
 }
 
-// Alias para compatibilidad con código existente
 export interface Category extends CategoryDTO {}
 export interface Pizza extends PizzaDTO {
-  category?: CategoryDTO; // Para compatibilidad
+  category?: CategoryDTO;
 }

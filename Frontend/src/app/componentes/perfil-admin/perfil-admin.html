@@ -1,5 +1,4 @@
 <div class="space-y-6 font-sans">
-  <!-- Executive v2 Header Card -->
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
       <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel Ejecutivo</p>
@@ -18,7 +17,6 @@
     </div>
   </div>
 
-  <!-- Banner persistente si falla sincronizacion con Backend -->
   <div
     *ngIf="loadError"
     class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
@@ -42,7 +40,6 @@
     </button>
   </div>
 
-  <!-- Mensajes de accion (exito y error) -->
   <div
     *ngIf="mensaje"
     class="px-5 py-3.5 rounded-2xl border flex justify-between items-center text-sm font-medium shadow-2xs"
@@ -57,15 +54,12 @@
     </button>
   </div>
 
-  <!-- Loading State -->
   <div *ngIf="cargando && !usuario" class="bg-white rounded-2xl border border-gray-200 p-16 flex flex-col items-center justify-center shadow-sm">
     <div class="animate-spin rounded-full h-11 w-11 border-4 border-red-100 border-t-red-600 mb-4"></div>
     <p class="text-gray-500 font-medium text-sm m-0">Cargando tu informaci&oacute;n...</p>
   </div>
 
-  <!-- Main Content Grid (Diseno Ejecutivo Unificado) -->
   <div *ngIf="usuario" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-    <!-- Left Column: Identity & Account Status -->
     <div class="space-y-6">
       <div class="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm flex flex-col items-center text-center">
         <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 text-white flex items-center justify-center text-3xl font-black shadow-md mb-4 ring-4 ring-red-50">
@@ -161,9 +155,7 @@
       </div>
     </div>
 
-    <!-- Right Column: Personal Info & Security Forms -->
     <div class="lg:col-span-2 space-y-6">
-      <!-- Informacion Personal -->
       <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/70">
           <div class="flex items-center gap-3">
@@ -309,7 +301,6 @@
         </div>
       </div>
 
-      <!-- Configuracion de Seguridad -->
       <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap justify-between items-center gap-2 bg-gray-50/70">
           <div class="flex items-center gap-3">

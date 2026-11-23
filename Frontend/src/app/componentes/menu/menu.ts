@@ -36,10 +36,8 @@ export class MenuComponent implements OnInit, AfterViewInit {
   loading = false;
   error = '';
 
-  // Control de carga de imágenes
   imagenesCargadas = new Set<number>();
 
-  // Modal de personalización
   mostrarModal = false;
   mostrarModalRapido = false;
   pizzaSeleccionada?: PizzaDTO;
@@ -50,12 +48,10 @@ export class MenuComponent implements OnInit, AfterViewInit {
   precioCalculado = 0;
   descripcionPersonalizacion = '';
 
-  // Variables para favoritos
   favoritosPizzaIds: Set<number> = new Set();
   isLoggedIn: boolean = false;
   currentUserId: number | null = null;
 
-  // Variable para highlight
   pizzaHighlightId: number | null = null;
 
   private readonly pizzaService = inject(PizzaService);
@@ -86,11 +82,9 @@ export class MenuComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Inicialización de vista
   }
 
   private setupScrollAnimations(): void {
-    // Animaciones gestionadas por CSS sin depender de IntersectionObserver
   }
 
   verificarAutenticacion(): void {
@@ -342,10 +336,6 @@ export class MenuComponent implements OnInit, AfterViewInit {
     return this.imageOptimizer.optimizeImageUrl(imageUrl, 'medium');
   }
 
-  /**
-   * Retorna el stock de masa disponible para el tamaño seleccionado.
-   * Todas las pizzas comparten el stock de masa por tamaño.
-   */
   getStockParaTamano(pizza: PizzaDTO | undefined, tamano?: SizeDTO): number {
     if (!pizza) return 0;
     if (!pizza.isAvailable || pizza.outOfStock) return 0;
@@ -532,7 +522,6 @@ export class MenuComponent implements OnInit, AfterViewInit {
     event.target.src = '/combo1.webp';
   }
 
-  // ACCESIBILIDAD: Control de Foco (Focus Trap)
   private elementoPrevioAlModal: HTMLElement | null = null;
 
   private enfocarPrimerElementoModal(): void {

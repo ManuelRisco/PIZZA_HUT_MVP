@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, NgZone, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -20,6 +20,12 @@ import { ToastService } from '../../services/toast.service';
 import { Payment } from '../../services/payment.service';
 import { SunatService } from '../../services/sunat.service';
 import { UsuarioService } from '../../services/usuario.service';
+
+declare global {
+  interface Window {
+    MercadoPago?: any;
+  }
+}
 
 @Component({
   selector: 'app-carrito',
@@ -150,8 +156,32 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
   confirmedAdminEmailSent = false;
   confirmedBoletaComprobante: string | null = null;
   confirmedBoletaPdfUrl: string | null = null;
+  confirmedPaymentViaMp = false;
+  confirmedPaymentMethodLabel = '';
 
-  // ==== Boleta de Venta Electrónica (SUNAT / Nubefact) & DNI (RENIEC) ====
+  mpConfigLoaded = false;
+  mpConfigured = false;
+  mpPublicKey = '';
+  mpSandboxMode = true;
+  mpLocale = 'es-PE';
+  mpSdkReady = false;
+  mpBrickLoading = false;
+  mpBrickReady = false;
+  mpBrickError = '';
+  requiresCardDetails = false;
+  isYapeMethod = false;
+  isPlinOrTransferMethod = false;
+  isCashMethod = false;
+  requiresMobileDetails = false;
+  useMercadoPagoCardBrick = false;
+  useMercadoPagoYape = false;
+  isUserAuthenticated = false;
+  private mpInstance: any = null;
+  private cardBrickController: any = null;
+  private lastMountedBrickAmount = -1;
+  private brickMountToken = 0;
+  private brickMountTimer: ReturnType<typeof setTimeout> | null = null;
+
   wantsBoleta = false;
   userHasSavedDni = false;
   editingSavedDni = false;
@@ -210,6 +240,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     private readonly sunatService: SunatService,
     private readonly usuarioService: UsuarioService,
     private readonly router: Router,
+    private readonly ngZone: NgZone,
   ) {}
 
   ngOnInit(): void {
@@ -218,6 +249,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         this.items = items;
         this.recalcularTotales();
         if (items.length === 0) {
+          void this.unmountCardBrick();
           if (!this.isProcessing && !this.isSuccess) {
             this.accessibility.announce('Carrito vacío');
           }
@@ -228,11 +260,18 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     );
 
     this.loadPaymentMethods();
+    this.loadMercadoPagoConfig();
     this.loadIngredientes();
     this.cargarPromocionGuardada();
 
     const userId = this.authService.obtenerUsuarioId();
     const currentUser = this.authService.getCurrentUser();
+    this.isUserAuthenticated = Boolean(userId && currentUser?.id);
+    this.subs.push(
+      this.authService.currentUser$.subscribe((u) => {
+        this.isUserAuthenticated = Boolean(u?.id && this.authService.obtenerUsuarioId());
+      }),
+    );
     if (currentUser?.dni) {
       this.boletaDni = currentUser.dni;
       this.boletaNombre = currentUser.name || '';
@@ -252,7 +291,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
             }
           }
         },
-        error: () => {}
+        error: () => {},
       });
 
       this.addressService.obtenerPorUserId(userId).subscribe({
@@ -290,7 +329,336 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnDestroy(): void {
     this.clearProcessingTimers();
+    if (this.brickMountTimer !== null) {
+      clearTimeout(this.brickMountTimer);
+      this.brickMountTimer = null;
+    }
+    void this.unmountCardBrick();
     this.subs.forEach((sub) => sub.unsubscribe());
+  }
+
+  private loadMercadoPagoConfig(): void {
+    const sub = this.paymentService.obtenerConfiguracionMercadoPago().subscribe({
+      next: (config) => {
+        this.mpConfigLoaded = true;
+        this.mpConfigured = Boolean(config?.configured && config?.publicKey);
+        this.mpPublicKey = config?.publicKey || '';
+        this.mpSandboxMode = config?.sandboxMode ?? true;
+        this.mpLocale = config?.locale || 'es-PE';
+        this.syncPaymentMethodFlags();
+
+        if (this.mpConfigured && this.mpPublicKey) {
+          this.loadMercadoPagoSdk()
+            .then(() => {
+              this.ngZone.run(() => {
+                if (typeof window.MercadoPago === 'function') {
+                  this.mpInstance = new window.MercadoPago(this.mpPublicKey, {
+                    locale: this.mpLocale,
+                  });
+                  this.mpSdkReady = true;
+                  this.mpBrickError = '';
+                  this.syncPaymentMethodFlags();
+                  if (this.useMercadoPagoCardBrick) {
+                    this.scheduleCardBrickMount(true);
+                  }
+                }
+              });
+            })
+            .catch(() => {
+              this.ngZone.run(() => {
+                this.mpSdkReady = false;
+                this.mpBrickError = 'No se pudo cargar el SDK seguro de Mercado Pago. Revisa tu conexión.';
+              });
+            });
+        }
+      },
+      error: () => {
+        this.mpConfigLoaded = true;
+        this.mpConfigured = false;
+        this.syncPaymentMethodFlags();
+      },
+    });
+    this.subs.push(sub);
+  }
+
+  private loadMercadoPagoSdk(): Promise<void> {
+    if (typeof window.MercadoPago === 'function') {
+      return Promise.resolve();
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      const existing = document.getElementById('mercado-pago-sdk-v2') as HTMLScriptElement | null;
+      if (existing) {
+        if (typeof window.MercadoPago === 'function') {
+          resolve();
+          return;
+        }
+        existing.addEventListener('load', () => resolve(), { once: true });
+        existing.addEventListener('error', () => reject(new Error('MP SDK load error')), { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.id = 'mercado-pago-sdk-v2';
+      script.src = 'https://sdk.mercadopago.com/js/v2';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('MP SDK load error'));
+      document.head.appendChild(script);
+    });
+  }
+
+  reintentarCardBrick(): void {
+    this.mpBrickError = '';
+    if (!this.mpSdkReady && this.mpConfigured && this.mpPublicKey) {
+      this.loadMercadoPagoConfig();
+      return;
+    }
+    this.scheduleCardBrickMount(true);
+  }
+
+  private async unmountCardBrick(): Promise<void> {
+    this.brickMountToken++;
+    if (this.brickMountTimer !== null) {
+      clearTimeout(this.brickMountTimer);
+      this.brickMountTimer = null;
+    }
+    if (this.cardBrickController) {
+      const ctrl = this.cardBrickController;
+      this.cardBrickController = null;
+      try {
+        await ctrl.unmount();
+      } catch {
+      }
+    }
+    this.lastMountedBrickAmount = -1;
+    this.mpBrickReady = false;
+    this.mpBrickLoading = false;
+  }
+
+  private scheduleCardBrickMount(force = false): void {
+    if (!this.useMercadoPagoCardBrick || !this.mpSdkReady || !this.mpInstance) {
+      return;
+    }
+    if (this.items.length === 0 || this.isProcessing || this.isSuccess) {
+      return;
+    }
+
+    const amount = Number(this.totals.total.toFixed(2));
+    if (amount <= 0) {
+      return;
+    }
+
+    if (!force && this.cardBrickController && this.lastMountedBrickAmount === amount) {
+      return;
+    }
+
+    if (this.brickMountTimer !== null) {
+      clearTimeout(this.brickMountTimer);
+    }
+
+    const myToken = ++this.brickMountToken;
+    this.mpBrickLoading = true;
+    this.mpBrickReady = false;
+    this.mpBrickError = '';
+
+    this.brickMountTimer = setTimeout(() => {
+      void this.mountCardBrick(amount, myToken);
+    }, 90);
+  }
+
+  private async mountCardBrick(amount: number, expectedToken: number): Promise<void> {
+    const container = document.getElementById('mp-card-brick-container');
+    if (!container || expectedToken !== this.brickMountToken || !this.mpInstance) {
+      this.ngZone.run(() => {
+        this.mpBrickLoading = false;
+      });
+      return;
+    }
+
+    if (this.cardBrickController) {
+      const prev = this.cardBrickController;
+      this.cardBrickController = null;
+      try {
+        await prev.unmount();
+      } catch {
+      }
+    }
+
+    if (expectedToken !== this.brickMountToken) {
+      return;
+    }
+
+    container.innerHTML = '';
+
+    const currentUser = this.authService.getCurrentUser();
+    const cleanDni = /^\d{8}$/.test((this.boletaDni || '').trim())
+      ? this.boletaDni.trim()
+      : (currentUser?.dni && /^\d{8}$/.test(currentUser.dni.trim()) ? currentUser.dni.trim() : '');
+
+    const payerInit: Record<string, any> = {};
+    if (currentUser?.email) {
+      payerInit['email'] = currentUser.email;
+    }
+    if (cleanDni) {
+      payerInit['identification'] = { type: 'DNI', number: cleanDni };
+    }
+
+    try {
+      const bricksBuilder = this.mpInstance.bricks();
+      const controller = await bricksBuilder.create('cardPayment', 'mp-card-brick-container', {
+        initialization: {
+          amount,
+          payer: payerInit,
+        },
+        customization: {
+          visual: {
+            hideFormTitle: true,
+            style: {
+              theme: 'default',
+              customVariables: {
+                baseColor: '#c8102e',
+                baseColorFirstVariant: '#a00d24',
+                baseColorSecondVariant: '#7f0a1c',
+              },
+            },
+          },
+          paymentMethods: {
+            maxInstallments: 1,
+          },
+        },
+        callbacks: {
+          onReady: () => {
+            this.ngZone.run(() => {
+              if (expectedToken === this.brickMountToken) {
+                this.mpBrickLoading = false;
+                this.mpBrickReady = true;
+                this.mpBrickError = '';
+              }
+            });
+          },
+          onSubmit: (cardFormData: any) => {
+            return this.handleMercadoPagoCardSubmit(cardFormData);
+          },
+          onError: (error: any) => {
+            console.error('Mercado Pago Card Brick error:', error);
+            this.ngZone.run(() => {
+              this.mpBrickLoading = false;
+              this.mpBrickReady = false;
+              this.mpBrickError =
+                'No se pudo inicializar el módulo de tarjeta de Mercado Pago. Verifica tu Public Key en .env.';
+            });
+          },
+        },
+      });
+
+      if (expectedToken !== this.brickMountToken) {
+        try {
+          await controller.unmount();
+        } catch {
+        }
+        return;
+      }
+
+      this.cardBrickController = controller;
+      this.lastMountedBrickAmount = amount;
+    } catch (err) {
+      console.error('Error al montar Mercado Pago Card Brick:', err);
+      this.ngZone.run(() => {
+        this.mpBrickLoading = false;
+        this.mpBrickReady = false;
+        this.mpBrickError = 'Ocurrió un error al cargar Mercado Pago. Intenta recargar el módulo.';
+      });
+    }
+  }
+
+  private handleMercadoPagoCardSubmit(cardFormData: any): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.ngZone.run(() => {
+        if (this.items.length === 0 || this.isProcessing) {
+          resolve();
+          return;
+        }
+
+        const precheckError = this.validateDeliveryAndBoletaBeforePay();
+        if (precheckError) {
+          this.checkoutError = precheckError;
+          this.toastService.showError(precheckError);
+          resolve();
+          return;
+        }
+
+        const token = cardFormData?.token;
+        if (!token) {
+          this.checkoutError = 'Mercado Pago no generó el token seguro de tu tarjeta. Verifica los datos ingresados.';
+          this.toastService.showError(this.checkoutError);
+          resolve();
+          return;
+        }
+
+        const payload = this.buildBaseCheckoutPayload();
+        const currentUser = this.authService.getCurrentUser();
+
+        payload.payment = {
+          paymentMethodId: this.selectedPaymentMethodId!,
+          amount: this.totals.total,
+          status: 'PENDING',
+          mercadoPagoToken: token,
+          mercadoPagoPaymentMethodId: cardFormData?.payment_method_id || 'visa',
+          mercadoPagoIssuerId: cardFormData?.issuer_id ? String(cardFormData.issuer_id) : undefined,
+          mercadoPagoInstallments: Number(cardFormData?.installments) || 1,
+          mercadoPagoPayerEmail: cardFormData?.payer?.email || currentUser?.email || undefined,
+          mercadoPagoPayerDocType: cardFormData?.payer?.identification?.type || 'DNI',
+          mercadoPagoPayerDocNumber:
+            cardFormData?.payer?.identification?.number ||
+            (this.wantsBoleta ? this.boletaDni.trim() : currentUser?.dni || undefined),
+        };
+
+        this.checkoutError = '';
+        this.checkoutSuccess = '';
+        this.confirmedPaymentViaMp = true;
+        this.confirmedPaymentMethodLabel = 'Tarjeta vía Mercado Pago';
+
+        this.finalizarCheckoutBackend(payload, () => {
+          resolve();
+        });
+      });
+    });
+  }
+
+  private async generarTokenYapeMercadoPago(phone: string, otp: string): Promise<string> {
+    if (!this.mpInstance) {
+      throw new Error('El SDK seguro de Mercado Pago todavía está cargando. Espera un segundo e intenta nuevamente.');
+    }
+
+    const yapePayload = {
+      otp: otp.trim(),
+      phoneNumber: phone.trim(),
+    };
+
+    try {
+      let tokenResponse: any;
+      if (typeof this.mpInstance.yape === 'function') {
+        const yapeClient = this.mpInstance.yape(yapePayload);
+        tokenResponse = await yapeClient.create();
+      } else if (this.mpInstance.yape && typeof this.mpInstance.yape.create === 'function') {
+        tokenResponse = await this.mpInstance.yape.create(yapePayload);
+      } else {
+        throw new Error('Tu versión del SDK de Mercado Pago no expuso el módulo Yape.');
+      }
+
+      const token = tokenResponse?.id || tokenResponse?.token;
+      if (!token) {
+        throw new Error('No se recibió un token válido de Yape.');
+      }
+      return String(token);
+    } catch (err: any) {
+      const detail =
+        err?.message ||
+        err?.cause?.[0]?.description ||
+        'Verifica que tu número celular (9 dígitos) y el código de aprobación Yape (6 dígitos) sean correctos.';
+      throw new Error(`No se pudo validar tu código Yape en Mercado Pago: ${detail}`);
+    }
   }
 
   actualizarCantidad(item: CartItem, valor: string): void {
@@ -356,23 +724,15 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  checkout(): void {
-    if (this.items.length === 0 || this.isProcessing) {
-      return;
+  private validateDeliveryAndBoletaBeforePay(): string | null {
+    if (!this.authService.obtenerUsuarioId() || !this.authService.getCurrentUser()?.id) {
+      return 'Debes iniciar sesión para confirmar tu pedido.';
     }
 
     if (!this.selectedPaymentMethodId) {
-      this.checkoutError =
-        this.paymentMethods.length === 0
-          ? 'No hay métodos de pago disponibles en este momento.'
-          : 'Selecciona un método de pago para continuar.';
-      return;
-    }
-
-    const detailError = this.validatePaymentDetails();
-    if (detailError) {
-      this.checkoutError = detailError;
-      return;
+      return this.paymentMethods.length === 0
+        ? 'No hay métodos de pago disponibles en este momento.'
+        : 'Selecciona un método de pago para continuar.';
     }
 
     if (
@@ -390,35 +750,34 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     }
     const addressError = this.validateAddressForm();
     if (addressError) {
-      this.checkoutError = addressError;
-      return;
+      return addressError;
     }
 
     if (this.wantsBoleta) {
       const cleanDni = (this.boletaDni || '').trim();
       if (!/^\d{8}$/.test(cleanDni)) {
-        this.checkoutError = 'Para emitir Boleta de Venta Electrónica debes ingresar un DNI válido de 8 dígitos.';
-        return;
+        return 'Para emitir Boleta de Venta Electrónica debes ingresar un DNI válido de 8 dígitos.';
       }
       if (!this.userHasSavedDni && !this.boletaAgeVerified) {
-        this.checkoutError = 'Debes confirmar que eres mayor de 18 años (+18) y que el DNI ingresado te pertenece.';
-        return;
+        return 'Debes confirmar que eres mayor de 18 años (+18) y que el DNI ingresado te pertenece.';
       }
     }
 
-    this.isProcessing = true;
-    this.checkoutError = '';
-    this.checkoutSuccess = '';
+    return null;
+  }
 
+  private buildBaseCheckoutPayload(): CheckoutPayload {
     const combinedNotes = this.composeNotes();
 
     const payload: CheckoutPayload = {
       notes: combinedNotes,
-      paymentMethodId: this.selectedPaymentMethodId,
+      paymentMethodId: this.selectedPaymentMethodId!,
       deliveryType: this.deliveryType,
       wantsBoleta: this.wantsBoleta,
       clienteDni: this.wantsBoleta ? this.boletaDni.trim() : undefined,
-      clienteNombre: this.wantsBoleta ? (this.boletaNombre.trim() || this.authService.getCurrentUser()?.name || '') : undefined,
+      clienteNombre: this.wantsBoleta
+        ? this.boletaNombre.trim() || this.authService.getCurrentUser()?.name || ''
+        : undefined,
       ageVerified: this.wantsBoleta ? true : undefined,
     };
 
@@ -429,7 +788,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         (d) =>
           (d.line1 || '').trim().toLowerCase() === this.addressForm.line1.trim().toLowerCase() &&
           (d.city || '').trim().toLowerCase() === this.addressForm.city.trim().toLowerCase() &&
-          (d.district || '').trim().toLowerCase() === this.addressForm.district.trim().toLowerCase()
+          (d.district || '').trim().toLowerCase() === this.addressForm.district.trim().toLowerCase(),
       );
       if (existingMatch?.id) {
         payload.addressId = existingMatch.id;
@@ -450,11 +809,99 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
       };
     }
 
+    return payload;
+  }
+
+  async checkout(): Promise<void> {
+    if (this.items.length === 0 || this.isProcessing) {
+      return;
+    }
+
+    const precheckError = this.validateDeliveryAndBoletaBeforePay();
+    if (precheckError) {
+      this.checkoutError = precheckError;
+      return;
+    }
+
+    if (this.useMercadoPagoCardBrick) {
+      this.checkoutError = '';
+      const brickEl = document.getElementById('mp-card-brick-section');
+      if (brickEl) {
+        brickEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      this.toastService.showInfo(
+        'Completa tu tarjeta en el módulo seguro de Mercado Pago y presiona el botón "Pagar".',
+      );
+      return;
+    }
+
+    const detailError = this.validatePaymentDetails();
+    if (detailError) {
+      this.checkoutError = detailError;
+      return;
+    }
+
+    this.checkoutError = '';
+    this.checkoutSuccess = '';
+
+    const payload = this.buildBaseCheckoutPayload();
+    const currentUser = this.authService.getCurrentUser();
+
+    if (this.useMercadoPagoYape) {
+      this.isProcessing = true;
+      try {
+        const yapeToken = await this.generarTokenYapeMercadoPago(
+          this.mobileForm.phone,
+          this.mobileForm.reference,
+        );
+        payload.payment = {
+          paymentMethodId: this.selectedPaymentMethodId!,
+          amount: this.totals.total,
+          status: 'PENDING',
+          mercadoPagoToken: yapeToken,
+          mercadoPagoPaymentMethodId: 'yape',
+          mercadoPagoInstallments: 1,
+          mercadoPagoPayerEmail: currentUser?.email || undefined,
+          mercadoPagoPayerDocType: 'DNI',
+          mercadoPagoPayerDocNumber: this.wantsBoleta
+            ? this.boletaDni.trim()
+            : currentUser?.dni || undefined,
+          mercadoPagoPayerPhone: this.mobileForm.phone.trim(),
+        };
+        this.confirmedPaymentViaMp = true;
+        this.confirmedPaymentMethodLabel = 'Yape vía Mercado Pago';
+        this.finalizarCheckoutBackend(payload);
+      } catch (err: any) {
+        this.isProcessing = false;
+        this.checkoutError =
+          err?.message || 'No se pudo procesar tu código Yape con Mercado Pago.';
+        this.toastService.showError(this.checkoutError);
+      }
+      return;
+    }
+
+    if (this.isCashMethod) {
+      this.confirmedPaymentViaMp = false;
+      this.confirmedPaymentMethodLabel = 'Efectivo (pago al recibir)';
+      payload.payment = {
+        paymentMethodId: this.selectedPaymentMethodId!,
+        amount: this.totals.total,
+        status: 'PENDING',
+      };
+      this.finalizarCheckoutBackend(payload);
+      return;
+    }
+
+    this.confirmedPaymentViaMp = false;
+    this.confirmedPaymentMethodLabel = this.selectedPaymentMethod?.name || 'Pago registrado';
     payload.payment = {
-      paymentMethodId: this.selectedPaymentMethodId,
+      paymentMethodId: this.selectedPaymentMethodId!,
       amount: this.totals.total,
       status: 'PAID',
-      transactionId: 'SIM-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+      transactionId:
+        this.requiresMobileDetails && this.mobileForm.reference.trim()
+          ? 'REF-' + this.mobileForm.reference.trim().toUpperCase()
+          : 'LOCAL-' + Math.random().toString(36).substring(2, 11).toUpperCase(),
     };
 
     this.finalizarCheckoutBackend(payload);
@@ -469,13 +916,17 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  private startProcessingAnimation(): void {
+  private startProcessingAnimation(viaMercadoPago = false): void {
     this.clearProcessingTimers();
     this.isProcessing = true;
     this.processingStep = 1;
     this.processingProgress = 12;
-    this.processingTitle = 'Registrando tu pedido...';
-    this.processingSubtitle = 'Verificando disponibilidad de ingredientes en cocina';
+    this.processingTitle = viaMercadoPago
+      ? 'Procesando pago seguro en Mercado Pago...'
+      : 'Registrando tu pedido...';
+    this.processingSubtitle = viaMercadoPago
+      ? 'Validando autorización de pago y stock disponible en cocina'
+      : 'Verificando disponibilidad de ingredientes en cocina';
 
     this.processingTimers.push(
       setTimeout(() => {
@@ -515,10 +966,11 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     }, 140);
   }
 
-  finalizarCheckoutBackend(payload: CheckoutPayload): void {
+  finalizarCheckoutBackend(payload: CheckoutPayload, onFinished?: (ok: boolean) => void): void {
     const startTime = Date.now();
     const MIN_ANIMATION_MS = 3300;
-    this.startProcessingAnimation();
+    const isMpPayment = Boolean(payload.payment?.mercadoPagoToken);
+    this.startProcessingAnimation(isMpPayment);
 
     const sub = this.checkoutService.checkout(payload).subscribe({
       next: (result) => {
@@ -538,7 +990,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
             this.authService.updateCurrentUser({
               ...cur,
               dni: this.boletaDni.trim(),
-              ageVerified: true
+              ageVerified: true,
             });
           }
         }
@@ -562,6 +1014,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
                 this.clearProcessingTimers();
                 this.isProcessing = false;
                 this.isSuccess = true;
+                void this.unmountCardBrick();
                 if (this.confirmedEmailSent) {
                   this.toastService.showSuccess(
                     `¡Se envió el correo de confirmación a ${this.confirmedEmailAddress || 'tu bandeja'}!`,
@@ -577,6 +1030,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
                 }
                 this.resetPaymentForms();
                 this.limpiarPromocionDeStorage();
+                onFinished?.(true);
               }, 450),
             );
           }, waitBeforeCompleteMs),
@@ -586,7 +1040,10 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         this.clearProcessingTimers();
         this.checkoutError = err?.message ?? 'No se pudo completar el pedido.';
         this.isProcessing = false;
+        this.confirmedPaymentViaMp = false;
+        this.toastService.showError(this.checkoutError);
         this.accessibility.announceError(this.checkoutError);
+        onFinished?.(false);
       },
     });
 
@@ -618,13 +1075,18 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
       error: (err) => {
         this.buscandoDni = false;
         this.boletaDniError = err?.error?.message || 'No se pudo consultar el DNI en RENIEC.';
-      }
+      },
     });
   }
 
   guardarDniEnCuenta(): void {
     this.boletaDniError = '';
     this.boletaDniMsg = '';
+    if (!this.authService.obtenerUsuarioId() || !this.authService.getCurrentUser()?.id) {
+      this.boletaDniError = 'Debes iniciar sesión para guardar tu DNI en tu cuenta.';
+      this.toastService.showInfo('Inicia sesión para guardar tu DNI en tu cuenta.');
+      return;
+    }
     const clean = (this.boletaDni || '').trim();
     if (!/^\d{8}$/.test(clean)) {
       this.boletaDniError = 'Ingresa un DNI válido de 8 dígitos.';
@@ -649,8 +1111,12 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
       },
       error: (err) => {
         this.guardandoDni = false;
+        if (err?.status === 401 || err?.status === 403) {
+          this.boletaDniError = 'Debes iniciar sesión para guardar tu DNI en tu cuenta.';
+          return;
+        }
         this.boletaDniError = err?.error?.message || 'No se pudo vincular el DNI.';
-      }
+      },
     });
   }
 
@@ -698,6 +1164,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         } else {
           this.selectedPaymentMethodId = null;
           this.selectedPaymentMethod = null;
+          this.syncPaymentMethodFlags();
         }
       },
       error: () => {
@@ -705,6 +1172,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         this.paymentMethodsLoaded = true;
         this.selectedPaymentMethodId = null;
         this.selectedPaymentMethod = null;
+        this.syncPaymentMethodFlags();
       },
     });
 
@@ -750,7 +1218,17 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     this.selectedPaymentMethodId = this.selectedPaymentMethod?.id ?? null;
+    this.syncPaymentMethodFlags();
+    this.checkoutError = '';
     this.resetPaymentForms();
+
+    if (this.useMercadoPagoCardBrick) {
+      if (this.mpSdkReady) {
+        this.scheduleCardBrickMount(true);
+      }
+    } else {
+      void this.unmountCardBrick();
+    }
   }
 
   selectPaymentMethod(method: PaymentMethodDTO): void {
@@ -761,14 +1239,16 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     return [...this.paymentMethods].toSorted((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
   }
 
-  get requiresCardDetails(): boolean {
+  private syncPaymentMethodFlags(): void {
     const name = this.selectedPaymentMethod?.name?.toLowerCase() ?? '';
-    return name.includes('tarjeta');
-  }
-
-  get requiresMobileDetails(): boolean {
-    const name = this.selectedPaymentMethod?.name?.toLowerCase() ?? '';
-    return name.includes('yape') || name.includes('plin') || name.includes('transferencia');
+    this.requiresCardDetails = name.includes('tarjeta') || name.includes('card');
+    this.isYapeMethod = name.includes('yape');
+    this.isPlinOrTransferMethod =
+      !this.isYapeMethod && (name.includes('plin') || name.includes('transferencia'));
+    this.isCashMethod = name.includes('efectivo') || name.includes('cash');
+    this.requiresMobileDetails = this.isYapeMethod || this.isPlinOrTransferMethod;
+    this.useMercadoPagoCardBrick = this.requiresCardDetails && this.mpConfigured;
+    this.useMercadoPagoYape = this.isYapeMethod && this.mpConfigured;
   }
 
   private validatePaymentDetails(): string | null {
@@ -776,7 +1256,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
       return 'Selecciona un método de pago para continuar.';
     }
 
-    if (this.requiresCardDetails) {
+    if (this.requiresCardDetails && !this.mpConfigured) {
       const { holder, number, expiry, cvv } = this.cardForm;
       if (!holder.trim()) {
         return 'Ingresa el nombre del titular de la tarjeta.';
@@ -792,13 +1272,28 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
       }
     }
 
+    if (this.useMercadoPagoYape) {
+      const { phone, reference } = this.mobileForm;
+      const phoneRegex = this.mpSandboxMode ? /^\d{9}$/ : /^9\d{8}$/;
+      if (!phoneRegex.test(phone.trim())) {
+        return this.mpSandboxMode
+          ? 'Ingresa un número de celular Yape de 9 dígitos (en Sandbox usa 111111111).'
+          : 'Ingresa tu número de celular Yape (9 dígitos, empieza con 9).';
+      }
+      if (!/^\d{6}$/.test(reference.trim())) {
+        return 'Ingresa el código de aprobación Yape de 6 dígitos generado en tu app Yape.';
+      }
+      return null;
+    }
+
     if (this.requiresMobileDetails) {
       const { phone, reference } = this.mobileForm;
+      const appLabel = this.isYapeMethod ? 'Yape' : 'Plin / transferencia';
       if (!/^9\d{8}$/.test(phone.trim())) {
-        return 'Ingresa el número de celular Yape (9 dígitos).';
+        return `Ingresa el número de celular asociado a ${appLabel} (9 dígitos).`;
       }
       if (!reference.trim()) {
-        return 'Ingresa el código o referencia de la transferencia.';
+        return 'Ingresa el código o referencia de la operación.';
       }
     }
 
@@ -814,9 +1309,12 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     const userNotes = this.notes ? this.notes.trim() : '';
     const details: string[] = [];
 
-    if (this.requiresMobileDetails) {
+    if (this.useMercadoPagoYape) {
+      details.push(`Pago Yape Mercado Pago (${this.mobileForm.phone.trim()})`);
+    } else if (this.requiresMobileDetails) {
+      const label = this.isYapeMethod ? 'Yape' : 'Plin/Transferencia';
       details.push(
-        `Pago móvil ${this.mobileForm.phone.trim()} referencia ${this.mobileForm.reference.trim()}`,
+        `Pago ${label} ${this.mobileForm.phone.trim()} referencia ${this.mobileForm.reference.trim()}`,
       );
     }
 
@@ -897,6 +1395,10 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         deliveryFee: this.baseDeliveryFee,
         total: Math.max(0, baseTotals.subtotal + this.baseDeliveryFee - this.promoDiscount),
       };
+    }
+
+    if (this.useMercadoPagoCardBrick && this.mpSdkReady) {
+      this.scheduleCardBrickMount();
     }
   }
 

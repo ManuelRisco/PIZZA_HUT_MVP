@@ -39,7 +39,6 @@ export class Join implements OnInit {
   serverError = false;
   showPassword = false;
 
-  // Google Sign-In state
   googleLoading = false;
   googleClientId = '';
   googleCloudConfigured = false;
@@ -48,7 +47,6 @@ export class Join implements OnInit {
   googleName = '';
   googleModalError = '';
 
-  // Optional DNI configuration at login for Boletas Electrónicas SUNAT
   showDniOption = false;
   loginDni = '';
   loginDniNombre = '';
@@ -57,7 +55,6 @@ export class Join implements OnInit {
   dniLookupMsg = '';
   dniLookupError = '';
 
-  // Password Recovery state
   showRecoveryModal = false;
   recoveryStep: 1 | 2 = 1;
   recoveryEmail = '';
@@ -94,9 +91,7 @@ export class Join implements OnInit {
           }
         }
       },
-      error: () => {
-        // Fallback silencioso a selector interactivo de cuenta Google
-      }
+      error: () => {}
     });
   }
 
@@ -204,7 +199,6 @@ export class Join implements OnInit {
     });
   }
 
-  // ==== INICIO DE SESION CON GOOGLE ====
   onGoogleSignInClick(): void {
     this.loginError = '';
     this.loginSuccess = '';
@@ -230,7 +224,6 @@ export class Join implements OnInit {
       return;
     }
 
-    // Selector interactivo de cuenta de Google (entorno local o sin GOOGLE_CLIENT_ID)
     this.googleEmail = this.usuario.email && this.usuario.email.includes('@') ? this.usuario.email.trim() : '';
     this.googleName = '';
     this.googleModalError = '';
@@ -326,7 +319,6 @@ export class Join implements OnInit {
     this.router.navigate([destino]);
   }
 
-  // ==== RECUPERACION DE CONTRASENA ====
   openRecoveryModal(): void {
     this.loginError = '';
     this.loginSuccess = '';

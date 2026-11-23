@@ -10,17 +10,18 @@ import { AccessibilityService, ColorblindMode, FontSizeMode } from '../../servic
   styleUrls: ['./accessibility-fab.css']
 })
 export class AccessibilityFabComponent implements OnInit {
-  isPanelOpen: boolean = false;
+  isPanelOpen = false;
+  isMobile = false;
 
   readonly colorblindModes: ColorblindMode[] = ['none', 'protanopia', 'deuteranopia', 'tritanopia'];
   readonly fontSizes: FontSizeMode[] = ['pequena', 'normal', 'grande', 'extra-grande'];
+  readonly mobileFontSizes: FontSizeMode[] = ['pequena', 'normal', 'grande'];
 
-  // Estados de accesibilidad
-  contrasteAlto: boolean = false;
+  contrasteAlto = false;
   modoColorblind: ColorblindMode = 'none';
   tamanoFuente: FontSizeMode = 'normal';
-  modoDislexia: boolean = false;
-  reducirMovimiento: boolean = false;
+  modoDislexia = false;
+  reducirMovimiento = false;
 
   constructor(
     public readonly accessibilityService: AccessibilityService,
@@ -29,7 +30,22 @@ export class AccessibilityFabComponent implements OnInit {
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
+      this.detectViewport();
       this.cargarEstadosAccesibilidad();
+    }
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.detectViewport();
+    }
+  }
+
+  private detectViewport(): void {
+    this.isMobile = window.innerWidth <= 768;
+    if (this.isMobile && this.accessibilityService.shortcutsGuideState) {
+      this.accessibilityService.toggleShortcutsGuide();
     }
   }
 
@@ -57,8 +73,6 @@ export class AccessibilityFabComponent implements OnInit {
       this.closePanel();
     }
   }
-
-  // ===== ACCESIBILIDAD =====
 
   cargarEstadosAccesibilidad(): void {
     this.contrasteAlto = this.accessibilityService.getHighContrast();
@@ -100,24 +114,59 @@ export class AccessibilityFabComponent implements OnInit {
     );
   }
 
-  // ===== LABELS =====
+  resetAccesibilidad(): void {
+    if (this.contrasteAlto) {
+      this.contrasteAlto = this.accessibilityService.toggleHighContrast();
+    }
+    this.setColorblindMode('none');
+    this.setFontSize('normal');
+    if (this.modoDislexia) {
+      this.modoDislexia = false;
+      this.accessibilityService.setDyslexiaMode(false);
+    }
+    if (this.reducirMovimiento) {
+      this.reducirMovimiento = false;
+      this.accessibilityService.setReduceMotion(false);
+    }
+    this.accessibilityService.announce('Preferencias de accesibilidad restablecidas', 'polite');
+  }
+
+  get tieneCambiosActivos(): boolean {
+    return (
+      this.contrasteAlto ||
+      this.modoColorblind !== 'none' ||
+      this.tamanoFuente !== 'normal' ||
+      this.modoDislexia ||
+      this.reducirMovimiento
+    );
+  }
 
   getColorblindLabel(mode: ColorblindMode): string {
     const labels: Record<ColorblindMode, string> = {
       'none': 'Sin filtro',
-      'protanopia': 'Protanopia (Rojo-Verde)',
-      'deuteranopia': 'Deuteranopia (Rojo-Verde)',
-      'tritanopia': 'Tritanopia (Azul-Amarillo)'
+      'protanopia': 'Protanopia',
+      'deuteranopia': 'Deuteranopia',
+      'tritanopia': 'Tritanopia'
     };
     return labels[mode];
   }
 
   getFontSizeLabel(size: FontSizeMode): string {
     const labels: Record<FontSizeMode, string> = {
-      'pequena': 'Pequeña (90%)',
+      'pequena': 'Pequeña',
       'normal': 'Normal',
-      'grande': 'Grande (125%)',
-      'extra-grande': 'Extra Grande (150%)'
+      'grande': 'Grande',
+      'extra-grande': 'Muy grande'
+    };
+    return labels[size];
+  }
+
+  getCompactFontLabel(size: FontSizeMode): string {
+    const labels: Record<FontSizeMode, string> = {
+      'pequena': 'A-',
+      'normal': 'A',
+      'grande': 'A+',
+      'extra-grande': 'A++'
     };
     return labels[size];
   }

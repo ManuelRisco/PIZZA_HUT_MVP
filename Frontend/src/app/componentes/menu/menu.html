@@ -1,5 +1,4 @@
 <main class="container mx-auto px-4 md:px-8 py-8" aria-label="Menú de Pizzas">
-  <!-- Título -->
   <div class="mb-8">
     <div class="relative">
       <h2 class="text-3xl font-black uppercase tracking-tight text-gray-900">
@@ -9,7 +8,6 @@
     </div>
   </div>
 
-  <!-- Buscador -->
   @if (!loading && pizzas.length > 0) {
     <div class="mb-8">
       <div class="relative max-w-md">
@@ -31,14 +29,12 @@
     </div>
   }
 
-  <!-- Loading -->
   @if (loading) {
     <div class="flex justify-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-red-600"></div>
     </div>
   }
 
-  <!-- Paginación Superior -->
   @if (!loading && pizzasFiltradas.length > 0) {
     <div class="mb-6 pb-4 border-b border-gray-100">
       <app-pagination
@@ -52,12 +48,10 @@
     </div>
   }
 
-  <!-- Grid de Pizzas -->
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8" aria-label="Lista de pizzas disponibles">
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-7" aria-label="Lista de pizzas disponibles">
     @for (pizza of pizzasPaginadas; track pizza.id; let i = $index) {
-      <div class="animate-fadeIn transition-all duration-300 ease-out bg-white border border-gray-200 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col h-full relative font-sans group cursor-pointer" [id]="'pizza-' + pizza.id">
+      <div class="animate-fadeIn transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1.5 flex flex-col h-full relative font-sans group cursor-pointer" [id]="'pizza-' + pizza.id">
         
-        <!-- Popular & Stock Badges -->
         <div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-1.5">
           @if ((i < 2 && !searchTerm) || pizza.isPopular) {
             <div class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-sm uppercase tracking-wider shadow">
@@ -79,7 +73,6 @@
           }
         </div>
 
-        <!-- Botón de favorito -->
         <button
           type="button"
           class="absolute top-4 left-4 z-10 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center shadow hover:bg-white transition-colors"
@@ -89,7 +82,6 @@
           <i class="bi text-lg" [class.bi-heart-fill]="esFavorito(pizza.id || 0)" [class.bi-heart]="!esFavorito(pizza.id || 0)" [class.text-red-600]="esFavorito(pizza.id || 0)" [class.text-gray-500]="!esFavorito(pizza.id || 0)"></i>
         </button>
 
-        <!-- Imagen -->
         <div class="relative pt-[75%] bg-gray-50 overflow-hidden cursor-pointer"
              (click)="!esPizzaAgotada(pizza) && abrirModalPersonalizacion(pizza)"
              (keydown.enter)="!esPizzaAgotada(pizza) && abrirModalPersonalizacion(pizza)"
@@ -107,7 +99,6 @@
           >
         </div>
 
-        <!-- Contenido -->
         <div class="p-6 flex flex-col flex-grow border-t border-gray-100">
           <h3 class="text-xl font-black text-gray-900 uppercase mb-2 hover:text-red-600 transition-colors cursor-pointer"
               (click)="!esPizzaAgotada(pizza) && abrirModalPersonalizacion(pizza)">{{ pizza.name }}</h3>
@@ -132,7 +123,6 @@
     }
   </div>
 
-  <!-- Paginación -->
   @if (!loading && pizzasFiltradas.length > 0) {
     <div class="mt-8 pt-6 border-t border-gray-200">
       <app-pagination
@@ -155,19 +145,17 @@
   }
 </main>
 
-<!-- Modal de Agregar Rápido (Solo Tamaño) -->
 @if (mostrarModalRapido && pizzaSeleccionada) {
-  <div class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn" style="z-index: 9999;" aria-modal="true" aria-labelledby="modal-rapido-title" (click)="cerrarModalRapido()">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md my-auto relative animate-modalPop" (click)="$event.stopPropagation()">
+  <div class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 animate-fadeIn" style="z-index: 9999;" aria-modal="true" aria-labelledby="modal-rapido-title" (click)="cerrarModalRapido()">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90dvh] flex flex-col overflow-hidden relative animate-modalPop" (click)="$event.stopPropagation()">
       
-      <!-- Header -->
-      <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-        <h5 class="text-xl font-bold text-gray-900" id="modal-rapido-title">
+      <div class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+        <h5 class="text-lg sm:text-xl font-bold text-gray-900 m-0 pr-2" id="modal-rapido-title">
           {{ pizzaSeleccionada.name }}
         </h5>
         <button 
           type="button" 
-          class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-colors" 
+          class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-colors shrink-0" 
           (click)="cerrarModalRapido()"
           aria-label="Cerrar diálogo"
         >
@@ -175,15 +163,14 @@
         </button>
       </div>
 
-      <!-- Body -->
-      <div class="p-6">
-        <h6 class="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-4" id="sizes-label">
+      <div class="p-4 sm:p-6 overflow-y-auto flex-1">
+        <h6 class="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3 sm:mb-4" id="sizes-label">
           Selecciona el Tamaño <span class="text-red-500">*</span>
         </h6>
         <div class="grid grid-cols-2 gap-3" aria-labelledby="sizes-label">
           @for (tamano of tamanosDisponibles; track tamano.id) {
             <div 
-              class="relative border-2 rounded-xl p-4 transition-all duration-200 flex flex-col items-center justify-center text-center group"
+              class="relative border-2 rounded-xl p-3 sm:p-4 transition-all duration-200 flex flex-col items-center justify-center text-center group"
               [ngClass]="getStockParaTamano(pizzaSeleccionada, tamano) <= 0 ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed' : (tamanoSeleccionado?.id === tamano.id ? 'border-red-600 bg-red-50/50 cursor-pointer' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50 cursor-pointer')"
               (click)="seleccionarTamano(tamano)"
               [attr.aria-pressed]="tamanoSeleccionado?.id === tamano.id"
@@ -193,9 +180,9 @@
                   <i class="bi bi-check-circle-fill"></i>
                 </div>
               }
-              <i class="bi bi-pie-chart-fill text-2xl mb-2" [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'text-red-600' : 'text-gray-400 group-hover:text-red-400'"></i>
-              <span class="font-bold text-gray-900">{{ tamano.name }}</span>
-              <span class="text-sm text-gray-500 font-medium mt-1">{{ formatearPrecio((pizzaSeleccionada.price || 0) + (tamano.extraCost || 0)) }}</span>
+              <i class="bi bi-pie-chart-fill text-2xl mb-1.5" [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'text-red-600' : 'text-gray-400 group-hover:text-red-400'"></i>
+              <span class="font-bold text-gray-900 text-sm sm:text-base">{{ tamano.name }}</span>
+              <span class="text-xs sm:text-sm text-gray-500 font-medium mt-1">{{ formatearPrecio((pizzaSeleccionada.price || 0) + (tamano.extraCost || 0)) }}</span>
               <span class="text-[11px] font-bold mt-1" [ngClass]="getStockParaTamano(pizzaSeleccionada, tamano) > 0 ? 'text-emerald-600' : 'text-red-500'">
                 {{ getStockParaTamano(pizzaSeleccionada, tamano) > 0 ? ('Disp: ' + getStockParaTamano(pizzaSeleccionada, tamano)) : 'Agotado' }}
               </span>
@@ -204,14 +191,13 @@
         </div>
       </div>
 
-      <!-- Footer -->
-      <div class="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex gap-3">
-        <button type="button" class="flex-1 py-3 px-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors" (click)="cerrarModalRapido()">
+      <div class="p-4 sm:p-5 border-t border-gray-100 bg-gray-50 flex gap-3 shrink-0">
+        <button type="button" class="flex-1 py-2.5 sm:py-3 px-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm" (click)="cerrarModalRapido()">
           Cancelar
         </button>
         <button 
           type="button" 
-          class="flex-1 py-3 px-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          class="flex-1 py-2.5 sm:py-3 px-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
           [disabled]="!tamanoSeleccionado"
           (click)="agregarAlCarritoRapido()"
           [attr.aria-label]="tamanoSeleccionado ? 'Agregar ' + pizzaSeleccionada.name + ' al carrito' : 'Selecciona un tamaño para agregar al carrito'"
@@ -223,19 +209,17 @@
   </div>
 }
 
-<!-- Modal de Personalización -->
 @if (mostrarModal && pizzaSeleccionada) {
-  <div class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn" style="z-index: 9999;" aria-modal="true" aria-labelledby="modal-personalizacion-title" (click)="cerrarModal()" (keydown.enter)="cerrarModal()" tabindex="0">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-auto relative animate-modalPop max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()">
+  <div class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 animate-fadeIn" style="z-index: 9999;" aria-modal="true" aria-labelledby="modal-personalizacion-title" (click)="cerrarModal()" (keydown.escape)="cerrarModal()" tabindex="0">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative animate-modalPop max-h-[90dvh] flex flex-col overflow-hidden" (click)="$event.stopPropagation()">
       
-      <!-- Header -->
-      <div class="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
-        <h5 class="text-xl font-bold text-gray-900 flex items-center gap-2" id="modal-personalizacion-title">
+      <div class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+        <h5 class="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2 m-0 pr-2" id="modal-personalizacion-title">
           <span>Personaliza tu {{ pizzaSeleccionada.name }}</span>
         </h5>
         <button 
           type="button" 
-          class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-colors" 
+          class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-colors shrink-0" 
           (click)="cerrarModal()"
           aria-label="Cerrar diálogo"
         >
@@ -243,17 +227,15 @@
         </button>
       </div>
 
-      <!-- Body (Scrollable) -->
-      <div class="p-6 overflow-y-auto">
-        <!-- Selección de Tamaño -->
-        <div class="mb-8">
-          <h6 class="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-4" id="sizes-label-personalizacion">
+      <div class="p-4 sm:p-6 overflow-y-auto flex-1">
+        <div class="mb-6 sm:mb-8">
+          <h6 class="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3 sm:mb-4" id="sizes-label-personalizacion">
             Selecciona el Tamaño <span class="text-red-500">*</span>
           </h6>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" aria-labelledby="sizes-label-personalizacion">
             @for (tamano of tamanosDisponibles; track tamano.id) {
               <div 
-                class="relative border-2 rounded-xl p-4 transition-all duration-200 flex flex-col items-center justify-center text-center group"
+                class="relative border-2 rounded-xl p-3.5 sm:p-4 transition-all duration-200 flex flex-col items-center justify-center text-center group"
                 [ngClass]="getStockParaTamano(pizzaSeleccionada, tamano) <= 0 ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed' : (tamanoSeleccionado?.id === tamano.id ? 'border-red-600 bg-red-50/50 shadow-md cursor-pointer' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50 cursor-pointer')"
                 (click)="seleccionarTamano(tamano)"
                 [attr.aria-pressed]="tamanoSeleccionado?.id === tamano.id"
@@ -263,9 +245,9 @@
                     <i class="bi bi-check-circle-fill"></i>
                   </div>
                 }
-                <i class="bi bi-pie-chart-fill text-3xl mb-3" [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'text-red-600' : 'text-gray-400 group-hover:text-red-400'"></i>
+                <i class="bi bi-pie-chart-fill text-2xl sm:text-3xl mb-2" [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'text-red-600' : 'text-gray-400 group-hover:text-red-400'"></i>
                 <span class="font-bold text-gray-900">{{ tamano.name }}</span>
-                <span class="text-xs text-gray-500 my-1 line-clamp-2 h-8">{{ tamano.description }}</span>
+                <span class="text-xs text-gray-500 my-1 line-clamp-2 min-h-[2rem]">{{ tamano.description }}</span>
                 <span class="text-sm text-gray-900 font-bold mt-1">+ {{ formatearPrecio(tamano.extraCost || 0) }}</span>
                 <span class="text-[11px] font-bold mt-1" [ngClass]="getStockParaTamano(pizzaSeleccionada, tamano) > 0 ? 'text-emerald-600' : 'text-red-500'">
                   {{ getStockParaTamano(pizzaSeleccionada, tamano) > 0 ? ('Disp: ' + getStockParaTamano(pizzaSeleccionada, tamano)) : 'Agotado' }}
@@ -275,23 +257,22 @@
           </div>
         </div>
 
-        <!-- Selección de Ingredientes Extra -->
         <div>
-          <h6 class="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-4" id="ingredientes-label">
+          <h6 class="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3 sm:mb-4" id="ingredientes-label">
             Ingredientes Extra (Opcional)
           </h6>
           @if (ingredientesDisponibles.length === 0) {
             <p class="text-gray-500 italic bg-gray-50 p-4 rounded-xl text-center">No hay ingredientes adicionales disponibles</p>
           } @else {
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-labelledby="ingredientes-label">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3" aria-labelledby="ingredientes-label">
               @for (ingrediente of ingredientesDisponibles; track ingrediente.id) {
                 <label 
                   class="flex items-center p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 group"
                   [ngClass]="extrasSeleccionados.includes(ingrediente.id?.toString() || '') ? 'border-red-600 bg-red-50/30' : 'border-gray-200 hover:border-red-300'"
                 >
-                  <div class="flex-grow">
-                    <div class="font-bold text-gray-900">{{ ingrediente.name }}</div>
-                    <div class="text-sm text-red-600 font-medium">+ {{ formatearPrecio(ingrediente.extraCost || 0) }}</div>
+                  <div class="flex-grow min-w-0">
+                    <div class="font-bold text-gray-900 text-sm sm:text-base">{{ ingrediente.name }}</div>
+                    <div class="text-xs sm:text-sm text-red-600 font-medium">+ {{ formatearPrecio(ingrediente.extraCost || 0) }}</div>
                   </div>
                   <div class="ml-3 flex-shrink-0">
                     <input 
@@ -308,30 +289,29 @@
         </div>
       </div>
 
-      <!-- Footer / Resumen -->
-      <div class="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl shrink-0">
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-          <div class="mb-2 sm:mb-0 w-full sm:w-auto">
-            <h6 class="text-sm text-gray-500 font-medium uppercase tracking-wider mb-1">Total Calculado</h6>
-            <div class="text-xs text-gray-400 line-clamp-1 max-w-[250px]">{{ descripcionPersonalizacion || 'Selecciona opciones...' }}</div>
+      <div class="p-4 sm:p-5 border-t border-gray-100 bg-gray-50 shrink-0">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-3 mb-3 sm:mb-4 bg-white p-3.5 sm:p-4 rounded-xl border border-gray-200 shadow-sm">
+          <div class="w-full sm:w-auto min-w-0">
+            <h6 class="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider m-0">Total Calculado</h6>
+            <div class="text-xs text-gray-400 truncate max-w-full sm:max-w-[260px]">{{ descripcionPersonalizacion || 'Selecciona opciones...' }}</div>
           </div>
-          <div class="text-2xl font-black text-red-600">
+          <div class="text-xl sm:text-2xl font-black text-red-600 shrink-0">
             {{ formatearPrecio(precioCalculado) }}
           </div>
         </div>
         
-        <div class="flex gap-3">
-          <button type="button" class="w-1/3 py-3 px-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors" (click)="cerrarModal()">
+        <div class="flex gap-2.5 sm:gap-3">
+          <button type="button" class="w-1/3 py-2.5 sm:py-3 px-3 sm:px-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm" (click)="cerrarModal()">
             Cancelar
           </button>
           <button 
             type="button" 
-            class="w-2/3 py-3 px-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-red-600/30"
+            class="w-2/3 py-2.5 sm:py-3 px-3 sm:px-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-red-600/30 text-sm"
             [disabled]="!tamanoSeleccionado"
             (click)="agregarAlCarritoPersonalizado()"
             [attr.aria-label]="tamanoSeleccionado ? 'Agregar ' + pizzaSeleccionada.name + ' personalizada al carrito' : 'Selecciona un tamaño para agregar al carrito'"
           >
-            <i class="bi bi-cart-plus-fill text-lg"></i> Agregar al Carrito
+            <i class="bi bi-cart-plus-fill text-base sm:text-lg"></i> Agregar al Carrito
           </button>
         </div>
       </div>

@@ -1,5 +1,4 @@
 <div class="space-y-6 font-sans">
-  <!-- Executive v2 Header Card -->
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
       <div class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1 flex items-center gap-1.5">
@@ -45,7 +44,6 @@
     </div>
   </div>
 
-  <!-- Persistent Error / Backend-Offline Banner -->
   <div
     *ngIf="errorMessage"
     class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
@@ -69,7 +67,6 @@
     </button>
   </div>
 
-  <!-- Loading Initial State -->
   <div
     *ngIf="loading && !hasLoadedOnce"
     class="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center"
@@ -79,9 +76,7 @@
   </div>
 
   <ng-container *ngIf="hasLoadedOnce">
-    <!-- KPI Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      <!-- Valor Total -->
       <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -95,7 +90,6 @@
         <p class="text-2xl font-black text-gray-900 mt-1 mb-0">S/ {{ summary.totalInventoryValue | number:'1.2-2' }}</p>
       </div>
 
-      <!-- Valor Insumos -->
       <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -107,7 +101,6 @@
         <p class="text-xl font-black text-gray-900 mt-1 mb-0">S/ {{ summary.ingredientsInventoryValue | number:'1.2-2' }}</p>
       </div>
 
-      <!-- Valor Extras -->
       <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
@@ -119,7 +112,6 @@
         <p class="text-xl font-black text-gray-900 mt-1 mb-0">S/ {{ summary.extrasInventoryValue | number:'1.2-2' }}</p>
       </div>
 
-      <!-- Stock Bajo -->
       <div
         class="bg-white rounded-2xl p-5 border shadow-sm cursor-pointer transition-all"
         [ngClass]="summary.lowStockCount > 0 ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200'"
@@ -139,7 +131,6 @@
         </p>
       </div>
 
-      <!-- Agotados -->
       <div
         class="bg-white rounded-2xl p-5 border shadow-sm cursor-pointer transition-all"
         [ngClass]="summary.outOfStockCount > 0 ? 'border-red-200 bg-red-50/30' : 'border-gray-200'"
@@ -160,7 +151,6 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div class="flex flex-wrap border-b border-gray-200 bg-gray-50/70 px-4 pt-3 gap-2">
         <button
@@ -218,9 +208,7 @@
         </button>
       </div>
 
-      <!-- ==================== TAB 1: ALERTAS ==================== -->
       <div *ngIf="activeTab === 'alertas'" class="p-5 sm:p-6 space-y-4">
-        <!-- Banner de Consolidación de Lote (1 minuto) / Confirmación de Correo Enviado -->
         <div
           *ngIf="batchStatus.pendingBatchCount > 0"
           class="rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs"
@@ -244,7 +232,7 @@
                 Ventana de 1 minuto completada · Despachando correo consolidado a los administradores...
               </p>
               <p class="text-xs sm:text-sm text-amber-800 m-0 mt-0.5" *ngIf="batchStatus.secondsRemaining === 0 && !batchStatus.mailOperational">
-                Lote consolidado listo ({{ batchStatus.pendingBatchCount }} producto(s)), en espera de credenciales SMTP Gmail válidas en <code>.env</code>.
+                Lote consolidado listo ({{ batchStatus.pendingBatchCount }} producto(s)), pendiente de configuración de correo.
               </p>
             </div>
           </div>
@@ -384,10 +372,10 @@
                         <span
                           *ngIf="batchStatus.secondsRemaining === 0 && !batchStatus.mailOperational"
                           class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-800 inline-flex items-center gap-1"
-                          [title]="mailInfo.emailError || 'Pendiente de conexión SMTP'"
+                          [title]="mailInfo.emailError || 'Pendiente de envío'"
                         >
                           <i class="bi bi-envelope-exclamation-fill"></i>
-                          <span>En cola SMTP</span>
+                          <span>En cola</span>
                         </span>
                       </div>
                     </ng-container>
@@ -435,7 +423,6 @@
         ></app-pagination>
       </div>
 
-      <!-- ==================== TAB 2: EXISTENCIAS VALORIZADAS ==================== -->
       <div *ngIf="activeTab === 'existencias'" class="p-5 sm:p-6 space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div class="relative">
@@ -569,7 +556,6 @@
         ></app-pagination>
       </div>
 
-      <!-- ==================== TAB 3: KARDEX DE MOVIMIENTOS ==================== -->
       <div *ngIf="activeTab === 'kardex'" class="p-5 sm:p-6 space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div class="relative md:col-span-2">
@@ -692,13 +678,11 @@
   </ng-container>
 </div>
 
-<!-- ==================== MODAL DE OPERACIÓN DE INVENTARIO ==================== -->
 <div
   *ngIf="showOperationModal"
   class="fixed inset-0 z-[6000] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
 >
   <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90dvh] flex flex-col overflow-hidden">
-    <!-- Modal Header -->
     <div class="bg-gray-900 text-white px-5 sm:px-6 py-4 flex items-center justify-between shrink-0">
       <div>
         <h3 class="text-lg font-black m-0">
@@ -722,9 +706,7 @@
       </button>
     </div>
 
-    <!-- Modal Body -->
     <div class="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
-      <!-- Selector de Modo -->
       <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl">
         <button
           type="button"
@@ -744,7 +726,6 @@
         </button>
       </div>
 
-      <!-- Tipo de Item -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tipo de Producto</label>
@@ -784,7 +765,6 @@
         </div>
       </div>
 
-      <!-- Resumen en vivo -->
       <div *ngIf="selectedCatalogItem as item" class="bg-gray-50 border border-gray-200 rounded-xl p-3.5 flex items-center justify-between gap-2">
         <div>
           <p class="text-xs text-gray-500 font-semibold m-0">Stock actual en almacén</p>
@@ -799,7 +779,6 @@
         </div>
       </div>
 
-      <!-- Cantidad + Costo Unitario + Stock Mínimo -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label class="block text-xs font-bold text-gray-700 uppercase mb-1">
@@ -840,7 +819,6 @@
         </div>
       </div>
 
-      <!-- Motivo -->
       <div>
         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Motivo / Guía / Observación</label>
         <input
@@ -852,7 +830,6 @@
       </div>
     </div>
 
-    <!-- Modal Footer -->
     <div class="px-5 sm:px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end gap-3 shrink-0">
       <button
         type="button"

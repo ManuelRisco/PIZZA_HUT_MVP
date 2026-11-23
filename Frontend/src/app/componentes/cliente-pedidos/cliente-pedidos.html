@@ -1,5 +1,4 @@
 <div class="space-y-6 font-sans">
-  <!-- Executive v2 Header Card -->
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
       <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel de Cliente</p>
@@ -18,7 +17,6 @@
     </div>
   </div>
 
-  <!-- Filter Toolbar -->
   <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3">
     <div class="relative flex-1 min-w-[200px]">
       <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
@@ -58,7 +56,6 @@
     </div>
   </div>
 
-  <!-- Banner persistente de error de conexión -->
   <div *ngIf="loadError" class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3" role="alert">
     <div class="flex items-start sm:items-center gap-3">
       <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
@@ -78,7 +75,6 @@
     </button>
   </div>
 
-  <!-- Mensajes de acciones -->
   <div *ngIf="mensaje">
     <div class="px-5 py-3.5 rounded-2xl flex items-center gap-3 font-medium shadow-2xs border text-sm"
          [ngClass]="error ? 'bg-red-50 text-red-800 border-red-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'">
@@ -88,7 +84,6 @@
     </div>
   </div>
 
-  <!-- Loading State -->
   @if (loading) {
     <div class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200">
       <div class="animate-spin rounded-full h-11 w-11 border-4 border-red-100 border-t-red-600 mb-4"></div>
@@ -96,7 +91,6 @@
     </div>
   }
 
-  <!-- Cards de Pedidos -->
   @if (!loading && !loadError) {
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="p-4 sm:p-6 space-y-4">
@@ -104,7 +98,6 @@
           class="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow"
           *ngFor="let order of ordersPaginados; trackBy: trackByOrder"
         >
-          <!-- Header Card -->
           <div class="px-5 py-4 border-b border-gray-100 bg-gray-50/70 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div class="flex items-center gap-2.5 flex-wrap">
               <span class="text-base font-black text-gray-900">#PH-{{ order.id?.toString()?.padStart(4, '0') }}</span>
@@ -136,7 +129,6 @@
             </div>
           </div>
 
-          <!-- Body Card -->
           <div class="p-5 flex flex-col lg:flex-row gap-5">
             <div class="flex-1 space-y-3 border-b lg:border-b-0 lg:border-r border-gray-100 pb-4 lg:pb-0 pr-0 lg:pr-6">
               <div *ngIf="esDelivery(order) && order.addressLine1">
@@ -161,7 +153,6 @@
               </div>
             </div>
 
-            <!-- Resumen numérico -->
             <div class="w-full lg:w-48 shrink-0">
               <h6 class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Resumen</h6>
               <div class="space-y-1.5 text-xs sm:text-sm">
@@ -177,7 +168,6 @@
               </div>
             </div>
 
-            <!-- Botones -->
             <div class="w-full lg:w-48 shrink-0 flex flex-col gap-2 justify-end">
               <button
                 type="button"
@@ -217,7 +207,6 @@
           </div>
         </div>
 
-        <!-- Empty State -->
         <div *ngIf="filteredOrders.length === 0" class="py-12 flex flex-col items-center text-center">
           <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 text-gray-300 mb-4">
             <i class="bi bi-bag-x text-4xl"></i>
@@ -241,7 +230,6 @@
   }
 </div>
 
-<!-- Modal Detalles Pedido -->
 <div class="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" *ngIf="showModal" role="dialog" aria-modal="true">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90dvh] flex flex-col overflow-hidden">
     <div class="px-6 py-4 bg-gray-900 text-white flex justify-between items-center shrink-0">
@@ -291,7 +279,6 @@
         </div>
       </div>
 
-      <!-- Items Table -->
       <div class="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left text-sm min-w-[520px]">
@@ -362,7 +349,6 @@
   </div>
 </div>
 
-<!-- Modal Calificar -->
 <div class="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" *ngIf="showReviewModal" role="dialog" aria-modal="true">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90dvh] flex flex-col overflow-hidden">
     <div class="px-6 py-4 bg-gray-900 text-white flex justify-between items-center shrink-0">

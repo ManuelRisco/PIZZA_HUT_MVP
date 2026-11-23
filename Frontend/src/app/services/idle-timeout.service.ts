@@ -12,13 +12,12 @@ export class IdleTimeoutService {
   private readonly router = inject(Router);
   private readonly ngZone = inject(NgZone);
 
-  private readonly timeoutSeconds= 300; // 5 minutos (300 segundos) para cierre total
-  private readonly warningSeconds= 180; // 3 minutos (180 segundos) para mostrar el modal
+  private readonly timeoutSeconds= 300;
+  private readonly warningSeconds= 180;
 
   private idleTimer: any;
   private warningTimer: any;
   
-  // Señal reactiva para mostrar u ocultar el modal AFK
   public showAfkModal = signal(false);
   
   private isTracking = false;
@@ -86,20 +85,17 @@ export class IdleTimeoutService {
   private resetTimer(): void {
     if (!this.isTracking) return;
     
-    // Si el modal está visible, ignorar eventos de usuario hasta que decida
     if (this.showAfkModal()) return;
 
     this.clearTimers();
 
     this.ngZone.runOutsideAngular(() => {
-      // Timer para la advertencia (Minuto 3)
       this.warningTimer = setTimeout(() => {
         this.ngZone.run(() => {
           this.showWarning();
         });
       }, this.warningSeconds * 1000);
 
-      // Timer para el cierre de sesión (Minuto 5)
       this.idleTimer = setTimeout(() => {
         this.ngZone.run(() => {
           this.forceLogout();
@@ -109,8 +105,6 @@ export class IdleTimeoutService {
   }
 
   private showWarning(): void {
-    // Al mostrar la advertencia, removemos listeners temporalmente 
-    // para que no se reinicie si mueve el mouse dentro del modal
     this.removeListeners();
     this.showAfkModal.set(true);
   }

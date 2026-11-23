@@ -16,7 +16,6 @@ export class Size {
 
   constructor(private readonly http: HttpClient) {}
 
-  // Operaciones CRUD para Tamaños
   obtenerTodos(includeDeleted: boolean = false): Observable<SizeDTO[]> {
     let params = new HttpParams();
     if (includeDeleted) {

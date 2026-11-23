@@ -37,7 +37,6 @@ export class Orders implements OnInit, OnChanges {
   updatingOrderId: number | null = null;
   emitiendoBoletaOrderId: number | null = null;
 
-  // KPIs
   kpiTotalOrders = 0;
   kpiPendientes = 0;
   kpiEntregados = 0;
@@ -188,7 +187,6 @@ export class Orders implements OnInit, OnChanges {
     if (!id || !this.orders || this.orders.length === 0) return;
     const order = this.orders.find(o => o.id === id);
     if (order) {
-      // Si el pedido está oculto por filtros actuales, restablecerlos
       if (this.filtroEstado !== 'TODOS' && order.status !== this.filtroEstado) {
         this.filtroEstado = 'TODOS';
       }
@@ -198,7 +196,6 @@ export class Orders implements OnInit, OnChanges {
       this.terminoBusqueda = '';
       this.aplicarFiltro();
 
-      // Ajustar la página si el pedido no está en la página 1
       const orderIndex = this.filteredOrders.findIndex(o => o.id === id);
       if (orderIndex !== -1) {
         this.currentPage = Math.floor(orderIndex / this.itemsPerPage) + 1;
@@ -239,7 +236,6 @@ export class Orders implements OnInit, OnChanges {
       },
       error: (err) => {
         console.error('Error al actualizar estado:', err);
-        // Rollback status
         order.status = estadoAnterior;
         this.updatingOrderId = null;
         this.mostrarMensaje(err?.error?.message || 'Error al actualizar el estado del pedido', true);

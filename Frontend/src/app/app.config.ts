@@ -6,7 +6,6 @@ import { routes } from './app.routes';
 import { AdminGuard } from './guards/admin.guard';
 import { AuthService } from './services/auth.service';
 
-// Función interceptor para Angular standalone
 import { inject } from '@angular/core';
 import { HttpInterceptorFn } from '@angular/common/http';
 

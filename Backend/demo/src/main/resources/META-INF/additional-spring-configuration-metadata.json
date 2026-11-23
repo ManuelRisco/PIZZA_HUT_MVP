@@ -132,6 +132,22 @@
       "type": "java.lang.Integer",
       "description": "Maximo de solicitudes generales de lectura por minuto por IP.",
       "defaultValue": 240
+    },
+    {
+      "name": "mercadopago.public.key",
+      "type": "java.lang.String",
+      "description": "Clave publica (Public Key) de Mercado Pago Peru cargada desde .env (MERCADOPAGO_PUBLIC_KEY)."
+    },
+    {
+      "name": "mercadopago.access.token",
+      "type": "java.lang.String",
+      "description": "Access Token privado de Mercado Pago Peru cargado desde .env (MERCADOPAGO_ACCESS_TOKEN)."
+    },
+    {
+      "name": "mercadopago.sandbox.mode",
+      "type": "java.lang.Boolean",
+      "description": "Indica si la pasarela Mercado Pago opera en modo Sandbox/Pruebas.",
+      "defaultValue": true
     }
   ]
 }

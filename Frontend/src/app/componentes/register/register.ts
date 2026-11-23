@@ -292,7 +292,6 @@ export class Register implements OnInit {
       this.registerForm.markAllAsTouched();
       this.accessibilityService.announceError(errorMessage);
       
-      // Anunciar el primer error específico
       const controls = this.registerForm.controls;
       for (const name in controls) {
         if (controls[name].invalid) {
@@ -366,7 +365,6 @@ export class Register implements OnInit {
     if (error.error?.message) {
       const serverMessage = error.error.message.toLowerCase();
 
-      // Manejo dinámico de duplicados devueltos por el backend
       if (serverMessage.includes('correo') || serverMessage.includes('email')) {
         this.registerForm.get('email')?.setErrors({ duplicado: true });
         errorMessage = 'El correo electrónico ya se encuentra registrado';

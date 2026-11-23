@@ -29,17 +29,14 @@ export class Promociones implements OnInit {
   error = '';
   success = '';
 
-  // Filtros
   filtroEstado: 'TODOS' | 'ACTIVAS' | 'INACTIVAS' = 'TODOS';
   terminoBusqueda = '';
 
-  // KPIs
   kpiTotalPromociones = 0;
   kpiActivas = 0;
   kpiInactivas = 0;
   kpiConLimiteUso = 0;
 
-  // Precomputed maps to eliminate new Date() allocations per row per render
   vigenciaMap = new Map<number, boolean>();
   fechasMap = new Map<number, { start: string; end: string }>();
 
@@ -273,7 +270,6 @@ export class Promociones implements OnInit {
       }
     });
   }
-
 
   restaurarPromocion(id: number, nombre?: string): void {
     if (!confirm('¿Desea restaurar la promoción' + (nombre ? ` "${nombre}"` : '') + '?')) return;

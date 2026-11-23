@@ -28,17 +28,14 @@ export class MetodosPagoComponent implements OnInit {
   guardando: boolean = false;
   terminoBusqueda: string = '';
 
-  // KPIs
   kpiTotalMetodos = 0;
   kpiActivos = 0;
   kpiEnUso = 0;
 
-  // Paginación
   currentPage = 1;
   itemsPerPage = 10;
   pageSizeOptions: number[] = [10, 20, 50];
 
-  // Modelo para el formulario
   formulario: PaymentMethodDTO = {
     name: '',
     description: '',
@@ -230,7 +227,6 @@ export class MetodosPagoComponent implements OnInit {
       }
     });
   }
-
 
   restaurarMetodoPago(metodo: PaymentMethodDTO): void {
     if (!metodo.id) return;

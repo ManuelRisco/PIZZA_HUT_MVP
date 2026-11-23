@@ -1,11 +1,12 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationStart } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CartService } from '../../services/cart.service';
 import { AccessibilityService } from '../../services/accessibility.service';
 import { TranslateService } from '../../services/translate.service';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-navbar',
@@ -21,14 +22,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   esAdmin: boolean = false;
   private userSubscription?: Subscription;
   private cartSubscription?: Subscription;
+  private routerSubscription?: Subscription;
   cartCount = 0;
 
-  // Idioma
   idiomaActual: string = 'es';
   mostrarSelectorIdioma: boolean = false;
   idiomas: { code: string; name: string; flag: string }[] = [];
 
-  // Estado para Menu Movil
   isMobileMenuOpen: boolean = false;
 
   constructor(
@@ -50,6 +50,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.cartCount = this.cartService.getItemCount();
     });
 
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationStart))
+      .subscribe(() => {
+        this.closeMobileMenu();
+      });
+
     this.accessibilityService.announce(
       'Barra de navegaci\u00f3n cargada. Use Alt+M para Men\u00fa, Alt+C para Carrito, Alt+P para Perfil',
       'polite'
@@ -64,19 +70,53 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.setBodyScrollLock(false);
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
     }
     if (this.cartSubscription) {
       this.cartSubscription.unsubscribe();
     }
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
   }
 
-  toggleMobileMenu() {
+  private setBodyScrollLock(locked: boolean): void {
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = locked ? 'hidden' : '';
+    }
+  }
+
+  toggleMobileMenu(event?: Event) {
+    event?.stopPropagation();
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
+    this.setBodyScrollLock(this.isMobileMenuOpen);
     if (this.isMobileMenuOpen) {
       this.mostrarMenuUsuario = false;
       this.mostrarSelectorIdioma = false;
+    }
+  }
+
+  closeMobileMenu(event?: Event) {
+    event?.stopPropagation();
+    this.isMobileMenuOpen = false;
+    this.mostrarMenuUsuario = false;
+    this.mostrarSelectorIdioma = false;
+    this.setBodyScrollLock(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeClose() {
+    this.closeMobileMenu();
+    this.mostrarMenuUsuario = false;
+    this.mostrarSelectorIdioma = false;
+  }
+
+  @HostListener('window:resize')
+  onWindowResize() {
+    if (typeof window !== 'undefined' && window.innerWidth > 1024 && this.isMobileMenuOpen) {
+      this.closeMobileMenu();
     }
   }
 
@@ -108,7 +148,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.mostrarSelectorIdioma = false;
     }
     if (!target.closest('.navbar-links') && !target.closest('.hamburger-btn') && this.isMobileMenuOpen) {
-      this.isMobileMenuOpen = false;
+      this.closeMobileMenu();
     }
   }
 
@@ -188,8 +228,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   cerrarSesion() {
-    this.mostrarMenuUsuario = false;
-    this.isMobileMenuOpen = false;
+    this.closeMobileMenu();
     this.mostrarModalLogout = true;
   }
 
@@ -210,8 +249,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   navegarA(ruta: string) {
-    this.mostrarMenuUsuario = false;
-    this.isMobileMenuOpen = false;
+    this.closeMobileMenu();
     this.router.navigate([ruta]).then(navigated => {
       if (navigated === false || this.location.path() !== ruta) {
         this.location.go(ruta);

@@ -49,14 +49,12 @@ export class PerdidasComponent implements OnInit {
   pizzas: PizzaDTO[] = [];
   sizes: SizeDTO[] = [];
 
-  // Filtros
   filterStartDate = '';
   filterEndDate = '';
   filterCategory: 'TODOS' | LossCategory = 'TODOS';
   filterItemType: 'TODOS' | LossItemType = 'TODOS';
   searchTerm = '';
 
-  // Paginación y listas cacheadas para Change Detection instantáneo
   currentPage = 1;
   itemsPerPage = 10;
   filteredLosses: ProductLossDTO[] = [];
@@ -65,7 +63,6 @@ export class PerdidasComponent implements OnInit {
   categoryStats: CategoryStatCard[] = [];
   topLossCause: CategoryStatCard | null = null;
 
-  // Modal Crear / Editar
   showModal = false;
   editingLoss: ProductLossDTO | null = null;
   form: {
@@ -81,7 +78,6 @@ export class PerdidasComponent implements OnInit {
     lossDate: string;
   } = this.createDefaultForm();
 
-  // Modal Confirmar Eliminación
   lossToDelete: ProductLossDTO | null = null;
   restoreStockOnDelete = true;
 
@@ -229,7 +225,6 @@ export class PerdidasComponent implements OnInit {
 
     this.filteredLosses = filtered;
 
-    // Métricas
     const total = filtered.reduce((sum, l) => sum + Number(l.totalLossCost ?? 0), 0);
     this.totalLossCostFiltered = total;
 
@@ -252,7 +247,6 @@ export class PerdidasComponent implements OnInit {
     const sorted = [...this.categoryStats].sort((a, b) => b.totalCost - a.totalCost);
     this.topLossCause = sorted.length > 0 && sorted[0].totalCost > 0 ? sorted[0] : null;
 
-    // Paginación
     const totalPages = Math.ceil(filtered.length / this.itemsPerPage);
     if (this.currentPage > totalPages && totalPages > 0) {
       this.currentPage = totalPages;
@@ -299,7 +293,6 @@ export class PerdidasComponent implements OnInit {
     return meta ? meta.badgeClass : 'bg-gray-100 text-gray-700';
   }
 
-  // Modal Registrar / Editar
   abrirModalNueva(): void {
     this.editingLoss = null;
     this.form = this.createDefaultForm();

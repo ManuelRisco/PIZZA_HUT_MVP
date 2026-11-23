@@ -72,12 +72,10 @@ export class InventarioComponent implements OnInit, OnDestroy {
   extras: Extra[] = [];
   unifiedStock: UnifiedStockRow[] = [];
 
-  // Paginacion Tab 1: Alertas (cacheada)
   alertsPage = 1;
   alertsPerPage = 10;
   paginatedAlertsList: StockAlertItemDTO[] = [];
 
-  // Filtros y Paginacion Tab 2: Existencias (cacheadas)
   stockTypeFilter: 'TODOS' | 'INGREDIENT' | 'EXTRA' = 'TODOS';
   stockStatusFilter: 'TODOS' | 'OK' | 'LOW_STOCK' | 'OUT_OF_STOCK' = 'TODOS';
   stockSearch = '';
@@ -86,7 +84,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
   filteredStockList: UnifiedStockRow[] = [];
   paginatedStockList: UnifiedStockRow[] = [];
 
-  // Filtros y Paginacion Tab 3: Kardex (cacheados)
   movements: StockMovementDTO[] = [];
   kardexItemType: 'TODOS' | 'INGREDIENT' | 'EXTRA' = 'TODOS';
   kardexMovementType: 'TODOS' | 'PURCHASE' | 'SALE' | 'LOSS' | 'ADJUSTMENT' | 'RETURN' = 'TODOS';
@@ -97,7 +94,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
   filteredMovementsList: StockMovementDTO[] = [];
   paginatedMovementsList: StockMovementDTO[] = [];
 
-  // Modal Operacion Rapida (Reabastecer / Ajuste Fisico)
   showOperationModal = false;
   operationMode: 'RESTOCK' | 'ADJUST' = 'RESTOCK';
   operationForm: {
@@ -167,7 +163,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
       try {
         sessionStorage.setItem(InventarioComponent.ACK_SENT_AT_KEY, sentAtKey);
       } catch {
-        // Ignorar si sessionStorage no esta disponible
       }
     }
     this.clearSentBannerTimer();
@@ -231,7 +226,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
           try {
             sessionStorage.setItem(InventarioComponent.ACK_SENT_AT_KEY, normalized.lastSentAt);
           } catch {
-            // Ignorar
           }
         }
       }
@@ -486,7 +480,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
       });
   }
 
-  // ==================== RECALCULOS CACHEADOS ====================
   recalcularAlertas(): void {
     const alerts = this.summary?.alerts || [];
     const totalPages = Math.max(1, Math.ceil(alerts.length / this.alertsPerPage));
@@ -586,7 +579,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
     this.recalcularMovimientos();
   }
 
-  // ==================== TRACKBY ====================
   trackByAlert(index: number, alert: StockAlertItemDTO): string {
     return `${alert.itemType}-${alert.itemId}-${index}`;
   }
@@ -607,7 +599,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
     return ext.id ?? index;
   }
 
-  // ==================== MODAL DE REABASTECIMIENTO / AJUSTE ====================
   abrirModalOperacion(
     mode: 'RESTOCK' | 'ADJUST',
     preset?: {

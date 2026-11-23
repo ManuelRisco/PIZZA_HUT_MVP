@@ -1,5 +1,4 @@
 <div class="space-y-6 font-sans">
-  <!-- Executive v2 Header Card -->
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
       <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Catálogo y Operaciones</p>
@@ -16,7 +15,6 @@
     </div>
   </div>
 
-  <!-- Persistent Load Error / Backend Offline Banner -->
   <div *ngIf="loadError" class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3" role="alert">
     <div class="flex items-start sm:items-center gap-3">
       <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
@@ -32,7 +30,6 @@
     </button>
   </div>
 
-  <!-- Mensajes de acción (éxito y error de mutación) -->
   <div *ngIf="success" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl flex justify-between items-center text-sm font-medium">
     <div class="flex items-center gap-2">
       <i class="bi bi-check-circle-fill text-emerald-600"></i>
@@ -52,7 +49,6 @@
     </button>
   </div>
 
-  <!-- White KPI Summary Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
       <div>
@@ -95,7 +91,6 @@
     </div>
   </div>
 
-  <!-- Filter & Search Toolbar Card -->
   <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3">
     <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 flex-1">
       <div class="relative w-full sm:w-72">
@@ -158,13 +153,11 @@
     </div>
   </div>
 
-  <!-- Loading State -->
   <div *ngIf="loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm py-16 flex flex-col items-center justify-center text-gray-500">
     <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
     <span class="text-sm font-bold text-gray-600">Cargando catálogo de pizzas...</span>
   </div>
 
-  <!-- Catálogo de Pizzas -->
   <div *ngIf="!loading && (!loadError || todasLasPizzas.length > 0)" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100 bg-gray-50/70 flex flex-wrap justify-between items-center gap-3">
       <h3 class="text-sm font-black text-gray-800 uppercase tracking-wider m-0">
@@ -180,14 +173,12 @@
       </button>
     </div>
 
-    <!-- Grid Responsivo de Pizzas -->
     <div *ngIf="pizzas.length > 0" class="p-4 sm:p-5">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         <div
           *ngFor="let pizza of pizzasPaginadas; trackBy: trackByPizzaId; let i = index"
           class="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-red-200 hover:shadow-md transition-all group flex flex-col sm:flex-row h-full"
         >
-          <!-- Imagen de la pizza -->
           <div class="w-full sm:w-44 md:w-48 h-48 sm:h-auto shrink-0 bg-gray-50 flex flex-col items-center justify-center p-4 border-b sm:border-b-0 sm:border-r border-gray-100 relative">
             <img
               *ngIf="pizza.imageUrl && !pizza.imageError"
@@ -212,7 +203,6 @@
             </span>
           </div>
 
-          <!-- Información de la pizza -->
           <div class="flex-1 min-w-0 p-4 flex flex-col justify-between">
             <div>
               <div class="flex justify-between items-start gap-2 mb-1.5">
@@ -236,7 +226,6 @@
                 {{ pizza.description }}
               </p>
 
-              <!-- Métricas financieras directas -->
               <div class="grid grid-cols-3 gap-1.5 bg-gray-50 border border-gray-100 rounded-xl p-2.5 mb-3 text-[11px]">
                 <div>
                   <span class="text-gray-400 block font-semibold">Costo Directo</span>
@@ -273,7 +262,6 @@
               </div>
             </div>
 
-            <!-- Botones de acción responsivos -->
             <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mt-auto pt-2 border-t border-gray-100">
               <ng-container *ngIf="pizza.deletedAt">
                 <button
@@ -327,7 +315,6 @@
       </div>
     </div>
 
-    <!-- Paginación -->
     <div *ngIf="pizzas.length > 0" class="px-5 py-4 border-t border-gray-100 bg-white">
       <app-pagination
         [currentPage]="currentPage"
@@ -339,7 +326,6 @@
       ></app-pagination>
     </div>
 
-    <!-- Estado vacío (solo si no hay loadError) -->
     <div *ngIf="!loadError && pizzas.length === 0" class="py-16 px-6 text-center flex flex-col items-center">
       <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mb-4 border border-gray-100">
         <i class="bi bi-pie-chart text-3xl"></i>
@@ -357,7 +343,6 @@
     </div>
   </div>
 
-  <!-- MODAL CREAR / EDITAR PIZZA + RECETA + IMAGEN LOCAL -->
   <div
     *ngIf="showForm"
     class="fixed inset-0 z-[6000] !mt-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
@@ -378,7 +363,6 @@
 
       <form [formGroup]="pizzaForm" (ngSubmit)="guardarPizza()" class="flex flex-col flex-1 overflow-hidden">
         <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-5">
-          <!-- Alerta dentro del modal -->
           <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex justify-between items-center text-xs sm:text-sm font-medium">
             <div class="flex items-center gap-2">
               <i class="bi bi-exclamation-triangle-fill"></i>
@@ -390,7 +374,6 @@
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <!-- Nombre -->
             <div>
               <label for="name" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Nombre de la Pizza *</label>
               <input
@@ -407,7 +390,6 @@
               </div>
             </div>
 
-            <!-- Categoría -->
             <div>
               <label for="categoryId" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Categoría *</label>
               <select
@@ -424,7 +406,6 @@
               </div>
             </div>
 
-            <!-- Precio -->
             <div>
               <label for="price" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Precio Base Venta - Personal (S/) *</label>
               <input
@@ -443,9 +424,8 @@
               </div>
             </div>
 
-            <!-- Archivo de Imagen en Servidor -->
             <div>
-              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Imagen de la Pizza (Archivo en Backend)</label>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Imagen de la Pizza</label>
               <div class="flex items-center gap-3 p-3 rounded-xl border border-dashed border-gray-300 bg-gray-50">
                 <div class="w-14 h-14 rounded-xl bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
                   <img *ngIf="imagenPreview" [src]="imagenPreview" alt="Vista previa" class="w-full h-full object-cover" />
@@ -473,7 +453,6 @@
             </div>
           </div>
 
-          <!-- Descripción -->
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <label for="description" class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Descripción</label>
@@ -502,7 +481,6 @@
             </p>
           </div>
 
-          <!-- Editor de Receta Directa -->
           <div class="bg-gray-50 rounded-2xl border border-gray-200 p-4 sm:p-5">
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
               <div>
@@ -527,7 +505,6 @@
               </div>
             </div>
 
-            <!-- SIMULADOR DE TAMAÑOS INTERACTIVO -->
             <div class="bg-white p-3 sm:p-3.5 rounded-xl border border-gray-200 mb-4 shadow-2xs">
               <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <span class="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -538,7 +515,6 @@
                 </span>
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <!-- Personal / Base -->
                 <button
                   type="button"
                   (click)="seleccionarTamanoSimuladorForm(null)"
@@ -554,7 +530,6 @@
                   </div>
                 </button>
 
-                <!-- Otros tamaños de la BD -->
                 <button
                   *ngFor="let tam of tamanosDisponibles; trackBy: trackBySizeId"
                   [hidden]="(tam.recipeMultiplier || 1) === 1.0 && tam.name.toLowerCase().includes('personal')"
@@ -576,7 +551,6 @@
               </div>
             </div>
 
-            <!-- Agregar Insumo a Receta -->
             <div class="flex flex-col sm:flex-row gap-2.5 mb-4">
               <select
                 class="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
@@ -606,7 +580,6 @@
               </button>
             </div>
 
-            <!-- Tabla de Insumos de la Receta -->
             <div class="bg-white rounded-xl border border-gray-200 overflow-hidden" *ngIf="recetaFormulario.length > 0">
               <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs min-w-[560px]">
@@ -668,7 +641,6 @@
             </p>
           </div>
 
-          <!-- Checkboxes -->
           <div class="flex flex-wrap gap-4 sm:gap-6">
             <label class="flex items-center gap-2.5 cursor-pointer bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl">
               <input type="checkbox" formControlName="isAvailable" class="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500" />
@@ -681,7 +653,6 @@
           </div>
         </div>
 
-        <!-- Modal Footer -->
         <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end gap-3 shrink-0">
           <button
             type="button"
@@ -704,7 +675,6 @@
     </div>
   </div>
 
-  <!-- MODAL RÁPIDO DE RECETA E INSUMOS -->
   <div
     *ngIf="mostrarModalReceta && pizzaRecetaModal"
     class="fixed inset-0 z-[6000] !mt-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
@@ -733,7 +703,6 @@
           </button>
         </div>
 
-        <!-- SIMULADOR DE TAMAÑOS EN MODAL RÁPIDO -->
         <div class="bg-white p-3.5 rounded-xl border border-gray-200 shadow-2xs">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
             <span class="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -744,7 +713,6 @@
             </span>
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <!-- Personal / Base -->
             <button
               type="button"
               (click)="seleccionarTamanoSimuladorModal(null)"
@@ -760,7 +728,6 @@
               </div>
             </button>
 
-            <!-- Otros tamaños de la BD -->
             <button
               *ngFor="let tam of tamanosDisponibles; trackBy: trackBySizeId"
               [hidden]="(tam.recipeMultiplier || 1) === 1.0 && tam.name.toLowerCase().includes('personal')"
@@ -782,7 +749,6 @@
           </div>
         </div>
 
-        <!-- Resumen precalculado / simulado -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="bg-white p-3.5 rounded-xl border border-gray-200 shadow-xs">
             <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
@@ -806,7 +772,6 @@
           </div>
         </div>
 
-        <!-- Selector para agregar insumo -->
         <div class="bg-white p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row gap-3">
           <select
             class="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-none focus:bg-white focus:border-red-500"
@@ -834,7 +799,6 @@
           </button>
         </div>
 
-        <!-- Tabla de receta con overflow-x-auto -->
         <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm min-w-[560px]">
@@ -916,7 +880,6 @@
     </div>
   </div>
 
-  <!-- DECORATOR PATTERN - Modal Simulador de Extras y Tamaños -->
   <div
     *ngIf="mostrarExtras"
     class="fixed inset-0 z-[6000] !mt-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"

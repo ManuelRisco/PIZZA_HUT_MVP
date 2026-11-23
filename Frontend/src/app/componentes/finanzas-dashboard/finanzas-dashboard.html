@@ -1,5 +1,4 @@
 <div class="space-y-6 font-sans">
-  <!-- Executive v2 Header Card -->
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
       <div class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1 flex items-center gap-1.5">
@@ -35,7 +34,6 @@
     </div>
   </div>
 
-  <!-- Persistent Error / Backend-Offline Banner -->
   <div
     *ngIf="errorMessage"
     class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
@@ -59,9 +57,7 @@
     </button>
   </div>
 
-  <!-- Barra de Filtros Temporales y Agrupación -->
   <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-3">
-    <!-- Presets -->
     <div class="flex flex-wrap items-center gap-1.5">
       <button
         type="button"
@@ -121,7 +117,6 @@
       </button>
     </div>
 
-    <!-- Fechas personalizadas + Agrupar por + Solo Entregados -->
     <div class="flex flex-wrap items-center gap-3">
       <div *ngIf="selectedPreset !== 'ALL'" class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
         <input
@@ -179,7 +174,6 @@
     </div>
   </div>
 
-  <!-- Loading Initial State -->
   <div
     *ngIf="loading && !hasLoadedOnce"
     class="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center"
@@ -188,11 +182,8 @@
     <p class="text-sm font-bold text-gray-600 m-0">Sincronizando estado de pérdidas y ganancias...</p>
   </div>
 
-  <!-- Contenido Financiero (oculto si falló la primera carga para no mostrar S/ 0.00 falsos) -->
   <ng-container *ngIf="hasLoadedOnce">
-    <!-- ==================== 5 KPI CARDS EJECUTIVAS ==================== -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      <!-- 1. Ingresos Netos -->
       <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -207,7 +198,6 @@
         </p>
       </div>
 
-      <!-- 2. Costo Directo Ventas (COGS) -->
       <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -220,7 +210,6 @@
         <p class="text-xs text-gray-500 mt-1 mb-0">Materia prima de lo vendido</p>
       </div>
 
-      <!-- 3. Utilidad Bruta -->
       <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
@@ -235,7 +224,6 @@
         <p class="text-xs text-gray-500 mt-1 mb-0">Ventas netas menos COGS</p>
       </div>
 
-      <!-- 4. Pérdidas / Mermas -->
       <div class="bg-white rounded-2xl p-5 border border-amber-200 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -248,7 +236,6 @@
         <p class="text-xs text-gray-500 mt-1 mb-0">{{ lossesPercentOfRevenue | number:'1.1-1' }}% sobre ingresos</p>
       </div>
 
-      <!-- 5. Resultado Neto (Ganancia o Pérdida) -->
       <div
         class="rounded-2xl p-5 border shadow-sm"
         [ngClass]="
@@ -291,9 +278,7 @@
       </div>
     </div>
 
-    <!-- ==================== ESTADO DE RESULTADOS + GRÁFICO TEMPORAL ==================== -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- Estado de Resultados Formal (P&L) -->
       <div class="lg:col-span-5 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
         <div class="bg-gray-900 text-white px-6 py-4 flex items-center justify-between">
           <div>
@@ -375,7 +360,6 @@
         </div>
       </div>
 
-      <!-- Gráfico Comparativo de Evolución Temporal -->
       <div class="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 flex flex-col justify-between">
         <div>
           <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -386,7 +370,6 @@
               </p>
             </div>
 
-            <!-- Leyenda -->
             <div class="flex flex-wrap items-center gap-3 text-xs font-bold text-gray-600">
               <span class="flex items-center gap-1.5">
                 <span class="w-3 h-3 rounded-sm bg-emerald-500 inline-block"></span> Ingresos
@@ -417,7 +400,6 @@
                 *ngFor="let pt of report.timeline; trackBy: trackByTimeline"
                 class="flex-1 min-w-[54px] max-w-[96px] h-full flex flex-col items-center justify-end group relative"
               >
-                <!-- Tooltip -->
                 <div
                   class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full bg-gray-900 text-white text-[11px] rounded-xl px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-xl"
                 >
@@ -432,7 +414,6 @@
                   </p>
                 </div>
 
-                <!-- Barras Agrupadas -->
                 <div class="w-full h-full flex items-end justify-center gap-1">
                   <div
                     class="w-2.5 sm:w-3 rounded-t bg-emerald-500 transition-all duration-500"
@@ -455,7 +436,6 @@
               </div>
             </div>
 
-            <!-- Etiquetas eje X -->
             <div class="min-w-[460px] flex items-center justify-around gap-4 px-3 pt-2">
               <div
                 *ngFor="let pt of report.timeline; trackBy: trackByTimeline"
@@ -474,9 +454,7 @@
       </div>
     </div>
 
-    <!-- ==================== PANELES INFERIORES: RANKING RENTABILIDAD + DESGLOSE MERMAS ==================== -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- Ranking de Rentabilidad por Producto -->
       <div class="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -571,7 +549,6 @@
         ></app-pagination>
       </div>
 
-      <!-- Desglose de Pérdidas por Categoría -->
       <div class="lg:col-span-5 bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 space-y-4">
         <div class="flex items-center justify-between gap-2">
           <div>

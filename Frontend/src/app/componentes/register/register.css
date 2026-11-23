@@ -1,84 +1,120 @@
 .register-form-section {
-  min-height: 100vh;
+  min-height: calc(100dvh - 64px);
   display: flex;
   justify-content: center;
   align-items: center;
   background: radial-gradient(circle at center, #1a1a1a 0%, #0d0d0d 100%);
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Poppins', system-ui, sans-serif;
+  padding: 24px 16px;
 }
 
 .register-form-container {
-  background: rgba(30, 30, 30, 0.95);
-  padding: 40px;
+  background: rgba(30, 30, 30, 0.96);
+  padding: 32px 30px;
   border-radius: 20px;
-  box-shadow: 0 0 25px rgba(255, 0, 0, 0.4);
-  width: 380px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  width: 100%;
+  max-width: 440px;
   text-align: center;
   color: #fff;
+  animation: registerCardIn 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes registerCardIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
 }
 
 .register-header h2 {
-  font-size: 28px;
-  color: #d90000;
-  margin-bottom: 10px;
+  font-size: 26px;
+  font-weight: 800;
+  color: #ef4444;
+  margin-bottom: 6px;
 }
 
 .register-subtitle {
-  color: #ccc;
-  font-size: 15px;
-  margin-bottom: 30px;
+  color: #d1d5db;
+  font-size: 14px;
+  margin-bottom: 22px;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   text-align: left;
 }
 
 label {
   display: block;
   margin-bottom: 6px;
+  font-size: 13px;
   font-weight: 600;
-  color: #f5f5f5;
+  color: #f3f4f6;
 }
 
 .input-with-icon {
   position: relative;
-}
-
-.input-with-icon i {
-  position: absolute;
-  top: 12px;
-  left: -12px;
-  color: #d90000;
-}
-
-input {
   width: 100%;
-  margin-left: -25px;
-  padding: 10px 10px 10px 35px;
-  border: 2px solid #333;
-  border-radius: 10px;
-  background-color: #1c1c1c;
-  color: #fff;
-  font-size: 11px;
-  transition: 0.3s;
 }
 
-input:focus {
-  border-color: #d90000;
-  box-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+.input-with-icon > i:first-child {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: #ef4444;
+  pointer-events: none;
+  font-size: 14px;
+}
+
+.input-with-icon .password-toggle-icon {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.input-with-icon .password-toggle-icon:hover {
+  color: #fff;
+}
+
+.input-with-icon input {
+  width: 100%;
+  margin: 0;
+  padding: 12px 40px 12px 40px;
+  border: 1.5px solid #333;
+  border-radius: 11px;
+  background-color: #161616;
+  color: #fff;
+  font-size: 15px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.input-with-icon input:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.22);
   outline: none;
 }
 
-input.error {
-  border-color: #7c1a20;
-  background-color: #2a1a1a;
+.input-with-icon input.error {
+  border-color: #dc2626;
+  background-color: #261616;
 }
 
-/* Mensajes de error */
 .error-message {
   margin-top: 5px;
-  color: #b02a37;
+  color: #f87171;
   font-size: 12px;
   font-weight: 500;
   display: flex;
@@ -86,22 +122,22 @@ input.error {
   gap: 5px;
 }
 
-/* Alertas */
 .alert {
-  padding: 16px 20px;
+  padding: 12px 14px;
   border-radius: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  font-size: 13px;
+  text-align: left;
 }
 
 .alert-success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #b8dabd;
+  background: #dcfce7;
+  color: #14532d;
+  border: 1px solid #86efac;
 }
 
 .alert-error {
@@ -110,30 +146,29 @@ input.error {
   border: 1px solid #e8b4b8;
 }
 
-/* Indicador de carga */
 .loading {
   text-align: center;
-  padding: 20px;
-  color: #ccc;
-  font-size: 16px;
+  padding: 16px;
+  color: #d1d5db;
+  font-size: 15px;
 }
 
 .loading i {
-  margin-right: 10px;
-  color: #d90000;
+  margin-right: 8px;
+  color: #ef4444;
 }
 
 .btn-register {
   width: 100%;
-  padding: 12px;
-  background-color: #d90000;
+  padding: 13px;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   border: none;
-  border-radius: 10px;
-  font-weight: bold;
+  border-radius: 11px;
+  font-weight: 700;
   color: #fff;
   cursor: pointer;
-  font-size: 16px;
-  transition: all 0.3s ease;
+  font-size: 15px;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease, filter 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -141,19 +176,24 @@ input.error {
 }
 
 .btn-register:hover:not(:disabled) {
-  background-color: #cc0000;
-  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.4);
+  filter: brightness(1.06);
+}
+
+.btn-register:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .btn-register:disabled {
-  background-color: #555;
+  background: #4b5563;
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.65;
 }
 
 .login-link {
-  color: #d90000;
-  font-weight: bold;
+  color: #ef4444;
+  font-weight: 700;
   text-decoration: none;
 }
 
@@ -183,11 +223,11 @@ input.error {
 
 .btn-google {
   width: 100%;
-  padding: 11px 14px;
+  padding: 12px 14px;
   background-color: #ffffff;
   color: #1f2937;
   border: 1px solid #d1d5db;
-  border-radius: 10px;
+  border-radius: 11px;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -195,11 +235,12 @@ input.error {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .btn-google:hover:not(:disabled) {
   background-color: #f3f4f6;
+  transform: translateY(-1px);
 }
 
 .btn-google:disabled {
@@ -210,32 +251,36 @@ input.error {
 .auth-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(3px);
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 6000;
   padding: 16px;
 }
 
 .auth-modal-card {
   background: #1f1f1f;
   border: 1px solid #333;
-  border-radius: 16px;
-  width: 420px;
-  max-width: 100%;
-  padding: 24px;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 430px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  padding: 22px;
   color: #fff;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.65);
   text-align: left;
+  animation: registerCardIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .auth-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .google-modal-title-group {
@@ -274,13 +319,13 @@ input.error {
 
 .modal-input {
   width: 100%;
-  margin-left: 0;
-  padding: 10px 12px;
+  margin: 0;
+  padding: 11px 12px;
   border: 1.5px solid #374151;
   border-radius: 10px;
   background: #141414;
   color: #fff;
-  font-size: 13px;
+  font-size: 15px;
   box-sizing: border-box;
 }
 
@@ -289,26 +334,56 @@ input.error {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.btn-modal-secondary,
+.btn-modal-primary {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
 }
 
 .btn-modal-secondary {
-  padding: 9px 16px;
-  border-radius: 9px;
   border: 1px solid #4b5563;
   background: transparent;
   color: #e5e7eb;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
 }
 
 .btn-modal-primary {
-  padding: 9px 18px;
-  border-radius: 9px;
   border: none;
-  background: #d90000;
+  background: #dc2626;
   color: #fff;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .register-form-section {
+    padding: 16px 12px;
+    align-items: flex-start;
+  }
+
+  .register-form-container {
+    padding: 22px 16px;
+    border-radius: 16px;
+  }
+
+  .register-header h2 {
+    font-size: 22px;
+  }
+
+  .auth-modal-card {
+    padding: 18px;
+  }
+
+  .auth-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .btn-modal-secondary,
+  .btn-modal-primary {
+    width: 100%;
+    text-align: center;
+  }
 }

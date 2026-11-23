@@ -1,5 +1,4 @@
 <div class="space-y-6 font-sans">
-  <!-- Executive v2 Header -->
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
       <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Catálogo y Operaciones</p>
@@ -22,7 +21,6 @@
     </div>
   </div>
 
-  <!-- Persistent Load Error Banner -->
   <div *ngIf="loadError" class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3" role="alert">
     <div class="flex items-start sm:items-center gap-3">
       <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
@@ -39,7 +37,6 @@
     </button>
   </div>
 
-  <!-- Feedback de acciones -->
   <div *ngIf="success" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center justify-between gap-3 text-sm font-medium">
     <div class="flex items-center gap-2">
       <i class="bi bi-check-circle-fill text-emerald-600"></i>
@@ -60,7 +57,6 @@
     </button>
   </div>
 
-  <!-- KPI Summary Strip -->
   <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
     <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
       <div>
@@ -103,7 +99,6 @@
     </div>
   </div>
 
-  <!-- Barra de búsqueda y filtros locales (0ms) -->
   <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm space-y-4">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
       <div class="relative flex-1 max-w-md">
@@ -168,13 +163,11 @@
     </div>
   </div>
 
-  <!-- Indicador de carga -->
   <div *ngIf="loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm py-16 flex flex-col items-center justify-center text-gray-500">
     <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
     <span class="text-sm font-bold text-gray-600">Cargando usuarios...</span>
   </div>
 
-  <!-- Tabla de Usuarios -->
   <div *ngIf="!loading && !loadError" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div *ngIf="usuarios.length > 0">
       <div class="overflow-x-auto">
@@ -322,7 +315,6 @@
       </div>
     </div>
 
-    <!-- Empty State (Guarded by !loading && !loadError) -->
     <div *ngIf="usuarios.length === 0" class="py-16 px-6 text-center flex flex-col items-center">
       <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 mb-4">
         <i class="bi bi-people text-3xl"></i>
@@ -345,7 +337,6 @@
   </div>
 </div>
 
-<!-- Modal Crear / Editar Usuario -->
 <div *ngIf="showForm" class="fixed inset-0 z-[6000] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90dvh] flex flex-col overflow-hidden">
     <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center shrink-0">
@@ -365,7 +356,6 @@
       </div>
 
       <form [formGroup]="usuarioForm" (ngSubmit)="guardarUsuario()" class="space-y-5">
-        <!-- DNI Opcional con Autocompletado RENIEC -->
         <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2.5">
           <div class="flex items-center justify-between gap-2">
             <label for="admin-dni" class="block text-xs font-bold uppercase tracking-wider text-gray-700 m-0">
@@ -472,7 +462,6 @@
           </div>
         </div>
 
-        <!-- Contraseñas en creación -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5" *ngIf="!editMode">
           <div>
             <label for="password" class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Contraseña *</label>
@@ -527,10 +516,8 @@
   </div>
 </div>
 
-<!-- Modal de Logs del Sistema -->
 <div *ngIf="showLogsModal" class="fixed inset-0 z-[6000] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90dvh] flex flex-col overflow-hidden">
-    <!-- Header Modal -->
     <div class="bg-gray-900 text-white px-5 sm:px-6 py-4 flex justify-between items-center shrink-0">
       <div>
         <h3 class="text-lg font-black m-0 flex items-center gap-2">
@@ -550,7 +537,6 @@
       </div>
     </div>
 
-    <!-- Tabs -->
     <div class="flex border-b border-gray-200 bg-white shrink-0">
       <button type="button"
               class="flex-1 py-3 px-4 font-bold transition-colors border-b-2 text-sm cursor-pointer flex items-center justify-center gap-2"
@@ -568,9 +554,7 @@
       </button>
     </div>
 
-    <!-- Body scrollable -->
     <div class="flex-1 overflow-y-auto p-4 sm:p-6 bg-gray-50 space-y-4">
-      <!-- Error dentro del modal con Reintentar -->
       <div *ngIf="logsError" class="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3" role="alert">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
@@ -587,13 +571,11 @@
         </button>
       </div>
 
-      <!-- Loading Logs -->
       <div *ngIf="loadingLogs" class="bg-white rounded-2xl border border-gray-200 py-14 flex flex-col justify-center items-center">
         <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
         <span class="font-bold text-sm text-gray-600">Cargando registros del sistema...</span>
       </div>
 
-      <!-- TAB: Sesiones Activas -->
       <div *ngIf="!loadingLogs && !logsError && activeLogTab === 'sesiones'">
         <div *ngIf="sesionesActivas.length > 0" class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div class="overflow-x-auto">
@@ -668,9 +650,7 @@
         </div>
       </div>
 
-      <!-- TAB: Auditoría -->
       <div *ngIf="!loadingLogs && !logsError && activeLogTab === 'auditoria'" class="space-y-4">
-        <!-- Buscador rápido en logs de auditoría -->
         <div class="bg-white rounded-2xl p-3.5 border border-gray-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="relative flex-1 max-w-md">
             <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>

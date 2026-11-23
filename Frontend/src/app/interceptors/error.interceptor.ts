@@ -20,7 +20,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Ignorar rutas silenciosas o con manejo propio en pantalla
       if (
         req.url.includes('/api/ingresar') ||
         req.url.includes('/api/registro') ||

@@ -22,7 +22,6 @@ import { CostosProduccionComponent } from '../costos-produccion/costos-produccio
 import { FinanzasDashboardComponent } from '../finanzas-dashboard/finanzas-dashboard';
 import { PaginationComponent } from '../pagination/pagination';
 
-// Services for dashboard data
 import { UsuarioService } from '../../services/usuario.service';
 import { Order } from '../../services/order.service';
 import { Payment } from '../../services/payment.service';

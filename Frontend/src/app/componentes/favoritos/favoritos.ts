@@ -27,7 +27,6 @@ export class FavoritosComponent implements OnInit {
   esError = false;
   imagenesCargadas = new Set<number>();
 
-  // Paginación (12 llena filas exactas en 1, 2, 3 y 4 columnas)
   currentPage = 1;
   itemsPerPage = 12;
 

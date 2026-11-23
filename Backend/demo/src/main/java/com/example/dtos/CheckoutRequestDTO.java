@@ -105,6 +105,16 @@ public class CheckoutRequestDTO {
 
         private String transactionId;
 
+        // Campos opcionales de pasarela oficial Mercado Pago (token PCI-DSS de Card Brick o Yape SDK)
+        private String mercadoPagoToken;
+        private String mercadoPagoPaymentMethodId;
+        private String mercadoPagoIssuerId;
+        private Integer mercadoPagoInstallments;
+        private String mercadoPagoPayerEmail;
+        private String mercadoPagoPayerDocType;
+        private String mercadoPagoPayerDocNumber;
+        private String mercadoPagoPayerPhone;
+
         public Integer getPaymentMethodId() { return paymentMethodId; }
         public void setPaymentMethodId(Integer paymentMethodId) { this.paymentMethodId = paymentMethodId; }
         public BigDecimal getAmount() { return amount; }
@@ -113,6 +123,23 @@ public class CheckoutRequestDTO {
         public void setStatus(String status) { this.status = status; }
         public String getTransactionId() { return transactionId; }
         public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
+
+        public String getMercadoPagoToken() { return mercadoPagoToken; }
+        public void setMercadoPagoToken(String mercadoPagoToken) { this.mercadoPagoToken = mercadoPagoToken; }
+        public String getMercadoPagoPaymentMethodId() { return mercadoPagoPaymentMethodId; }
+        public void setMercadoPagoPaymentMethodId(String mercadoPagoPaymentMethodId) { this.mercadoPagoPaymentMethodId = mercadoPagoPaymentMethodId; }
+        public String getMercadoPagoIssuerId() { return mercadoPagoIssuerId; }
+        public void setMercadoPagoIssuerId(String mercadoPagoIssuerId) { this.mercadoPagoIssuerId = mercadoPagoIssuerId; }
+        public Integer getMercadoPagoInstallments() { return mercadoPagoInstallments; }
+        public void setMercadoPagoInstallments(Integer mercadoPagoInstallments) { this.mercadoPagoInstallments = mercadoPagoInstallments; }
+        public String getMercadoPagoPayerEmail() { return mercadoPagoPayerEmail; }
+        public void setMercadoPagoPayerEmail(String mercadoPagoPayerEmail) { this.mercadoPagoPayerEmail = mercadoPagoPayerEmail; }
+        public String getMercadoPagoPayerDocType() { return mercadoPagoPayerDocType; }
+        public void setMercadoPagoPayerDocType(String mercadoPagoPayerDocType) { this.mercadoPagoPayerDocType = mercadoPagoPayerDocType; }
+        public String getMercadoPagoPayerDocNumber() { return mercadoPagoPayerDocNumber; }
+        public void setMercadoPagoPayerDocNumber(String mercadoPagoPayerDocNumber) { this.mercadoPagoPayerDocNumber = mercadoPagoPayerDocNumber; }
+        public String getMercadoPagoPayerPhone() { return mercadoPagoPayerPhone; }
+        public void setMercadoPagoPayerPhone(String mercadoPagoPayerPhone) { this.mercadoPagoPayerPhone = mercadoPagoPayerPhone; }
     }
 
     public OrderDTO getOrder() { return order; }

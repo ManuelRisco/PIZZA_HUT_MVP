@@ -33,11 +33,9 @@ export class ExtrasComponent implements OnInit {
   error = '';
   success = '';
 
-  // Filtros
   filtroCategoria: string = 'TODOS';
   terminoBusqueda: string = '';
 
-  // KPIs precalculados
   kpiTotalExtras = 0;
   kpiConStock = 0;
   kpiStockBajo = 0;
@@ -294,7 +292,6 @@ export class ExtrasComponent implements OnInit {
       }
     });
   }
-
 
   restaurarExtra(id: number, nombre?: string): void {
     if (!confirm('¿Desea restaurar el extra' + (nombre ? ` "${nombre}"` : '') + '?')) return;

@@ -8,13 +8,10 @@ export const ClienteGuard = () => {
 
   const user = authService.getCurrentUser();
 
-  // Si no hay usuario autenticado, redirigir a login
   if (!user) {
     router.navigate(['/join']);
     return false;
   }
 
-  // Permitir acceso tanto a ADMIN como a CLIENT/USER
-  // Los administradores también pueden acceder a las funcionalidades de cliente
   return true;
 };

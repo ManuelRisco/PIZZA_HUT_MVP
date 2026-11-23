@@ -22,14 +22,12 @@ export class Payments implements OnInit {
   error = false;
   loading = false;
 
-  // KPIs precalculados
   kpiTotalPagos = 0;
   kpiPagados = 0;
   kpiPendientes = 0;
   kpiFallidosReembolsos = 0;
   kpiTotalMonto = 0;
 
-  // Paginación
   currentPage = 1;
   itemsPerPage = 10;
   pageSizeOptions: number[] = [10, 25, 50];

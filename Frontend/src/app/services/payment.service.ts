@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PaymentDTO } from '../models/admin.interface';
+import { MercadoPagoConfigDTO } from '../models/checkout.model';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -16,7 +17,6 @@ export class Payment {
 
   constructor(private readonly http: HttpClient) {}
 
-  // Operaciones CRUD para Pagos
   obtenerTodos(): Observable<PaymentDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/payments`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
@@ -43,6 +43,12 @@ export class Payment {
 
   crearTokenIzipay(amount: number): Observable<{ formToken: string }> {
     return this.http.post<any>(`${this.apiUrl}/payments/create-token`, { amount }, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
+  }
+
+  obtenerConfiguracionMercadoPago(): Observable<MercadoPagoConfigDTO> {
+    return this.http
+      .get<any>(`${this.apiUrl}/payments/mercadopago/config`)
+      .pipe(map(res => (res?.data !== undefined ? res.data : res)));
   }
 }
 

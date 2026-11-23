@@ -1,21 +1,18 @@
 <div class="flex flex-1 min-h-0 bg-gray-50 overflow-hidden font-sans" role="region" aria-label="Panel de administración">
-  <!-- Overlay for mobile sidebar -->
   <div
-    *ngIf="!sidebarCollapsed"
-    class="fixed inset-0 bg-black/60 backdrop-blur-2xs z-[5400] md:hidden"
+    class="fixed inset-0 bg-black/60 backdrop-blur-xs z-[5400] md:hidden transition-opacity duration-300 ease-out"
+    [ngClass]="!sidebarCollapsed ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
     (click)="toggleSidebar()"
   ></div>
 
-  <!-- Sidebar -->
   <aside
-    class="bg-black text-white flex flex-col transition-all duration-300 z-[5500] md:z-20 fixed inset-y-0 left-0 md:static md:h-full shrink-0"
+    class="bg-black text-white flex flex-col transition-transform md:transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] z-[5500] md:z-20 fixed inset-y-0 left-0 h-[100dvh] md:static md:h-full shrink-0 overscroll-contain will-change-transform shadow-2xl md:shadow-none"
     [ngClass]="{
       'w-[260px] translate-x-0': !sidebarCollapsed,
       'w-[260px] -translate-x-full md:translate-x-0 md:w-[80px]': sidebarCollapsed
     }"
     aria-label="Menú de administración"
   >
-    <!-- Header Sidebar -->
     <div class="flex items-center justify-between gap-3 p-4 border-b border-gray-800 shrink-0">
       <div class="flex items-center gap-3 overflow-hidden">
         <button
@@ -46,7 +43,6 @@
       </button>
     </div>
 
-    <!-- Navigation Menu -->
     <nav class="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-1 sidebar-scroll" aria-label="Opciones de administración">
       <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
          [ngClass]="vistaActual === 'dashboard' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
@@ -56,7 +52,6 @@
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Dashboard</span>
       </a>
 
-      <!-- Finanzas, Stock y Producción -->
       <div *ngIf="!sidebarCollapsed" class="pt-3 pb-1 px-3 text-[10px] font-black uppercase tracking-widest text-gray-500">
         Finanzas, Stock y Costos
       </div>
@@ -106,7 +101,6 @@
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Costos de Producción</span>
       </a>
 
-      <!-- Catálogo y Operaciones -->
       <div *ngIf="!sidebarCollapsed" class="pt-3 pb-1 px-3 text-[10px] font-black uppercase tracking-widest text-gray-500">
         Catálogo y Operaciones
       </div>
@@ -200,7 +194,6 @@
       </a>
     </nav>
 
-    <!-- User Profile & Logout (Bottom) -->
     <div class="border-t border-gray-800 p-3 shrink-0">
       <div
         class="flex items-center gap-3 cursor-pointer p-2 rounded-xl transition-colors"
@@ -236,9 +229,7 @@
     </div>
   </aside>
 
-  <!-- Main Content -->
   <section class="flex-1 flex flex-col min-h-0 overflow-hidden relative min-w-0">
-    <!-- Mobile Sub-Header -->
     <div class="md:hidden flex items-center justify-between gap-3 bg-white border-b border-gray-200 px-4 py-3 shrink-0">
       <div class="flex items-center gap-3 min-w-0">
         <button
@@ -263,11 +254,8 @@
       </span>
     </div>
 
-    <!-- Scrollable Content -->
-    <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 min-w-0 w-full">
-      <!-- Vista Dashboard HOME -->
+    <div class="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6 lg:p-8 min-w-0 w-full">
       <div *ngIf="vistaActual === 'dashboard'" class="max-w-7xl mx-auto space-y-6">
-        <!-- Executive v2 Header Card -->
         <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel Ejecutivo</p>
@@ -296,7 +284,6 @@
           </div>
         </div>
 
-        <!-- Banner persistente de Error / Servidor Caído -->
         <div
           *ngIf="errorDashboard"
           class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
@@ -320,9 +307,7 @@
           </button>
         </div>
 
-        <!-- ==================== KPI CARDS ROW ==================== -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Ventas Hoy -->
           <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group">
             <div class="flex items-center justify-between mb-3">
               <div class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -338,7 +323,6 @@
             <p class="text-2xl font-black text-gray-900 m-0">S/ {{ ventasHoy | number:'1.2-2' }}</p>
           </div>
 
-          <!-- Pedidos Pendientes -->
           <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
                (click)="cambiarVista('orders')">
             <div class="flex items-center justify-between mb-3">
@@ -355,7 +339,6 @@
             <p class="text-2xl font-black m-0" [ngClass]="pedidosPendientes > 0 ? 'text-amber-600' : 'text-gray-900'">{{ pedidosPendientes }}</p>
           </div>
 
-          <!-- Total Clientes -->
           <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
                (click)="cambiarVista('usuarios')">
             <div class="flex items-center justify-between mb-3">
@@ -367,7 +350,6 @@
             <p class="text-2xl font-black text-gray-900 m-0">{{ totalClientes }}</p>
           </div>
 
-          <!-- Rating Promedio -->
           <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
                (click)="cambiarVista('reviews')">
             <div class="flex items-center justify-between mb-3">
@@ -386,7 +368,6 @@
           </div>
         </div>
 
-        <!-- ==================== ACCESOS RÁPIDOS: FINANZAS, STOCK Y PRODUCCIÓN ==================== -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             type="button"
@@ -454,9 +435,7 @@
           </button>
         </div>
 
-        <!-- ==================== CHARTS ROW ==================== -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Gráfico Ventas Semanales -->
           <div class="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col">
             <div class="flex flex-wrap justify-between items-start gap-3 mb-6">
               <div>
@@ -497,7 +476,6 @@
             </div>
           </div>
 
-          <!-- Más Vendidos (Top 5) -->
           <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col">
             <div class="flex justify-between items-center mb-5">
               <div>
@@ -547,7 +525,6 @@
           </div>
         </div>
 
-        <!-- ==================== PEDIDOS RECIENTES ==================== -->
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div class="p-5 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -629,7 +606,6 @@
         </div>
       </div>
 
-      <!-- Módulos del Panel Admin -->
       <div class="max-w-7xl mx-auto" *ngIf="vistaActual !== 'dashboard'">
         <div *ngIf="vistaActual === 'finanzas'"><app-finanzas-dashboard></app-finanzas-dashboard></div>
         <div *ngIf="vistaActual === 'inventario'"><app-inventario></app-inventario></div>
@@ -653,7 +629,6 @@
     </div>
   </section>
 
-  <!-- Modal de Pedidos del Día Seleccionado -->
   <div
     *ngIf="diaSeleccionado"
     class="fixed inset-0 bg-black/60 z-[6000] flex items-center justify-center p-4 backdrop-blur-xs"
@@ -735,7 +710,6 @@
     </div>
   </div>
 
-  <!-- Modal Unificado de Confirmación de Cierre de Sesión -->
   <div
     *ngIf="mostrarModalLogout"
     class="fixed inset-0 bg-black/60 z-[6000] flex items-center justify-center p-4 backdrop-blur-xs"

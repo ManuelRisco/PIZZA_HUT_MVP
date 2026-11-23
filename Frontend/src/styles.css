@@ -2,35 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-/* You can add global styles to this file, and also import other style files */
-
 :root {
   color-scheme: light;
+  --ease-fluid: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #ffffff;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   margin: 0;
-  /* Optimización del scroll global */
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
-/* Optimización del scroll para reducir lag */
-html {
-  scroll-behavior: smooth;
-  background-color: #ffffff;
+img,
+video,
+iframe {
+  max-width: 100%;
 }
 
-/* Aceleración por hardware para animaciones */
-* {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
 }
 
-/* ========== ACCESIBILIDAD - ALTO CONTRASTE Y FILTROS DE COLOR ========== */
+main#main-content > * {
+  animation: pageReveal 0.24s ease-out;
+}
 
-/* Filtros de Daltonismo sobre el elemento raíz (preserva position: fixed y compone con Alto Contraste) */
+@keyframes pageReveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 html[data-colorblind="protanopia"] {
   filter: saturate(0.95) hue-rotate(-10deg) brightness(1.05);
 }
@@ -43,7 +66,6 @@ html[data-colorblind="tritanopia"] {
   filter: saturate(0.88) hue-rotate(60deg);
 }
 
-/* Alto Contraste Negro (#000000) y Amarillo (#FFE600) - WCAG AAA (17.9:1) */
 html[data-contraste="alto"] {
   --hc-bg: #000000;
   --hc-surface: #0a0a0a;
@@ -56,7 +78,6 @@ html[data-contraste="alto"] {
   color: var(--hc-fg) !important;
 }
 
-/* Scrollbars en Negro y Amarillo */
 html[data-contraste="alto"] ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -74,7 +95,6 @@ html[data-contraste="alto"] ::-webkit-scrollbar-thumb {
   border: 2px solid var(--hc-bg);
 }
 
-/* Superficies y contenedores en negro puro (:where evita guerras de especificidad con estados activos/hover) */
 html[data-contraste="alto"] :where(
   body, main, section, header, footer, nav, aside, article, output,
   table, thead, tbody, tfoot, tr, th, td,
@@ -82,9 +102,8 @@ html[data-contraste="alto"] :where(
   input:not([type="checkbox"]):not([type="radio"]), select, textarea, option, kbd,
   [class*="bg-"]:not([class*="bg-transparent"]):not([class*="bg-black/"]):not(.bg-clip-text):not(.pointer-events-none),
   [style*="background-color"],
-  .navbar, .language-dropdown, .user-dropdown,
-  .accessibility-panel, .panel-header, .fab-button, .chip-option, .font-option, .toggle-option,
-  .language-selector-btn, .language-list,
+  .navbar, .navbar-links, .mobile-drawer-header, .language-dropdown, .user-dropdown,
+  .accessibility-panel, .panel-header, .fab-button, .chip-option, .font-option, .toggle-option, .segmented-btn,
   .login-page, .login-form-container, .btn-login,
   .register-form-section, .register-form-container, .btn-register,
   .cart-items-container, .checkout-section, .summary-card, .empty-state,
@@ -92,7 +111,6 @@ html[data-contraste="alto"] :where(
   .quantity-control, .extras-info, .applied-promo,
   .btn-primary, .btn-secondary, .btn-promo, .btn-cancel, .btn-confirm-delete,
   .delete-modal-content, .processing-content, .success-content, .email-status-banner, .email-status-icon, .processing-step-item, .processing-progress-track,
-  .izipay-modal, .izipay-header, .izipay-body, .izipay-order-info,
   .toast-notification, .not-found-content,
   .card, .modal-content, .dropdown-menu, .alert, .btn
 ) {
@@ -109,12 +127,10 @@ html[data-contraste="alto"] .fab-button::before {
   display: none !important;
 }
 
-/* Overlays y fondos de modales oscuros semitransparentes (nunca opacos ni amarillos) */
 html[data-contraste="alto"] :is(
   .fab-overlay,
   .mobile-overlay,
   .delete-modal-overlay,
-  .izipay-overlay,
   .processing-overlay,
   .success-overlay,
   .modal-backdrop,
@@ -135,7 +151,6 @@ html[data-contraste="alto"] .pointer-events-none[class*="bg-gradient"] {
   border: 1px solid var(--hc-divider) !important;
 }
 
-/* Texto, contenedores de texto, enlaces e íconos nítidos en amarillo */
 html[data-contraste="alto"] :where(
   div, h1, h2, h3, h4, h5, h6,
   p, span, a, li, dt, dd,
@@ -164,7 +179,6 @@ html[data-contraste="alto"] :is(.fab-icon, .panel-icon) {
   filter: brightness(0) saturate(100%) invert(85%) sepia(90%) saturate(1600%) hue-rotate(358deg) brightness(104%) contrast(105%) !important;
 }
 
-/* Bordes amarillos definidos en cuadros, tarjetas, inputs, botones, badges y tablas */
 html[data-contraste="alto"] *:not(.animate-spin):not(.pizza-loader):not(.spinner) {
   border-color: var(--hc-border) !important;
 }
@@ -189,13 +203,13 @@ html[data-contraste="alto"] :where(
   .rounded-3xl[class*="shadow"],
   .card, .modal-content, .dropdown-menu, .alert,
   .language-dropdown, .user-dropdown,
-  .accessibility-panel, .fab-button, .toggle-option, .chip-option, .font-option,
+  .accessibility-panel, .fab-button, .toggle-option, .chip-option, .font-option, .segmented-btn,
   .login-form-container, .register-form-container,
   .cart-items-container, .checkout-section, .summary-card, .empty-state,
   .payment-card-form, .payment-mobile-form, .address-form, .radio-option,
   .quantity-control, .extras-info, .applied-promo,
   .delete-modal-content, .processing-content, .success-content, .email-status-banner, .email-status-icon, .processing-step-item, .processing-progress-track,
-  .izipay-modal, .toast-notification, .not-found-content,
+  .toast-notification, .not-found-content,
   [class*="bg-red-"], [class*="bg-emerald-"], [class*="bg-amber-"],
   [class*="bg-blue-"], [class*="bg-purple-"], [class*="bg-gray-900"],
   [class*="bg-gray-100"], [class*="bg-white/"]:not(.inset-0),
@@ -214,6 +228,10 @@ html[data-contraste="alto"] app-navbar .navbar {
   border-bottom: 2px solid var(--hc-border) !important;
 }
 
+html[data-contraste="alto"] app-navbar .navbar-links.mobile-open {
+  border-left: 2px solid var(--hc-border) !important;
+}
+
 html[data-contraste="alto"] app-footer footer {
   border-top: 2px solid var(--hc-border) !important;
 }
@@ -226,7 +244,6 @@ html[data-contraste="alto"] .panel-header {
   border-bottom: 1.5px solid var(--hc-border) !important;
 }
 
-/* Barras de progreso, gráficos e indicadores puntuales en amarillo sólido */
 html[data-contraste="alto"] :is(
   app-carousel .bg-yellow-500,
   .toast-progress,
@@ -241,7 +258,6 @@ html[data-contraste="alto"] :is(
   box-shadow: none !important;
 }
 
-/* Switches y estados seleccionados */
 html[data-contraste="alto"] .toggle-switch {
   background-color: var(--hc-bg) !important;
   border: 1.5px solid var(--hc-border) !important;
@@ -265,19 +281,12 @@ html[data-contraste="alto"] :is(.toggle-option.active, .font-option.active, .pro
   border: 2px solid var(--hc-fg) !important;
 }
 
-html[data-contraste="alto"] .font-option.active::after {
-  content: '✓';
-  margin-left: auto;
-  font-weight: 900;
-  color: var(--hc-fg);
-}
-
-/* Chips, pestañas activas, paginación actual y enlaces activos del sidebar (inversión limpia Amarillo/Negro) */
 html[data-contraste="alto"] :is(
   .chip-option.active,
+  .segmented-btn.active,
   .language-option.active,
-  .language-item.active,
   .cart-badge,
+  .mobile-cart-badge,
   app-pagination button[aria-current="page"],
   aside nav a.bg-red-600,
   button.border-transparent.bg-red-600
@@ -290,9 +299,10 @@ html[data-contraste="alto"] :is(
 
 html[data-contraste="alto"] :is(
   .chip-option.active,
+  .segmented-btn.active,
   .language-option.active,
-  .language-item.active,
   .cart-badge,
+  .mobile-cart-badge,
   app-pagination button[aria-current="page"],
   aside nav a.bg-red-600,
   button.border-transparent.bg-red-600
@@ -301,7 +311,6 @@ html[data-contraste="alto"] :is(
   -webkit-text-fill-color: var(--hc-bg) !important;
 }
 
-/* Estados :hover interactivos (botón iluminado en amarillo con texto negro) */
 html[data-contraste="alto"] :is(
   button:not(:disabled):not(.toggle-option):not(.hamburger-btn):not(.toast-close):not([class*="inset-y-0"]):not(.right-3.top-2):hover,
   .btn:not(:disabled):hover,
@@ -342,138 +351,39 @@ html[data-contraste="alto"] :focus-visible {
   outline-offset: 2px !important;
 }
 
-/* ========== ACCESIBILIDAD - TAMAÑO DE FUENTE ========== */
-
-/* Tamaño de fuente pequeño (90%) */
 html[data-font-size="pequena"] {
-  font-size: 12px;
+  font-size: 14px;
 }
 
-html[data-font-size="pequena"] body {
-  font-size: 0.9rem;
-}
-
-html[data-font-size="pequena"] h1 {
-  font-size: 1.8rem;
-}
-
-html[data-font-size="pequena"] h2 {
-  font-size: 1.5rem;
-}
-
-html[data-font-size="pequena"] h3 {
-  font-size: 1.3rem;
-}
-
-html[data-font-size="pequena"] h4,
-html[data-font-size="pequena"] h5,
-html[data-font-size="pequena"] h6 {
-  font-size: 1.1rem;
-}
-
-html[data-font-size="pequena"] button,
-html[data-font-size="pequena"] input,
-html[data-font-size="pequena"] textarea,
-html[data-font-size="pequena"] select {
-  font-size: 0.9rem;
-}
-
-/* Tamaño de fuente grande (125%) */
 html[data-font-size="grande"] {
-  font-size: 16px;
-}
-
-html[data-font-size="grande"] body {
-  font-size: 1.25rem;
-}
-
-html[data-font-size="grande"] h1 {
-  font-size: 2.5rem;
-}
-
-html[data-font-size="grande"] h2 {
-  font-size: 2rem;
-}
-
-html[data-font-size="grande"] h3 {
-  font-size: 1.75rem;
-}
-
-html[data-font-size="grande"] h4,
-html[data-font-size="grande"] h5,
-html[data-font-size="grande"] h6 {
-  font-size: 1.5rem;
-}
-
-html[data-font-size="grande"] button,
-html[data-font-size="grande"] input,
-html[data-font-size="grande"] textarea,
-html[data-font-size="grande"] select {
-  font-size: 1.25rem;
-}
-
-html[data-font-size="grande"] .navbar {
-  padding: 1rem 1.5rem !important;
-}
-
-html[data-font-size="grande"] .navbar a {
-  font-size: 1.1rem !important;
-}
-
-/* Tamaño de fuente extra grande (150%) */
-html[data-font-size="extra-grande"] {
   font-size: 18px;
 }
 
-html[data-font-size="extra-grande"] body {
-  font-size: 1.5rem;
+html[data-font-size="extra-grande"] {
+  font-size: 20px;
 }
 
-html[data-font-size="extra-grande"] h1 {
-  font-size: 3rem;
+@media (max-width: 768px) {
+  html[data-font-size="pequena"] {
+    font-size: 13.5px;
+  }
+
+  html[data-font-size="grande"] {
+    font-size: 17px;
+  }
+
+  html[data-font-size="extra-grande"] {
+    font-size: 18px;
+  }
 }
 
-html[data-font-size="extra-grande"] h2 {
-  font-size: 2.5rem;
-}
-
-html[data-font-size="extra-grande"] h3 {
-  font-size: 2.2rem;
-}
-
-html[data-font-size="extra-grande"] h4,
-html[data-font-size="extra-grande"] h5,
-html[data-font-size="extra-grande"] h6 {
-  font-size: 1.8rem;
-}
-
-html[data-font-size="extra-grande"] button,
-html[data-font-size="extra-grande"] input,
-html[data-font-size="extra-grande"] textarea,
-html[data-font-size="extra-grande"] select {
-  font-size: 1.5rem;
-}
-
-html[data-font-size="extra-grande"] .navbar {
-  padding: 1.5rem 2rem !important;
-}
-
-html[data-font-size="extra-grande"] .navbar a {
-  font-size: 1.3rem !important;
-}
-
-/* Line height aumentado para mejor legibilidad con fuentes grandes */
 html[data-font-size="grande"] p,
-html[data-font-size="extra-grande"] p {
-  line-height: 1.8;
-}
-
+html[data-font-size="extra-grande"] p,
 html[data-font-size="grande"] li,
 html[data-font-size="extra-grande"] li {
-  line-height: 1.8;
+  line-height: 1.7;
 }
 
-/* ========== ACCESIBILIDAD - CONTROL DE FOCO Y TECLADO ========== */
 .skip-link {
   position: absolute;
   top: -40px;
@@ -494,7 +404,6 @@ html[data-font-size="extra-grande"] li {
   outline: none;
 }
 
-/* ========== ACCESIBILIDAD - REDUCCIÓN DE MOVIMIENTO ========== */
 html[data-reduce-motion="true"] *,
 html[data-reduce-motion="true"] *::before,
 html[data-reduce-motion="true"] *::after {
@@ -504,7 +413,17 @@ html[data-reduce-motion="true"] *::after {
   scroll-behavior: auto !important;
 }
 
-/* ========== ACCESIBILIDAD - MODO DISLEXIA (LECTURA FÁCIL) ========== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 html[data-dyslexia="true"] {
   --font-dyslexia: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
 }
@@ -524,16 +443,11 @@ html[data-dyslexia="true"] input,
 html[data-dyslexia="true"] textarea,
 html[data-dyslexia="true"] select {
   font-family: var(--font-dyslexia) !important;
-  letter-spacing: 0.05em !important;
-  word-spacing: 0.15em !important;
+  letter-spacing: 0.04em !important;
+  word-spacing: 0.12em !important;
   line-height: 1.6 !important;
 }
 
-/* ========== FIN ACCESIBILIDAD ========== */
-
-/* ========== GOOGLE TRANSLATE WIDGET - OCULTAR UI INTRUSIVA ========== */
-
-/* Ocultar la barra superior que Google Translate inyecta */
 .goog-te-banner-frame,
 .goog-te-balloon-frame,
 #goog-gt-tt,
@@ -544,18 +458,15 @@ html[data-dyslexia="true"] select {
   display: none !important;
 }
 
-/* Evitar que Google Translate desplace el body hacia abajo */
 html body {
   top: 0 !important;
 }
 
-/* Ocultar la barra superior del widget (no el contenedor del combo) */
 body > .skiptranslate:not(#google_translate_element) {
   display: none !important;
   height: 0 !important;
 }
 
-/* Posicionar el contenedor del widget fuera de pantalla (NO display:none) */
 #google_translate_element {
   position: absolute !important;
   left: -9999px !important;
@@ -564,4 +475,3 @@ body > .skiptranslate:not(#google_translate_element) {
   height: 1px !important;
   overflow: hidden !important;
 }
-/* ========== FIN GOOGLE TRANSLATE ========== */

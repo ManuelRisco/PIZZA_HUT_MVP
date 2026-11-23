@@ -40,16 +40,13 @@ export class Categorias implements OnInit {
   error = '';
   success = '';
 
-  // Filtros y búsqueda
   terminoBusqueda = '';
   filtroUso: 'TODAS' | 'EN_USO' | 'SIN_USO' = 'TODAS';
 
-  // KPIs precalculados
   kpiTotalCategorias = 0;
   kpiCategoriasEnUso = 0;
   kpiCategoriasSinPizzas = 0;
 
-  // Paginación (múltiplo de 1, 2 y 3 columnas)
   currentPage = 1;
   itemsPerPage = 12;
   pageSizeOptions: number[] = [12, 24, 48];
@@ -317,7 +314,6 @@ export class Categorias implements OnInit {
     }
   }
 
-
   restaurarCategoria(id: number, nombre: string): void {
     if (!confirm(`¿Desea restaurar la categoría "${nombre}"?`)) {
       return;
@@ -489,12 +485,10 @@ export class Categorias implements OnInit {
   formatearFecha(fechaString: string): string {
     try {
       const fecha = new Date(fechaString);
-      // Verificar si la fecha es válida
       if (Number.isNaN(fecha.getTime())) {
         return 'N/D';
       }
 
-      // Formatear la fecha en español
       return fecha.toLocaleDateString('es-ES', {
         year: 'numeric',
         month: '2-digit',

@@ -1,5 +1,4 @@
 <div class="space-y-6 font-sans">
-  <!-- Executive v2 Header Card -->
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
       <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Finanzas, Stock y Costos</p>
@@ -31,7 +30,6 @@
     </div>
   </div>
 
-  <!-- Persistent Error / Backend-Offline Banner -->
   <div
     *ngIf="errorMessage"
     class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
@@ -55,9 +53,7 @@
     </button>
   </div>
 
-  <!-- KPI Summary Row -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-    <!-- Pérdida Económica Total -->
     <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
       <div class="flex items-center justify-between mb-3">
         <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
@@ -71,7 +67,6 @@
       <p class="text-2xl font-black text-red-600 m-0">S/ {{ totalLossCostFiltered | number:'1.2-2' }}</p>
     </div>
 
-    <!-- Total Registros -->
     <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
       <div class="flex items-center justify-between mb-3">
         <div class="w-11 h-11 rounded-xl bg-gray-100 text-gray-800 flex items-center justify-center">
@@ -83,7 +78,6 @@
       <p class="text-2xl font-black text-gray-900 m-0">{{ filteredLosses.length }}</p>
     </div>
 
-    <!-- Mayor Causa de Pérdida -->
     <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm sm:col-span-2 lg:col-span-1">
       <div class="flex items-center justify-between mb-3">
         <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -106,7 +100,6 @@
     </div>
   </div>
 
-  <!-- Desglose por Categoría (Tarjetas Interactivas) -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
     <button
       type="button"
@@ -129,9 +122,7 @@
     </button>
   </div>
 
-  <!-- Toolbar de Filtros -->
   <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col md:flex-row flex-wrap items-stretch md:items-center justify-between gap-3">
-    <!-- Buscador -->
     <div class="relative flex-1 min-w-[220px]">
       <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
       <input
@@ -143,9 +134,7 @@
       />
     </div>
 
-    <!-- Selects de Filtros -->
     <div class="flex flex-wrap items-center gap-2">
-      <!-- Filtro Tipo Item -->
       <select
         [(ngModel)]="filterItemType"
         (ngModelChange)="cargarPerdidas()"
@@ -157,7 +146,6 @@
         <option value="PIZZA">Pizzas Preparadas</option>
       </select>
 
-      <!-- Filtro Causa -->
       <select
         [(ngModel)]="filterCategory"
         (ngModelChange)="cargarPerdidas()"
@@ -171,7 +159,6 @@
         <option value="OTHER">Otras</option>
       </select>
 
-      <!-- Fechas -->
       <div class="flex items-center gap-1.5">
         <input
           type="date"
@@ -199,13 +186,11 @@
     </div>
   </div>
 
-  <!-- Loading State -->
   <div *ngIf="loading" class="bg-white rounded-2xl border border-gray-200 p-16 flex flex-col items-center justify-center shadow-sm">
     <div class="animate-spin rounded-full h-11 w-11 border-4 border-red-100 border-t-red-600 mb-4"></div>
     <p class="text-gray-500 font-medium text-sm m-0">Cargando registros de pérdidas...</p>
   </div>
 
-  <!-- Tabla de Mermas Registradas -->
   <div *ngIf="!loading && !errorMessage" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse min-w-[850px]">
@@ -223,7 +208,6 @@
         </thead>
         <tbody class="text-sm divide-y divide-gray-100">
           <tr *ngFor="let loss of paginatedLosses; trackBy: trackByLoss" class="hover:bg-gray-50/70 transition-colors">
-            <!-- Fecha e ID -->
             <td class="py-3.5 px-4 whitespace-nowrap">
               <span class="font-black text-gray-900 block">#MER-{{ loss.id }}</span>
               <span class="text-xs text-gray-500">
@@ -231,7 +215,6 @@
               </span>
             </td>
 
-            <!-- Tipo de Item -->
             <td class="py-3.5 px-4 whitespace-nowrap">
               <span
                 class="px-2.5 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1.5"
@@ -259,7 +242,6 @@
               </span>
             </td>
 
-            <!-- Producto -->
             <td class="py-3.5 px-4">
               <span class="font-bold text-gray-900 block">{{ loss.itemName }}</span>
               <span *ngIf="loss.orderId" class="text-xs text-purple-700 font-bold inline-flex items-center gap-1">
@@ -267,14 +249,12 @@
               </span>
             </td>
 
-            <!-- Causa -->
             <td class="py-3.5 px-4 whitespace-nowrap">
               <span class="px-2.5 py-1 rounded-full text-xs font-bold" [ngClass]="getCategoryBadgeClass(loss.category)">
                 {{ getCategoryLabel(loss.category) }}
               </span>
             </td>
 
-            <!-- Cantidad -->
             <td class="py-3.5 px-4 text-center whitespace-nowrap">
               <span class="font-black text-gray-900">
                 {{ loss.quantity | number:'1.0-2' }}
@@ -282,7 +262,6 @@
               <span class="text-xs text-gray-500 font-bold ml-1">{{ loss.unit }}</span>
             </td>
 
-            <!-- Costo -->
             <td class="py-3.5 px-4 text-right whitespace-nowrap">
               <span class="font-black text-red-600 block text-base">
                 S/ {{ loss.totalLossCost | number:'1.2-2' }}
@@ -292,7 +271,6 @@
               </span>
             </td>
 
-            <!-- Motivo / Reportado por -->
             <td class="py-3.5 px-4 max-w-xs">
               <p class="text-xs text-gray-700 font-medium m-0 line-clamp-2">
                 {{ loss.reason || 'Sin justificación detallada' }}
@@ -302,7 +280,6 @@
               </span>
             </td>
 
-            <!-- Acciones -->
             <td class="py-3.5 px-4 text-center whitespace-nowrap">
               <div class="inline-flex items-center gap-1.5">
                 <button
@@ -325,7 +302,6 @@
             </td>
           </tr>
 
-          <!-- Estado Vacío -->
           <tr *ngIf="filteredLosses.length === 0">
             <td colspan="8" class="py-14 text-center text-gray-400">
               <i class="bi bi-shield-check text-4xl block mb-2 text-emerald-500"></i>
@@ -337,7 +313,6 @@
       </table>
     </div>
 
-    <!-- Paginación -->
     <div class="px-5 py-3.5 border-t border-gray-100 bg-white" *ngIf="filteredLosses.length > 0">
       <app-pagination
         [currentPage]="currentPage"
@@ -351,7 +326,6 @@
   </div>
 </div>
 
-<!-- ==================== MODAL REGISTRAR / EDITAR PÉRDIDA ==================== -->
 <div
   *ngIf="showModal"
   class="fixed inset-0 bg-black/60 z-[6000] flex items-center justify-center p-4 backdrop-blur-xs"
@@ -359,7 +333,6 @@
   aria-modal="true"
 >
   <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden animate-fade-in-up">
-    <!-- Header Modal -->
     <div class="px-6 py-4 bg-gray-900 text-white flex items-center justify-between shrink-0">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white">
@@ -383,10 +356,8 @@
       </button>
     </div>
 
-    <!-- Body Modal -->
     <div class="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
       <ng-container *ngIf="!editingLoss">
-        <!-- Selector Tipo de Item -->
         <div>
           <label class="block text-xs font-bold text-gray-700 uppercase mb-1.5">Tipo de Elemento Afectado</label>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -417,7 +388,6 @@
           </div>
         </div>
 
-        <!-- Selector según tipo -->
         <div *ngIf="form.itemType === 'INGREDIENT'">
           <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Ingrediente / Insumo</label>
           <select
@@ -467,7 +437,6 @@
           </div>
         </div>
 
-        <!-- Cantidad y Estimación de Costo en Vivo -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
           <div>
             <label class="block text-xs font-bold text-gray-700 uppercase mb-1">
@@ -495,7 +464,6 @@
         </div>
       </ng-container>
 
-      <!-- Categoría y Fecha -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Categoría / Causa</label>
@@ -521,7 +489,6 @@
         </div>
       </div>
 
-      <!-- Motivo -->
       <div>
         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descripción / Justificación</label>
         <textarea
@@ -532,7 +499,6 @@
         ></textarea>
       </div>
 
-      <!-- Checkbox descontar stock -->
       <label
         *ngIf="!editingLoss"
         class="flex items-start gap-3 p-3.5 rounded-xl bg-gray-50 border border-gray-200 cursor-pointer"
@@ -557,7 +523,6 @@
       </label>
     </div>
 
-    <!-- Footer -->
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3 shrink-0">
       <button
         type="button"
@@ -578,7 +543,6 @@
   </div>
 </div>
 
-<!-- ==================== MODAL CONFIRMAR ELIMINACIÓN ==================== -->
 <div
   *ngIf="lossToDelete"
   class="fixed inset-0 bg-black/60 z-[6000] flex items-center justify-center p-4 backdrop-blur-xs"

@@ -12,16 +12,10 @@ export class TranslateService {
     this.currentLang = localStorage.getItem('preferred-lang') || 'es';
   }
 
-  /**
-   * Obtiene el idioma actual
-   */
   getCurrentLang(): string {
     return this.currentLang;
   }
 
-  /**
-   * Carga el script de Google Translate
-   */
   loadGoogleTranslate(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.scriptLoaded) {
@@ -41,7 +35,6 @@ export class TranslateService {
 
       this.scriptLoading = true;
 
-      // Crear el contenedor para Google Translate
       let container = document.getElementById('google_translate_element');
       if (!container) {
         container = document.createElement('div');
@@ -49,7 +42,6 @@ export class TranslateService {
         document.body.appendChild(container);
       }
       
-      // Posicionar fuera de pantalla para que no ocupe espacio visual
       container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.top = '-9999px';
@@ -57,7 +49,6 @@ export class TranslateService {
       container.style.height = '1px';
       container.style.overflow = 'hidden';
 
-      // Definir la callback global
       (window as any).googleTranslateElementInit = () => {
         try {
           new (window as any).google.translate.TranslateElement(
@@ -65,20 +56,19 @@ export class TranslateService {
               pageLanguage: 'es',
               includedLanguages: 'es,en,fr,pt,de,it,ja,ko,zh-CN',
               layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE,
-              autoDisplay: true, // Debe ser true para que se genere el combo con opciones
+              autoDisplay: true,
             },
             'google_translate_element'
           );
           this.scriptLoaded = true;
           this.scriptLoading = false;
-          resolve(); // Resolvemos inmediatamente
+          resolve();
         } catch (err) {
           this.scriptLoading = false;
           reject(err);
         }
       };
 
-      // Cargar el script
       const script = document.createElement('script');
       script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
       script.async = true;
@@ -90,66 +80,44 @@ export class TranslateService {
     });
   }
 
-  /**
-   * Cambia el idioma de la página mediante Cookies + Reload (Método 100% confiable para GT)
-   */
   changeLanguage(langCode: string): void {
-    // 1. Guardar la preferencia en localStorage
     this.currentLang = langCode;
     localStorage.setItem('preferred-lang', langCode);
 
-    // 2. Manipular la cookie nativa de Google Translate (googtrans)
     if (langCode === 'es') {
-      // Limpiar cookie para volver al original
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + window.location.hostname;
     } else {
-      // Formato de Google Translate: /idiomaPagina/idiomaDestino
       const cookieString = `/es/${langCode}`;
       document.cookie = `googtrans=${cookieString}; path=/;`;
       document.cookie = `googtrans=${cookieString}; path=/; domain=.${window.location.hostname};`;
     }
 
-    // 3. Recargar la página para que el script inicial de GT lea la cookie y traduzca automáticamente
     window.location.reload();
   }
 
-  /**
-   * Fuerza a Google Translate a retraducir el contenido dinámico (DOM actualizado)
-   * Útil para cuando se carga data desde APIs (ej: lista de pizzas en el menú)
-   */
   retranslate(): void {
     if (this.currentLang === 'es') return;
 
-    // Hard reset de Google Translate para forzar escaneo del DOM (Pizzas dinámicas)
-    // 1. Eliminar scripts antiguos de Google Translate
     document.querySelectorAll('script[src*="translate.google.com"]').forEach(s => s.remove());
     
-    // 2. Limpiar el contenedor del widget
     const container = document.getElementById('google_translate_element');
     if (container) {
       container.innerHTML = '';
     }
 
-    // 3. Limpiar iframes inyectados por Google Translate
     document.querySelectorAll('iframe.goog-te-menu-frame, iframe.goog-te-banner-frame').forEach(f => f.remove());
     
-    // 4. Limpiar objetos globales
     if ((window as any).google?.translate) {
       delete (window as any).google.translate;
     }
     
-    // 5. Resetear estado del servicio
     this.scriptLoaded = false;
     this.scriptLoading = false;
 
-    // 6. Recargar el script (escaneará el DOM actual, incluyendo las pizzas recién cargadas)
     this.loadGoogleTranslate();
   }
 
-  /**
-   * Obtiene la lista de idiomas disponibles
-   */
   getAvailableLanguages(): { code: string; name: string; flag: string }[] {
     return [
       { code: 'es', name: 'Español', flag: '🇪🇸' },

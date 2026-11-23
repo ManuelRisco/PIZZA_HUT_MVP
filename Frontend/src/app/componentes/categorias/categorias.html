@@ -1,5 +1,4 @@
 <div class="space-y-6 font-sans">
-  <!-- Executive v2 Header Card -->
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
       <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Catálogo y Operaciones</p>
@@ -16,7 +15,6 @@
     </div>
   </div>
 
-  <!-- Persistent Load Error / Backend Offline Banner -->
   <div *ngIf="loadError" class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3" role="alert">
     <div class="flex items-start sm:items-center gap-3">
       <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
@@ -32,7 +30,6 @@
     </button>
   </div>
 
-  <!-- Mensajes de éxito y error de acción -->
   <div *ngIf="success" class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl flex justify-between items-center text-sm font-medium">
     <div class="flex items-center gap-2">
       <i class="bi bi-check-circle-fill text-emerald-600"></i>
@@ -52,7 +49,6 @@
     </button>
   </div>
 
-  <!-- White KPI Summary Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
     <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
       <div>
@@ -85,7 +81,6 @@
     </div>
   </div>
 
-  <!-- Filter & Search Toolbar Card -->
   <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3">
     <div class="relative w-full sm:w-72">
       <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
@@ -126,13 +121,11 @@
     </div>
   </div>
 
-  <!-- Indicador de carga -->
   <div *ngIf="loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm py-16 flex flex-col items-center justify-center text-gray-500">
     <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
     <span class="text-sm font-bold text-gray-600">Cargando categorías...</span>
   </div>
 
-  <!-- Lista de Categorías -->
   <div *ngIf="!loading && (!loadError || categorias.length > 0)" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100 bg-gray-50/70 flex flex-wrap justify-between items-center gap-3">
       <h3 class="text-sm font-black text-gray-800 uppercase tracking-wider m-0">
@@ -148,7 +141,6 @@
       </button>
     </div>
 
-    <!-- Grid 1 / 2 / 3 columnas -->
     <div *ngIf="categoriasFiltradas.length > 0" class="p-4 sm:p-5">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
         <div
@@ -201,7 +193,6 @@
             </div>
           </div>
 
-          <!-- Botones de acción -->
           <div class="flex gap-2 mt-auto">
             <ng-container *ngIf="categoria.deletedAt">
               <button
@@ -239,7 +230,6 @@
       </div>
     </div>
 
-    <!-- Paginación -->
     <div *ngIf="categoriasFiltradas.length > 0" class="px-5 py-4 border-t border-gray-100 bg-white">
       <app-pagination
         [currentPage]="currentPage"
@@ -251,7 +241,6 @@
       ></app-pagination>
     </div>
 
-    <!-- Estado vacío -->
     <div *ngIf="!loadError && categoriasFiltradas.length === 0" class="py-16 px-6 text-center flex flex-col items-center">
       <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mb-4 border border-gray-100">
         <i class="bi bi-folder2-open text-3xl"></i>
@@ -279,7 +268,6 @@
     </div>
   </div>
 
-  <!-- MODAL CREAR / EDITAR CATEGORÍA -->
   <div
     *ngIf="showForm"
     class="fixed inset-0 z-[6000] !mt-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"

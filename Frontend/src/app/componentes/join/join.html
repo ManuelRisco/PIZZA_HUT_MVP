@@ -5,7 +5,6 @@
         <h2 class="login-title">¡Inicia Sesión!</h2>
       </div>
 
-      <!-- Mensaje de éxito tras recuperar contraseña -->
       @if (loginSuccess) {
         <div class="alert alert-success mb-3">
           <i class="fas fa-check-circle"></i>
@@ -16,10 +15,8 @@
         </div>
       }
 
-      <!-- Formulario de login -->
       <form (ngSubmit)="onLogin($event)" #loginForm="ngForm">
 
-        <!-- Correo electrónico -->
         <div class="form-group">
           <label for="email">Correo electrónico</label>
           <div class="input-with-icon" [class.has-error]="fieldErrors['email']">
@@ -43,7 +40,6 @@
           }
         </div>
 
-        <!-- Contraseña -->
         <div class="form-group">
           <div class="password-label-row">
             <label for="password">Contraseña</label>
@@ -63,9 +59,8 @@
               required
               [class.input-error]="fieldErrors['password']"
             />
-            <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"
-               (click)="showPassword = !showPassword"
-               style="position: absolute; right: -15px; top: 12px; cursor: pointer; color: #888; left: auto;"></i>
+            <i class="fas password-toggle-icon" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"
+               (click)="showPassword = !showPassword"></i>
           </div>
           @if (fieldErrors['password']) {
             <small class="error-message">
@@ -75,7 +70,6 @@
           }
         </div>
 
-        <!-- Opción de DNI Opcional para Boletas Electrónicas SUNAT al iniciar sesión -->
         <div class="form-group" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px 12px; margin-bottom: 14px;">
           <button
             type="button"
@@ -134,7 +128,6 @@
           }
         </div>
 
-        <!-- Error general o de validación de backend -->
         @if (loginError) {
           <div class="alert alert-error mb-3">
             <i class="fas fa-exclamation-circle"></i>
@@ -149,14 +142,12 @@
           </div>
         }
 
-        <!-- Indicador de carga -->
         @if (loading) {
           <div class="loading mb-3">
             <i class="fas fa-spinner fa-spin"></i> Verificando credenciales...
           </div>
         }
 
-        <!-- Botón login -->
         <button
           type="submit"
           class="btn-login"
@@ -170,12 +161,10 @@
           {{ loading ? 'Iniciando...' : 'Iniciar sesión' }}
         </button>
 
-        <!-- Separador O continúa con -->
         <div class="social-divider">
           <span>o continúa con</span>
         </div>
 
-        <!-- Botón Iniciar sesión con Google -->
         <button
           type="button"
           class="btn-google"
@@ -194,7 +183,6 @@
           <span>{{ googleLoading ? 'Conectando con Google...' : 'Continuar con Google' }}</span>
         </button>
 
-        <!-- Enlace a registro -->
         <div class="text-center mt-3">
           <p>¿No tienes una cuenta?
             <a routerLink="/register" class="register-link">¡Regístrate ya!</a>
@@ -204,7 +192,6 @@
     </div>
   </div>
 
-  <!-- MODAL: RECUPERAR CONTRASEÑA -->
   @if (showRecoveryModal) {
     <div class="auth-modal-backdrop" (click)="closeRecoveryModal()">
       <div class="auth-modal-card" (click)="$event.stopPropagation()">
@@ -328,7 +315,6 @@
     </div>
   }
 
-  <!-- MODAL: CONTINUAR CON GOOGLE -->
   @if (showGoogleModal) {
     <div class="auth-modal-backdrop" (click)="closeGoogleModal()">
       <div class="auth-modal-card google-modal-card" (click)="$event.stopPropagation()">

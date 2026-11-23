@@ -1,21 +1,18 @@
 <div class="flex flex-1 min-h-0 bg-gray-50 overflow-hidden font-sans" role="region" aria-label="Panel de cliente">
-  <!-- Overlay for mobile sidebar -->
   <div
-    *ngIf="!sidebarCollapsed"
-    class="fixed inset-0 bg-black/60 backdrop-blur-2xs z-[5400] md:hidden"
+    class="fixed inset-0 bg-black/60 backdrop-blur-xs z-[5400] md:hidden transition-opacity duration-300 ease-out"
+    [ngClass]="!sidebarCollapsed ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
     (click)="toggleSidebar()"
   ></div>
 
-  <!-- Sidebar -->
   <aside
-    class="bg-black text-white flex flex-col transition-all duration-300 z-[5500] md:z-20 fixed inset-y-0 left-0 md:static md:h-full shrink-0"
+    class="bg-black text-white flex flex-col transition-transform md:transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] z-[5500] md:z-20 fixed inset-y-0 left-0 h-[100dvh] md:static md:h-full shrink-0 overscroll-contain will-change-transform shadow-2xl md:shadow-none"
     [ngClass]="{
       'w-[260px] translate-x-0': !sidebarCollapsed,
       'w-[260px] -translate-x-full md:translate-x-0 md:w-[80px]': sidebarCollapsed
     }"
     aria-label="Menú del panel de cliente"
   >
-    <!-- Header Sidebar -->
     <div class="flex items-center justify-between gap-3 p-4 border-b border-gray-800 shrink-0">
       <div class="flex items-center gap-3 overflow-hidden">
         <button
@@ -42,7 +39,6 @@
       </button>
     </div>
 
-    <!-- Navigation Menu -->
     <nav class="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-1 sidebar-scroll">
       <a class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 text-sm"
          [ngClass]="vistaActual === 'dashboard' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'"
@@ -52,7 +48,6 @@
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Dashboard</span>
       </a>
 
-      <!-- Sección: Pedidos y Actividad -->
       <div *ngIf="!sidebarCollapsed" class="pt-3 pb-1 px-3">
         <span class="text-[10px] font-black uppercase tracking-widest text-gray-500">Actividad y Pedidos</span>
       </div>
@@ -100,7 +95,6 @@
         <span *ngIf="!sidebarCollapsed" class="whitespace-nowrap">Mis Reseñas</span>
       </a>
 
-      <!-- Sección: Cuenta y Seguridad -->
       <div *ngIf="!sidebarCollapsed" class="pt-3 pb-1 px-3">
         <span class="text-[10px] font-black uppercase tracking-widest text-gray-500">Cuenta y Seguridad</span>
       </div>
@@ -115,7 +109,6 @@
       </a>
     </nav>
 
-    <!-- User Profile & Logout (Bottom) -->
     <div class="border-t border-gray-800 p-3 shrink-0">
       <div
         class="flex items-center gap-3 cursor-pointer p-2 rounded-xl transition-colors"
@@ -151,9 +144,7 @@
     </div>
   </aside>
 
-  <!-- Main Content -->
   <section class="flex-1 flex flex-col min-h-0 overflow-hidden relative min-w-0">
-    <!-- Mobile Sub-Header -->
     <div class="md:hidden flex items-center justify-between gap-3 bg-white border-b border-gray-200 px-4 py-3 shrink-0">
       <div class="flex items-center gap-3 min-w-0">
         <button
@@ -187,11 +178,8 @@
       </div>
     </div>
 
-    <!-- Scrollable Content -->
-    <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 min-w-0 w-full">
-      <!-- Vista Dashboard HOME -->
+    <div class="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6 lg:p-8 min-w-0 w-full">
       <div *ngIf="vistaActual === 'dashboard'" class="max-w-7xl mx-auto space-y-6">
-        <!-- Executive v2 Header Card -->
         <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel de Cliente</p>
@@ -218,7 +206,6 @@
           </div>
         </div>
 
-        <!-- Banner de desconexión -->
         <div *ngIf="loadError" class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3" role="alert">
           <div class="flex items-start sm:items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
@@ -238,9 +225,7 @@
           </button>
         </div>
 
-        <!-- ==================== KPI CARDS ROW (Idéntico a Panel Admin) ==================== -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Total Invertido / Pedidos -->
           <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
                (click)="cambiarVista('pedidos')">
             <div class="flex items-center justify-between mb-3">
@@ -257,7 +242,6 @@
             <p class="text-2xl font-black text-gray-900 m-0">{{ totalPedidos }}</p>
           </div>
 
-          <!-- Pedidos en Curso -->
           <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
                (click)="cambiarVista('pedidos')">
             <div class="flex items-center justify-between mb-3">
@@ -274,7 +258,6 @@
             <p class="text-2xl font-black m-0" [ngClass]="pedidosActivos > 0 ? 'text-amber-600' : 'text-gray-900'">{{ pedidosActivos }}</p>
           </div>
 
-          <!-- Pizzas Favoritas -->
           <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
                (click)="cambiarVista('favoritos')">
             <div class="flex items-center justify-between mb-3">
@@ -289,7 +272,6 @@
             <p class="text-2xl font-black text-gray-900 m-0">{{ totalFavoritos }}</p>
           </div>
 
-          <!-- Mis Reseñas -->
           <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
                (click)="cambiarVista('resenas')">
             <div class="flex items-center justify-between mb-3">
@@ -308,7 +290,6 @@
           </div>
         </div>
 
-        <!-- ==================== ACCESOS RÁPIDOS (Idéntico a Panel Admin) ==================== -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             type="button"
@@ -377,7 +358,6 @@
           </button>
         </div>
 
-        <!-- ==================== PEDIDOS RECIENTES DEL CLIENTE ==================== -->
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div class="p-5 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -452,7 +432,6 @@
         </div>
       </div>
 
-      <!-- Otras Vistas -->
       <div class="max-w-7xl mx-auto" *ngIf="vistaActual !== 'dashboard'">
         <div *ngIf="vistaActual === 'perfil'"><app-cliente-perfil></app-cliente-perfil></div>
         <div *ngIf="vistaActual === 'pedidos'"><app-cliente-pedidos></app-cliente-pedidos></div>
@@ -462,7 +441,6 @@
     </div>
   </section>
 
-  <!-- Modal Unificado de Confirmación de Cierre de Sesión -->
   <div
     *ngIf="mostrarModalLogout"
     class="fixed inset-0 bg-black/60 z-[6000] flex items-center justify-center p-4 backdrop-blur-xs"

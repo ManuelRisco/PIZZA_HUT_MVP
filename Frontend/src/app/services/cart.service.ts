@@ -13,14 +13,10 @@ export class CartService {
     return [...this.itemsSubject.value];
   }
 
-  /**
-   * Calcula los totales del carrito.
-   * El deliveryFee es solo para cálculo base, el componente carrito lo ajusta según el tipo de delivery.
-   */
   getTotals(): CartTotals {
     const items = this.itemsSubject.value;
     const subtotal = items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
-    const deliveryFee = subtotal > 0 ? 5.0 : 0; // Fee base, ajustable según tipo de entrega
+    const deliveryFee = subtotal > 0 ? 5.0 : 0;
     return {
       itemsCount: items.reduce((count, item) => count + item.quantity, 0),
       subtotal,
@@ -29,10 +25,6 @@ export class CartService {
     };
   }
 
-  /**
-   * Agrega un item al carrito.
-   * El precio ya debe venir calculado desde el componente (incluyendo tamaño y extras).
-   */
   addItem(payload: AddToCartPayload): CartItem {
     const quantity = payload.quantity && payload.quantity > 0 ? payload.quantity : 1;
     const unitPrice = payload.pizza.price;
@@ -75,9 +67,6 @@ export class CartService {
     return newItem;
   }
 
-  /**
-   * Agrega un extra (bebida, postre, etc.) al carrito conservando su imagen local y stock máximo
-   */
   addExtra(
     extraId: number,
     name: string,

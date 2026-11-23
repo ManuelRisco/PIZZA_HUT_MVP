@@ -52,14 +52,10 @@ export class PromocionesClienteComponent implements OnInit {
 
     this.promocionService.listarActivas().subscribe({
       next: (data) => {
-        // Usar el campo 'currentlyActive' que calcula el backend
-        // que es más confiable que recalcular en frontend
         this.promociones = data.filter(p => {
-          // Si currentlyActive viene del backend, usarlo como principal indicador
           if (p.currentlyActive !== undefined) {
             return p.currentlyActive;
           }
-          // Fallback a isActive si currentlyActive no viene
           return p.isActive && this.esVigente(p);
         });
         this.aplicarFiltros();
@@ -86,12 +82,10 @@ export class PromocionesClienteComponent implements OnInit {
   aplicarFiltros(): void {
     let resultado = [...this.promociones];
 
-    // Filtrar por tipo
     if (this.tipoSeleccionado !== 'TODOS') {
       resultado = resultado.filter(p => p.discountType === this.tipoSeleccionado);
     }
 
-    // Filtrar por búsqueda
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
       resultado = resultado.filter(p =>
@@ -175,20 +169,16 @@ export class PromocionesClienteComponent implements OnInit {
 
     try {
       const ahora = new Date();
-      // Convertir strings de fecha a Date, asumiendo formato ISO
       const inicio = new Date(promo.startDate);
       const fin = new Date(promo.endDate);
 
-      // Validar que las fechas sean válidas
       if (Number.isNaN(inicio.getTime()) || Number.isNaN(fin.getTime())) {
         return false;
       }
 
-      // Comparar: ahora debe estar entre inicio y fin (inclusive)
       const esVigente = ahora >= inicio && ahora <= fin;
 
       if (!esVigente) {
-        // Promoción no vigente
       }
 
       return esVigente;

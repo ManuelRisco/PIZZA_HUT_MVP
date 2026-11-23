@@ -17,7 +17,6 @@ export class AccessibilityService {
   private readonly announceSubject= new Subject<AccessibilityAnnouncement>();
   public announce$ = this.announceSubject.asObservable();
 
-  // Estado para la guía inferior de atajos
   private readonly shortcutsGuideSubject = new BehaviorSubject<boolean>(
     this.getInitialShortcutsState()
   );
@@ -48,11 +47,7 @@ export class AccessibilityService {
     this.initializeLiveRegion();
   }
 
-  /**
-   * Inicializa la región en vivo global para anuncios
-   */
   private initializeLiveRegion(): void {
-    // Se crea un elemento invisible pero accesible para screen readers
     this.liveRegionElement = document.createElement('div');
     this.liveRegionElement.id = 'accessibility-announcements';
     this.liveRegionElement.setAttribute('aria-live', 'polite');
@@ -65,23 +60,16 @@ export class AccessibilityService {
     this.liveRegionElement.style.height = '1px';
     this.liveRegionElement.style.overflow = 'hidden';
 
-    // Esperar a que el DOM esté listo
     if (document.body) {
       document.body.appendChild(this.liveRegionElement);
     }
   }
 
-  /**
-   * Anuncia un mensaje de forma accesible
-   * @param message - Mensaje a anunciar
-   * @param type - 'polite' (esperado) o 'assertive' (urgente)
-   */
   public announce(message: string, type: 'polite' | 'assertive' = 'polite'): void {
     if (this.liveRegionElement) {
       this.liveRegionElement.setAttribute('aria-live', type);
       this.liveRegionElement.textContent = message;
 
-      // Limpiar después de que se haya anunciado (si es polite, más tiempo)
       const clearDelay = type === 'assertive' ? 2000 : 3000;
       setTimeout(() => {
         if (this.liveRegionElement) {
@@ -90,13 +78,9 @@ export class AccessibilityService {
       }, clearDelay);
     }
 
-    // Emitir para otros componentes que escuchen
     this.announceSubject.next({ message, type });
   }
 
-  /**
-   * Anuncia que se agregó un producto al carrito
-   */
   public announceAddToCart(productName: string, quantity: number = 1): void {
     const message = quantity > 1
       ? `${quantity} ${productName}s agregadas al carrito`
@@ -104,86 +88,50 @@ export class AccessibilityService {
     this.announce(message, 'polite');
   }
 
-  /**
-   * Anuncia que se removió un producto del carrito
-   */
   public announceRemoveFromCart(productName: string): void {
     this.announce(`${productName} removida del carrito`, 'polite');
   }
 
-  /**
-   * Anuncia actualización de cantidad
-   */
   public announceQuantityChange(quantity: number, productName: string): void {
     this.announce(`Cantidad de ${productName}: ${quantity}`, 'polite');
   }
 
-  /**
-   * Anuncia el total del carrito
-   */
   public announceCartTotal(total: number): void {
     this.announce(`Total del carrito: ${total.toFixed(2)} pesos`, 'polite');
   }
 
-  /**
-   * Anuncia error de validación
-   */
   public announceValidationError(fieldName: string, error: string): void {
     this.announce(`Error en ${fieldName}: ${error}`, 'assertive');
   }
 
-  /**
-   * Anuncia error general (urgente)
-   */
   public announceError(message: string): void {
     this.announce(`Error: ${message}`, 'assertive');
   }
 
-  /**
-   * Anuncia confirmación de acción
-   */
   public announceSuccess(message: string): void {
     this.announce(`Éxito: ${message}`, 'polite');
   }
 
-  /**
-   * Anuncia que se añadió a favoritos
-   */
   public announceAddedToFavorites(productName: string): void {
     this.announce(`${productName} agregada a favoritos`, 'polite');
   }
 
-  /**
-   * Anuncia que se removió de favoritos
-   */
   public announceRemovedFromFavorites(productName: string): void {
     this.announce(`${productName} removida de favoritos`, 'polite');
   }
 
-  /**
-   * Anuncia navegación
-   */
   public announceNavigation(pageName: string): void {
     this.announce(`Navegando a ${pageName}`, 'polite');
   }
 
-  /**
-   * Anuncia formulario enviado
-   */
   public announceFormSubmitted(): void {
     this.announce(`Formulario enviado correctamente`, 'polite');
   }
 
-  /**
-   * Getter para el elemento live region (útil para testing)
-   */
   public getLiveRegionElement(): HTMLDivElement | null {
     return this.liveRegionElement;
   }
 
-  /**
-   * Activa o desactiva el filtro de alto contraste
-   */
   public setHighContrast(active: boolean): void {
     if (typeof document !== 'undefined') {
       const html = document.documentElement;
@@ -202,18 +150,12 @@ export class AccessibilityService {
     }
   }
 
-  /**
-   * Alterna el filtro de alto contraste y devuelve el nuevo estado
-   */
   public toggleHighContrast(): boolean {
     const newState = !this.getHighContrast();
     this.setHighContrast(newState);
     return newState;
   }
 
-  /**
-   * Obtiene el estado actual de alto contraste
-   */
   public getHighContrast(): boolean {
     if (typeof document !== 'undefined') {
       return document.documentElement.dataset['contraste'] === 'alto';
@@ -221,28 +163,20 @@ export class AccessibilityService {
     return false;
   }
 
-  /**
-   * Establece el modo de visión de color (filtro para daltonismo)
-   * @param mode - 'none', 'protanopia', 'deuteranopia', 'tritanopia'
-   */
   public setColorblindMode(mode: ColorblindMode): void {
     if (typeof document !== 'undefined') {
       const html = document.documentElement;
 
-      // Remover atributo anterior
       delete html.dataset['colorblind'];
 
-      // Establecer nuevo modo si no es 'none'
       if (mode !== 'none') {
         html.dataset['colorblind'] = mode;
       }
 
-      // Guardar preferencia
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('colorblind-mode', mode);
       }
 
-      // Anunciar cambio
       const mensajes: { [key: string]: string } = {
         'none': 'Filtro de daltonismo desactivado',
         'protanopia': 'Filtro para protanopia (rojo-verde) activado',
@@ -254,9 +188,6 @@ export class AccessibilityService {
     }
   }
 
-  /**
-   * Obtiene el modo actual de daltonismo
-   */
   public getColorblindMode(): ColorblindMode {
     if (typeof document !== 'undefined') {
       const mode = document.documentElement.dataset['colorblind'];
@@ -267,28 +198,20 @@ export class AccessibilityService {
     return 'none';
   }
 
-  /**
-   * Establece el tamaño de fuente
-   * @param size - 'pequena', 'normal', 'grande', 'extra-grande'
-   */
   public setFontSize(size: FontSizeMode): void {
     if (typeof document !== 'undefined') {
       const html = document.documentElement;
 
-      // Remover tamaño anterior
       delete html.dataset['fontSize'];
 
-      // Establecer nuevo tamaño si no es 'normal'
       if (size !== 'normal') {
         html.dataset['fontSize'] = size;
       }
 
-      // Guardar preferencia
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('font-size', size);
       }
 
-      // Anunciar cambio
       const mensajes: { [key: string]: string } = {
         'pequena': 'Tamaño de fuente pequeño',
         'normal': 'Tamaño de fuente normal',
@@ -300,9 +223,6 @@ export class AccessibilityService {
     }
   }
 
-  /**
-   * Obtiene el tamaño de fuente actual
-   */
   public getFontSize(): FontSizeMode {
     if (typeof document !== 'undefined') {
       const size = document.documentElement.dataset['fontSize'];
@@ -313,9 +233,6 @@ export class AccessibilityService {
     return 'normal';
   }
 
-  /**
-   * Establece el modo dislexia
-   */
   public setDyslexiaMode(active: boolean): void {
     if (typeof document !== 'undefined') {
       const html = document.documentElement;
@@ -331,9 +248,6 @@ export class AccessibilityService {
     }
   }
 
-  /**
-   * Obtiene el estado actual del modo dislexia
-   */
   public getDyslexiaMode(): boolean {
     if (typeof document !== 'undefined') {
       return document.documentElement.dataset['dyslexia'] === 'true';
@@ -341,9 +255,6 @@ export class AccessibilityService {
     return false;
   }
 
-  /**
-   * Establece la reducción de movimiento
-   */
   public setReduceMotion(active: boolean): void {
     if (typeof document !== 'undefined') {
       const html = document.documentElement;
@@ -359,9 +270,6 @@ export class AccessibilityService {
     }
   }
 
-  /**
-   * Obtiene el estado actual de reducción de movimiento
-   */
   public getReduceMotion(): boolean {
     if (typeof document !== 'undefined') {
       return document.documentElement.dataset['reduceMotion'] === 'true';

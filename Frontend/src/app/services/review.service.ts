@@ -16,7 +16,6 @@ export class Review {
 
   constructor(private readonly http: HttpClient) {}
 
-  // Operaciones CRUD para Reseñas
   obtenerTodos(): Observable<ReviewDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/reviews`).pipe(map(res => res.data !== undefined ? res.data : res));
   }

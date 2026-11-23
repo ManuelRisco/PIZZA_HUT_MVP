@@ -18,11 +18,9 @@
     </output>
   } @else {
     <div class="cart-grid">
-      <!-- Columna Principal -->
       <div class="cart-column products-column">
         
         <div class="cart-items-container" aria-label="Items en el carrito">
-          <!-- Productos -->
           <h2 class="section-title" style="margin-top: 0;">Tus Productos</h2>
         @for (item of items; track item.id; let i = $index) {
           <article class="cart-item" [attr.aria-label]="item.name + ', tamaño ' + (item.size | titlecase) + ', cantidad ' + item.quantity">
@@ -63,14 +61,11 @@
       </div>
       </div>
 
-      <!-- Columna 2: Entrega y Pago -->
       <div class="cart-column checkout-column">
           
-          <!-- Sección de Entrega -->
           <section class="checkout-section">
             <h2 class="section-title"><i class="bi bi-geo-alt"></i> Entrega</h2>
             
-        <!-- Tipo de entrega -->
         <div class="summary-field">
           <span id="delivery-type-label">Tipo de entrega</span>
           <fieldset class="delivery-type-options" style="border:none;padding:0;margin:0;">
@@ -102,7 +97,6 @@
           </fieldset>
         </div>
 
-        <!-- Formulario de dirección (solo si es DELIVERY) -->
         @if (deliveryType === 'DELIVERY') {
           <fieldset class="address-form">
             <legend id="address-legend">Dirección de entrega</legend>
@@ -218,7 +212,6 @@
         }
         </section>
 
-        <!-- Sección de Pago -->
         <section class="checkout-section">
           <h2 class="section-title"><i class="bi bi-credit-card"></i> Pago</h2>
           <div class="summary-field">
@@ -244,103 +237,207 @@
         </div>
 
         @if (requiresCardDetails) {
-          <fieldset class="payment-card-form">
-            <legend class="visually-hidden">Detalles de tarjeta de crédito</legend>
-            <div class="summary-field">
-              <label for="cardHolder">Titular de la tarjeta</label>
-              <input 
-                id="cardHolder" 
-                type="text" 
-                [(ngModel)]="cardForm.holder" 
-                [ngModelOptions]="{ standalone: true }" 
-                placeholder="Nombre como figura en la tarjeta"
-                aria-label="Titular de la tarjeta"
-                aria-required="true"
-              >
+          @if (useMercadoPagoCardBrick) {
+            <div id="mp-card-brick-section" style="margin-top: 12px; background: #ffffff; border: 2px solid #bae6fd; border-radius: 14px; padding: 14px 16px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+                <span style="font-weight: 800; font-size: 0.9rem; color: #0369a1; display: inline-flex; align-items: center; gap: 6px;">
+                  <i class="bi bi-shield-lock-fill"></i>
+                  Pago seguro con Mercado Pago Perú
+                </span>
+                @if (mpSandboxMode) {
+                  <span style="font-size: 0.68rem; font-weight: 800; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; padding: 2px 8px; border-radius: 999px;">
+                    MODO PRUEBAS (SANDBOX)
+                  </span>
+                } @else {
+                  <span style="font-size: 0.68rem; font-weight: 800; background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 999px;">
+                    PCI-DSS PROTEGIDO
+                  </span>
+                }
+              </div>
+
+              @if (mpBrickLoading) {
+                <div style="padding: 18px; text-align: center; color: #4b5563; font-size: 0.85rem;">
+                  <i class="bi bi-arrow-repeat" style="margin-right: 6px;"></i>
+                  Cargando módulo encriptado de tarjeta...
+                </div>
+              }
+
+              @if (mpBrickError) {
+                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 10px 12px; color: #991b1b; font-size: 0.82rem; margin-bottom: 10px;">
+                  <i class="bi bi-exclamation-triangle-fill"></i> {{ mpBrickError }}
+                  <button
+                    type="button"
+                    (click)="reintentarCardBrick()"
+                    style="margin-left: 8px; background: #991b1b; color: #fff; border: none; border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              }
+
+              <div id="mp-card-brick-container"></div>
+
+              <small style="display: block; margin-top: 8px; color: #64748b; font-size: 0.75rem;">
+                <i class="bi bi-lock-fill" style="color: #0284c7;"></i>
+                Tus datos se procesan de forma segura con Mercado Pago.
+              </small>
             </div>
-            <div class="summary-field">
-              <label for="cardNumber">Número de tarjeta</label>
-              <input 
-                id="cardNumber" 
-                type="text" 
-                maxlength="19" 
-                [(ngModel)]="cardForm.number" 
-                [ngModelOptions]="{ standalone: true }" 
-                placeholder="0000 0000 0000 0000"
-                aria-label="Número de tarjeta"
-                aria-describedby="cardNumber-help"
-                aria-required="true"
-              >
-              <small id="cardNumber-help" class="form-text text-muted">Formato: 16 dígitos</small>
-            </div>
-            <fieldset class="card-inline-fields"><legend class="visually-hidden">Fecha de expiración y CVV</legend>
+          } @else {
+            <fieldset class="payment-card-form">
+              <legend class="visually-hidden">Detalles de tarjeta de crédito</legend>
               <div class="summary-field">
-                <label for="cardExpiry">Expiración</label>
+                <label for="cardHolder">Titular de la tarjeta</label>
                 <input 
-                  id="cardExpiry" 
+                  id="cardHolder" 
                   type="text" 
-                  maxlength="5" 
-                  [(ngModel)]="cardForm.expiry" 
+                  [(ngModel)]="cardForm.holder" 
                   [ngModelOptions]="{ standalone: true }" 
-                  placeholder="MM/AA"
-                  aria-label="Fecha de expiración (MM/AA)"
+                  placeholder="Nombre como figura en la tarjeta"
+                  aria-label="Titular de la tarjeta"
                   aria-required="true"
                 >
               </div>
               <div class="summary-field">
-                <label for="cardCvv">CVV</label>
-                <div style="position: relative;">
-                  <input 
-                    id="cardCvv" 
-                    [type]="showCvv ? 'text' : 'password'" 
-                    maxlength="4" 
-                    [(ngModel)]="cardForm.cvv" 
-                    [ngModelOptions]="{ standalone: true }" 
-                    placeholder="***"
-                    aria-label="CVV (código de seguridad)"
-                    aria-required="true"
-                    style="width: 100%; padding-right: 35px;"
-                  >
-                  <i class="bi" [ngClass]="showCvv ? 'bi-eye-slash' : 'bi-eye'" 
-                     (click)="showCvv = !showCvv" 
-                     style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888;"></i>
-                </div>
+                <label for="cardNumber">Número de tarjeta</label>
+                <input 
+                  id="cardNumber" 
+                  type="text" 
+                  maxlength="19" 
+                  [(ngModel)]="cardForm.number" 
+                  [ngModelOptions]="{ standalone: true }" 
+                  placeholder="0000 0000 0000 0000"
+                  aria-label="Número de tarjeta"
+                  aria-describedby="cardNumber-help"
+                  aria-required="true"
+                >
+                <small id="cardNumber-help" class="form-text text-muted">Formato: 16 dígitos</small>
               </div>
+              <fieldset class="card-inline-fields"><legend class="visually-hidden">Fecha de expiración y CVV</legend>
+                <div class="summary-field">
+                  <label for="cardExpiry">Expiración</label>
+                  <input 
+                    id="cardExpiry" 
+                    type="text" 
+                    maxlength="5" 
+                    [(ngModel)]="cardForm.expiry" 
+                    [ngModelOptions]="{ standalone: true }" 
+                    placeholder="MM/AA"
+                    aria-label="Fecha de expiración (MM/AA)"
+                    aria-required="true"
+                  >
+                </div>
+                <div class="summary-field">
+                  <label for="cardCvv">CVV</label>
+                  <div style="position: relative;">
+                    <input 
+                      id="cardCvv" 
+                      [type]="showCvv ? 'text' : 'password'" 
+                      maxlength="4" 
+                      [(ngModel)]="cardForm.cvv" 
+                      [ngModelOptions]="{ standalone: true }" 
+                      placeholder="***"
+                      aria-label="CVV (código de seguridad)"
+                      aria-required="true"
+                      style="width: 100%; padding-right: 35px;"
+                    >
+                    <i class="bi" [ngClass]="showCvv ? 'bi-eye-slash' : 'bi-eye'" 
+                       (click)="showCvv = !showCvv" 
+                       style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888;"></i>
+                  </div>
+                </div>
+              </fieldset>
             </fieldset>
-            <div class="helper-text" aria-label="Información de seguridad">Simulación: los datos no se enviarán a un procesador real.</div>
-          </fieldset>
+          }
         }
 
         @if (requiresMobileDetails) {
-          <fieldset class="payment-mobile-form">
-            <legend class="visually-hidden">Detalles de pago móvil</legend>
-            <div class="summary-field">
-              <label for="mobilePhone">Número asociado</label>
-              <input 
-                id="mobilePhone" 
-                type="tel" 
-                maxlength="9" 
-                [(ngModel)]="mobileForm.phone" 
-                [ngModelOptions]="{ standalone: true }" 
-                placeholder="9XXXXXXXX"
-                aria-label="Número de teléfono asociado"
-                aria-required="true"
-              >
-            </div>
-            <div class="summary-field">
-              <label for="mobileReference">Código de transferencia</label>
-              <input 
-                id="mobileReference" 
-                type="text" 
-                [(ngModel)]="mobileForm.reference" 
-                [ngModelOptions]="{ standalone: true }" 
-                placeholder="Ingresa el código o referencia"
-                aria-label="Código de referencia de transferencia"
-                aria-required="true"
-              >
-            </div>
-            <div class="helper-text" aria-label="Instrucciones">Confirma el pago en tu app y regístralo con el código generado.</div>
-          </fieldset>
+          @if (useMercadoPagoYape) {
+            <fieldset class="payment-mobile-form" style="border: 2px solid #ddd6fe; border-radius: 14px; padding: 14px 16px; background: #faf5ff;">
+              <legend class="visually-hidden">Pago oficial con Yape vía Mercado Pago</legend>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+                <span style="font-weight: 800; font-size: 0.9rem; color: #6d28d9; display: inline-flex; align-items: center; gap: 6px;">
+                  <i class="bi bi-phone-fill"></i>
+                  Yape Oficial vía Mercado Pago
+                </span>
+                @if (mpSandboxMode) {
+                  <span style="font-size: 0.68rem; font-weight: 800; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; padding: 2px 8px; border-radius: 999px;">
+                    SANDBOX
+                  </span>
+                } @else {
+                  <span style="font-size: 0.68rem; font-weight: 800; background: #ede9fe; color: #5b21b6; padding: 2px 8px; border-radius: 999px;">
+                    COBRO INMEDIATO
+                  </span>
+                }
+              </div>
+
+              <div class="summary-field">
+                <label for="mobilePhone">Celular registrado en Yape</label>
+                <input 
+                  id="mobilePhone" 
+                  type="tel" 
+                  maxlength="9" 
+                  [(ngModel)]="mobileForm.phone" 
+                  [ngModelOptions]="{ standalone: true }" 
+                  placeholder="9XXXXXXXX"
+                  aria-label="Número de celular Yape"
+                  aria-required="true"
+                >
+              </div>
+              <div class="summary-field">
+                <label for="mobileReference">Código de aprobación Yape (6 dígitos)</label>
+                <input 
+                  id="mobileReference" 
+                  type="text" 
+                  inputmode="numeric"
+                  maxlength="6"
+                  [(ngModel)]="mobileForm.reference" 
+                  [ngModelOptions]="{ standalone: true }" 
+                  placeholder="Ej. 123456"
+                  aria-label="Código de aprobación Yape de 6 dígitos"
+                  aria-required="true"
+                >
+              </div>
+              <div class="helper-text" style="color: #5b21b6;" aria-label="Instrucciones Yape">
+                <i class="bi bi-shield-check"></i>
+                Abre tu app <strong>Yape → Menú → Aprobar compras</strong> y copia el código de 6 dígitos. El cobro se confirma al instante.
+                @if (mpSandboxMode) {
+                  <span style="display: block; margin-top: 4px; color: #92400e; font-weight: 700;">
+                    Datos de prueba Sandbox: Celular <code>111111111</code> · OTP <code>123456</code> (aprobado)
+                  </span>
+                }
+              </div>
+            </fieldset>
+          } @else {
+            <fieldset class="payment-mobile-form">
+              <legend class="visually-hidden">Detalles de pago móvil</legend>
+              <div class="summary-field">
+                <label for="mobilePhone">Número asociado ({{ isYapeMethod ? 'Yape' : 'Plin' }})</label>
+                <input 
+                  id="mobilePhone" 
+                  type="tel" 
+                  maxlength="9" 
+                  [(ngModel)]="mobileForm.phone" 
+                  [ngModelOptions]="{ standalone: true }" 
+                  placeholder="9XXXXXXXX"
+                  aria-label="Número de teléfono asociado"
+                  aria-required="true"
+                >
+              </div>
+              <div class="summary-field">
+                <label for="mobileReference">Código de transferencia / operación</label>
+                <input 
+                  id="mobileReference" 
+                  type="text" 
+                  [(ngModel)]="mobileForm.reference" 
+                  [ngModelOptions]="{ standalone: true }" 
+                  placeholder="Ingresa el código o referencia"
+                  aria-label="Código de referencia de transferencia"
+                  aria-required="true"
+                >
+              </div>
+              <div class="helper-text" aria-label="Instrucciones">Confirma el pago en tu app y regístralo con el código generado.</div>
+            </fieldset>
+          }
         }
 
         <div class="summary-field">
@@ -356,7 +453,6 @@
           ></textarea>
         </div>
 
-        <!-- Sección: Emisión de Boleta de Venta Electrónica (SUNAT / Nubefact) -->
         <div style="margin-top: 16px; background: #fff; border: 2px solid #e5e7eb; border-radius: 14px; padding: 14px 16px;">
           <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; margin: 0;">
             <input
@@ -370,14 +466,14 @@
               <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
                 <span style="font-weight: 800; font-size: 0.92rem; color: #111827;">
                   <i class="bi bi-receipt-cutoff" style="color: #c8102e; margin-right: 4px;"></i>
-                  Solicitar Boleta de Venta Electrónica (SUNAT)
+                  Solicitar Boleta de Venta Electrónica
                 </span>
                 <span style="font-size: 0.7rem; font-weight: 800; background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 999px;">
                   PDF POR CORREO
                 </span>
               </div>
               <small style="display: block; color: #6b7280; font-size: 0.78rem; margin-top: 3px;">
-                Se generará tu comprobante electrónico serie <strong>BBB1</strong> con el desglose de productos e I.G.V. (18%) y te enviaremos el PDF adjunto a tu correo.
+                Se generará tu comprobante electrónico y te enviaremos el PDF adjunto a tu correo.
               </small>
             </div>
           </label>
@@ -468,25 +564,37 @@
                     </span>
                   </label>
 
-                  <div style="margin-top: 10px; display: flex; justify-content: flex-end; gap: 8px;">
-                    @if (userHasSavedDni) {
+                  <div style="margin-top: 10px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    @if (isUserAuthenticated) {
+                      @if (userHasSavedDni) {
+                        <button
+                          type="button"
+                          (click)="editingSavedDni = false"
+                          style="background: #e5e7eb; color: #374151; border: none; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer;"
+                        >
+                          Cancelar
+                        </button>
+                      }
                       <button
                         type="button"
-                        (click)="editingSavedDni = false"
-                        style="background: #e5e7eb; color: #374151; border: none; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer;"
+                        (click)="guardarDniEnCuenta()"
+                        [disabled]="guardandoDni || boletaDni.trim().length !== 8 || !boletaAgeVerified"
+                        style="background: #c8102e; color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 0.78rem; font-weight: 700; cursor: pointer;"
                       >
-                        Cancelar
+                        <i class="bi bi-floppy-fill"></i>
+                        {{ guardandoDni ? 'Guardando...' : 'Guardar DNI en mi cuenta' }}
                       </button>
+                    } @else {
+                      <span style="font-size: 0.76rem; color: #6b7280; margin-right: auto;">
+                        Inicia sesión para guardar tu DNI y confirmar tu pedido.
+                      </span>
+                      <a
+                        routerLink="/join"
+                        style="background: #111827; color: #fff; text-decoration: none; border-radius: 8px; padding: 7px 14px; font-size: 0.78rem; font-weight: 700;"
+                      >
+                        <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+                      </a>
                     }
-                    <button
-                      type="button"
-                      (click)="guardarDniEnCuenta()"
-                      [disabled]="guardandoDni || boletaDni.trim().length !== 8 || !boletaAgeVerified"
-                      style="background: #c8102e; color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 0.78rem; font-weight: 700; cursor: pointer;"
-                    >
-                      <i class="bi bi-floppy-fill"></i>
-                      {{ guardandoDni ? 'Guardando...' : 'Guardar DNI en mi cuenta' }}
-                    </button>
                   </div>
                 </div>
               }
@@ -496,12 +604,10 @@
         </section>
       </div>
 
-      <!-- Columna 3: Resumen -->
       <aside class="cart-column summary-column" aria-label="Resumen del pedido">
         <div class="summary-card">
           <h2 id="summary-title" class="summary-card-title">Resumen de tu pedido</h2>
 
-        <!-- Código promocional -->
         <section class="promo-section" aria-label="Código promocional">
           <h3 id="promo-title">¿Tienes un código promocional?</h3>
           
@@ -608,6 +714,10 @@
         >
           @if (isProcessing) {
             <span>Procesando...</span>
+          } @else if (useMercadoPagoCardBrick) {
+            <span><i class="bi bi-shield-lock-fill"></i> Pagar con Mercado Pago</span>
+          } @else if (useMercadoPagoYape) {
+            <span><i class="bi bi-phone-fill"></i> Pagar con Yape (Mercado Pago)</span>
           } @else {
             <span>Proceder con mi pedido</span>
           }
@@ -626,7 +736,6 @@
     </div>
   }
 
-  <!-- Modal de confirmación de eliminación -->
   @if (showDeleteModal && itemToDelete) {
     <div class="delete-modal-overlay" (click)="cerrarModalEliminar()">
       <div class="delete-modal-content" (click)="$event.stopPropagation()">
@@ -643,7 +752,6 @@
     </div>
   }
 
-  <!-- Overlay de Procesamiento Sincronizado con Pedido y Envío de Correo -->
   @if (isProcessing && !isSuccess) {
     <div class="processing-overlay" role="status" aria-live="polite" aria-busy="true">
       <div class="processing-content">
@@ -712,7 +820,6 @@
     </div>
   }
 
-  <!-- Overlay de Éxito -->
   @if (isSuccess) {
     <div class="success-overlay" role="dialog" aria-modal="true" aria-label="Pedido confirmado">
       <div class="success-content">
@@ -724,6 +831,20 @@
         </div>
         <h2>¡Pedido {{ confirmedOrderId ? '#' + confirmedOrderId + ' ' : '' }}Confirmado!</h2>
         <p>Tu deliciosa pizza ya entró en preparación en nuestra cocina.</p>
+
+        @if (confirmedPaymentViaMp) {
+          <div style="margin: 10px 0; background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 12px; padding: 10px 14px; text-align: left; display: flex; align-items: center; gap: 10px;">
+            <i class="bi bi-patch-check-fill" style="color: #0284c7; font-size: 1.25rem;"></i>
+            <div>
+              <div style="font-size: 0.78rem; font-weight: 800; color: #0369a1; text-transform: uppercase;">
+                Pago Aprobado por Mercado Pago Perú
+              </div>
+              <div style="font-size: 0.82rem; color: #0c4a6e;">
+                Medio confirmado: <strong>{{ confirmedPaymentMethodLabel || 'Mercado Pago' }}</strong>
+              </div>
+            </div>
+          </div>
+        }
 
         @if (confirmedEmailSent) {
           <div class="email-status-banner sent" role="status" aria-live="polite">
@@ -746,7 +867,7 @@
             <div class="email-status-copy">
               <strong>Pedido registrado en cocina</strong>
               <span>
-                El envío de correo a <b>{{ confirmedEmailAddress || 'tu cuenta' }}</b> está pendiente de verificación SMTP.
+                El envío del comprobante a <b>{{ confirmedEmailAddress || 'tu cuenta' }}</b> quedó pendiente.
               </span>
             </div>
           </div>
@@ -777,7 +898,5 @@
       </div>
     </div>
   }
-
-
 
 </main>

@@ -16,7 +16,6 @@ export class PizzaService {
 
   constructor(private readonly http: HttpClient) {}
 
-  // Operaciones CRUD para Pizzas
   listarPizzas(includeDeleted: boolean = false): Observable<PizzaDTO[]> {
     let params = new HttpParams();
     if (includeDeleted) {
@@ -69,7 +68,6 @@ export class PizzaService {
     );
   }
 
-  // Operaciones para Categorías
   listarCategorias(includeDeleted: boolean = false): Observable<CategoryDTO[]> {
     let params = new HttpParams();
     if (includeDeleted) {
@@ -110,7 +108,6 @@ export class PizzaService {
     );
   }
 
-  // Operaciones para Ingredientes
   listarIngredientes(includeDeleted: boolean = false): Observable<IngredientDTO[]> {
     let params = new HttpParams();
     if (includeDeleted) {

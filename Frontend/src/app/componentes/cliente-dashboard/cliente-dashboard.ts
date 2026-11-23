@@ -63,7 +63,6 @@ export class ClienteDashboardComponent implements OnInit, OnDestroy {
   loadingMetricas: boolean = false;
   loadError: string = '';
 
-  // KPIs del Panel de Cliente
   totalPedidos: number = 0;
   pedidosActivos: number = 0;
   gastoTotal: number = 0;

@@ -16,7 +16,6 @@ export class UsuarioService {
 
   constructor(private readonly http: HttpClient) { }
 
-  // Operaciones CRUD para Usuarios
   listarUsuarios(): Observable<UsuarioDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/usuarios`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
@@ -25,7 +24,6 @@ export class UsuarioService {
     return this.http.get<any>(`${this.apiUrl}/usuarios/${id}`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Obtener informaci\u00f3n del usuario autenticado actual
   obtenerUsuarioActual(): Observable<UsuarioDTO> {
     return this.http.get<any>(`${this.apiUrl}/usuarios/me`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
@@ -42,7 +40,6 @@ export class UsuarioService {
     return this.http.delete<any>(`${this.apiUrl}/usuarios/${id}`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Soft Delete - Inactivar/Reactivar
   inactivarUsuario(id: number): Observable<any> {
     return this.http.patch<any>(`${this.apiUrl}/usuarios/${id}/inactivar`, {}).pipe(map(res => res.data !== undefined ? res.data : res));
   }
@@ -55,22 +52,18 @@ export class UsuarioService {
     return this.http.get<any>(`${this.apiUrl}/usuarios/${id}/activo`).pipe(map(res => typeof res.data === 'boolean' ? {activo: res.data} : res));
   }
 
-  // Actualizar perfil del usuario actual
   actualizarPerfil(id: number, datos: Partial<UsuarioCreateDTO>): Observable<UsuarioDTO> {
     return this.http.put<any>(`${this.apiUrl}/usuarios/me`, datos, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Cambiar contrase\u00f1a del usuario actual
   cambiarPassword(id: number, passwordData: { password: string; currentPassword?: string }): Observable<any> {
     return this.http.patch<any>(`${this.apiUrl}/usuarios/${id}/cambiar-password`, passwordData, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Operaciones de autenticaci\u00f3n
   login(loginData: LoginDTO): Observable<AuthResponseDTO> {
     return this.http.post<any>(`${this.apiUrl}/ingresar`, loginData, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Endpoints p\u00fablicos para validaci\u00f3n de duplicados
   verificarEmail(email: string): Observable<{existe: boolean}> {
     return this.http.get<any>(`${this.apiUrl}/verificar-email?email=${encodeURIComponent(email)}`).pipe(map(res => typeof res.data === 'boolean' ? {existe: res.data} : res));
   }

@@ -48,12 +48,10 @@ export class CostosProduccionComponent implements OnInit, OnDestroy {
   extras: Extra[] = [];
   extraToppings: IngredientDTO[] = [];
 
-  // KPIs precalculados para evitar getters durante Change Detection
   avgPizzaDirectCost = 0;
   avgPizzaMargin = 0;
   avgExtraMargin = 0;
 
-  // Filtros Catálogo
   searchCatalog = '';
   selectedSizeFilter: number | 'TODOS' = 'TODOS';
   selectedExtraCategoryFilter = 'TODOS';
@@ -66,10 +64,8 @@ export class CostosProduccionComponent implements OnInit, OnDestroy {
   filteredExtraCosts: ExtraCostDTO[] = [];
   paginatedExtraCosts: ExtraCostDTO[] = [];
 
-  // Modal Desglose de Receta
   selectedRecipeDetail: PizzaSizeCostDTO | null = null;
 
-  // Simulador de Lote de Producción
   private uidCounter = 1;
   private batchDebounceTimer: any = null;
 
@@ -173,7 +169,6 @@ export class CostosProduccionComponent implements OnInit, OnDestroy {
   }
 
   recalcularVistasCatalogo(): void {
-    // 1. KPIs
     if (this.pizzaCosts.length === 0) {
       this.avgPizzaDirectCost = 0;
       this.avgPizzaMargin = 0;
@@ -188,7 +183,6 @@ export class CostosProduccionComponent implements OnInit, OnDestroy {
       ? this.extraCosts.reduce((s, r) => s + Number(r.profitMargin ?? 0), 0) / this.extraCosts.length
       : 0;
 
-    // 2. Filtros Pizzas
     const term = this.searchCatalog.trim().toLowerCase();
     const filteredPizzas = this.pizzaCosts.filter((row) => {
       if (this.selectedSizeFilter !== 'TODOS' && row.sizeId !== Number(this.selectedSizeFilter)) {
@@ -215,7 +209,6 @@ export class CostosProduccionComponent implements OnInit, OnDestroy {
     const pizzaStart = (this.pizzaCatalogPage - 1) * this.itemsPerPage;
     this.paginatedPizzaCosts = filteredPizzas.slice(pizzaStart, pizzaStart + this.itemsPerPage);
 
-    // 3. Filtros Extras
     const filteredExtras = this.extraCosts.filter((row) => {
       if (
         this.selectedExtraCategoryFilter !== 'TODOS' &&
@@ -303,7 +296,6 @@ export class CostosProduccionComponent implements OnInit, OnDestroy {
     return (Number(lineCost) / Number(totalDirectCost)) * 100;
   }
 
-  // Simulador de Lote
   agregarPizzaDesdeCatalogo(row: PizzaSizeCostDTO): void {
     const existing = this.batchItems.find(
       (b) =>

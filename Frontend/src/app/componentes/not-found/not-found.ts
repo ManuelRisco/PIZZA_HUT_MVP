@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
   template: `
     <div class="not-found-container">
       <div class="not-found-content">
-        <div class="pizza-icon">ðŸ•</div>
+        <div class="pizza-icon">🍕</div>
         <h1>¡Oops! Página no encontrada</h1>
         <h2>Error 404</h2>
         <p>La página que buscas no existe, pero tenemos deliciosas pizzas esperándote.</p>
@@ -158,7 +158,6 @@ import { CommonModule } from '@angular/common';
       text-decoration: underline;
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
       .not-found-content {
         padding: 30px 20px;

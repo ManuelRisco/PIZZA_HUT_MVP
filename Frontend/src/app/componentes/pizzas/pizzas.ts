@@ -44,13 +44,11 @@ export class Pizzas implements OnInit, OnDestroy {
   terminoBusqueda = '';
   categoriaFiltro = 'TODAS';
 
-  // KPIs precalculados
   kpiTotalPizzas = 0;
   kpiDisponibles = 0;
   kpiAgotadas = 0;
   kpiPopulares = 0;
 
-  // Editor de Receta (en formulario y en modal rápido)
   recetaFormulario: PizzaIngredientDTO[] = [];
   nuevoIngredienteId: number | null = null;
   nuevaCantidadReceta: number = 80;
@@ -66,11 +64,9 @@ export class Pizzas implements OnInit, OnDestroy {
   margenRecetaModal = 0;
   stockProducibleModal = 0;
 
-  // Simulador de Insumos y Costos por Tamaño
   tamanoSimuladorForm: SizeDTO | null = null;
   tamanoSimuladorModal: SizeDTO | null = null;
 
-  // Variables para Decorator Pattern (extras)
   pizzaSeleccionadaExtras?: PizzaDTO;
   extrasSeleccionados: string[] = [];
   precioConExtras: number = 0;
@@ -287,9 +283,6 @@ export class Pizzas implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Subida de archivo de imagen al backend (/api/uploads/pizzas)
-   */
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
@@ -332,13 +325,6 @@ export class Pizzas implements OnInit, OnDestroy {
     this.imagenPreview = null;
   }
 
-  // ==================== GESTIÓN DE RECETA ====================
-
-  /**
-   * Genera una descripción comercial atractiva para el menú público (ej: http://localhost:4200/menu)
-   * a partir de los insumos configurados en la receta base actual.
-   * El usuario puede editar libremente el texto generado antes de guardar la pizza.
-   */
   generarDescripcionDesdeReceta(): void {
     if (!this.recetaFormulario || this.recetaFormulario.length === 0) {
       this.mostrarMensajeError('Agrega al menos un insumo a la receta base para generar la descripción automáticamente.');
@@ -409,8 +395,6 @@ export class Pizzas implements OnInit, OnDestroy {
     this.stockProducibleModal = this.calcularStockProducibleReceta(this.recetaModalItems, 1.0, personalSize?.stockQuantity);
   }
 
-  // ==================== SIMULADOR DE TAMAÑOS EN FORMULARIO ====================
-
   seleccionarTamanoSimuladorForm(tamano: SizeDTO | null): void {
     this.tamanoSimuladorForm = tamano;
   }
@@ -449,8 +433,6 @@ export class Pizzas implements OnInit, OnDestroy {
     const personal = this.tamanosDisponibles.find(t => (t.recipeMultiplier || 1) === 1.0);
     return personal?.stockQuantity ?? null;
   }
-
-  // ==================== SIMULADOR DE TAMAÑOS EN MODAL RÁPIDO ====================
 
   seleccionarTamanoSimuladorModal(tamano: SizeDTO | null): void {
     this.tamanoSimuladorModal = tamano;
@@ -618,8 +600,6 @@ export class Pizzas implements OnInit, OnDestroy {
     });
   }
 
-  // ==================== DECORATOR PATTERN (EXTRAS SIMULADOR) ====================
-
   mostrarOpcionesExtras(pizza: PizzaDTO): void {
     this.pizzaSeleccionadaExtras = pizza;
     this.extrasSeleccionados = [];
@@ -725,7 +705,6 @@ export class Pizzas implements OnInit, OnDestroy {
     this.selectedPizzaId = undefined;
     this.recetaFormulario = [];
 
-    // Pre-cargar Masa Fresca si existe en el catálogo para facilitar nueva receta
     const masa = this.todosIngredientes.find(i => i.name.toLowerCase().includes('masa'));
     if (masa?.id) {
       this.recetaFormulario.push({
@@ -838,7 +817,6 @@ export class Pizzas implements OnInit, OnDestroy {
       this.mostrarMensajeError('Por favor, complete todos los campos requeridos correctamente');
     }
   }
-
 
   restaurarPizza(id: number, nombre: string): void {
     if (!confirm(`¿Desea restaurar la pizza "${nombre}"?`)) {

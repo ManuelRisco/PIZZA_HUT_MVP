@@ -130,6 +130,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 || path.startsWith("/api/recuperar-password")
                 || path.startsWith("/api/sunat/dni")
                 || (path.startsWith("/api/sunat/boleta") && "POST".equalsIgnoreCase(method))
+                || (path.startsWith("/api/payments/mercadopago") && "POST".equalsIgnoreCase(method))
                 || (path.startsWith("/api/auth/google") && "POST".equalsIgnoreCase(method))) {
             return "AUTH";
         }

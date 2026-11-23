@@ -43,9 +43,6 @@ export class SunatService {
 
   constructor(private readonly http: HttpClient) {}
 
-  /**
-   * Consulta un DNI de 8 dígitos en RENIEC (Decolecta API + respaldo RENIEC)
-   */
   consultarDni(dni: string): Observable<DniLookupResponse> {
     const clean = (dni || '').trim();
     return this.http.get<any>(`${this.apiUrl}/sunat/dni/${encodeURIComponent(clean)}`).pipe(
@@ -53,9 +50,6 @@ export class SunatService {
     );
   }
 
-  /**
-   * Vincula/actualiza el DNI del usuario autenticado confirmando mayoría de edad (+18) y titularidad
-   */
   configurarDni(dni: string, ageVerified: boolean, name?: string): Observable<UsuarioDTO> {
     return this.http.post<any>(`${this.apiUrl}/sunat/configurar-dni`, {
       dni: (dni || '').trim(),
@@ -66,28 +60,18 @@ export class SunatService {
     );
   }
 
-  /**
-   * Emite (o recupera si ya fue emitida) la Boleta de Venta Electrónica de un pedido
-   */
   emitirBoletaPedido(orderId: number, payload: { dni?: string; nombre?: string; enviarCorreo?: boolean } = {}): Observable<BoletaEmisionResponse> {
     return this.http.post<any>(`${this.apiUrl}/sunat/boleta/order/${orderId}/emitir`, payload).pipe(
       map(res => res.data !== undefined ? res.data : res)
     );
   }
 
-  /**
-   * Descarga el PDF de la Boleta de Venta Electrónica como Blob autenticado
-   */
   obtenerPdfBlob(orderId: number, download: boolean = false): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/sunat/boleta/order/${orderId}/pdf?download=${download}`, {
       responseType: 'blob'
     });
   }
 
-  /**
-   * Abre el PDF de la Boleta de Venta Electrónica en una nueva pestaña
-   * (usa el enlace oficial de Nubefact si es público o descarga el Blob autenticado del backend).
-   */
   abrirBoletaPdf(orderId: number, externalPdfUrl?: string | null): void {
     if (externalPdfUrl && externalPdfUrl.startsWith('http')) {
       window.open(externalPdfUrl, '_blank', 'noopener,noreferrer');

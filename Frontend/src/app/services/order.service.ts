@@ -16,17 +16,14 @@ export class Order {
 
   constructor(private readonly http: HttpClient) {}
 
-  // Operaciones CRUD para Pedidos
   obtenerTodos(): Observable<OrderDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/orders`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
   
-  // Obtener pedidos completos con toda la información
   obtenerTodosCompletos(): Observable<OrderCompleteDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/orders/complete`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
   
-  // Obtener items de un pedido con información completa
   obtenerItemsCompletos(orderId: number): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/orders/${orderId}/items`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
@@ -47,7 +44,6 @@ export class Order {
     return this.http.post<any>(`${this.apiUrl}/orders`, order, this.httpOptions).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Nuevo m\u00e9todo Checkout Unificado
   checkout(payload: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/orders/checkout`, payload, this.httpOptions)
       .pipe(map(res => res.data !== undefined ? res.data : res));
@@ -69,7 +65,6 @@ export class Order {
     return this.http.delete<any>(`${this.apiUrl}/orders/${id}`).pipe(map(res => res.data !== undefined ? res.data : res));
   }
 
-  // Operaciones para Items de Pedido
   obtenerItemsPorPedido(orderId: number): Observable<OrderItemDTO[]> {
     return this.http.get<any>(`${this.apiUrl}/order-items/order/${orderId}`).pipe(map(res => res.data !== undefined ? res.data : res));
   }

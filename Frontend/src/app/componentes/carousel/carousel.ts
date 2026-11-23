@@ -62,7 +62,6 @@ export class Carousel implements OnInit, OnDestroy {
       this.currentIndex.set(index);
       this.cdr.markForCheck();
       
-      // Reiniciar el timer al hacer click manual
       this.stopAutoPlay();
       this.startAutoPlay();
     }

@@ -1,19 +1,29 @@
-<nav class="navbar" aria-label="Navegación principal">
-  <!-- Fondo oscurecido cuando el menú móvil está abierto -->
-  <div class="mobile-overlay" [class.active]="isMobileMenuOpen" (click)="toggleMobileMenu()"></div>
+<nav class="navbar" [class.menu-open]="isMobileMenuOpen" aria-label="Navegación principal">
+  <div class="mobile-overlay" [class.active]="isMobileMenuOpen" (click)="closeMobileMenu($event)"></div>
 
   <div class="navbar-header">
     <div class="navbar-logo">
       <a [routerLink]="['']">🍕 Pizza Hut</a>
     </div>
-    
-    <!-- Botón Hamburguesa -->
-    <button class="hamburger-btn" (click)="toggleMobileMenu()" aria-label="Abrir menú" [class.open]="isMobileMenuOpen">
-      <i class="bi" [class.bi-list]="!isMobileMenuOpen" [class.bi-x-lg]="isMobileMenuOpen" aria-hidden="true"></i>
-    </button>
+
+    <div class="mobile-header-actions">
+      <button type="button" class="mobile-cart-btn" (click)="navegarA('/cart')" aria-label="Ir al carrito">
+        <i class="bi bi-cart3" aria-hidden="true"></i>
+        <span class="mobile-cart-badge" *ngIf="cartCount > 0">{{ cartCount }}</span>
+      </button>
+      <button type="button" class="hamburger-btn" (click)="toggleMobileMenu($event)" [attr.aria-label]="isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'" [attr.aria-expanded]="isMobileMenuOpen" [class.open]="isMobileMenuOpen">
+        <i class="bi bi-list" aria-hidden="true"></i>
+      </button>
+    </div>
   </div>
 
   <ul class="navbar-links" [class.mobile-open]="isMobileMenuOpen" aria-label="Menú de navegación">
+    <li class="mobile-drawer-header">
+      <a class="drawer-brand" (click)="navegarA('/')" (keyup.enter)="navegarA('/')" tabindex="0">🍕 Pizza Hut</a>
+      <button type="button" class="drawer-close-btn" (click)="closeMobileMenu($event)" aria-label="Cerrar menú">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </li>
     <li>
       <a tabindex="0" (click)="navegarA('/menu')" (keyup.enter)="navegarA('/menu')" style="cursor: pointer;">Menú</a>
     </li>
@@ -36,7 +46,6 @@
       </a>
     </li>
 
-    <!-- Selector de Idioma -->
     <li class="language-menu-container">
       <button
         class="language-button"
@@ -48,7 +57,6 @@
         <i class="bi bi-chevron-down lang-chevron" [class.rotated]="mostrarSelectorIdioma" aria-hidden="true"></i>
       </button>
 
-      <!-- Dropdown de Idiomas -->
       <div class="language-dropdown" *ngIf="mostrarSelectorIdioma" aria-label="Idiomas disponibles">
         <button
           *ngFor="let lang of idiomas"
@@ -63,7 +71,6 @@
       </div>
     </li>
 
-    <!-- Menú de Usuario -->
     <li class="user-menu-container">
       <button
         class="user-menu-button"
@@ -71,11 +78,9 @@
         [attr.aria-expanded]="mostrarMenuUsuario"
         aria-haspopup="true"
         aria-label="Menú de usuario (Alt+P)">
-        <!-- Icono de usuario NO autenticado -->
         <div class="user-icon" *ngIf="!usuarioActual">
           <i class="bi bi-person-circle" aria-hidden="true"></i>
         </div>
-        <!-- Avatar con iniciales para usuario autenticado -->
         <div class="user-avatar" *ngIf="usuarioActual" [class.admin]="esAdmin" [attr.aria-label]="usuarioActual.name">
           {{ getIniciales() }}
         </div>
@@ -85,13 +90,11 @@
         <i class="bi bi-chevron-down arrow-icon" aria-hidden="true"></i>
       </button>
 
-      <!-- Dropdown Menu -->
       <div class="user-dropdown"
         *ngIf="mostrarMenuUsuario"
         role="menu"
         aria-label="Opciones de usuario">
         <div class="dropdown-content">
-          <!-- Usuario NO autenticado -->
           <div *ngIf="!usuarioActual" class="dropdown-section">
             <button class="dropdown-item primary" (click)="navegarA('/join')" role="menuitem">
               <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
@@ -104,7 +107,6 @@
             </button>
           </div>
 
-          <!-- Usuario CLIENTE autenticado -->
           <div *ngIf="usuarioActual && !esAdmin" class="dropdown-section">
             <div class="user-info-dropdown" [attr.aria-label]="'Información de usuario: ' + usuarioActual.name">
               <div class="avatar-circle">{{ getIniciales() }}</div>
@@ -141,7 +143,6 @@
             </button>
           </div>
 
-          <!-- Usuario ADMINISTRADOR autenticado -->
           <div *ngIf="usuarioActual && esAdmin" class="dropdown-section">
             <div class="user-info-dropdown" [attr.aria-label]="'Información de administrador: ' + usuarioActual.name">
               <div class="avatar-circle admin">{{ getIniciales() }}</div>
@@ -190,7 +191,6 @@
   </ul>
 </nav>
 
-<!-- Modal Unificado de Confirmación de Cierre de Sesión (Navbar) -->
 <div
   *ngIf="mostrarModalLogout"
   class="fixed inset-0 bg-black/60 z-[9000] flex items-center justify-center p-4 backdrop-blur-xs font-sans"
