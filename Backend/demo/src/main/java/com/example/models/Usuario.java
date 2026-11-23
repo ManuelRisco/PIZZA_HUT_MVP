@@ -16,18 +16,24 @@ public class Usuario {
     private String email;
 
     @Column(name = "password_hash", nullable = false, length = 255)
-    @JsonIgnore  // Ocultar el hash de la contrase\u00f1a en las respuestas JSON
+    @JsonIgnore
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private Role role = Role.CUSTOMER; // Valor por defecto
+    private Role role = Role.CUSTOMER;
 
     @Column(name = "name", length = 100)
     private String name;
 
     @Column(name = "phone", length = 20)
     private String phone;
+
+    @Column(name = "dni", length = 15)
+    private String dni;
+
+    @Column(name = "age_verified", nullable = false)
+    private Boolean ageVerified = false;
 
     // ==== Campos para JWT y Seguridad ====
     @Column(name = "refresh_token", length = 512)
@@ -37,10 +43,10 @@ public class Usuario {
     @Column(name = "refresh_token_expiry")
     @JsonIgnore
     private LocalDateTime refreshTokenExpiry;
-    
+
     @Column(name = "token_version", nullable = false)
     @JsonIgnore
-    private Integer tokenVersion = 1; // Versi\u00f3n del token, incrementa al cambiar datos cr\u00edticos
+    private Integer tokenVersion = 1;
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
@@ -62,20 +68,19 @@ public class Usuario {
     @Column(name = "password_set", nullable = false)
     private Boolean passwordSet = true;
 
-    // ==== Campos de auditor\u00eda ====
+    // ==== Campos de auditoría ====
     @Column(name = "created_at")
-    @JsonIgnore  // Ocultar metadatos internos
+    @JsonIgnore
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
-    @JsonIgnore  // Ocultar metadatos internos
+    @JsonIgnore
     private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
-    @JsonIgnore  // Ocultar metadatos internos
+    @JsonIgnore
     private LocalDateTime deletedAt;
 
-    // Constructor vac\u00edo
     public Usuario() {}
 
     @PrePersist
@@ -91,14 +96,19 @@ public class Usuario {
         if (this.passwordSet == null) {
             this.passwordSet = true;
         }
+        if (this.ageVerified == null) {
+            this.ageVerified = (this.dni != null && !this.dni.isBlank());
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+        if (this.ageVerified == null) {
+            this.ageVerified = (this.dni != null && !this.dni.isBlank());
+        }
     }
 
-    // Getters y setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -117,6 +127,12 @@ public class Usuario {
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 
+    public String getDni() { return dni; }
+    public void setDni(String dni) { this.dni = dni; }
+
+    public Boolean getAgeVerified() { return ageVerified; }
+    public void setAgeVerified(Boolean ageVerified) { this.ageVerified = ageVerified; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
@@ -126,18 +142,17 @@ public class Usuario {
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 
-    // ==== Getters y Setters JWT y Seguridad ====
     public String getRefreshToken() { return refreshToken; }
     public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
 
     public LocalDateTime getRefreshTokenExpiry() { return refreshTokenExpiry; }
     public void setRefreshTokenExpiry(LocalDateTime refreshTokenExpiry) { this.refreshTokenExpiry = refreshTokenExpiry; }
-    
+
     public Integer getTokenVersion() { return tokenVersion; }
     public void setTokenVersion(Integer tokenVersion) { this.tokenVersion = tokenVersion; }
-    
-    public void incrementTokenVersion() { 
-        this.tokenVersion = (this.tokenVersion == null ? 1 : this.tokenVersion) + 1; 
+
+    public void incrementTokenVersion() {
+        this.tokenVersion = (this.tokenVersion == null ? 1 : this.tokenVersion) + 1;
     }
 
     public LocalDateTime getLastLogin() { return lastLogin; }
@@ -158,21 +173,18 @@ public class Usuario {
     public Boolean getPasswordSet() { return passwordSet; }
     public void setPasswordSet(Boolean passwordSet) { this.passwordSet = passwordSet; }
 
-    // ==== M\u00e9todos de utilidad ====
     public boolean isAccountLocked() {
         return lockedUntil != null && lockedUntil.isAfter(LocalDateTime.now());
     }
 
     public boolean isRefreshTokenValid() {
-        return refreshToken != null && 
-               refreshTokenExpiry != null && 
+        return refreshToken != null &&
+               refreshTokenExpiry != null &&
                refreshTokenExpiry.isAfter(LocalDateTime.now());
     }
 
     public void incrementLoginAttempts() {
         this.loginAttempts = (this.loginAttempts == null ? 0 : this.loginAttempts) + 1;
-        
-        // Bloquear cuenta despu\u00e9s de 5 intentos fallidos
         if (this.loginAttempts >= 5) {
             this.lockedUntil = LocalDateTime.now().plusMinutes(15);
         }
@@ -183,7 +195,6 @@ public class Usuario {
         this.lockedUntil = null;
     }
 
-    // Enum para los roles del usuario
     public enum Role {
         CUSTOMER, ADMIN
     }

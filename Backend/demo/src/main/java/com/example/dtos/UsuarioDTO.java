@@ -8,6 +8,8 @@ public class UsuarioDTO {
     private String email;
     private String name;
     private String phone;
+    private String dni;
+    private Boolean ageVerified;
     private Usuario.Role role;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
@@ -18,15 +20,15 @@ public class UsuarioDTO {
     private String authProvider;
     private Boolean passwordSet;
 
-    // Constructor vacio
     public UsuarioDTO() {}
 
-    // Constructor desde entidad (sin informacion sensible)
     public UsuarioDTO(Usuario usuario) {
         this.id = usuario.getId();
         this.email = usuario.getEmail();
         this.name = usuario.getName();
         this.phone = usuario.getPhone();
+        this.dni = usuario.getDni();
+        this.ageVerified = Boolean.TRUE.equals(usuario.getAgeVerified());
         this.role = usuario.getRole();
         this.createdAt = usuario.getCreatedAt();
         this.deletedAt = usuario.getDeletedAt();
@@ -38,7 +40,6 @@ public class UsuarioDTO {
         this.passwordSet = usuario.getPasswordSet() == null ? true : usuario.getPasswordSet();
     }
 
-    // Getters y setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -51,6 +52,12 @@ public class UsuarioDTO {
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 
+    public String getDni() { return dni; }
+    public void setDni(String dni) { this.dni = dni; }
+
+    public Boolean getAgeVerified() { return ageVerified; }
+    public void setAgeVerified(Boolean ageVerified) { this.ageVerified = ageVerified; }
+
     public Usuario.Role getRole() { return role; }
     public void setRole(Usuario.Role role) { this.role = role; }
 
@@ -59,13 +66,13 @@ public class UsuarioDTO {
 
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
-    
+
     public LocalDateTime getLastLogin() { return lastLogin; }
     public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }
-    
+
     public Integer getLoginAttempts() { return loginAttempts; }
     public void setLoginAttempts(Integer loginAttempts) { this.loginAttempts = loginAttempts; }
-    
+
     public LocalDateTime getLockedUntil() { return lockedUntil; }
     public void setLockedUntil(LocalDateTime lockedUntil) { this.lockedUntil = lockedUntil; }
 

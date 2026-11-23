@@ -13,6 +13,8 @@ export interface CrearClienteDTO {
   password: string;
   name: string;
   phone?: string;
+  dni?: string | null;
+  ageVerified?: boolean;
 }
 
 // Interface para los datos al crear admin con Factory Pattern

@@ -8,8 +8,8 @@ export interface CheckoutSizeConfig {
 
 export interface CheckoutPayload {
   addressId?: number;
-  deliveryType?: 'PICKUP' | 'DELIVERY'; // Tipo de entrega
-  address?: {  // Datos de dirección para crear nueva dirección
+  deliveryType?: 'PICKUP' | 'DELIVERY';
+  address?: {
     line1: string;
     city: string;
     district: string;
@@ -20,8 +20,12 @@ export interface CheckoutPayload {
   estimatedDelivery?: string;
   status?: OrderDTO['status'];
   sizeMapping?: Record<string, CheckoutSizeConfig>;
-  promoCode?: string; // Código promocional aplicado
-  discount?: number; // Descuento aplicado
+  promoCode?: string;
+  discount?: number;
+  wantsBoleta?: boolean;
+  clienteDni?: string;
+  clienteNombre?: string;
+  ageVerified?: boolean;
   payment?: {
     paymentMethodId: number;
     amount?: number;

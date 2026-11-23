@@ -434,7 +434,10 @@ public class OrderController {
     private List<OrderCompleteDTO> fetchOrders(Integer currentUserId, int safeLimit) {
         String sql = """
             SELECT o.id AS order_id, o.delivery_type, o.status, o.subtotal, o.deliveryFee, o.discount, o.promo_code, o.total, o.notes, o.estimatedDelivery, o.createdAt AS order_date,
-                   u.id AS user_id, u.name AS customer_name, u.email AS customer_email, u.phone AS customer_phone,
+                   o.wants_boleta, o.boleta_tipo_comprobante, o.boleta_serie, o.boleta_numero, o.boleta_cliente_dni, o.boleta_cliente_nombre, o.boleta_cliente_direccion,
+                   o.boleta_pdf_url, o.boleta_xml_url, o.boleta_cdr_url, o.boleta_enlace, o.boleta_hash, o.boleta_qr, o.boleta_estado, o.boleta_error,
+                   o.boleta_total_gravada, o.boleta_total_igv, o.boleta_emitida_at,
+                   u.id AS user_id, u.name AS customer_name, u.email AS customer_email, u.phone AS customer_phone, u.dni AS customer_dni,
                    a.id AS address_id, a.line1 AS address_line1, a.city AS address_city, a.district AS address_district, a.reference AS address_reference,
                    pm.id AS payment_method_id, pm.name AS payment_method_name
             FROM orders o
@@ -456,6 +459,7 @@ public class OrderController {
             dto.setUserName(rs.getString("customer_name"));
             dto.setUserEmail(rs.getString("customer_email"));
             dto.setUserPhone(rs.getString("customer_phone"));
+            dto.setUserDni(rs.getString("customer_dni"));
             dto.setAddressId(rs.getObject("address_id") != null ? rs.getInt("address_id") : null);
             dto.setAddressLine1(rs.getString("address_line1"));
             dto.setAddressCity(rs.getString("address_city"));
@@ -473,6 +477,30 @@ public class OrderController {
             dto.setNotes(rs.getString("notes"));
             dto.setEstimatedDelivery(rs.getTimestamp("estimatedDelivery") != null ? rs.getTimestamp("estimatedDelivery").toLocalDateTime() : null);
             dto.setCreatedAt(rs.getTimestamp("order_date") != null ? rs.getTimestamp("order_date").toLocalDateTime() : null);
+
+            dto.setWantsBoleta(rs.getObject("wants_boleta") != null && rs.getBoolean("wants_boleta"));
+            dto.setBoletaTipoComprobante(rs.getObject("boleta_tipo_comprobante") != null ? rs.getInt("boleta_tipo_comprobante") : null);
+            String serie = rs.getString("boleta_serie");
+            Integer numero = rs.getObject("boleta_numero") != null ? rs.getInt("boleta_numero") : null;
+            dto.setBoletaSerie(serie);
+            dto.setBoletaNumero(numero);
+            if (serie != null && numero != null) {
+                dto.setBoletaComprobante(serie + "-" + String.format("%06d", numero));
+            }
+            dto.setBoletaClienteDni(rs.getString("boleta_cliente_dni"));
+            dto.setBoletaClienteNombre(rs.getString("boleta_cliente_nombre"));
+            dto.setBoletaClienteDireccion(rs.getString("boleta_cliente_direccion"));
+            dto.setBoletaPdfUrl(rs.getString("boleta_pdf_url"));
+            dto.setBoletaXmlUrl(rs.getString("boleta_xml_url"));
+            dto.setBoletaCdrUrl(rs.getString("boleta_cdr_url"));
+            dto.setBoletaEnlace(rs.getString("boleta_enlace"));
+            dto.setBoletaHash(rs.getString("boleta_hash"));
+            dto.setBoletaQr(rs.getString("boleta_qr"));
+            dto.setBoletaEstado(rs.getString("boleta_estado"));
+            dto.setBoletaError(rs.getString("boleta_error"));
+            dto.setBoletaTotalGravada(rs.getBigDecimal("boleta_total_gravada"));
+            dto.setBoletaTotalIgv(rs.getBigDecimal("boleta_total_igv"));
+            dto.setBoletaEmitidaAt(rs.getTimestamp("boleta_emitida_at") != null ? rs.getTimestamp("boleta_emitida_at").toLocalDateTime() : null);
             return dto;
         }, queryArgs.toArray());
     }

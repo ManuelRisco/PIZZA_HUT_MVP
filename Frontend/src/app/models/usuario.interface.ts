@@ -4,6 +4,8 @@ export interface UsuarioDTO {
   email: string;
   name: string;
   phone?: string;
+  dni?: string | null;
+  ageVerified?: boolean;
   role: 'CUSTOMER' | 'ADMIN';
   createdAt?: string | null;
   deletedAt?: string | null;
@@ -21,6 +23,8 @@ export interface UsuarioCreateDTO {
   password: string;
   name: string;
   phone?: string;
+  dni?: string | null;
+  ageVerified?: boolean;
   role?: 'CUSTOMER' | 'ADMIN';
 }
 

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { UsuarioService } from '../../services/usuario.service';
+import { SunatService } from '../../services/sunat.service';
 
 @Component({
   selector: 'app-cliente-perfil',
@@ -23,6 +24,8 @@ export class ClientePerfilComponent implements OnInit {
   guardandoPerfil = false;
   guardandoPassword = false;
   vinculandoGoogle = false;
+  buscandoDni = false;
+  ageVerified = false;
 
   editandoPassword = false;
   passwordActual: string = '';
@@ -39,6 +42,7 @@ export class ClientePerfilComponent implements OnInit {
   constructor(
     private readonly authService: AuthService,
     private readonly usuarioService: UsuarioService,
+    private readonly sunatService: SunatService,
     private readonly router: Router
   ) {}
 
@@ -70,9 +74,12 @@ export class ClientePerfilComponent implements OnInit {
           const isGoogle = this.authService.isGoogleLinked(usuario);
           this.usuario = {
             ...usuario,
+            dni: usuario?.dni || '',
+            ageVerified: Boolean(usuario?.ageVerified || usuario?.dni),
             googleLinked: isGoogle,
             authProvider: isGoogle ? 'GOOGLE' : (usuario?.authProvider || 'LOCAL')
           };
+          this.ageVerified = Boolean(this.usuario.ageVerified);
           this.authService.updateCurrentUser(this.usuario);
         },
         error: (error) => {
@@ -139,10 +146,24 @@ export class ClientePerfilComponent implements OnInit {
       return;
     }
 
-    const datosActualizados = {
+    const cleanDni = this.usuario.dni ? String(this.usuario.dni).trim() : '';
+    if (cleanDni && !/^\d{8}$/.test(cleanDni)) {
+      this.mensajeError = 'El DNI debe contener exactamente 8 d\u00edgitos num\u00e9ricos';
+      setTimeout(() => this.mensajeError = '', 3500);
+      return;
+    }
+    if (cleanDni && !this.ageVerified) {
+      this.mensajeError = 'Debes confirmar que eres mayor de 18 a\u00f1os y titular del DNI ingresado';
+      setTimeout(() => this.mensajeError = '', 3500);
+      return;
+    }
+
+    const datosActualizados: any = {
       name: this.usuario.name.trim(),
       email: this.usuario.email.trim(),
-      phone: this.usuario.phone && this.usuario.phone.trim() !== '' ? this.usuario.phone.trim() : null
+      phone: this.usuario.phone && this.usuario.phone.trim() !== '' ? this.usuario.phone.trim() : null,
+      dni: cleanDni,
+      ageVerified: cleanDni ? this.ageVerified : false
     };
 
     this.guardandoPerfil = true;
@@ -176,6 +197,31 @@ export class ClientePerfilComponent implements OnInit {
     if (!this.usuario?.name) return 'U';
     const primerNombre = this.usuario.name.trim().split(' ')[0];
     return primerNombre.substring(0, 2).toUpperCase();
+  }
+
+  consultarDniPerfil(): void {
+    const clean = (this.usuario?.dni || '').trim();
+    if (!/^\d{8}$/.test(clean)) {
+      this.mensajeError = 'Ingresa un DNI v\u00e1lido de 8 d\u00edgitos para consultar en RENIEC';
+      setTimeout(() => this.mensajeError = '', 3500);
+      return;
+    }
+    this.buscandoDni = true;
+    this.sunatService.consultarDni(clean).subscribe({
+      next: (res) => {
+        this.buscandoDni = false;
+        if (res?.nombreCompleto) {
+          this.usuario.name = res.nombreCompleto;
+          this.mensajeExito = `Nombre autocompletado con RENIEC: ${res.nombreCompleto}`;
+          setTimeout(() => this.mensajeExito = '', 4000);
+        }
+      },
+      error: (err) => {
+        this.buscandoDni = false;
+        this.mensajeError = err?.error?.message || 'No se pudo consultar el DNI en RENIEC';
+        setTimeout(() => this.mensajeError = '', 4000);
+      }
+    });
   }
 
   toggleEdicionPassword() {

@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { UsuarioService } from '../../services/usuario.service';
 import { UsuarioDTO, UsuarioCreateDTO } from '../../models/usuario.interface';
 import { ToastService } from '../../services/toast.service';
+import { SunatService } from '../../services/sunat.service';
 
 @Component({
   selector: 'app-perfil-admin',
@@ -40,11 +41,14 @@ export class PerfilAdminComponent implements OnInit {
   guardandoPerfil: boolean = false;
   guardandoPassword: boolean = false;
   vinculandoGoogle: boolean = false;
+  buscandoDni: boolean = false;
+  ageVerified: boolean = false;
 
   constructor(
     private readonly authService: AuthService,
     private readonly usuarioService: UsuarioService,
     private readonly toastService: ToastService,
+    private readonly sunatService: SunatService,
   ) {}
 
   ngOnInit() {
@@ -89,10 +93,13 @@ export class PerfilAdminComponent implements OnInit {
         const isGoogle = this.authService.isGoogleLinked(usuario);
         this.usuario = {
           ...usuario,
+          dni: usuario?.dni || '',
+          ageVerified: Boolean(usuario?.ageVerified || usuario?.dni),
           googleLinked: isGoogle,
           authProvider: isGoogle ? 'GOOGLE' : usuario?.authProvider || 'LOCAL',
         };
         this.usuarioEditado = { ...this.usuario };
+        this.ageVerified = Boolean(this.usuario.ageVerified);
         this.authService.updateCurrentUser(this.usuario);
         this.cargando = false;
       },
@@ -155,12 +162,24 @@ export class PerfilAdminComponent implements OnInit {
       return;
     }
 
+    const cleanDni = this.usuarioEditado.dni ? String(this.usuarioEditado.dni).trim() : '';
+    if (cleanDni && !/^\d{8}$/.test(cleanDni)) {
+      this.mostrarNotificacion('El DNI debe contener exactamente 8 d\u00edgitos num\u00e9ricos', 'error');
+      return;
+    }
+    if (cleanDni && !this.ageVerified) {
+      this.mostrarNotificacion('Debes confirmar la mayor\u00eda de edad (+18) y titularidad del DNI', 'error');
+      return;
+    }
+
     this.guardandoPerfil = true;
 
     const datosActualizar: UsuarioCreateDTO = {
       email: this.usuarioEditado.email,
       name: this.usuarioEditado.name,
       phone: this.usuarioEditado.phone,
+      dni: cleanDni,
+      ageVerified: cleanDni ? this.ageVerified : false,
       password: 'dummy_password_not_used',
       role: this.usuarioEditado.role,
     };
@@ -320,6 +339,28 @@ export class PerfilAdminComponent implements OnInit {
     const raw = (this.usuario?.name || this.usuarioEditado?.name || 'Admin').trim();
     const primer = raw.split(' ')[0] || 'AD';
     return primer.substring(0, 2).toUpperCase();
+  }
+
+  consultarDniAdminPerfil(): void {
+    const clean = (this.usuarioEditado?.dni || '').trim();
+    if (!/^\d{8}$/.test(clean)) {
+      this.mostrarNotificacion('Ingresa un DNI v\u00e1lido de 8 d\u00edgitos para consultar en RENIEC', 'error');
+      return;
+    }
+    this.buscandoDni = true;
+    this.sunatService.consultarDni(clean).subscribe({
+      next: (res) => {
+        this.buscandoDni = false;
+        if (res?.nombreCompleto) {
+          this.usuarioEditado.name = res.nombreCompleto;
+          this.mostrarNotificacion(`Datos RENIEC cargados: ${res.nombreCompleto}`, 'success');
+        }
+      },
+      error: (err) => {
+        this.buscandoDni = false;
+        this.mostrarNotificacion(err?.error?.message || 'No se pudo consultar el DNI en RENIEC', 'error');
+      }
+    });
   }
 
   private mostrarNotificacion(texto: string, tipo: 'success' | 'error'): void {

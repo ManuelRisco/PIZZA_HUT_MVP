@@ -30,12 +30,14 @@ public class CheckoutService {
     private final ExtraService extraService;
     private final SizeService sizeService;
     private final InventoryService inventoryService;
+    private final SunatReniecService sunatReniecService;
 
     public CheckoutService(OrderService orderService, OrderItemService orderItemService, AddressService addressService,
                            PaymentService paymentService, PromotionService promotionService,
                            OrderItemExtraService orderItemExtraService, IngredientService ingredientService,
                            PizzaService pizzaService, ExtraService extraService, SizeService sizeService,
-                           InventoryService inventoryService) {
+                           InventoryService inventoryService,
+                           @org.springframework.beans.factory.annotation.Autowired(required = false) SunatReniecService sunatReniecService) {
         this.orderService = orderService;
         this.orderItemService = orderItemService;
         this.addressService = addressService;
@@ -47,6 +49,7 @@ public class CheckoutService {
         this.extraService = extraService;
         this.sizeService = sizeService;
         this.inventoryService = inventoryService;
+        this.sunatReniecService = sunatReniecService;
     }
 
     public Order checkout(CheckoutRequestDTO req) {
@@ -67,19 +70,55 @@ public class CheckoutService {
 
         incrementPromotionUsage(promotionAUsar);
 
+        boolean wantsBoleta = Boolean.TRUE.equals(req.getWantsBoleta())
+                || (req.getOrder() != null && Boolean.TRUE.equals(req.getOrder().getWantsBoleta()));
+        if (wantsBoleta && sunatReniecService != null) {
+            String reqDni = req.getClienteDni() != null && !req.getClienteDni().isBlank()
+                    ? req.getClienteDni().trim()
+                    : (req.getOrder() != null ? req.getOrder().getBoletaClienteDni() : null);
+            String reqNombre = req.getClienteNombre() != null && !req.getClienteNombre().isBlank()
+                    ? req.getClienteNombre().trim()
+                    : (req.getOrder() != null ? req.getOrder().getBoletaClienteNombre() : null);
+            sunatReniecService.emitirBoletaParaPedido(savedOrder.getId(), reqDni, reqNombre);
+            savedOrder = orderService.obtenerPorId(savedOrder.getId()).orElse(savedOrder);
+        }
+
         return savedOrder;
     }
 
     private Integer processAddress(CheckoutRequestDTO req) {
+        if (!"DELIVERY".equalsIgnoreCase(req.getOrder().getDeliveryType())) {
+            return null;
+        }
         Integer addressId = req.getOrder().getAddressId();
-        if (req.getAddress() != null && "DELIVERY".equalsIgnoreCase(req.getOrder().getDeliveryType())) {
+        Integer userId = req.getOrder().getUserId();
+
+        // Si el cliente seleccionó un addressId existente que le pertenece, reutilizarlo sin crear filas duplicadas
+        if (addressId != null) {
+            var existingOpt = addressService.obtenerPorId(addressId);
+            if (existingOpt.isPresent()) {
+                Address existing = existingOpt.get();
+                if (userId == null || userId.equals(existing.getUserId())) {
+                    if (req.getAddress() != null && req.getAddress().getReference() != null
+                            && !req.getAddress().getReference().isBlank()
+                            && !req.getAddress().getReference().trim().equals(existing.getReference())) {
+                        existing.setReference(req.getAddress().getReference().trim());
+                        addressService.actualizarAddress(existing.getId(), existing);
+                    }
+                    return existing.getId();
+                }
+            }
+        }
+
+        if (req.getAddress() != null) {
             Address address = new Address();
-            address.setUserId(req.getOrder().getUserId());
+            address.setUserId(userId);
             address.setLine1(req.getAddress().getLine1());
             address.setCity(req.getAddress().getCity());
             address.setDistrict(req.getAddress().getDistrict());
             address.setReference(req.getAddress().getReference());
             address.setIsDefault(req.getAddress().getIsDefault() != null ? req.getAddress().getIsDefault() : false);
+            // crearAddress ahora deduplica automáticamente por (userId, line1, city, district)
             Address savedAddress = addressService.crearAddress(address);
             return savedAddress.getId();
         }

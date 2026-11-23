@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Order } from '../../services/order.service';
+import { SunatService } from '../../services/sunat.service';
 import { OrderCompleteDTO } from '../../models/admin.interface';
 import { PaginationComponent } from '../pagination/pagination';
 
@@ -34,6 +35,7 @@ export class Orders implements OnInit, OnChanges {
   error = false;
   loading = true;
   updatingOrderId: number | null = null;
+  emitiendoBoletaOrderId: number | null = null;
 
   // KPIs
   kpiTotalOrders = 0;
@@ -45,6 +47,7 @@ export class Orders implements OnInit, OnChanges {
 
   constructor(
     private readonly orderService: Order,
+    private readonly sunatService: SunatService,
     private readonly route: ActivatedRoute
   ) {}
 
@@ -272,5 +275,51 @@ export class Orders implements OnInit, OnChanges {
 
   trackByOrderId(index: number, item: OrderCompleteDTO): number {
     return item.id ?? index;
+  }
+
+  tieneBoleta(order: OrderCompleteDTO): boolean {
+    return Boolean(order?.boletaComprobante || order?.boletaNumero || order?.boletaPdfUrl);
+  }
+
+  verBoletaPdf(order: OrderCompleteDTO): void {
+    if (!order?.id) return;
+    this.sunatService.abrirBoletaPdf(order.id, order.boletaPdfUrl);
+  }
+
+  emitirBoletaAdmin(order: OrderCompleteDTO): void {
+    if (!order?.id || this.emitiendoBoletaOrderId === order.id) return;
+    let dni = (order.boletaClienteDni || order.userDni || '').trim();
+    if (!/^\d{8}$/.test(dni)) {
+      const promptDni = window.prompt('Ingresa el DNI de 8 dígitos del cliente para emitir la Boleta Electrónica SUNAT:', '');
+      if (!promptDni) return;
+      dni = promptDni.trim();
+      if (!/^\d{8}$/.test(dni)) {
+        this.mostrarMensaje('El DNI debe contener exactamente 8 dígitos numéricos', true);
+        return;
+      }
+    }
+    this.emitiendoBoletaOrderId = order.id;
+    this.sunatService.emitirBoletaPedido(order.id, { dni, nombre: order.userName, enviarCorreo: true }).subscribe({
+      next: (res) => {
+        this.emitiendoBoletaOrderId = null;
+        order.wantsBoleta = true;
+        order.boletaSerie = res.serie;
+        order.boletaNumero = res.numero;
+        order.boletaComprobante = res.comprobante;
+        order.boletaClienteDni = res.clienteDni;
+        order.boletaClienteNombre = res.clienteNombre;
+        order.boletaPdfUrl = res.pdfUrl;
+        order.boletaXmlUrl = res.xmlUrl;
+        order.boletaHash = res.hash;
+        order.boletaEstado = res.estado;
+        order.boletaTotalGravada = res.totalGravada;
+        order.boletaTotalIgv = res.totalIgv;
+        this.mostrarMensaje(`Boleta Electrónica ${res.comprobante} emitida y enviada al cliente por correo`);
+      },
+      error: (err) => {
+        this.emitiendoBoletaOrderId = null;
+        this.mostrarMensaje(err?.error?.message || 'Error al emitir la Boleta Electrónica', true);
+      }
+    });
   }
 }

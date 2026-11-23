@@ -58,6 +58,11 @@ public class XssProtectionFilter extends OncePerRequestFilter {
         }
 
         // 1. Verificar URI y Query String
+        String rawUri = request.getRequestURI();
+        if (rawUri != null && containsXssPayload(decodeQuietly(rawUri))) {
+            rejectXssRequest(request, response, "URI");
+            return;
+        }
         String rawQuery = request.getQueryString();
         if (rawQuery != null && containsXssPayload(decodeQuietly(rawQuery))) {
             rejectXssRequest(request, response, "query string");

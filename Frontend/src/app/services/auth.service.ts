@@ -208,12 +208,19 @@ export class AuthService {
     localStorage.setItem('userGoogleLinked', isGoogle ? 'true' : 'false');
     localStorage.setItem('userPasswordSet', hasPassword ? 'true' : 'false');
 
+    if (usuario.dni) {
+      localStorage.setItem('userDni', usuario.dni);
+      localStorage.setItem('userAgeVerified', usuario.ageVerified ? 'true' : 'false');
+    }
+
     this.currentUserSubject.next({
       id: usuario.id,
       email: usuario.email,
       name: usuario.name,
       role: usuario.role,
       phone: usuario.phone,
+      dni: usuario.dni || null,
+      ageVerified: Boolean(usuario.ageVerified),
       googleLinked: isGoogle,
       authProvider: isGoogle ? 'GOOGLE' : (usuario.authProvider || 'LOCAL'),
       passwordSet: hasPassword
@@ -340,12 +347,26 @@ export class AuthService {
         : (typeof currentUser.passwordSet === 'boolean' ? currentUser.passwordSet : localStorage.getItem('userPasswordSet') !== 'false');
       localStorage.setItem('userPasswordSet', hasPassword ? 'true' : 'false');
 
+      if (usuario.dni !== undefined) {
+        if (usuario.dni) {
+          localStorage.setItem('userDni', usuario.dni);
+          localStorage.setItem('userAgeVerified', 'true');
+        } else {
+          localStorage.removeItem('userDni');
+          localStorage.removeItem('userAgeVerified');
+        }
+      }
+      const resolvedDni = usuario.dni !== undefined ? usuario.dni : (currentUser.dni || localStorage.getItem('userDni') || null);
+      const resolvedAgeVerified = usuario.ageVerified !== undefined ? Boolean(usuario.ageVerified) : Boolean(currentUser.ageVerified || localStorage.getItem('userAgeVerified') === 'true');
+
       this.currentUserSubject.next({
         id: usuario.id,
         email: usuario.email,
         name: usuario.name,
         role: usuario.role,
         phone: usuario.phone,
+        dni: resolvedDni,
+        ageVerified: resolvedAgeVerified,
         googleLinked: isGoogle,
         authProvider: isGoogle ? 'GOOGLE' : (usuario.authProvider || 'LOCAL'),
         passwordSet: hasPassword
@@ -405,12 +426,16 @@ export class AuthService {
     if (tokenData?.email && tokenData.name && tokenData.role) {
       const isGoogle = localStorage.getItem('userGoogleLinked') === 'true' || localStorage.getItem('authProvider') === 'GOOGLE';
       const hasPassword = localStorage.getItem('userPasswordSet') !== 'false';
+      const cachedDni = localStorage.getItem('userDni') || null;
+      const cachedAge = localStorage.getItem('userAgeVerified') === 'true';
       this.currentUserSubject.next({
         id: tokenData.id,
         email: tokenData.email,
         name: tokenData.name,
         role: tokenData.role,
         phone: tokenData.phone,
+        dni: cachedDni,
+        ageVerified: cachedAge,
         googleLinked: isGoogle,
         authProvider: isGoogle ? 'GOOGLE' : 'LOCAL',
         passwordSet: hasPassword

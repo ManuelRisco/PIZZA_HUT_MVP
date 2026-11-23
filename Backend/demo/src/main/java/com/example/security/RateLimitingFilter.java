@@ -128,6 +128,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/ingresar")
                 || path.startsWith("/api/registro")
                 || path.startsWith("/api/recuperar-password")
+                || path.startsWith("/api/sunat/dni")
+                || (path.startsWith("/api/sunat/boleta") && "POST".equalsIgnoreCase(method))
                 || (path.startsWith("/api/auth/google") && "POST".equalsIgnoreCase(method))) {
             return "AUTH";
         }

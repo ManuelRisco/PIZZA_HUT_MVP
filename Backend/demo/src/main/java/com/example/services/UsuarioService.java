@@ -47,6 +47,20 @@ public class UsuarioService {
         if (usuario.getName() != null) {
             usuario.setName(usuario.getName().trim());
         }
+        if (usuario.getDni() != null && !usuario.getDni().trim().isEmpty()) {
+            String cleanDni = usuario.getDni().trim();
+            if (!cleanDni.matches("^\\d{8}$")) {
+                return "El DNI debe contener exactamente 8 d\u00edgitos num\u00e9ricos.";
+            }
+            if (!Boolean.TRUE.equals(usuario.getAgeVerified())) {
+                return "Debes confirmar que eres mayor de 18 a\u00f1os y titular del DNI ingresado.";
+            }
+            usuario.setDni(cleanDni);
+            usuario.setAgeVerified(true);
+        } else {
+            usuario.setDni(null);
+            usuario.setAgeVerified(false);
+        }
         if (usuario.getTokenVersion() == null) {
             usuario.setTokenVersion(1);
         }
@@ -168,6 +182,19 @@ public class UsuarioService {
             usuario.setEmail(usuarioActualizado.getEmail());
             usuario.setName(usuarioActualizado.getName());
             usuario.setPhone(usuarioActualizado.getPhone());
+            if (usuarioActualizado.getDni() != null) {
+                String cleanDni = usuarioActualizado.getDni().trim();
+                if (cleanDni.isEmpty()) {
+                    usuario.setDni(null);
+                    usuario.setAgeVerified(false);
+                } else {
+                    if (!cleanDni.matches("^\\d{8}$")) {
+                        throw new IllegalArgumentException("El DNI debe contener exactamente 8 d\u00edgitos num\u00e9ricos.");
+                    }
+                    usuario.setDni(cleanDni);
+                    usuario.setAgeVerified(true);
+                }
+            }
 
             // Si el rol cambia, incrementar versi\u00f3n del token e invalidar
             // refresh_token
@@ -206,6 +233,11 @@ public class UsuarioService {
     // contrase\u00f1a
     @CacheEvict(value = "users", key = "#p0")
     public Usuario actualizarPerfil(@NonNull Long id, String name, String email, String phone) {
+        return actualizarPerfil(id, name, email, phone, null, null);
+    }
+
+    @CacheEvict(value = "users", key = "#p0")
+    public Usuario actualizarPerfil(@NonNull Long id, String name, String email, String phone, String dni, Boolean ageVerified) {
         Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
         if (usuarioOpt.isEmpty()) {
             throw new IllegalArgumentException("Usuario no encontrado");
@@ -222,6 +254,23 @@ public class UsuarioService {
         usuario.setName(name);
         usuario.setEmail(email);
         usuario.setPhone(phone);
+
+        if (dni != null) {
+            String cleanDni = dni.trim();
+            if (cleanDni.isEmpty()) {
+                usuario.setDni(null);
+                usuario.setAgeVerified(false);
+            } else {
+                if (!cleanDni.matches("^\\d{8}$")) {
+                    throw new IllegalArgumentException("El DNI debe contener exactamente 8 d\u00edgitos num\u00e9ricos.");
+                }
+                if (ageVerified != null && !ageVerified && !cleanDni.equals(usuario.getDni())) {
+                    throw new IllegalArgumentException("Debes confirmar que eres mayor de 18 a\u00f1os y titular del DNI ingresado.");
+                }
+                usuario.setDni(cleanDni);
+                usuario.setAgeVerified(true);
+            }
+        }
 
         return usuarioRepository.save(usuario);
     }

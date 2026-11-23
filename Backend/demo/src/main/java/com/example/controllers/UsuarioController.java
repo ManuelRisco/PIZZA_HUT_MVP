@@ -57,8 +57,15 @@ public class UsuarioController {
             usuario.setPasswordHash(usuarioDTO.getPassword());
         }
 
-        // PREVENCION DE ESCALADA DE PRIVILEGIOS: Todo registro por este endpoint publico siempre sera CUSTOMER
-        usuario.setRole(Usuario.Role.CUSTOMER);
+        // PREVENCION DE ESCALADA DE PRIVILEGIOS: Solo un ADMIN autenticado puede asignar rol ADMIN
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        boolean callerIsAdmin = auth != null && auth.getAuthorities() != null
+                && auth.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        if (callerIsAdmin && usuarioDTO.getRole() != null) {
+            usuario.setRole(usuarioDTO.getRole());
+        } else {
+            usuario.setRole(Usuario.Role.CUSTOMER);
+        }
 
         String mensaje = usuarioService.registrarUsuario(usuario);
         if (mensaje.contains("\u00e9xito")) {
@@ -222,11 +229,15 @@ public class UsuarioController {
         Usuario usuario = usuarioService.obtenerPorId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(MSG_USUARIO_NO_ENCONTRADO));
 
-        String newName = updates.containsKey("name") ? ((String) updates.get("name")).trim() : usuario.getName();
-        String newEmail = updates.containsKey("email") ? ((String) updates.get("email")).trim() : usuario.getEmail();
-        String newPhone = updates.containsKey("phone") ? ((String) updates.get("phone")).trim() : usuario.getPhone();
+        String newName = updates.containsKey("name") && updates.get("name") != null ? String.valueOf(updates.get("name")).trim() : usuario.getName();
+        String newEmail = updates.containsKey("email") && updates.get("email") != null ? String.valueOf(updates.get("email")).trim() : usuario.getEmail();
+        String newPhone = updates.containsKey("phone") && updates.get("phone") != null ? String.valueOf(updates.get("phone")).trim() : usuario.getPhone();
+        String newDni = updates.containsKey("dni") ? (updates.get("dni") != null ? String.valueOf(updates.get("dni")).trim() : "") : null;
+        Boolean ageVerified = updates.containsKey("ageVerified") && updates.get("ageVerified") != null
+                ? Boolean.parseBoolean(String.valueOf(updates.get("ageVerified")))
+                : null;
 
-        Usuario usuarioActualizado = usuarioService.actualizarPerfil(userId, newName, newEmail, newPhone);
+        Usuario usuarioActualizado = usuarioService.actualizarPerfil(userId, newName, newEmail, newPhone, newDni, ageVerified);
         return ResponseEntity.ok(ApiResponse.success(usuarioMapper.toDto(usuarioActualizado)));
     }
 

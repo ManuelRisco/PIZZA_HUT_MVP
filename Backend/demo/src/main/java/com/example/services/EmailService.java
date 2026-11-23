@@ -9,7 +9,9 @@ import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -50,6 +52,12 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final UsuarioRepository usuarioRepository;
     private final JdbcTemplate jdbcTemplate;
+    private SunatReniecService sunatReniecService;
+
+    @Autowired(required = false)
+    public void setSunatReniecService(SunatReniecService sunatReniecService) {
+        this.sunatReniecService = sunatReniecService;
+    }
 
     @Value("${app.mail.enabled:true}")
     private boolean mailEnabled;
@@ -132,14 +140,38 @@ public class EmailService {
         boolean adminSent = false;
         int adminCount = 0;
 
-        // 1. Correo de confirmacion para el cliente que realizo el pedido
+        // 1. Correo de confirmacion para el cliente que realizo el pedido (con PDF de Boleta Electronica adjunto si aplica)
         if (isDeliverableEmail(customerEmail)) {
             try {
-                String customerSubject = "Confirmaci\u00f3n de tu Pedido #" + order.getId() + " - Pizza Hut";
+                boolean hasBoleta = Boolean.TRUE.equals(order.getWantsBoleta()) || order.getBoletaNumero() != null;
+                String comprobanteLabel = order.getBoletaComprobante() != null ? order.getBoletaComprobante() : "";
+                String customerSubject = hasBoleta && !comprobanteLabel.isBlank()
+                        ? "Confirmaci\u00f3n de tu Pedido #" + order.getId() + " y Boleta Electr\u00f3nica " + comprobanteLabel + " - Pizza Hut"
+                        : "Confirmaci\u00f3n de tu Pedido #" + order.getId() + " - Pizza Hut";
                 String customerHtml = buildCustomerOrderHtml(order);
-                sendHtmlMessage(List.of(customerEmail), customerSubject, customerHtml);
+
+                byte[] boletaPdfBytes = null;
+                String boletaFilename = null;
+                if (hasBoleta && sunatReniecService != null) {
+                    try {
+                        boletaPdfBytes = sunatReniecService.obtenerPdfBoleta(order.getId());
+                        String serie = order.getBoletaSerie() != null ? order.getBoletaSerie() : "BBB1";
+                        int num = order.getBoletaNumero() != null ? order.getBoletaNumero() : order.getId();
+                        boletaFilename = String.format("Boleta_%s-%06d.pdf", serie, num);
+                    } catch (Exception pdfEx) {
+                        log.warn("No se pudo adjuntar el PDF de la boleta al correo del pedido #{}: {}", order.getId(), pdfEx.getMessage());
+                    }
+                }
+
+                if (boletaPdfBytes != null && boletaPdfBytes.length > 0 && boletaFilename != null) {
+                    sendHtmlMessageWithAttachment(List.of(customerEmail), customerSubject, customerHtml,
+                            boletaFilename, boletaPdfBytes, "application/pdf");
+                } else {
+                    sendHtmlMessage(List.of(customerEmail), customerSubject, customerHtml);
+                }
                 customerSent = true;
-                log.info("Correo de confirmaci\u00f3n del pedido #{} enviado al cliente {}.", order.getId(), customerEmail);
+                log.info("Correo de confirmaci\u00f3n del pedido #{} enviado al cliente {} (boletaAdjunta={}).",
+                        order.getId(), customerEmail, boletaPdfBytes != null);
             } catch (Exception ex) {
                 log.error("Error al enviar correo al cliente ({}) para pedido #{}: {}", customerEmail, orderId, ex.getMessage());
             }
@@ -203,11 +235,65 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    protected void sendHtmlMessageWithAttachment(List<String> toAddresses,
+                                                 String subject,
+                                                 String htmlBody,
+                                                 String attachmentFilename,
+                                                 byte[] attachmentBytes,
+                                                 String contentType) throws Exception {
+        String from = resolveFromAddress();
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+        helper.setFrom(new InternetAddress(from, "Pizza Hut Facturaci\u00f3n Electr\u00f3nica", StandardCharsets.UTF_8.name()));
+        helper.setTo(toAddresses.toArray(new String[0]));
+        helper.setSubject(subject);
+        helper.setText(htmlBody, true);
+        if (attachmentBytes != null && attachmentBytes.length > 0 && attachmentFilename != null) {
+            helper.addAttachment(attachmentFilename, new ByteArrayResource(attachmentBytes),
+                    contentType != null ? contentType : "application/pdf");
+        }
+        mailSender.send(message);
+    }
+
+    public boolean sendBoletaEmailForOrder(Integer orderId) {
+        if (orderId == null || !isMailOperational()) {
+            return false;
+        }
+        OrderCompleteDTO order = loadCompleteOrder(orderId);
+        if (order == null || !isDeliverableEmail(order.getUserEmail())) {
+            return false;
+        }
+        try {
+            String comprobante = order.getBoletaComprobante() != null ? order.getBoletaComprobante() : ("BBB1-" + orderId);
+            String subject = "Boleta de Venta Electr\u00f3nica " + comprobante + " (Pedido #" + order.getId() + ") - Pizza Hut";
+            String html = buildCustomerOrderHtml(order);
+            byte[] pdfBytes = sunatReniecService != null ? sunatReniecService.obtenerPdfBoleta(orderId) : null;
+            String serie = order.getBoletaSerie() != null ? order.getBoletaSerie() : "BBB1";
+            int num = order.getBoletaNumero() != null ? order.getBoletaNumero() : orderId;
+            String filename = String.format("Boleta_%s-%06d.pdf", serie, num);
+
+            if (pdfBytes != null && pdfBytes.length > 0) {
+                sendHtmlMessageWithAttachment(List.of(order.getUserEmail().trim()), subject, html, filename, pdfBytes, "application/pdf");
+            } else {
+                sendHtmlMessage(List.of(order.getUserEmail().trim()), subject, html);
+            }
+            return true;
+        } catch (Exception ex) {
+            log.error("Error al enviar correo con Boleta Electr\u00f3nica para pedido #{}: {}", orderId, ex.getMessage());
+            return false;
+        }
+    }
+
     private OrderCompleteDTO loadCompleteOrder(Integer orderId) {
         String sql = """
             SELECT o.id AS order_id, o.delivery_type, o.status, o.subtotal, o.deliveryFee, o.discount,
                    o.promo_code, o.total, o.notes, o.estimatedDelivery, o.createdAt AS order_date,
-                   u.id AS user_id, u.name AS customer_name, u.email AS customer_email, u.phone AS customer_phone,
+                   o.wants_boleta, o.boleta_tipo_comprobante, o.boleta_serie, o.boleta_numero,
+                   o.boleta_cliente_dni, o.boleta_cliente_nombre, o.boleta_cliente_direccion,
+                   o.boleta_pdf_url, o.boleta_xml_url, o.boleta_cdr_url, o.boleta_enlace,
+                   o.boleta_hash, o.boleta_qr, o.boleta_estado, o.boleta_total_gravada,
+                   o.boleta_total_igv, o.boleta_emitida_at,
+                   u.id AS user_id, u.name AS customer_name, u.email AS customer_email, u.phone AS customer_phone, u.dni AS customer_dni,
                    a.id AS address_id, a.line1 AS address_line1, a.city AS address_city,
                    a.district AS address_district, a.reference AS address_reference,
                    pm.id AS payment_method_id, pm.name AS payment_method_name
@@ -225,6 +311,7 @@ public class EmailService {
             dto.setUserName(rs.getString("customer_name"));
             dto.setUserEmail(rs.getString("customer_email"));
             dto.setUserPhone(rs.getString("customer_phone"));
+            dto.setUserDni(rs.getString("customer_dni"));
             dto.setAddressId(rs.getObject("address_id") != null ? rs.getInt("address_id") : null);
             dto.setAddressLine1(rs.getString("address_line1"));
             dto.setAddressCity(rs.getString("address_city"));
@@ -244,6 +331,30 @@ public class EmailService {
             dto.setEstimatedDelivery(est != null ? est.toLocalDateTime() : null);
             Timestamp created = rs.getTimestamp("order_date");
             dto.setCreatedAt(created != null ? created.toLocalDateTime() : LocalDateTime.now());
+
+            dto.setWantsBoleta(rs.getObject("wants_boleta") != null && rs.getBoolean("wants_boleta"));
+            dto.setBoletaTipoComprobante(rs.getObject("boleta_tipo_comprobante") != null ? rs.getInt("boleta_tipo_comprobante") : null);
+            String serie = rs.getString("boleta_serie");
+            Integer numero = rs.getObject("boleta_numero") != null ? rs.getInt("boleta_numero") : null;
+            dto.setBoletaSerie(serie);
+            dto.setBoletaNumero(numero);
+            if (serie != null && numero != null) {
+                dto.setBoletaComprobante(serie + "-" + String.format("%06d", numero));
+            }
+            dto.setBoletaClienteDni(rs.getString("boleta_cliente_dni"));
+            dto.setBoletaClienteNombre(rs.getString("boleta_cliente_nombre"));
+            dto.setBoletaClienteDireccion(rs.getString("boleta_cliente_direccion"));
+            dto.setBoletaPdfUrl(rs.getString("boleta_pdf_url"));
+            dto.setBoletaXmlUrl(rs.getString("boleta_xml_url"));
+            dto.setBoletaCdrUrl(rs.getString("boleta_cdr_url"));
+            dto.setBoletaEnlace(rs.getString("boleta_enlace"));
+            dto.setBoletaHash(rs.getString("boleta_hash"));
+            dto.setBoletaQr(rs.getString("boleta_qr"));
+            dto.setBoletaEstado(rs.getString("boleta_estado"));
+            dto.setBoletaTotalGravada(rs.getBigDecimal("boleta_total_gravada"));
+            dto.setBoletaTotalIgv(rs.getBigDecimal("boleta_total_igv"));
+            Timestamp emitida = rs.getTimestamp("boleta_emitida_at");
+            dto.setBoletaEmitidaAt(emitida != null ? emitida.toLocalDateTime() : null);
             return dto;
         }, orderId);
 
@@ -343,6 +454,7 @@ public class EmailService {
                   <h3 style="margin:0 0 10px;font-size:16px;color:#111827;">Detalle de tu pedido</h3>
                   %s
                   %s
+                  %s
                   <p style="margin:24px 0 0;font-size:13px;color:#6b7280;text-align:center;">
                     Si tienes alguna consulta sobre tu pedido #%d, responde a este correo o cont\u00e1ctanos indicando tu n\u00famero de orden.
                   </p>
@@ -361,6 +473,7 @@ public class EmailService {
                 buildNotesRowHtml(order.getNotes()),
                 buildOrderItemsTableHtml(order.getItems()),
                 buildOrderTotalsHtml(order),
+                buildBoletaSummaryHtml(order),
                 order.getId()
         );
     }
@@ -635,6 +748,36 @@ public class EmailService {
             return "";
         }
         return "<p style=\"margin:4px 0;\"><strong>Notas del pedido:</strong> " + escapeHtml(notes) + "</p>";
+    }
+
+    private String buildBoletaSummaryHtml(OrderCompleteDTO order) {
+        if (order == null || (!Boolean.TRUE.equals(order.getWantsBoleta()) && order.getBoletaNumero() == null)) {
+            return "";
+        }
+        String comprobante = order.getBoletaComprobante() != null ? escapeHtml(order.getBoletaComprobante()) : "BBB1-" + order.getId();
+        String dni = order.getBoletaClienteDni() != null ? escapeHtml(order.getBoletaClienteDni()) : "--------";
+        String denom = order.getBoletaClienteNombre() != null ? escapeHtml(order.getBoletaClienteNombre()) : escapeHtml(order.getUserName());
+        String gravada = formatMoney(order.getBoletaTotalGravada());
+        String igv = formatMoney(order.getBoletaTotalIgv());
+        String total = formatMoney(order.getTotal());
+        String hash = order.getBoletaHash() != null && !order.getBoletaHash().isBlank()
+                ? "<p style=\"margin:4px 0;font-size:12px;color:#4b5563;\"><strong>Resumen Hash CPE:</strong> <code>" + escapeHtml(order.getBoletaHash()) + "</code></p>"
+                : "";
+        String downloadBtn = (order.getBoletaPdfUrl() != null && order.getBoletaPdfUrl().startsWith("http"))
+                ? "<div style=\"margin-top:12px;\"><a href=\"" + escapeHtml(order.getBoletaPdfUrl()) + "\" target=\"_blank\" style=\"display:inline-block;background:#c8102e;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:10px 18px;border-radius:8px;\">Descargar Boleta de Venta Electr\u00f3nica (PDF)</a></div>"
+                : "";
+
+        return """
+            <div style="margin-top:20px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px 18px;font-size:13px;color:#14532d;">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;font-weight:800;color:#15803d;margin-bottom:4px;">Comprobante Electr\u00f3nico SUNAT Adjunto en PDF</div>
+              <h4 style="margin:0 0 8px;font-size:16px;color:#14532d;">Boleta de Venta Electr\u00f3nica %s</h4>
+              <p style="margin:4px 0;"><strong>DNI Cliente:</strong> %s &nbsp;|&nbsp; <strong>Denominaci\u00f3n:</strong> %s</p>
+              <p style="margin:4px 0;"><strong>Op. Gravada:</strong> %s &nbsp;|&nbsp; <strong>I.G.V. (18%%):</strong> %s &nbsp;|&nbsp; <strong>Importe Total:</strong> %s</p>
+              %s
+              <p style="margin:8px 0 0;font-size:12px;color:#166534;">Hemos adjuntado el archivo PDF oficial de tu Boleta de Venta Electr\u00f3nica a este correo.</p>
+              %s
+            </div>
+            """.formatted(comprobante, dni, denom, gravada, igv, total, hash, downloadBtn);
     }
 
     private String translateMovementType(String movementType) {

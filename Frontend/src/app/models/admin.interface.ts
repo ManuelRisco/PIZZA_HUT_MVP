@@ -33,6 +33,25 @@ export interface OrderDTO {
   emailSent?: boolean;
   emailSentTo?: string | null;
   adminEmailSent?: boolean;
+  wantsBoleta?: boolean;
+  boletaTipoComprobante?: number | null;
+  boletaSerie?: string | null;
+  boletaNumero?: number | null;
+  boletaComprobante?: string | null;
+  boletaClienteDni?: string | null;
+  boletaClienteNombre?: string | null;
+  boletaClienteDireccion?: string | null;
+  boletaPdfUrl?: string | null;
+  boletaXmlUrl?: string | null;
+  boletaCdrUrl?: string | null;
+  boletaEnlace?: string | null;
+  boletaHash?: string | null;
+  boletaQr?: string | null;
+  boletaEstado?: string | null;
+  boletaError?: string | null;
+  boletaTotalGravada?: number | null;
+  boletaTotalIgv?: number | null;
+  boletaEmitidaAt?: string | null;
 }
 
 // OrderItem (Items de pedido)
@@ -63,6 +82,7 @@ export interface OrderCompleteDTO {
   userName?: string;
   userEmail?: string;
   userPhone?: string;
+  userDni?: string | null;
 
   // Dirección
   addressId?: number | null;
@@ -92,6 +112,27 @@ export interface OrderCompleteDTO {
   notes?: string | null;
   estimatedDelivery?: string | null;
   createdAt?: string;
+
+  // Boleta de Venta Electrónica (SUNAT / Nubefact)
+  wantsBoleta?: boolean;
+  boletaTipoComprobante?: number | null;
+  boletaSerie?: string | null;
+  boletaNumero?: number | null;
+  boletaComprobante?: string | null;
+  boletaClienteDni?: string | null;
+  boletaClienteNombre?: string | null;
+  boletaClienteDireccion?: string | null;
+  boletaPdfUrl?: string | null;
+  boletaXmlUrl?: string | null;
+  boletaCdrUrl?: string | null;
+  boletaEnlace?: string | null;
+  boletaHash?: string | null;
+  boletaQr?: string | null;
+  boletaEstado?: string | null;
+  boletaError?: string | null;
+  boletaTotalGravada?: number | null;
+  boletaTotalIgv?: number | null;
+  boletaEmitidaAt?: string | null;
 
   // Items del pedido
   items?: OrderItemDTO[];

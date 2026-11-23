@@ -355,6 +355,144 @@
             aria-describedby="notes-help"
           ></textarea>
         </div>
+
+        <!-- Sección: Emisión de Boleta de Venta Electrónica (SUNAT / Nubefact) -->
+        <div style="margin-top: 16px; background: #fff; border: 2px solid #e5e7eb; border-radius: 14px; padding: 14px 16px;">
+          <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; margin: 0;">
+            <input
+              type="checkbox"
+              name="wantsBoleta"
+              [(ngModel)]="wantsBoleta"
+              [ngModelOptions]="{ standalone: true }"
+              style="margin-top: 3px; width: 18px; height: 18px; accent-color: #c8102e; cursor: pointer;"
+            />
+            <div style="flex: 1;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                <span style="font-weight: 800; font-size: 0.92rem; color: #111827;">
+                  <i class="bi bi-receipt-cutoff" style="color: #c8102e; margin-right: 4px;"></i>
+                  Solicitar Boleta de Venta Electrónica (SUNAT)
+                </span>
+                <span style="font-size: 0.7rem; font-weight: 800; background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 999px;">
+                  PDF POR CORREO
+                </span>
+              </div>
+              <small style="display: block; color: #6b7280; font-size: 0.78rem; margin-top: 3px;">
+                Se generará tu comprobante electrónico serie <strong>BBB1</strong> con el desglose de productos e I.G.V. (18%) y te enviaremos el PDF adjunto a tu correo.
+              </small>
+            </div>
+          </label>
+
+          @if (wantsBoleta) {
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #d1d5db;">
+              @if (userHasSavedDni && !editingSavedDni) {
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                  <div>
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: #15803d;">
+                      <i class="bi bi-patch-check-fill"></i> DNI Configurado en tu Cuenta
+                    </div>
+                    <div style="font-size: 0.88rem; font-weight: 800; color: #14532d; margin-top: 2px;">
+                      DNI: {{ boletaDni }} — {{ boletaNombre || 'Cliente Verificado' }}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="editingSavedDni = true"
+                    style="background: #fff; border: 1px solid #86efac; color: #166534; font-size: 0.76rem; font-weight: 700; padding: 6px 10px; border-radius: 8px; cursor: pointer;"
+                  >
+                    <i class="bi bi-pencil-square"></i> Cambiar DNI
+                  </button>
+                </div>
+              } @else {
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px;">
+                  <label for="cartBoletaDni" style="display: block; font-size: 0.8rem; font-weight: 700; color: #1f2937; margin-bottom: 6px;">
+                    Configura tu DNI para tus Boletas Electrónicas (se guardará para tus próximos pedidos)
+                  </label>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <input
+                      id="cartBoletaDni"
+                      type="text"
+                      maxlength="8"
+                      [(ngModel)]="boletaDni"
+                      [ngModelOptions]="{ standalone: true }"
+                      placeholder="Ingresa tu DNI (8 dígitos)"
+                      (keyup.enter)="consultarDniCarrito()"
+                      style="flex: 1; min-width: 150px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.85rem;"
+                    />
+                    <button
+                      type="button"
+                      (click)="consultarDniCarrito()"
+                      [disabled]="buscandoDni || boletaDni.trim().length !== 8"
+                      style="background: #111827; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.8rem; font-weight: 700; cursor: pointer;"
+                    >
+                      <i class="bi" [ngClass]="buscandoDni ? 'bi-arrow-repeat' : 'bi-search'"></i>
+                      {{ buscandoDni ? 'Buscando...' : 'Buscar RENIEC' }}
+                    </button>
+                  </div>
+
+                  @if (boletaNombre) {
+                    <div style="margin-top: 8px;">
+                      <label for="cartBoletaNombre" style="display: block; font-size: 0.75rem; font-weight: 700; color: #4b5563; margin-bottom: 3px;">
+                        Denominación del Cliente (RENIEC)
+                      </label>
+                      <input
+                        id="cartBoletaNombre"
+                        type="text"
+                        [(ngModel)]="boletaNombre"
+                        [ngModelOptions]="{ standalone: true }"
+                        style="width: 100%; padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.83rem; background: #fff; font-weight: 700;"
+                      />
+                    </div>
+                  }
+
+                  @if (boletaDniMsg) {
+                    <div style="margin-top: 6px; font-size: 0.78rem; color: #15803d; font-weight: 700;">
+                      <i class="bi bi-check-circle-fill"></i> {{ boletaDniMsg }}
+                    </div>
+                  }
+                  @if (boletaDniError) {
+                    <div style="margin-top: 6px; font-size: 0.78rem; color: #b91c1c; font-weight: 700;">
+                      <i class="bi bi-exclamation-triangle-fill"></i> {{ boletaDniError }}
+                    </div>
+                  }
+
+                  <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.77rem; color: #111827; font-weight: 600; margin-top: 10px; cursor: pointer;">
+                    <input
+                      type="checkbox"
+                      name="cartBoletaAgeVerified"
+                      [(ngModel)]="boletaAgeVerified"
+                      [ngModelOptions]="{ standalone: true }"
+                      style="margin-top: 2px; width: 16px; height: 16px; accent-color: #c8102e; cursor: pointer;"
+                    />
+                    <span>
+                      Declaro ser <strong>mayor de edad (+18 años)</strong> y que el <strong>DNI ingresado me pertenece</strong>.
+                    </span>
+                  </label>
+
+                  <div style="margin-top: 10px; display: flex; justify-content: flex-end; gap: 8px;">
+                    @if (userHasSavedDni) {
+                      <button
+                        type="button"
+                        (click)="editingSavedDni = false"
+                        style="background: #e5e7eb; color: #374151; border: none; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer;"
+                      >
+                        Cancelar
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      (click)="guardarDniEnCuenta()"
+                      [disabled]="guardandoDni || boletaDni.trim().length !== 8 || !boletaAgeVerified"
+                      style="background: #c8102e; color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 0.78rem; font-weight: 700; cursor: pointer;"
+                    >
+                      <i class="bi bi-floppy-fill"></i>
+                      {{ guardandoDni ? 'Guardando...' : 'Guardar DNI en mi cuenta' }}
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
         </section>
       </div>
 
@@ -611,6 +749,27 @@
                 El envío de correo a <b>{{ confirmedEmailAddress || 'tu cuenta' }}</b> está pendiente de verificación SMTP.
               </span>
             </div>
+          </div>
+        }
+
+        @if (confirmedBoletaComprobante) {
+          <div style="margin: 12px 0; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 12px 14px; text-align: left;">
+            <div style="font-size: 0.74rem; font-weight: 800; color: #15803d; text-transform: uppercase;">
+              <i class="bi bi-file-earmark-pdf-fill"></i> Boleta de Venta Electrónica Emitida (SUNAT)
+            </div>
+            <div style="font-size: 0.95rem; font-weight: 900; color: #14532d; margin-top: 2px;">
+              Comprobante {{ confirmedBoletaComprobante }} (DNI: {{ boletaDni }})
+            </div>
+            <p style="font-size: 0.78rem; color: #166534; margin: 4px 0 10px;">
+              El archivo PDF oficial de tu Boleta de Venta Electrónica fue adjuntado a tu correo electrónico.
+            </p>
+            <button
+              type="button"
+              (click)="abrirBoletaConfirmadaPdf()"
+              style="width: 100%; background: #15803d; color: #fff; border: none; border-radius: 9px; padding: 9px 14px; font-size: 0.82rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;"
+            >
+              <i class="bi bi-file-earmark-pdf-fill"></i> Ver / Descargar Boleta Electrónica (PDF)
+            </button>
           </div>
         }
 

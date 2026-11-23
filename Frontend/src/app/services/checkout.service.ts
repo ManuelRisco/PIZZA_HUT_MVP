@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { of, throwError, Observable } from 'rxjs';
+import { throwError, Observable } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { CheckoutPayload, CheckoutResult } from '../models/checkout.model';
 import { CartService } from './cart.service';
@@ -17,12 +17,12 @@ export class CheckoutService {
   checkout(payload: CheckoutPayload = {}): Observable<CheckoutResult> {
     const user = this.authService.getCurrentUser();
     if (!user?.id) {
-      return throwError(() => new Error('Debes iniciar sesi\u00f3n para confirmar tu pedido.'));
+      return throwError(() => new Error('Debes iniciar sesión para confirmar tu pedido.'));
     }
 
     const itemsSnapshot = this.cartService.getItemsSnapshot();
     if (itemsSnapshot.length === 0) {
-      return throwError(() => new Error('Tu carrito est\u00e1 vac\u00edo.'));
+      return throwError(() => new Error('Tu carrito está vacío.'));
     }
 
     const totals = this.cartService.getTotals();
@@ -46,8 +46,15 @@ export class CheckoutService {
         total: Number(finalTotalWithDiscount.toFixed(2)),
         promoCode: payload.promoCode ?? null,
         notes: payload.notes ?? null,
-        estimatedDelivery: payload.estimatedDelivery ?? null
+        estimatedDelivery: payload.estimatedDelivery ?? null,
+        wantsBoleta: Boolean(payload.wantsBoleta),
+        boletaClienteDni: payload.clienteDni ?? null,
+        boletaClienteNombre: payload.clienteNombre ?? null
       },
+      wantsBoleta: Boolean(payload.wantsBoleta),
+      clienteDni: payload.clienteDni ?? null,
+      clienteNombre: payload.clienteNombre ?? null,
+      ageVerified: Boolean(payload.ageVerified),
       address: payload.address && deliveryType === 'DELIVERY' ? {
         line1: payload.address.line1,
         city: payload.address.city,
@@ -80,11 +87,11 @@ export class CheckoutService {
       tap(() => this.cartService.clearCart()),
       map(orderResponse => {
         const updatedTotals = { ...totals, deliveryFee, total: finalTotal };
-        return { 
-          order: orderResponse, 
-          items: [], // El backend ahora devuelve todo en OrderDTO, asi que esto es solo para no romper el modelo
+        return {
+          order: orderResponse,
+          items: [],
           payment: unifiedPayload.payment ? { ...unifiedPayload.payment, orderId: orderResponse.id } : undefined,
-          totals: updatedTotals 
+          totals: updatedTotals
         } as any;
       }),
       catchError((error) => throwError(() => this.normalizeError(error)))
@@ -99,9 +106,8 @@ export class CheckoutService {
     const message =
       error?.error?.message ||
       error?.message ||
-      'No se pudo completar el pedido. Int\u00e9ntalo nuevamente.';
+      'No se pudo completar el pedido. Inténtalo nuevamente.';
 
     return new Error(message);
   }
 }
-

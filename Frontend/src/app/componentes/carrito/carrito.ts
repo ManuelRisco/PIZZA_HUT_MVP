@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -18,8 +18,8 @@ import { PromocionService } from '../../services/promocion.service';
 import { AccessibilityService } from '../../services/accessibility.service';
 import { ToastService } from '../../services/toast.service';
 import { Payment } from '../../services/payment.service';
-
-declare var KR: any;
+import { SunatService } from '../../services/sunat.service';
+import { UsuarioService } from '../../services/usuario.service';
 
 @Component({
   selector: 'app-carrito',
@@ -86,7 +86,12 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     };
     this.addressService.crear(newAddress).subscribe({
       next: (address) => {
-        this.direcciones.push(address);
+        const idx = this.direcciones.findIndex((d) => d.id === address.id);
+        if (idx === -1) {
+          this.direcciones.push(address);
+        } else {
+          this.direcciones[idx] = address;
+        }
         this.selectedAddressId = address.id || null;
         this.actualizarAddressForm();
         this.showNewAddressForm = false;
@@ -128,7 +133,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
   selectedPaymentMethodId: number | null = null;
   selectedPaymentMethod: PaymentMethodDTO | null = null;
   paymentMethodsLoaded = false;
-  cardForm = { holder: '', number: '', expiry: '', cvv: ''  };
+  cardForm = { holder: '', number: '', expiry: '', cvv: '' };
   mobileForm = { phone: '', reference: '' };
   notes = '';
   checkoutError = '';
@@ -143,6 +148,21 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
   confirmedEmailSent = false;
   confirmedEmailAddress = '';
   confirmedAdminEmailSent = false;
+  confirmedBoletaComprobante: string | null = null;
+  confirmedBoletaPdfUrl: string | null = null;
+
+  // ==== Boleta de Venta Electrónica (SUNAT / Nubefact) & DNI (RENIEC) ====
+  wantsBoleta = false;
+  userHasSavedDni = false;
+  editingSavedDni = false;
+  boletaDni = '';
+  boletaNombre = '';
+  boletaAgeVerified = false;
+  buscandoDni = false;
+  guardandoDni = false;
+  boletaDniMsg = '';
+  boletaDniError = '';
+
   processingStep: 1 | 2 | 3 | 4 = 1;
   processingProgress = 12;
   processingTitle = 'Registrando tu pedido...';
@@ -153,15 +173,12 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
   direcciones: AddressDTO[] = [];
   selectedAddressId: number | null = null;
 
-  // Modal de eliminación
   showDeleteModal = false;
   itemToDelete: CartItem | null = null;
 
-  // Delivery type
   deliveryType: 'PICKUP' | 'DELIVERY' = 'DELIVERY';
-  baseDeliveryFee = 5.0; // Costo de delivery por defecto
+  baseDeliveryFee = 5.0;
 
-  // Address form
   addressForm = {
     line1: '',
     city: '',
@@ -169,10 +186,8 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     reference: '',
   };
 
-  // Mapa de ingredientes para mostrar nombres
   ingredientesMap: Map<string, IngredientDTO> = new Map();
 
-  // Sistema de promociones
   promoCode = '';
   promoApplied = false;
   promoDiscount = 0;
@@ -192,6 +207,8 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     private readonly accessibility: AccessibilityService,
     private readonly toastService: ToastService,
     private readonly paymentService: Payment,
+    private readonly sunatService: SunatService,
+    private readonly usuarioService: UsuarioService,
     private readonly router: Router,
   ) {}
 
@@ -199,8 +216,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     this.subs.push(
       this.cartService.items$.subscribe((items) => {
         this.items = items;
-        this.recalcularTotales(); // Recalcular según el tipo de delivery
-        // Announce cart update
+        this.recalcularTotales();
         if (items.length === 0) {
           if (!this.isProcessing && !this.isSuccess) {
             this.accessibility.announce('Carrito vacío');
@@ -213,23 +229,54 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
 
     this.loadPaymentMethods();
     this.loadIngredientes();
-    this.cargarPromocionGuardada(); // Cargar código promocional guardado
+    this.cargarPromocionGuardada();
 
-    // Cargar direcciones del usuario autenticado
     const userId = this.authService.obtenerUsuarioId();
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser?.dni) {
+      this.boletaDni = currentUser.dni;
+      this.boletaNombre = currentUser.name || '';
+      this.boletaAgeVerified = true;
+      this.userHasSavedDni = true;
+    }
     if (userId) {
+      this.usuarioService.obtenerUsuarioActual().subscribe({
+        next: (u) => {
+          if (u) {
+            this.authService.updateCurrentUser(u);
+            if (u.dni && /^\d{8}$/.test(u.dni.trim())) {
+              this.boletaDni = u.dni.trim();
+              this.boletaNombre = u.name || '';
+              this.boletaAgeVerified = true;
+              this.userHasSavedDni = true;
+            }
+          }
+        },
+        error: () => {}
+      });
+
       this.addressService.obtenerPorUserId(userId).subscribe({
         next: (direcciones) => {
-          // Filtrar direcciones únicas por line1, city, district
           this.direcciones = direcciones.filter(
             (dir, idx, arr) =>
               arr.findIndex(
-                (d) => d.line1 === dir.line1 && d.city === dir.city && d.district === dir.district,
+                (d) =>
+                  (d.line1 || '').trim().toLowerCase() === (dir.line1 || '').trim().toLowerCase() &&
+                  (d.city || '').trim().toLowerCase() === (dir.city || '').trim().toLowerCase() &&
+                  (d.district || '').trim().toLowerCase() === (dir.district || '').trim().toLowerCase(),
               ) === idx,
           );
+          if (this.direcciones.length > 0 && !this.selectedAddressId) {
+            const def = this.direcciones.find((d) => d.isDefault) || this.direcciones[0];
+            this.selectedAddressId = def?.id || null;
+            this.onSavedAddressChange();
+          } else if (this.direcciones.length === 0) {
+            this.addressOption = 'new';
+          }
         },
         error: () => {
           this.direcciones = [];
+          this.addressOption = 'new';
         },
       });
     }
@@ -238,7 +285,6 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
       this.addressOption = 'saved';
     }
 
-    // Announce cart ready
     this.accessibility.announce('Carrito cargado. Revisa tus items y procede al pago');
   }
 
@@ -329,7 +375,6 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
-    // Si opción es 'saved', copiar datos al formulario antes de validar
     if (
       this.deliveryType === 'DELIVERY' &&
       this.addressOption === 'saved' &&
@@ -343,11 +388,22 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         this.addressForm.reference = dir.reference || '';
       }
     }
-    // Validar dirección si es DELIVERY
     const addressError = this.validateAddressForm();
     if (addressError) {
       this.checkoutError = addressError;
       return;
+    }
+
+    if (this.wantsBoleta) {
+      const cleanDni = (this.boletaDni || '').trim();
+      if (!/^\d{8}$/.test(cleanDni)) {
+        this.checkoutError = 'Para emitir Boleta de Venta Electrónica debes ingresar un DNI válido de 8 dígitos.';
+        return;
+      }
+      if (!this.userHasSavedDni && !this.boletaAgeVerified) {
+        this.checkoutError = 'Debes confirmar que eres mayor de 18 años (+18) y que el DNI ingresado te pertenece.';
+        return;
+      }
     }
 
     this.isProcessing = true;
@@ -359,20 +415,32 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     const payload: CheckoutPayload = {
       notes: combinedNotes,
       paymentMethodId: this.selectedPaymentMethodId,
-      deliveryType: this.deliveryType, // Agregar tipo de delivery
+      deliveryType: this.deliveryType,
+      wantsBoleta: this.wantsBoleta,
+      clienteDni: this.wantsBoleta ? this.boletaDni.trim() : undefined,
+      clienteNombre: this.wantsBoleta ? (this.boletaNombre.trim() || this.authService.getCurrentUser()?.name || '') : undefined,
+      ageVerified: this.wantsBoleta ? true : undefined,
     };
 
     if (this.deliveryType === 'DELIVERY' && this.addressOption === 'saved' && this.selectedAddressId) {
       payload.addressId = this.selectedAddressId;
+    } else if (this.deliveryType === 'DELIVERY' && this.addressOption === 'new') {
+      const existingMatch = this.direcciones.find(
+        (d) =>
+          (d.line1 || '').trim().toLowerCase() === this.addressForm.line1.trim().toLowerCase() &&
+          (d.city || '').trim().toLowerCase() === this.addressForm.city.trim().toLowerCase() &&
+          (d.district || '').trim().toLowerCase() === this.addressForm.district.trim().toLowerCase()
+      );
+      if (existingMatch?.id) {
+        payload.addressId = existingMatch.id;
+      }
     }
 
-    // Agregar código promocional y descuento si está aplicado
     if (this.promoApplied && this.promoCode.trim()) {
       payload.promoCode = this.promoCode.trim();
       payload.discount = this.promoDiscount;
     }
 
-    // Agregar dirección si es DELIVERY
     if (this.deliveryType === 'DELIVERY') {
       payload.address = {
         line1: this.addressForm.line1.trim(),
@@ -382,7 +450,6 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
       };
     }
 
-    // Simular que el pago fue exitoso automáticamente
     payload.payment = {
       paymentMethodId: this.selectedPaymentMethodId,
       amount: this.totals.total,
@@ -390,11 +457,8 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
       transactionId: 'SIM-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
     };
 
-    // Llamar directamente al backend
     this.finalizarCheckoutBackend(payload);
   }
-
-
 
   private clearProcessingTimers(): void {
     this.processingTimers.forEach((timerId) => clearTimeout(timerId));
@@ -418,14 +482,20 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         if (!this.isProcessing || this.processingStep >= 4) return;
         this.processingStep = 2;
         this.processingProgress = Math.max(this.processingProgress, 42);
-        this.processingTitle = 'Confirmando pago y preparando orden...';
-        this.processingSubtitle = 'Asegurando los detalles de tu pedido';
+        this.processingTitle = this.wantsBoleta
+          ? 'Emitiendo Boleta de Venta Electrónica SUNAT...'
+          : 'Confirmando pago y preparando orden...';
+        this.processingSubtitle = this.wantsBoleta
+          ? 'Generando comprobante electrónico serie BBB1 en Nubefact'
+          : 'Asegurando los detalles de tu pedido';
       }, 1100),
       setTimeout(() => {
         if (!this.isProcessing || this.processingStep >= 4) return;
         this.processingStep = 3;
         this.processingProgress = Math.max(this.processingProgress, 70);
-        this.processingTitle = 'Enviando confirmación a tu correo...';
+        this.processingTitle = this.wantsBoleta
+          ? 'Enviando tu Boleta Electrónica (PDF) por correo...'
+          : 'Enviando confirmación a tu correo...';
         this.processingSubtitle = 'Despachando el comprobante a tu bandeja y avisando a tienda';
       }, 2200),
     );
@@ -457,6 +527,21 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         this.confirmedEmailAddress =
           result?.order?.emailSentTo || this.authService.getCurrentUser()?.email || '';
         this.confirmedAdminEmailSent = Boolean(result?.order?.adminEmailSent);
+        this.confirmedBoletaComprobante = result?.order?.boletaComprobante || null;
+        this.confirmedBoletaPdfUrl = result?.order?.boletaPdfUrl || null;
+
+        if (this.wantsBoleta && /^\d{8}$/.test((this.boletaDni || '').trim())) {
+          this.userHasSavedDni = true;
+          this.editingSavedDni = false;
+          const cur = this.authService.getCurrentUser();
+          if (cur) {
+            this.authService.updateCurrentUser({
+              ...cur,
+              dni: this.boletaDni.trim(),
+              ageVerified: true
+            });
+          }
+        }
 
         const elapsed = Date.now() - startTime;
         const waitBeforeCompleteMs = Math.max(0, MIN_ANIMATION_MS - elapsed);
@@ -511,6 +596,67 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
   cerrarExito(): void {
     this.isSuccess = false;
     this.router.navigate(['/menu']);
+  }
+
+  consultarDniCarrito(): void {
+    this.boletaDniError = '';
+    this.boletaDniMsg = '';
+    const clean = (this.boletaDni || '').trim();
+    if (!/^\d{8}$/.test(clean)) {
+      this.boletaDniError = 'Ingresa un DNI válido de 8 dígitos numéricos.';
+      return;
+    }
+    this.buscandoDni = true;
+    this.sunatService.consultarDni(clean).subscribe({
+      next: (res) => {
+        this.buscandoDni = false;
+        if (res?.nombreCompleto) {
+          this.boletaNombre = res.nombreCompleto;
+          this.boletaDniMsg = `Titular RENIEC: ${res.nombreCompleto}`;
+        }
+      },
+      error: (err) => {
+        this.buscandoDni = false;
+        this.boletaDniError = err?.error?.message || 'No se pudo consultar el DNI en RENIEC.';
+      }
+    });
+  }
+
+  guardarDniEnCuenta(): void {
+    this.boletaDniError = '';
+    this.boletaDniMsg = '';
+    const clean = (this.boletaDni || '').trim();
+    if (!/^\d{8}$/.test(clean)) {
+      this.boletaDniError = 'Ingresa un DNI válido de 8 dígitos.';
+      return;
+    }
+    if (!this.boletaAgeVerified) {
+      this.boletaDniError = 'Debes confirmar que eres mayor de 18 años y titular del DNI.';
+      return;
+    }
+    this.guardandoDni = true;
+    this.sunatService.configurarDni(clean, true, this.boletaNombre || undefined).subscribe({
+      next: (u) => {
+        this.guardandoDni = false;
+        this.userHasSavedDni = true;
+        this.editingSavedDni = false;
+        if (u?.name) {
+          this.boletaNombre = u.name;
+        }
+        this.authService.updateCurrentUser(u);
+        this.boletaDniMsg = 'DNI guardado en tu cuenta para este y próximos pedidos.';
+        this.toastService.showSuccess('DNI vinculado correctamente a tu cuenta.');
+      },
+      error: (err) => {
+        this.guardandoDni = false;
+        this.boletaDniError = err?.error?.message || 'No se pudo vincular el DNI.';
+      }
+    });
+  }
+
+  abrirBoletaConfirmadaPdf(): void {
+    if (!this.confirmedOrderId) return;
+    this.sunatService.abrirBoletaPdf(this.confirmedOrderId, this.confirmedBoletaPdfUrl);
   }
 
   get isCheckoutDisabled(): boolean {
@@ -686,31 +832,6 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     return userNotes || extra;
   }
 
-  private generateTransactionId(): string | undefined {
-    if (!this.selectedPaymentMethod) {
-      return undefined;
-    }
-
-    const methodName = this.selectedPaymentMethod.name?.toLowerCase() ?? '';
-    const timestamp = Date.now().toString(36).toUpperCase();
-
-    if (this.requiresCardDetails) {
-      const digits = this.cardForm.number.replace(/\s+/g, '');
-      const lastDigits = digits.slice(-4);
-      return `CARD-${lastDigits}-${timestamp}`;
-    }
-
-    if (this.requiresMobileDetails) {
-      return `YAPE-${this.mobileForm.reference.trim()}-${timestamp}`;
-    }
-
-    if (methodName.includes('efectivo')) {
-      return `CASH-${timestamp}`;
-    }
-
-    return `PAY-${timestamp}`;
-  }
-
   getPaymentIcon(method: PaymentMethodDTO): string {
     const name = method.name?.toLowerCase() ?? '';
     if (name.includes('efectivo') || name.includes('cash')) {
@@ -725,13 +846,9 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     return 'bi-wallet2';
   }
 
-  /**
-   * Maneja el cambio de tipo de delivery
-   */
   onDeliveryTypeChange(): void {
     this.recalcularTotales();
 
-    // Limpiar el formulario de dirección si se selecciona PICKUP
     if (this.deliveryType === 'PICKUP') {
       this.addressForm = {
         line1: '',
@@ -741,10 +858,8 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
       };
     }
 
-    // Si cambia la opción de dirección, limpiar el formulario
     if (this.deliveryType === 'DELIVERY') {
       if (this.addressOption === 'saved') {
-        // Si hay una dirección seleccionada, cargar sus datos
         if (this.selectedAddressId) {
           this.onSavedAddressChange();
         } else {
@@ -756,7 +871,6 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
           };
         }
       } else if (this.addressOption === 'new') {
-        // Limpiar formulario para nueva dirección
         this.addressForm = {
           line1: '',
           city: '',
@@ -768,9 +882,6 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  /**
-   * Recalcula los totales según el tipo de delivery
-   */
   private recalcularTotales(): void {
     const baseTotals = this.cartService.getTotals();
 
@@ -789,12 +900,9 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  /**
-   * Valida los datos de dirección para delivery
-   */
   private validateAddressForm(): string | null {
     if (this.deliveryType === 'PICKUP') {
-      return null; // No se requiere dirección para pickup
+      return null;
     }
 
     if (!this.addressForm.line1.trim()) {
@@ -812,16 +920,10 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     return null;
   }
 
-  /**
-   * Obtiene la URL optimizada de una imagen
-   */
   getOptimizedImageUrl(imageUrl: string | undefined): string {
     return this.imageOptimizer.optimizeImageUrl(imageUrl, 'low');
   }
 
-  /**
-   * Aplica un código promocional al carrito
-   */
   aplicarPromocion(): void {
     if (!this.promoCode.trim()) {
       this.promoError = 'Ingresa un código promocional';
@@ -836,13 +938,8 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     this.promoError = '';
     this.promoSuccess = '';
 
-    // Calcular subtotal antes del delivery
     const subtotal = this.cartService.getTotals().subtotal;
-
-    // Obtener userId para validación completa
     const userId = this.authService.obtenerUsuarioId();
-
-    // Obtener items del carrito para calcular descuento solo sobre items aplicables
     const items = this.cartService.getItemsSnapshot();
 
     this.promocionService
@@ -854,7 +951,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
             this.promoDiscount = response.discount;
             this.promoSuccess =
               response.message || `Código aplicado: -S/. ${response.discount.toFixed(2)}`;
-            this.guardarPromocionEnStorage(); // Guardar en localStorage
+            this.guardarPromocionEnStorage();
             this.recalcularTotales();
           } else {
             this.promoError = response.message || 'Código promocional inválido';
@@ -872,22 +969,16 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  /**
-   * Quita el código promocional aplicado
-   */
   quitarPromocion(): void {
     this.promoCode = '';
     this.promoApplied = false;
     this.promoDiscount = 0;
     this.promoSuccess = '';
     this.promoError = '';
-    this.limpiarPromocionDeStorage(); // Limpiar de localStorage
+    this.limpiarPromocionDeStorage();
     this.recalcularTotales();
   }
 
-  /**
-   * Guarda el código promocional en localStorage
-   */
   private guardarPromocionEnStorage(): void {
     const promoData = {
       code: this.promoCode,
@@ -897,9 +988,6 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     localStorage.setItem('cart_promo', JSON.stringify(promoData));
   }
 
-  /**
-   * Carga el código promocional desde localStorage
-   */
   private cargarPromocionGuardada(): void {
     const promoData = localStorage.getItem('cart_promo');
     if (promoData) {
@@ -909,7 +997,6 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         this.promoApplied = promo.applied || false;
         this.promoDiscount = promo.discount || 0;
 
-        // Revalidar la promoción para asegurar que sigue siendo válida
         if (this.promoCode && this.promoApplied) {
           setTimeout(() => {
             this.aplicarPromocion();
@@ -921,11 +1008,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  /**
-   * Limpia el código promocional de localStorage
-   */
   private limpiarPromocionDeStorage(): void {
     localStorage.removeItem('cart_promo');
   }
 }
-

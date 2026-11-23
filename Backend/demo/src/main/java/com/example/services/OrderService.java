@@ -46,49 +46,39 @@ public class OrderService {
 
         Order order = orderOpt.get();
 
-        // Actualizar solo los campos que vienen en orderActualizada
-        if (orderActualizada.getUserId() != null) {
-            order.setUserId(orderActualizada.getUserId());
-        }
-        if (orderActualizada.getAddressId() != null) {
-            order.setAddressId(orderActualizada.getAddressId());
-        }
-        if (orderActualizada.getStatus() != null) {
-            order.setStatus(orderActualizada.getStatus());
-        }
-        if (orderActualizada.getDeliveryType() != null) {
-            order.setDeliveryType(orderActualizada.getDeliveryType());
-        }
-        if (orderActualizada.getPaymentMethodId() != null) {
-            order.setPaymentMethodId(orderActualizada.getPaymentMethodId());
-        }
-        if (orderActualizada.getPromotionId() != null) {
-            order.setPromotionId(orderActualizada.getPromotionId());
-        }
-        if (orderActualizada.getSubtotal() != null) {
-            order.setSubtotal(orderActualizada.getSubtotal());
-        }
-        if (orderActualizada.getDeliveryFee() != null) {
-            order.setDeliveryFee(orderActualizada.getDeliveryFee());
-        }
-        if (orderActualizada.getDiscount() != null) {
-            order.setDiscount(orderActualizada.getDiscount());
-        }
-        if (orderActualizada.getTotal() != null) {
-            order.setTotal(orderActualizada.getTotal());
-        }
-        if (orderActualizada.getNotes() != null) {
-            order.setNotes(orderActualizada.getNotes());
-        }
-        if (orderActualizada.getPromoCode() != null) {
-            order.setPromoCode(orderActualizada.getPromoCode());
-        }
-        if (orderActualizada.getStockSettled() != null) {
-            order.setStockSettled(orderActualizada.getStockSettled());
-        }
-        if (orderActualizada.getEstimatedDelivery() != null) {
-            order.setEstimatedDelivery(orderActualizada.getEstimatedDelivery());
-        }
+        if (orderActualizada.getUserId() != null) order.setUserId(orderActualizada.getUserId());
+        if (orderActualizada.getAddressId() != null) order.setAddressId(orderActualizada.getAddressId());
+        if (orderActualizada.getStatus() != null) order.setStatus(orderActualizada.getStatus());
+        if (orderActualizada.getDeliveryType() != null) order.setDeliveryType(orderActualizada.getDeliveryType());
+        if (orderActualizada.getPaymentMethodId() != null) order.setPaymentMethodId(orderActualizada.getPaymentMethodId());
+        if (orderActualizada.getPromotionId() != null) order.setPromotionId(orderActualizada.getPromotionId());
+        if (orderActualizada.getSubtotal() != null) order.setSubtotal(orderActualizada.getSubtotal());
+        if (orderActualizada.getDeliveryFee() != null) order.setDeliveryFee(orderActualizada.getDeliveryFee());
+        if (orderActualizada.getDiscount() != null) order.setDiscount(orderActualizada.getDiscount());
+        if (orderActualizada.getTotal() != null) order.setTotal(orderActualizada.getTotal());
+        if (orderActualizada.getNotes() != null) order.setNotes(orderActualizada.getNotes());
+        if (orderActualizada.getPromoCode() != null) order.setPromoCode(orderActualizada.getPromoCode());
+        if (orderActualizada.getStockSettled() != null) order.setStockSettled(orderActualizada.getStockSettled());
+        if (orderActualizada.getEstimatedDelivery() != null) order.setEstimatedDelivery(orderActualizada.getEstimatedDelivery());
+
+        if (orderActualizada.getWantsBoleta() != null) order.setWantsBoleta(orderActualizada.getWantsBoleta());
+        if (orderActualizada.getBoletaTipoComprobante() != null) order.setBoletaTipoComprobante(orderActualizada.getBoletaTipoComprobante());
+        if (orderActualizada.getBoletaSerie() != null) order.setBoletaSerie(orderActualizada.getBoletaSerie());
+        if (orderActualizada.getBoletaNumero() != null) order.setBoletaNumero(orderActualizada.getBoletaNumero());
+        if (orderActualizada.getBoletaClienteDni() != null) order.setBoletaClienteDni(orderActualizada.getBoletaClienteDni());
+        if (orderActualizada.getBoletaClienteNombre() != null) order.setBoletaClienteNombre(orderActualizada.getBoletaClienteNombre());
+        if (orderActualizada.getBoletaClienteDireccion() != null) order.setBoletaClienteDireccion(orderActualizada.getBoletaClienteDireccion());
+        if (orderActualizada.getBoletaPdfUrl() != null) order.setBoletaPdfUrl(orderActualizada.getBoletaPdfUrl());
+        if (orderActualizada.getBoletaXmlUrl() != null) order.setBoletaXmlUrl(orderActualizada.getBoletaXmlUrl());
+        if (orderActualizada.getBoletaCdrUrl() != null) order.setBoletaCdrUrl(orderActualizada.getBoletaCdrUrl());
+        if (orderActualizada.getBoletaEnlace() != null) order.setBoletaEnlace(orderActualizada.getBoletaEnlace());
+        if (orderActualizada.getBoletaHash() != null) order.setBoletaHash(orderActualizada.getBoletaHash());
+        if (orderActualizada.getBoletaQr() != null) order.setBoletaQr(orderActualizada.getBoletaQr());
+        if (orderActualizada.getBoletaEstado() != null) order.setBoletaEstado(orderActualizada.getBoletaEstado());
+        if (orderActualizada.getBoletaError() != null) order.setBoletaError(orderActualizada.getBoletaError());
+        if (orderActualizada.getBoletaTotalGravada() != null) order.setBoletaTotalGravada(orderActualizada.getBoletaTotalGravada());
+        if (orderActualizada.getBoletaTotalIgv() != null) order.setBoletaTotalIgv(orderActualizada.getBoletaTotalIgv());
+        if (orderActualizada.getBoletaEmitidaAt() != null) order.setBoletaEmitidaAt(orderActualizada.getBoletaEmitidaAt());
 
         return orderRepository.save(order);
     }

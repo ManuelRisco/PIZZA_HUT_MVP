@@ -7,15 +7,12 @@ import java.time.LocalDateTime;
 
 public class OrderDTO {
     private Integer id;
-
     private Integer userId;
-
     private Integer addressId;
-
     private String status;
     private String deliveryType;
 
-    @NotNull(message = "El ID del m\u00e9todo de pago es obligatorio")
+    @NotNull(message = "El ID del método de pago es obligatorio")
     private Integer paymentMethodId;
 
     private Integer promotionId;
@@ -43,6 +40,27 @@ public class OrderDTO {
     private String emailSentTo;
     private Boolean adminEmailSent;
 
+    // ==== Boleta de Venta Electrónica (SUNAT / Nubefact) ====
+    private Boolean wantsBoleta;
+    private Integer boletaTipoComprobante;
+    private String boletaSerie;
+    private Integer boletaNumero;
+    private String boletaComprobante; // Ej. BBB1-000003
+    private String boletaClienteDni;
+    private String boletaClienteNombre;
+    private String boletaClienteDireccion;
+    private String boletaPdfUrl;
+    private String boletaXmlUrl;
+    private String boletaCdrUrl;
+    private String boletaEnlace;
+    private String boletaHash;
+    private String boletaQr;
+    private String boletaEstado;
+    private String boletaError;
+    private BigDecimal boletaTotalGravada;
+    private BigDecimal boletaTotalIgv;
+    private LocalDateTime boletaEmitidaAt;
+
     public OrderDTO() {}
 
     public OrderDTO(Order order) {
@@ -61,6 +79,27 @@ public class OrderDTO {
         this.promoCode = order.getPromoCode();
         this.estimatedDelivery = order.getEstimatedDelivery();
         this.createdAt = order.getCreatedAt();
+        this.wantsBoleta = Boolean.TRUE.equals(order.getWantsBoleta());
+        this.boletaTipoComprobante = order.getBoletaTipoComprobante();
+        this.boletaSerie = order.getBoletaSerie();
+        this.boletaNumero = order.getBoletaNumero();
+        if (order.getBoletaSerie() != null && order.getBoletaNumero() != null) {
+            this.boletaComprobante = order.getBoletaSerie() + "-" + String.format("%06d", order.getBoletaNumero());
+        }
+        this.boletaClienteDni = order.getBoletaClienteDni();
+        this.boletaClienteNombre = order.getBoletaClienteNombre();
+        this.boletaClienteDireccion = order.getBoletaClienteDireccion();
+        this.boletaPdfUrl = order.getBoletaPdfUrl();
+        this.boletaXmlUrl = order.getBoletaXmlUrl();
+        this.boletaCdrUrl = order.getBoletaCdrUrl();
+        this.boletaEnlace = order.getBoletaEnlace();
+        this.boletaHash = order.getBoletaHash();
+        this.boletaQr = order.getBoletaQr();
+        this.boletaEstado = order.getBoletaEstado();
+        this.boletaError = order.getBoletaError();
+        this.boletaTotalGravada = order.getBoletaTotalGravada();
+        this.boletaTotalIgv = order.getBoletaTotalIgv();
+        this.boletaEmitidaAt = order.getBoletaEmitidaAt();
     }
 
     public Integer getId() { return id; }
@@ -116,4 +155,61 @@ public class OrderDTO {
 
     public Boolean getAdminEmailSent() { return adminEmailSent; }
     public void setAdminEmailSent(Boolean adminEmailSent) { this.adminEmailSent = adminEmailSent; }
+
+    public Boolean getWantsBoleta() { return wantsBoleta; }
+    public void setWantsBoleta(Boolean wantsBoleta) { this.wantsBoleta = wantsBoleta; }
+
+    public Integer getBoletaTipoComprobante() { return boletaTipoComprobante; }
+    public void setBoletaTipoComprobante(Integer boletaTipoComprobante) { this.boletaTipoComprobante = boletaTipoComprobante; }
+
+    public String getBoletaSerie() { return boletaSerie; }
+    public void setBoletaSerie(String boletaSerie) { this.boletaSerie = boletaSerie; }
+
+    public Integer getBoletaNumero() { return boletaNumero; }
+    public void setBoletaNumero(Integer boletaNumero) { this.boletaNumero = boletaNumero; }
+
+    public String getBoletaComprobante() { return boletaComprobante; }
+    public void setBoletaComprobante(String boletaComprobante) { this.boletaComprobante = boletaComprobante; }
+
+    public String getBoletaClienteDni() { return boletaClienteDni; }
+    public void setBoletaClienteDni(String boletaClienteDni) { this.boletaClienteDni = boletaClienteDni; }
+
+    public String getBoletaClienteNombre() { return boletaClienteNombre; }
+    public void setBoletaClienteNombre(String boletaClienteNombre) { this.boletaClienteNombre = boletaClienteNombre; }
+
+    public String getBoletaClienteDireccion() { return boletaClienteDireccion; }
+    public void setBoletaClienteDireccion(String boletaClienteDireccion) { this.boletaClienteDireccion = boletaClienteDireccion; }
+
+    public String getBoletaPdfUrl() { return boletaPdfUrl; }
+    public void setBoletaPdfUrl(String boletaPdfUrl) { this.boletaPdfUrl = boletaPdfUrl; }
+
+    public String getBoletaXmlUrl() { return boletaXmlUrl; }
+    public void setBoletaXmlUrl(String boletaXmlUrl) { this.boletaXmlUrl = boletaXmlUrl; }
+
+    public String getBoletaCdrUrl() { return boletaCdrUrl; }
+    public void setBoletaCdrUrl(String boletaCdrUrl) { this.boletaCdrUrl = boletaCdrUrl; }
+
+    public String getBoletaEnlace() { return boletaEnlace; }
+    public void setBoletaEnlace(String boletaEnlace) { this.boletaEnlace = boletaEnlace; }
+
+    public String getBoletaHash() { return boletaHash; }
+    public void setBoletaHash(String boletaHash) { this.boletaHash = boletaHash; }
+
+    public String getBoletaQr() { return boletaQr; }
+    public void setBoletaQr(String boletaQr) { this.boletaQr = boletaQr; }
+
+    public String getBoletaEstado() { return boletaEstado; }
+    public void setBoletaEstado(String boletaEstado) { this.boletaEstado = boletaEstado; }
+
+    public String getBoletaError() { return boletaError; }
+    public void setBoletaError(String boletaError) { this.boletaError = boletaError; }
+
+    public BigDecimal getBoletaTotalGravada() { return boletaTotalGravada; }
+    public void setBoletaTotalGravada(BigDecimal boletaTotalGravada) { this.boletaTotalGravada = boletaTotalGravada; }
+
+    public BigDecimal getBoletaTotalIgv() { return boletaTotalIgv; }
+    public void setBoletaTotalIgv(BigDecimal boletaTotalIgv) { this.boletaTotalIgv = boletaTotalIgv; }
+
+    public LocalDateTime getBoletaEmitidaAt() { return boletaEmitidaAt; }
+    public void setBoletaEmitidaAt(LocalDateTime boletaEmitidaAt) { this.boletaEmitidaAt = boletaEmitidaAt; }
 }

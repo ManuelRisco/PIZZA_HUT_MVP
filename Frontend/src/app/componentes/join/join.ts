@@ -3,6 +3,7 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { SunatService } from '../../services/sunat.service';
 import { LoginDTO } from '../../models/usuario.interface';
 
 declare const google: any;
@@ -47,6 +48,15 @@ export class Join implements OnInit {
   googleName = '';
   googleModalError = '';
 
+  // Optional DNI configuration at login for Boletas Electrónicas SUNAT
+  showDniOption = false;
+  loginDni = '';
+  loginDniNombre = '';
+  loginAgeVerified = false;
+  buscandoDni = false;
+  dniLookupMsg = '';
+  dniLookupError = '';
+
   // Password Recovery state
   showRecoveryModal = false;
   recoveryStep: 1 | 2 = 1;
@@ -63,6 +73,7 @@ export class Join implements OnInit {
 
   constructor(
     private readonly authService: AuthService,
+    private readonly sunatService: SunatService,
     private readonly router: Router,
     private readonly route: ActivatedRoute
   ) {
@@ -153,6 +164,16 @@ export class Join implements OnInit {
     const validationErrors = this.validateForm();
     if (validationErrors.length > 0) {
       this.loginError = validationErrors[0].message;
+      return;
+    }
+
+    const cleanDni = (this.loginDni || '').trim();
+    if (cleanDni && !/^\d{8}$/.test(cleanDni)) {
+      this.loginError = 'El DNI opcional debe contener exactamente 8 d\u00edgitos num\u00e9ricos.';
+      return;
+    }
+    if (cleanDni && !this.loginAgeVerified) {
+      this.loginError = 'Debes confirmar que eres mayor de 18 a\u00f1os y titular del DNI ingresado.';
       return;
     }
 
@@ -256,16 +277,53 @@ export class Join implements OnInit {
     });
   }
 
+  consultarDniEnLogin(fillGoogleName: boolean = false): void {
+    this.dniLookupError = '';
+    this.dniLookupMsg = '';
+    const clean = (this.loginDni || '').trim();
+    if (!/^\d{8}$/.test(clean)) {
+      this.dniLookupError = 'Ingresa un DNI válido de 8 dígitos.';
+      return;
+    }
+    this.buscandoDni = true;
+    this.sunatService.consultarDni(clean).subscribe({
+      next: (res) => {
+        this.buscandoDni = false;
+        if (res?.nombreCompleto) {
+          this.loginDniNombre = res.nombreCompleto;
+          this.dniLookupMsg = `Titular RENIEC: ${res.nombreCompleto}`;
+          if (fillGoogleName && !this.googleName.trim()) {
+            this.googleName = res.nombreCompleto;
+          }
+        }
+      },
+      error: (err) => {
+        this.buscandoDni = false;
+        this.dniLookupError = err?.error?.message || 'No se encontraron datos en RENIEC para ese DNI.';
+      }
+    });
+  }
+
   private redirectAfterAuth(response: any): void {
     if (!response?.usuario?.role || (response.usuario.role !== 'ADMIN' && response.usuario.role !== 'CUSTOMER')) {
       this.loginError = 'Usuario sin rol asignado. Contacte al administrador.';
       return;
     }
-    if (response.usuario.role === 'ADMIN') {
-      this.router.navigate(['/panel-admin']);
-    } else {
-      this.router.navigate(['/menu']);
+    const destino = response.usuario.role === 'ADMIN' ? '/panel-admin' : '/menu';
+    const cleanDni = (this.loginDni || '').trim();
+    if (/^\d{8}$/.test(cleanDni) && this.loginAgeVerified) {
+      this.sunatService.configurarDni(cleanDni, true, this.loginDniNombre || undefined).subscribe({
+        next: (updatedUser) => {
+          this.authService.updateCurrentUser(updatedUser);
+          this.router.navigate([destino]);
+        },
+        error: () => {
+          this.router.navigate([destino]);
+        }
+      });
+      return;
     }
+    this.router.navigate([destino]);
   }
 
   // ==== RECUPERACION DE CONTRASENA ====

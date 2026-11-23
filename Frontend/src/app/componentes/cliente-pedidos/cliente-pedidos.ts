@@ -6,6 +6,7 @@ import { Order } from '../../services/order.service';
 import { OrderCompleteDTO, ReviewDTO } from '../../models/admin.interface';
 import { AuthService } from '../../services/auth.service';
 import { Review } from '../../services/review.service';
+import { SunatService } from '../../services/sunat.service';
 import { PaginationComponent } from '../pagination/pagination';
 
 @Component({
@@ -55,8 +56,18 @@ export class ClientePedidosComponent implements OnInit {
   constructor(
     private readonly orderService: Order,
     private readonly authService: AuthService,
-    private readonly reviewService: Review
+    private readonly reviewService: Review,
+    private readonly sunatService: SunatService
   ) {}
+
+  tieneBoleta(order: OrderCompleteDTO): boolean {
+    return Boolean(order?.boletaComprobante || order?.boletaNumero || order?.boletaPdfUrl);
+  }
+
+  verBoletaPdf(order: OrderCompleteDTO): void {
+    if (!order?.id) return;
+    this.sunatService.abrirBoletaPdf(order.id, order.boletaPdfUrl);
+  }
 
   ngOnInit(): void {
     this.cargarTodo();

@@ -6,6 +6,7 @@ import { UsuarioService } from '../../services/usuario.service';
 import { UsuarioPatronesService } from '../../services/usuario-patrones.service';
 import { AuthService } from '../../services/auth.service';
 import { AccessibilityService } from '../../services/accessibility.service';
+import { SunatService } from '../../services/sunat.service';
 import { UsuarioDTO, UsuarioCreateDTO } from '../../models/usuario.interface';
 
 declare const google: any;
@@ -38,18 +39,29 @@ export class Register implements OnInit {
   showGoogleModal = false;
   googleEmail = '';
   googleName = '';
+  googleDni = '';
+  googleAgeVerified = false;
   googleModalError = '';
+
+  buscandoDni = false;
+  dniMensaje = '';
+  dniError = '';
 
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly usuarioService: UsuarioService,
     private readonly usuarioPatronesService: UsuarioPatronesService,
     private readonly authService: AuthService,
+    private readonly sunatService: SunatService,
     private readonly cdr: ChangeDetectorRef,
     private readonly accessibilityService: AccessibilityService,
     private readonly router: Router
   ) {
     this.registerForm = this.formBuilder.group({
+      dni: ['', [
+        Validators.pattern(/^[0-9]{8}$/)
+      ]],
+      ageVerified: [false],
       name: ['', [
         Validators.required,
         Validators.minLength(4),
@@ -120,8 +132,55 @@ export class Register implements OnInit {
 
     this.googleEmail = this.registerForm.get('email')?.value || '';
     this.googleName = this.registerForm.get('name')?.value || '';
+    this.googleDni = this.registerForm.get('dni')?.value || '';
+    this.googleAgeVerified = Boolean(this.registerForm.get('ageVerified')?.value);
     this.googleModalError = '';
     this.showGoogleModal = true;
+  }
+
+  consultarDniReniec(isGoogleModal: boolean = false): void {
+    this.dniError = '';
+    this.dniMensaje = '';
+    const rawDni = isGoogleModal
+      ? (this.googleDni || '').trim()
+      : String(this.registerForm.get('dni')?.value || '').trim();
+
+    if (!/^\d{8}$/.test(rawDni)) {
+      const msg = 'Ingresa un DNI válido de 8 dígitos para consultar en RENIEC.';
+      if (isGoogleModal) {
+        this.googleModalError = msg;
+      } else {
+        this.dniError = msg;
+      }
+      return;
+    }
+
+    this.buscandoDni = true;
+    this.sunatService.consultarDni(rawDni).subscribe({
+      next: (res) => {
+        this.buscandoDni = false;
+        if (res?.nombreCompleto) {
+          if (isGoogleModal) {
+            this.googleName = res.nombreCompleto;
+          } else {
+            this.registerForm.patchValue({ name: res.nombreCompleto });
+            this.registerForm.get('name')?.markAsTouched();
+            this.dniMensaje = `Datos RENIEC encontrados: ${res.nombreCompleto}`;
+          }
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.buscandoDni = false;
+        const msg = err?.error?.message || 'No se pudo consultar el DNI en RENIEC. Puedes ingresar tu nombre manualmente.';
+        if (isGoogleModal) {
+          this.googleModalError = msg;
+        } else {
+          this.dniError = msg;
+        }
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   closeGoogleModal(): void {
@@ -138,6 +197,15 @@ export class Register implements OnInit {
       this.googleModalError = 'Ingrese un correo de Google v\u00e1lido.';
       return;
     }
+    const cleanDni = (this.googleDni || '').trim();
+    if (cleanDni && !/^\d{8}$/.test(cleanDni)) {
+      this.googleModalError = 'El DNI debe tener exactamente 8 d\u00edgitos num\u00e9ricos.';
+      return;
+    }
+    if (cleanDni && !this.googleAgeVerified) {
+      this.googleModalError = 'Debes confirmar que eres mayor de 18 a\u00f1os y titular del DNI ingresado.';
+      return;
+    }
     this.executeGoogleBackendAuth({
       email: cleanEmail,
       name: (this.googleName || '').trim()
@@ -146,12 +214,30 @@ export class Register implements OnInit {
 
   private executeGoogleBackendAuth(payload: { credential?: string; accessToken?: string; email?: string; name?: string }): void {
     this.googleLoading = true;
+    const cleanDni = (this.googleDni || this.registerForm.get('dni')?.value || '').trim();
+    const ageOk = this.googleAgeVerified || Boolean(this.registerForm.get('ageVerified')?.value);
     this.authService.loginConGoogle(payload).subscribe({
       next: (response) => {
-        this.googleLoading = false;
-        this.showGoogleModal = false;
         const destino = response?.usuario?.role === 'ADMIN' ? '/panel-admin' : '/menu';
-        this.router.navigate([destino]);
+        if (/^\d{8}$/.test(cleanDni) && ageOk) {
+          this.sunatService.configurarDni(cleanDni, true, this.googleName || undefined).subscribe({
+            next: (u) => {
+              this.authService.updateCurrentUser(u);
+              this.googleLoading = false;
+              this.showGoogleModal = false;
+              this.router.navigate([destino]);
+            },
+            error: () => {
+              this.googleLoading = false;
+              this.showGoogleModal = false;
+              this.router.navigate([destino]);
+            }
+          });
+        } else {
+          this.googleLoading = false;
+          this.showGoogleModal = false;
+          this.router.navigate([destino]);
+        }
       },
       error: (err) => {
         this.googleLoading = false;
@@ -181,6 +267,16 @@ export class Register implements OnInit {
   }
 
   onSubmit(): void {
+    const cleanDni = String(this.registerForm.get('dni')?.value || '').trim();
+    const ageVerified = Boolean(this.registerForm.get('ageVerified')?.value);
+    if (cleanDni && !/^\d{8}$/.test(cleanDni)) {
+      this.mostrarMensajeError('El DNI debe contener exactamente 8 dígitos numéricos.');
+      return;
+    }
+    if (cleanDni && !ageVerified) {
+      this.mostrarMensajeError('Debes confirmar que eres mayor de 18 años y que el DNI ingresado te pertenece.');
+      return;
+    }
     if (this.registerForm.valid) {
       this.loading = true;
       this.limpiarMensajes();
@@ -208,11 +304,14 @@ export class Register implements OnInit {
   }
 
   registrarConPatrones(formValue: any): void {
+    const cleanDni = String(formValue.dni || '').trim();
     const clienteData = {
       email: formValue.email.trim().toLowerCase(),
       password: formValue.password,
       name: formValue.name.trim(),
-      phone: formValue.phone.trim()
+      phone: formValue.phone.trim(),
+      dni: cleanDni || null,
+      ageVerified: cleanDni ? Boolean(formValue.ageVerified) : false
     };
     this.usuarioPatronesService.crearCliente(clienteData).subscribe({
       next: () => {
@@ -225,11 +324,14 @@ export class Register implements OnInit {
   }
 
   registrarTradicional(formValue: any): void {
+    const cleanDni = String(formValue.dni || '').trim();
     const usuario: UsuarioCreateDTO = {
       name: formValue.name.trim(),
       phone: formValue.phone.trim(),
       email: formValue.email.trim().toLowerCase(),
       password: formValue.password,
+      dni: cleanDni || null,
+      ageVerified: cleanDni ? Boolean(formValue.ageVerified) : false,
       role: 'CUSTOMER'
     };
     this.usuarioService.crearUsuario(usuario).subscribe({

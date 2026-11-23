@@ -122,6 +122,10 @@
                 <i class="bi" [ngClass]="esPickup(order) ? 'bi-shop text-gray-600' : 'bi-scooter text-red-600'"></i>
                 {{ esPickup(order) ? 'Recojo en tienda' : 'Delivery' }}
               </span>
+              <span *ngIf="tieneBoleta(order)" class="px-2.5 py-1 rounded-lg text-xs font-black border flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border-emerald-200">
+                <i class="bi bi-receipt-cutoff text-emerald-600"></i>
+                Boleta {{ order.boletaComprobante || (order.boletaSerie + '-' + order.boletaNumero) }}
+              </span>
             </div>
 
             <div class="flex flex-col sm:items-end text-left sm:text-right">
@@ -181,6 +185,15 @@
                 (click)="verDetalles(order)"
               >
                 <i class="bi bi-eye"></i> Ver Detalles
+              </button>
+
+              <button
+                *ngIf="tieneBoleta(order)"
+                type="button"
+                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shadow-2xs cursor-pointer"
+                (click)="verBoletaPdf(order)"
+              >
+                <i class="bi bi-file-earmark-pdf-fill"></i> Boleta PDF
               </button>
 
               <button

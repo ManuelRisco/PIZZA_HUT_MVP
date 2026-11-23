@@ -13,6 +13,7 @@ import { SessionLog } from '../../models/session-log.model';
 import { AuditLog } from '../../models/audit-log.model';
 import { SessionLogService } from '../../services/session-log.service';
 import { AuditLogService } from '../../services/audit-log.service';
+import { SunatService } from '../../services/sunat.service';
 
 export type FiltroUsuario = 'todos' | 'admins' | 'clientes' | 'activos' | 'inactivos' | 'admins-activos';
 
@@ -60,6 +61,9 @@ export class Usuarios implements OnInit, OnDestroy {
   // Variables para mostrar/ocultar contraseñas
   showPassword = false;
   showConfirmPassword = false;
+  buscandoDni = false;
+  dniMensaje = '';
+  dniError = '';
 
   // Variables para la modal de creación/edición
   mostrarModal: boolean = false;
@@ -93,9 +97,12 @@ export class Usuarios implements OnInit, OnDestroy {
     private readonly router: Router,
     private readonly authService: AuthService,
     private readonly sessionLogService: SessionLogService,
-    private readonly auditLogService: AuditLogService
+    private readonly auditLogService: AuditLogService,
+    private readonly sunatService: SunatService
   ) {
     this.usuarioForm = this.formBuilder.group({
+      dni: ['', [Validators.pattern(/^[0-9]{8}$/)]],
+      ageVerified: [false],
       email: ['', [Validators.required, Validators.email]],
       name: ['', [
         Validators.required,
@@ -267,6 +274,7 @@ export class Usuarios implements OnInit, OnDestroy {
         (u.name || '').toLowerCase().includes(term) ||
         (u.email || '').toLowerCase().includes(term) ||
         (u.phone || '').toLowerCase().includes(term) ||
+        (u.dni || '').toLowerCase().includes(term) ||
         String(u.id ?? '').includes(term)
       );
     }
@@ -384,8 +392,10 @@ export class Usuarios implements OnInit, OnDestroy {
     this.showPassword = false;
     this.showConfirmPassword = false;
     this.usuarioForm.reset();
-    this.usuarioForm.patchValue({ role: 'CUSTOMER' });
+    this.usuarioForm.patchValue({ role: 'CUSTOMER', dni: '', ageVerified: false });
     this.selectedUsuarioId = undefined;
+    this.dniMensaje = '';
+    this.dniError = '';
 
     // Asegurar que todos los campos estén habilitados
     this.usuarioForm.get('email')?.enable();
@@ -403,7 +413,11 @@ export class Usuarios implements OnInit, OnDestroy {
     this.showForm = true;
     this.editMode = true;
     this.selectedUsuarioId = usuario.id;
+    this.dniMensaje = '';
+    this.dniError = '';
     this.usuarioForm.patchValue({
+      dni: usuario.dni || '',
+      ageVerified: Boolean(usuario.ageVerified || usuario.dni),
       email: usuario.email,
       name: usuario.name,
       phone: usuario.phone,
@@ -447,8 +461,46 @@ export class Usuarios implements OnInit, OnDestroy {
     this.router.navigate(['/panel-admin']);
   }
 
+  consultarDniReniecAdmin(): void {
+    this.dniMensaje = '';
+    this.dniError = '';
+    const cleanDni = String(this.usuarioForm.get('dni')?.value || '').trim();
+    if (!/^\d{8}$/.test(cleanDni)) {
+      this.dniError = 'Ingresa un DNI válido de 8 dígitos para consultar en RENIEC.';
+      return;
+    }
+    this.buscandoDni = true;
+    this.sunatService.consultarDni(cleanDni).subscribe({
+      next: (res) => {
+        this.buscandoDni = false;
+        if (res?.nombreCompleto) {
+          this.usuarioForm.patchValue({ name: res.nombreCompleto });
+          this.usuarioForm.get('name')?.markAsTouched();
+          this.dniMensaje = `RENIEC: ${res.nombreCompleto}`;
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.buscandoDni = false;
+        this.dniError = err?.error?.message || 'No se encontraron datos en RENIEC para ese DNI.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   guardarUsuario(): void {
     if (this.guardando) return;
+
+    const cleanDni = String(this.usuarioForm.get('dni')?.value || '').trim();
+    const ageVerified = Boolean(this.usuarioForm.get('ageVerified')?.value);
+    if (cleanDni && !/^\d{8}$/.test(cleanDni)) {
+      this.mostrarMensajeError('El DNI debe contener exactamente 8 dígitos numéricos');
+      return;
+    }
+    if (cleanDni && !ageVerified) {
+      this.mostrarMensajeError('Debes confirmar la declaración de mayoría de edad (+18) y titularidad del DNI');
+      return;
+    }
 
     const isValidForCreation = !this.editMode && this.usuarioForm.valid;
 
@@ -506,10 +558,13 @@ export class Usuarios implements OnInit, OnDestroy {
     const fuente = this.todosLosUsuarios.length > 0 ? this.todosLosUsuarios : this.usuarios;
     const usuarioOriginal = fuente.find(u => u.id === this.selectedUsuarioId);
 
+    const cleanDni = formValue.dni ? String(formValue.dni).trim() : '';
     const usuarioActualizar: UsuarioCreateDTO = {
       email: formValue.email.trim(),
       name: formValue.name.trim(),
       phone: formValue.phone ? formValue.phone.trim() : '',
+      dni: cleanDni || null,
+      ageVerified: cleanDni ? Boolean(formValue.ageVerified) : false,
       password: formValue.password || '',
       role: this.usuarioForm.get('role')?.disabled
         ? (usuarioOriginal?.role || 'CUSTOMER')
@@ -542,10 +597,13 @@ export class Usuarios implements OnInit, OnDestroy {
 
   private crearNuevoUsuario(): void {
     const formValue = this.usuarioForm.getRawValue();
+    const cleanDni = formValue.dni ? String(formValue.dni).trim() : '';
     const usuarioCrear: UsuarioCreateDTO = {
       email: formValue.email.trim(),
       name: formValue.name.trim(),
       phone: formValue.phone ? formValue.phone.trim() : '',
+      dni: cleanDni || null,
+      ageVerified: cleanDni ? Boolean(formValue.ageVerified) : false,
       role: formValue.role,
       password: formValue.password
     };

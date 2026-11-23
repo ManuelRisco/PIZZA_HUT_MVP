@@ -6,35 +6,41 @@ import jakarta.validation.constraints.*;
 import jakarta.validation.Valid;
 
 public class CheckoutRequestDTO {
-    
+
     @Valid
     @NotNull(message = "El pedido es obligatorio")
     private OrderDTO order;
-    
+
     @Valid
     private AddressDTO address;
-    
+
     @Valid
     @NotEmpty(message = "Debe haber al menos un artículo en el pedido")
     private List<CheckoutItemDTO> items;
-    
+
     @Valid
     @NotNull(message = "Los datos de pago son obligatorios")
     private PaymentDTO payment;
-    
+
+    // ==== Opciones de Boleta de Venta Electrónica (SUNAT) ====
+    private Boolean wantsBoleta;
+    private String clienteDni;
+    private String clienteNombre;
+    private Boolean ageVerified;
+
     public static class AddressDTO {
         @NotBlank(message = "La línea 1 de la dirección es obligatoria")
         private String line1;
-        
+
         @NotBlank(message = "La ciudad es obligatoria")
         private String city;
-        
+
         @NotBlank(message = "El distrito es obligatorio")
         private String district;
-        
+
         private String reference;
         private Boolean isDefault;
-        
+
         public String getLine1() { return line1; }
         public void setLine1(String line1) { this.line1 = line1; }
         public String getCity() { return city; }
@@ -50,22 +56,22 @@ public class CheckoutRequestDTO {
     public static class CheckoutItemDTO {
         @NotBlank(message = "El tipo de artículo es obligatorio")
         private String itemType; // "EXTRA" o "PIZZA"
-        
+
         private Integer pizzaId;
         private Integer extraId;
         private Integer sizeId;
-        
+
         @NotNull(message = "La cantidad es obligatoria")
         @Min(value = 1, message = "La cantidad mínima es 1")
         private Integer quantity;
-        
+
         @NotNull(message = "El precio unitario es obligatorio")
         @DecimalMin(value = "0.0", inclusive = false, message = "El precio unitario debe ser mayor a 0")
         private BigDecimal unitPrice;
-        
+
         @NotNull(message = "El total de línea es obligatorio")
         private BigDecimal lineTotal;
-        
+
         private List<Integer> extraIngredientIds;
 
         public String getItemType() { return itemType; }
@@ -85,18 +91,18 @@ public class CheckoutRequestDTO {
         public List<Integer> getExtraIngredientIds() { return extraIngredientIds; }
         public void setExtraIngredientIds(List<Integer> extraIngredientIds) { this.extraIngredientIds = extraIngredientIds; }
     }
-    
+
     public static class PaymentDTO {
         @NotNull(message = "El método de pago es obligatorio")
         private Integer paymentMethodId;
-        
+
         @NotNull(message = "El monto a pagar es obligatorio")
         @DecimalMin(value = "0.0", inclusive = false, message = "El monto debe ser mayor a 0")
         private BigDecimal amount;
-        
+
         @NotBlank(message = "El estado del pago es obligatorio")
         private String status;
-        
+
         private String transactionId;
 
         public Integer getPaymentMethodId() { return paymentMethodId; }
@@ -117,4 +123,13 @@ public class CheckoutRequestDTO {
     public void setItems(List<CheckoutItemDTO> items) { this.items = items; }
     public PaymentDTO getPayment() { return payment; }
     public void setPayment(PaymentDTO payment) { this.payment = payment; }
+
+    public Boolean getWantsBoleta() { return wantsBoleta; }
+    public void setWantsBoleta(Boolean wantsBoleta) { this.wantsBoleta = wantsBoleta; }
+    public String getClienteDni() { return clienteDni; }
+    public void setClienteDni(String clienteDni) { this.clienteDni = clienteDni; }
+    public String getClienteNombre() { return clienteNombre; }
+    public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }
+    public Boolean getAgeVerified() { return ageVerified; }
+    public void setAgeVerified(Boolean ageVerified) { this.ageVerified = ageVerified; }
 }

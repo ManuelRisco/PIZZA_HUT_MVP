@@ -192,6 +192,13 @@
             <i class="bi" [ngClass]="esPickup(order) ? 'bi-shop' : 'bi-bicycle'"></i>
             {{ esPickup(order) ? 'PICKUP' : 'DELIVERY' }}
           </span>
+          <span
+            *ngIf="tieneBoleta(order)"
+            class="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1"
+          >
+            <i class="bi bi-receipt-cutoff text-emerald-600"></i>
+            BOLETA {{ order.boletaComprobante || (order.boletaSerie + '-' + order.boletaNumero) }}
+          </span>
         </div>
 
         <div class="flex items-center gap-4">
@@ -212,6 +219,9 @@
           <p class="text-gray-500 m-0 mt-0.5">{{ order.userEmail }}</p>
           <p class="text-gray-500 m-0 mt-0.5" *ngIf="order.userPhone">
             <i class="bi bi-telephone text-[10px] mr-1"></i>{{ order.userPhone }}
+          </p>
+          <p class="text-indigo-700 font-bold m-0 mt-0.5" *ngIf="order.boletaClienteDni || order.userDni">
+            <i class="bi bi-person-vcard text-[10px] mr-1"></i>DNI: {{ order.boletaClienteDni || order.userDni }}
           </p>
         </div>
 
@@ -250,15 +260,37 @@
         </div>
       </div>
 
-      <!-- Footer del card: Botón ver detalles y cambio de estado con rollback -->
+      <!-- Footer del card: Botón ver detalles, Boleta SUNAT y cambio de estado con rollback -->
       <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-gray-100">
-        <button
-          type="button"
-          (click)="verDetalles(order)"
-          class="px-3.5 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
-        >
-          <i class="bi bi-eye-fill"></i> Ver Detalles y Productos
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            (click)="verDetalles(order)"
+            class="px-3.5 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <i class="bi bi-eye-fill"></i> Ver Detalles y Productos
+          </button>
+
+          <button
+            *ngIf="tieneBoleta(order)"
+            type="button"
+            (click)="verBoletaPdf(order)"
+            class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+          >
+            <i class="bi bi-file-earmark-pdf-fill"></i> Ver Boleta PDF ({{ order.boletaComprobante }})
+          </button>
+
+          <button
+            *ngIf="!tieneBoleta(order) && order.status !== 'CANCELLED'"
+            type="button"
+            (click)="emitirBoletaAdmin(order)"
+            [disabled]="emitiendoBoletaOrderId === order.id"
+            class="px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          >
+            <i class="bi" [ngClass]="emitiendoBoletaOrderId === order.id ? 'bi-arrow-repeat animate-spin' : 'bi-receipt'"></i>
+            {{ emitiendoBoletaOrderId === order.id ? 'Emitiendo Boleta...' : 'Emitir Boleta SUNAT' }}
+          </button>
+        </div>
 
         <div class="flex items-center gap-2">
           <span class="text-xs font-bold text-gray-500 uppercase">Cambiar Estado:</span>
@@ -347,6 +379,10 @@
           <div class="flex justify-between" *ngIf="selectedOrder.userPhone">
             <span class="text-gray-500">Teléfono:</span>
             <span class="font-medium text-gray-800">{{ selectedOrder.userPhone }}</span>
+          </div>
+          <div class="flex justify-between" *ngIf="selectedOrder.boletaClienteDni || selectedOrder.userDni">
+            <span class="text-gray-500">DNI (SUNAT):</span>
+            <span class="font-bold text-indigo-700">{{ selectedOrder.boletaClienteDni || selectedOrder.userDni }}</span>
           </div>
           <div class="flex justify-between border-t border-gray-200 pt-2">
             <span class="text-gray-500">Modalidad:</span>
@@ -439,6 +475,57 @@
             <span>Total:</span>
             <span class="text-emerald-600 text-base">S/ {{ selectedOrder.total | number:'1.2-2' }}</span>
           </div>
+        </div>
+      </div>
+
+      <!-- Sección de Boleta de Venta Electrónica SUNAT en Modal -->
+      <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-md bg-emerald-600 text-white font-black text-[10px] uppercase">SUNAT / NubeFacT</span>
+            <span class="font-black text-gray-900 text-sm">
+              {{ tieneBoleta(selectedOrder) ? ('Boleta de Venta Electrónica ' + selectedOrder.boletaComprobante) : 'Pedido sin Boleta Electrónica emitida' }}
+            </span>
+          </div>
+          <p class="text-gray-600 m-0" *ngIf="tieneBoleta(selectedOrder)">
+            <strong>DNI:</strong> {{ selectedOrder.boletaClienteDni }} &nbsp;|&nbsp;
+            <strong>Titular:</strong> {{ selectedOrder.boletaClienteNombre || selectedOrder.userName }} &nbsp;|&nbsp;
+            <strong>Op. Gravada:</strong> S/ {{ (selectedOrder.boletaTotalGravada || (selectedOrder.total / 1.18)) | number:'1.2-2' }} &nbsp;|&nbsp;
+            <strong>I.G.V. (18%):</strong> S/ {{ (selectedOrder.boletaTotalIgv || (selectedOrder.total - (selectedOrder.total / 1.18))) | number:'1.2-2' }}
+          </p>
+          <p class="text-gray-500 m-0 font-mono text-[11px]" *ngIf="selectedOrder.boletaHash">
+            Hash CPE: {{ selectedOrder.boletaHash }}
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            *ngIf="tieneBoleta(selectedOrder)"
+            type="button"
+            (click)="verBoletaPdf(selectedOrder)"
+            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+          >
+            <i class="bi bi-file-earmark-pdf-fill"></i> Ver / Descargar Boleta PDF
+          </button>
+          <a
+            *ngIf="selectedOrder.boletaXmlUrl"
+            [href]="selectedOrder.boletaXmlUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="px-3 py-2 bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 font-bold rounded-xl text-xs transition-colors flex items-center gap-1 no-underline"
+          >
+            <i class="bi bi-filetype-xml"></i> XML
+          </a>
+          <button
+            *ngIf="!tieneBoleta(selectedOrder) && selectedOrder.status !== 'CANCELLED'"
+            type="button"
+            (click)="emitirBoletaAdmin(selectedOrder)"
+            [disabled]="emitiendoBoletaOrderId === selectedOrder.id"
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+          >
+            <i class="bi" [ngClass]="emitiendoBoletaOrderId === selectedOrder.id ? 'bi-arrow-repeat animate-spin' : 'bi-receipt-cutoff'"></i>
+            {{ emitiendoBoletaOrderId === selectedOrder.id ? 'Emitiendo...' : 'Emitir Boleta Electrónica Ahora' }}
+          </button>
         </div>
       </div>
     </div>
