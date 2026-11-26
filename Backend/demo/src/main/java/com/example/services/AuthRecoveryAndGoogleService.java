@@ -1,5 +1,10 @@
 package com.example.services;
 
+import com.example.dtos.GoogleAuthRequestDTO;
+import com.example.dtos.GoogleAuthResultDTO;
+import com.example.dtos.GoogleConfigDTO;
+import com.example.dtos.GoogleIdentityPayloadDTO;
+import com.example.dtos.PasswordResetRequestResultDTO;
 import com.example.exceptions.BadRequestException;
 import com.example.exceptions.ResourceNotFoundException;
 import com.example.models.Usuario;
@@ -38,25 +43,6 @@ public class AuthRecoveryAndGoogleService {
     private static final Logger log = LoggerFactory.getLogger(AuthRecoveryAndGoogleService.class);
     private static final int OTP_EXPIRATION_MINUTES = 15;
     private static final int MAX_OTP_ATTEMPTS = 5;
-
-    public record PasswordResetRequestResult(
-            boolean emailSent,
-            String maskedEmail,
-            int expirationMinutes,
-            String message
-    ) {}
-
-    public record GoogleIdentityPayload(
-            String email,
-            String name,
-            String sub,
-            boolean verified
-    ) {}
-
-    public record GoogleAuthResult(
-            Usuario usuario,
-            boolean newlyCreated
-    ) {}
 
     private static final class InMemoryOtpEntry {
         final String codeHash;
@@ -105,20 +91,20 @@ public class AuthRecoveryAndGoogleService {
         return !cleanClientId.isEmpty() && !cleanClientId.startsWith("TU_GOOGLE_CLIENT_ID");
     }
 
-    public Map<String, Object> obtenerConfiguracionGoogle() {
+    public GoogleConfigDTO obtenerConfiguracionGoogle() {
         String cleanClientId = googleClientId != null ? googleClientId.trim() : "";
         boolean secretConfigured = googleClientSecret != null && !googleClientSecret.isBlank();
         boolean cloudConfigured = isGoogleCloudConfigured();
-        return Map.of(
-                "clientId", cloudConfigured ? cleanClientId : "",
-                "googleCloudConfigured", cloudConfigured,
-                "clientSecretConfigured", secretConfigured,
-                "allowQuickGoogleSignIn", allowGoogleDevMode && !cloudConfigured
+        return new GoogleConfigDTO(
+                cloudConfigured ? cleanClientId : "",
+                cloudConfigured,
+                secretConfigured,
+                allowGoogleDevMode && !cloudConfigured
         );
     }
 
     @Transactional
-    public PasswordResetRequestResult solicitarRecuperacionPassword(String rawEmail) {
+    public PasswordResetRequestResultDTO solicitarRecuperacionPassword(String rawEmail) {
         if (rawEmail == null || rawEmail.isBlank()) {
             throw new BadRequestException("Ingrese el correo electr\u00f3nico de su cuenta.");
         }
@@ -149,7 +135,7 @@ public class AuthRecoveryAndGoogleService {
                 ? "Enviamos un c\u00f3digo de 6 d\u00edgitos a " + masked + ". Revisa tu bandeja de entrada."
                 : "Se gener\u00f3 la solicitud de recuperaci\u00f3n para " + masked + ".";
 
-        return new PasswordResetRequestResult(sent, masked, OTP_EXPIRATION_MINUTES, msg);
+        return new PasswordResetRequestResultDTO(sent, masked, OTP_EXPIRATION_MINUTES, msg);
     }
 
     public boolean verificarCodigoRecuperacion(String rawEmail, String rawCode) {
@@ -205,17 +191,17 @@ public class AuthRecoveryAndGoogleService {
 
     @Transactional
     @CacheEvict(value = "users", allEntries = true)
-    public GoogleAuthResult autenticarConGoogle(Map<String, String> payload) {
-        if (payload == null || payload.isEmpty()) {
+    public GoogleAuthResultDTO autenticarConGoogle(GoogleAuthRequestDTO payload) {
+        if (payload == null) {
             throw new BadRequestException("Datos de autenticaci\u00f3n de Google incompletos.");
         }
 
-        String idToken = firstNonBlank(payload.get("credential"), payload.get("idToken"));
-        String accessToken = payload.get("accessToken");
-        String directEmail = payload.get("email");
-        String directName = payload.get("name");
+        String idToken = firstNonBlank(payload.credential(), payload.idToken());
+        String accessToken = payload.accessToken();
+        String directEmail = payload.email();
+        String directName = payload.name();
 
-        GoogleIdentityPayload googleUser;
+        GoogleIdentityPayloadDTO googleUser;
         if (idToken != null && !idToken.isBlank()) {
             googleUser = verifyGoogleIdToken(idToken.trim());
         } else if (accessToken != null && !accessToken.isBlank()) {
@@ -228,7 +214,7 @@ public class AuthRecoveryAndGoogleService {
             String resolvedName = (directName != null && !directName.isBlank())
                     ? directName.trim()
                     : deriveDisplayNameFromEmail(normalized);
-            googleUser = new GoogleIdentityPayload(normalized, resolvedName, "google-local-" + normalized, true);
+            googleUser = new GoogleIdentityPayloadDTO(normalized, resolvedName, "google-local-" + normalized, true);
         } else {
             throw new BadRequestException("No se recibi\u00f3 un token de Google v\u00e1lido.");
         }
@@ -253,7 +239,7 @@ public class AuthRecoveryAndGoogleService {
             existente.resetLoginAttempts();
             existente.setLastLogin(LocalDateTime.now());
             Usuario guardado = usuarioRepository.saveAndFlush(existente);
-            return new GoogleAuthResult(guardado, false);
+            return new GoogleAuthResultDTO(guardado, false);
         }
 
         // Crear nuevo usuario CUSTOMER automaticamente con su cuenta de Google (sin password local definida)
@@ -271,7 +257,7 @@ public class AuthRecoveryAndGoogleService {
 
         Usuario creado = usuarioRepository.saveAndFlush(nuevo);
         log.info("Nuevo usuario registrado autom\u00e1ticamente mediante Google OAuth: {}", email);
-        return new GoogleAuthResult(creado, true);
+        return new GoogleAuthResultDTO(creado, true);
     }
 
     @Transactional
@@ -297,7 +283,7 @@ public class AuthRecoveryAndGoogleService {
 
     @Transactional
     @CacheEvict(value = "users", allEntries = true)
-    public Usuario vincularCuentaConGoogle(Long userId, Map<String, String> payload) {
+    public Usuario vincularCuentaConGoogle(Long userId, GoogleAuthRequestDTO payload) {
         if (userId == null) {
             throw new BadRequestException("Usuario no identificado.");
         }
@@ -308,9 +294,9 @@ public class AuthRecoveryAndGoogleService {
         }
 
         if (payload != null) {
-            String idToken = firstNonBlank(payload.get("credential"), payload.get("idToken"));
-            String accessToken = payload.get("accessToken");
-            GoogleIdentityPayload googleUser = null;
+            String idToken = firstNonBlank(payload.credential(), payload.idToken());
+            String accessToken = payload.accessToken();
+            GoogleIdentityPayloadDTO googleUser = null;
             if (idToken != null && !idToken.isBlank()) {
                 googleUser = verifyGoogleIdToken(idToken.trim());
             } else if (accessToken != null && !accessToken.isBlank()) {
@@ -330,7 +316,7 @@ public class AuthRecoveryAndGoogleService {
         return usuarioRepository.saveAndFlush(usuario);
     }
 
-    private GoogleIdentityPayload verifyGoogleIdToken(String idToken) {
+    private GoogleIdentityPayloadDTO verifyGoogleIdToken(String idToken) {
         try {
             String url = "https://oauth2.googleapis.com/tokeninfo?id_token="
                     + URLEncoder.encode(idToken, StandardCharsets.UTF_8);
@@ -356,7 +342,7 @@ public class AuthRecoveryAndGoogleService {
                 name = deriveDisplayNameFromEmail(email);
             }
             String sub = json.path("sub").asText("");
-            return new GoogleIdentityPayload(email, name, sub, verified);
+            return new GoogleIdentityPayloadDTO(email, name, sub, verified);
         } catch (BadRequestException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -365,7 +351,7 @@ public class AuthRecoveryAndGoogleService {
         }
     }
 
-    private GoogleIdentityPayload verifyGoogleAccessToken(String accessToken) {
+    private GoogleIdentityPayloadDTO verifyGoogleAccessToken(String accessToken) {
         try {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create("https://www.googleapis.com/oauth2/v3/userinfo"))
@@ -385,7 +371,7 @@ public class AuthRecoveryAndGoogleService {
                 name = deriveDisplayNameFromEmail(email);
             }
             String sub = json.path("sub").asText("");
-            return new GoogleIdentityPayload(email, name, sub, verified);
+            return new GoogleIdentityPayloadDTO(email, name, sub, verified);
         } catch (BadRequestException ex) {
             throw ex;
         } catch (Exception ex) {

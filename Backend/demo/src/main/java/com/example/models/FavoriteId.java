@@ -1,58 +1,24 @@
 package com.example.models;
 
 import jakarta.persistence.Embeddable;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.io.Serializable;
 
-import java.util.Objects;
-
 @Embeddable
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class FavoriteId implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private Integer userId;
     private Integer pizzaId;
-
-    // ==== Constructores ====
-    public FavoriteId() {
-    }
-
-    public FavoriteId(Integer userId, Integer pizzaId) {
-        this.userId = userId;
-        this.pizzaId = pizzaId;
-    }
-
-    // ==== Getters y Setters ====
-    public Integer getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
-
-    public Integer getPizzaId() {
-        return pizzaId;
-    }
-
-    public void setPizzaId(Integer pizzaId) {
-        this.pizzaId = pizzaId;
-    }
-
-    // ==== equals y hashCode ====
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        FavoriteId that = (FavoriteId) o;
-        return Objects.equals(userId, that.userId) &&
-                Objects.equals(pizzaId, that.pizzaId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(userId, pizzaId);
-    }
 }

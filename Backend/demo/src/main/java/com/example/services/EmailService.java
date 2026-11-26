@@ -1,6 +1,7 @@
 package com.example.services;
 
 import com.example.dtos.OrderCompleteDTO;
+import com.example.dtos.OrderEmailDispatchResultDTO;
 import com.example.dtos.StockAlertDTO;
 import com.example.models.Usuario;
 import com.example.repositories.UsuarioRepository;
@@ -35,28 +36,17 @@ import java.util.stream.Collectors;
 @Service
 public class EmailService {
 
-    public record OrderEmailDispatchResult(
-            boolean customerEmailSent,
-            String customerEmail,
-            boolean adminEmailSent,
-            int adminRecipientsCount
-    ) {
-        public static OrderEmailDispatchResult notSent(String customerEmail) {
-            return new OrderEmailDispatchResult(false, customerEmail, false, 0);
-        }
-    }
-
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
     private static final DateTimeFormatter DATE_TIME_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final JavaMailSender mailSender;
     private final UsuarioRepository usuarioRepository;
     private final JdbcTemplate jdbcTemplate;
-    private SunatReniecService sunatReniecService;
+    private SunatService sunatService;
 
     @Autowired(required = false)
-    public void setSunatReniecService(SunatReniecService sunatReniecService) {
-        this.sunatReniecService = sunatReniecService;
+    public void setSunatService(SunatService sunatService) {
+        this.sunatService = sunatService;
     }
 
     @Value("${app.mail.enabled:true}")
@@ -115,9 +105,9 @@ public class EmailService {
         sendOrderCreatedEmails(orderId);
     }
 
-    public OrderEmailDispatchResult sendOrderCreatedEmails(Integer orderId) {
+    public OrderEmailDispatchResultDTO sendOrderCreatedEmails(Integer orderId) {
         if (orderId == null) {
-            return OrderEmailDispatchResult.notSent(null);
+            return OrderEmailDispatchResultDTO.notSent(null);
         }
         OrderCompleteDTO order = null;
         try {
@@ -129,11 +119,11 @@ public class EmailService {
         String customerEmail = order != null && order.getUserEmail() != null ? order.getUserEmail().trim() : null;
         if (!isMailOperational()) {
             log.debug("Servicio de correo deshabilitado o sin credenciales en .env; se omite notificaci\u00f3n de pedido #{}.", orderId);
-            return OrderEmailDispatchResult.notSent(customerEmail);
+            return OrderEmailDispatchResultDTO.notSent(customerEmail);
         }
         if (order == null) {
             log.warn("No se encontr\u00f3 informaci\u00f3n del pedido #{} para enviar correos.", orderId);
-            return OrderEmailDispatchResult.notSent(null);
+            return OrderEmailDispatchResultDTO.notSent(null);
         }
 
         boolean customerSent = false;
@@ -152,9 +142,9 @@ public class EmailService {
 
                 byte[] boletaPdfBytes = null;
                 String boletaFilename = null;
-                if (hasBoleta && sunatReniecService != null) {
+                if (hasBoleta && sunatService != null) {
                     try {
-                        boletaPdfBytes = sunatReniecService.obtenerPdfBoleta(order.getId());
+                        boletaPdfBytes = sunatService.obtenerPdfBoleta(order.getId());
                         String serie = order.getBoletaSerie() != null ? order.getBoletaSerie() : "BBB1";
                         int num = order.getBoletaNumero() != null ? order.getBoletaNumero() : order.getId();
                         boletaFilename = String.format("Boleta_%s-%06d.pdf", serie, num);
@@ -198,7 +188,7 @@ public class EmailService {
             log.warn("No se encontraron correos de administradores activos para notificar el pedido #{}.", order.getId());
         }
 
-        return new OrderEmailDispatchResult(customerSent, customerEmail, adminSent, adminCount);
+        return new OrderEmailDispatchResultDTO(customerSent, customerEmail, adminSent, adminCount);
     }
 
     public List<String> sendStockShortageAlertEmail(List<StockAlertDTO> alerts) throws Exception {
@@ -267,7 +257,7 @@ public class EmailService {
             String comprobante = order.getBoletaComprobante() != null ? order.getBoletaComprobante() : ("BBB1-" + orderId);
             String subject = "Boleta de Venta Electr\u00f3nica " + comprobante + " (Pedido #" + order.getId() + ") - Pizza Hut";
             String html = buildCustomerOrderHtml(order);
-            byte[] pdfBytes = sunatReniecService != null ? sunatReniecService.obtenerPdfBoleta(orderId) : null;
+            byte[] pdfBytes = sunatService != null ? sunatService.obtenerPdfBoleta(orderId) : null;
             String serie = order.getBoletaSerie() != null ? order.getBoletaSerie() : "BBB1";
             int num = order.getBoletaNumero() != null ? order.getBoletaNumero() : orderId;
             String filename = String.format("Boleta_%s-%06d.pdf", serie, num);

@@ -3,6 +3,12 @@ package com.example.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,6 +16,10 @@ import java.util.List;
 @Entity
 @Table(name = "pizzas")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Pizza {
 
     @Id
@@ -33,82 +43,44 @@ public class Pizza {
     private BigDecimal price;
 
     @Column(nullable = false)
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private boolean isAvailable = true;
 
     @Column(nullable = false)
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private boolean isPopular = false;
 
     @Column(nullable = false)
-    @JsonIgnore  // Ocultar metadatos internos
+    @JsonIgnore
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(nullable = false)
-    @JsonIgnore  // Ocultar metadatos internos
+    @JsonIgnore
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @JsonIgnore  // Ocultar metadatos internos
+    @JsonIgnore
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "pizza", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
     private List<PizzaIngredient> pizzaIngredients;
 
-    // Constructor vac\u00edo
-    public Pizza() {}
-
-    // Constructor completo
-    public Pizza(Integer id, Category category, String name, String description, String imageUrl, java.math.BigDecimal price,
-                 boolean isAvailable, boolean isPopular, LocalDateTime createdAt, LocalDateTime updatedAt,
-                 LocalDateTime deletedAt, List<PizzaIngredient> pizzaIngredients) {
-        this.id = id;
-        this.category = category;
-        this.name = name;
-        this.description = description;
-        this.imageUrl = imageUrl;
-        this.price = price;
-        this.isAvailable = isAvailable;
-        this.isPopular = isPopular;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deletedAt = deletedAt;
-        this.pizzaIngredients = pizzaIngredients;
+    public boolean getIsAvailable() {
+        return isAvailable;
     }
 
-    // Getters y setters
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public void setIsAvailable(boolean isAvailable) {
+        this.isAvailable = isAvailable;
+    }
 
-    public Category getCategory() { return category; }
-    public void setCategory(Category category) { this.category = category; }
+    public boolean getIsPopular() {
+        return isPopular;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-
-    public java.math.BigDecimal getPrice() { return price; }
-    public void setPrice(java.math.BigDecimal price) { this.price = price; }
-
-    public boolean getIsAvailable() { return isAvailable; }
-    public void setIsAvailable(boolean isAvailable) { this.isAvailable = isAvailable; }
-
-    public boolean getIsPopular() { return isPopular; }
-    public void setIsPopular(boolean isPopular) { this.isPopular = isPopular; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-
-    public LocalDateTime getDeletedAt() { return deletedAt; }
-    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
-
-    public List<PizzaIngredient> getPizzaIngredients() { return pizzaIngredients; }
-    public void setPizzaIngredients(List<PizzaIngredient> pizzaIngredients) { this.pizzaIngredients = pizzaIngredients; }
+    public void setIsPopular(boolean isPopular) {
+        this.isPopular = isPopular;
+    }
 
     @PrePersist
     protected void onCreate() {

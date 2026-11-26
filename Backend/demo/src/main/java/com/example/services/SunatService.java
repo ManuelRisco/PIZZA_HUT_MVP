@@ -1,5 +1,7 @@
 package com.example.services;
 
+import com.example.dtos.BoletaEmisionDTO;
+import com.example.dtos.DniLookupDTO;
 import com.example.dtos.OrderCompleteDTO;
 import com.example.exceptions.BadRequestException;
 import com.example.exceptions.ResourceNotFoundException;
@@ -22,7 +24,6 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -40,50 +41,18 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
-public class SunatReniecService {
+public class SunatService {
 
-    private static final Logger log = LoggerFactory.getLogger(SunatReniecService.class);
+    private static final Logger log = LoggerFactory.getLogger(SunatService.class);
     private static final String DEFAULT_SERIE = "BBB1";
     private static final int TIPO_COMPROBANTE_BOLETA = 2;
     private static final String UNIDAD_MEDIDA_BIEN = "NIU";
     private static final String UNIDAD_MEDIDA_SERVICIO = "ZZ";
     private static final BigDecimal IGV_DIVISOR = new BigDecimal("1.18");
     private static final DateTimeFormatter NUBEFACT_DATE_FMT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-
-    public record DniLookupResult(
-            String dni,
-            String nombres,
-            String apellidoPaterno,
-            String apellidoMaterno,
-            String nombreCompleto,
-            String source
-    ) {}
-
-    public record BoletaEmisionResult(
-            Integer orderId,
-            String serie,
-            Integer numero,
-            String comprobante,
-            String clienteDni,
-            String clienteNombre,
-            String clienteDireccion,
-            BigDecimal totalGravada,
-            BigDecimal totalIgv,
-            BigDecimal total,
-            String pdfUrl,
-            String xmlUrl,
-            String cdrUrl,
-            String enlace,
-            String hash,
-            String qr,
-            String estado,
-            LocalDateTime emitidaAt
-    ) {}
 
     private record RawBoletaLine(
             String unidadMedida,
@@ -97,8 +66,8 @@ public class SunatReniecService {
     private final OrderRepository orderRepository;
     private final UsuarioRepository usuarioRepository;
     private final AddressService addressService;
+    private final ReniecService reniecService;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final ConcurrentHashMap<String, DniLookupResult> memoryDniCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, byte[]> pdfBytesCache = new ConcurrentHashMap<>();
 
     private final HttpClient httpClient = HttpClient.newBuilder()
@@ -106,313 +75,22 @@ public class SunatReniecService {
             .followRedirects(HttpClient.Redirect.NORMAL)
             .build();
 
-    @Value("${decolecta.api.url:https://api.decolecta.com/v1}")
-    private String decolectaApiUrl;
-
-    @Value("${decolecta.api.token:}")
-    private String decolectaApiToken;
-
     @Value("${nubefact.api.url:}")
     private String nubefactApiUrl;
 
     @Value("${nubefact.api.token:}")
     private String nubefactApiToken;
 
-    public SunatReniecService(JdbcTemplate jdbcTemplate,
-                              OrderRepository orderRepository,
-                              UsuarioRepository usuarioRepository,
-                              AddressService addressService) {
+    public SunatService(JdbcTemplate jdbcTemplate,
+                        OrderRepository orderRepository,
+                        UsuarioRepository usuarioRepository,
+                        AddressService addressService,
+                        ReniecService reniecService) {
         this.jdbcTemplate = jdbcTemplate;
         this.orderRepository = orderRepository;
         this.usuarioRepository = usuarioRepository;
         this.addressService = addressService;
-    }
-
-    /**
-     * Consulta un DNI peruano de 8 dígitos usando Decolecta API (configurada en .env)
-     * con respaldo en caché SQL Server y consulta RENIEC en vivo para garantizar disponibilidad.
-     */
-    public DniLookupResult consultarDni(String rawDni) {
-        if (rawDni == null || !rawDni.trim().matches("^\\d{8}$")) {
-            throw new BadRequestException("El DNI debe contener exactamente 8 dígitos numéricos.");
-        }
-        String dni = rawDni.trim();
-
-        // 1. Revisar caché en memoria
-        DniLookupResult cached = memoryDniCache.get(dni);
-        if (cached != null) {
-            return cached;
-        }
-
-        // 2. Revisar caché en SQL Server (dbo.reniec_dni_cache)
-        DniLookupResult dbCached = findInDbCache(dni);
-        if (dbCached != null) {
-            memoryDniCache.put(dni, dbCached);
-            return dbCached;
-        }
-
-        // 3. Consultar API primaria configurada en .env (Decolecta)
-        DniLookupResult decolectaResult = tryDecolectaApi(dni);
-        if (decolectaResult != null) {
-            saveToCache(decolectaResult);
-            return decolectaResult;
-        }
-
-        // 4. Respaldo automático en vivo RENIEC (eldni.com) por si el token de Decolecta excedió límite
-        DniLookupResult fallbackResult = tryLiveReniecFallback(dni);
-        if (fallbackResult != null) {
-            saveToCache(fallbackResult);
-            return fallbackResult;
-        }
-
-        // 5. Revisar si algún usuario registrado en la base de datos ya tiene ese DNI
-        DniLookupResult userDbResult = findInUsersTable(dni);
-        if (userDbResult != null) {
-            saveToCache(userDbResult);
-            return userDbResult;
-        }
-
-        throw new ResourceNotFoundException("No se encontraron datos en RENIEC para el DNI " + dni + ". Puede escribir su nombre manualmente.");
-    }
-
-    private DniLookupResult tryDecolectaApi(String dni) {
-        if (decolectaApiUrl == null || decolectaApiUrl.isBlank() || decolectaApiToken == null || decolectaApiToken.isBlank()) {
-            return null;
-        }
-        String baseUrl = decolectaApiUrl.trim().replaceAll("/+$", "");
-        String token = decolectaApiToken.trim();
-        String[] authHeaders = new String[]{
-            "Bearer " + token,
-            token.startsWith("sk_") ? "Bearer " + token : "Bearer sk_" + token
-        };
-
-        for (String authHeader : authHeaders) {
-            try {
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create(baseUrl + "/reniec/dni?numero=" + dni))
-                        .header("Authorization", authHeader)
-                        .header("Referer", "https://api.decolecta.com")
-                        .header("Accept", "application/json")
-                        .header("User-Agent", "PizzaHutMVP/1.0")
-                        .timeout(Duration.ofSeconds(8))
-                        .GET()
-                        .build();
-
-                HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
-                if (resp.statusCode() == 200 && resp.body() != null && !resp.body().isBlank()) {
-                    JsonNode json = objectMapper.readTree(resp.body());
-                    String nombres = firstNonBlank(
-                            json.path("first_name").asText(null),
-                            json.path("nombres").asText(null)
-                    );
-                    String apPaterno = firstNonBlank(
-                            json.path("first_last_name").asText(null),
-                            json.path("apellidoPaterno").asText(null),
-                            json.path("apellido_paterno").asText(null)
-                    );
-                    String apMaterno = firstNonBlank(
-                            json.path("second_last_name").asText(null),
-                            json.path("apellidoMaterno").asText(null),
-                            json.path("apellido_materno").asText(null)
-                    );
-                    String fullName = firstNonBlank(
-                            json.path("full_name").asText(null),
-                            json.path("nombreCompleto").asText(null),
-                            json.path("nombre_completo").asText(null)
-                    );
-
-                    if ((fullName == null || fullName.isBlank()) && nombres != null) {
-                        fullName = (nombres + " " + (apPaterno != null ? apPaterno : "") + " " + (apMaterno != null ? apMaterno : ""))
-                                .trim().replaceAll("\\s+", " ");
-                    }
-                    if (fullName != null && !fullName.isBlank()) {
-                        log.info("DNI {} consultado exitosamente desde Decolecta API: {}", dni, fullName);
-                        return new DniLookupResult(
-                                dni,
-                                nombres != null ? nombres.trim() : fullName.trim(),
-                                apPaterno != null ? apPaterno.trim() : "",
-                                apMaterno != null ? apMaterno.trim() : "",
-                                fullName.trim().replaceAll("\\s+", " "),
-                                "DECOLECTA_RENIEC"
-                        );
-                    }
-                } else {
-                    log.debug("Decolecta API devolvió HTTP {} para DNI {}: {}", resp.statusCode(), dni, resp.body());
-                }
-            } catch (Exception ex) {
-                log.debug("Aviso al consultar Decolecta API para DNI {}: {}", dni, ex.getMessage());
-            }
-        }
-        return null;
-    }
-
-    private DniLookupResult tryLiveReniecFallback(String dni) {
-        try {
-            String url = "https://eldni.com/pe/buscar-datos-por-dni";
-            HttpRequest getReq = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-                    .timeout(Duration.ofSeconds(8))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> getResp = httpClient.send(getReq, HttpResponse.BodyHandlers.ofString());
-            if (getResp.statusCode() != 200 || getResp.body() == null) {
-                return null;
-            }
-
-            Matcher tokenMatcher = Pattern.compile("name=\"_token\"\\s+value=\"([^\"]+)\"").matcher(getResp.body());
-            if (!tokenMatcher.find()) {
-                return null;
-            }
-            String csrfToken = tokenMatcher.group(1);
-            List<String> setCookies = getResp.headers().allValues("Set-Cookie");
-            String cookieHeader = setCookies.stream()
-                    .map(c -> c.split(";", 2)[0])
-                    .collect(Collectors.joining("; "));
-
-            String formData = "_token=" + URLEncoder.encode(csrfToken, StandardCharsets.UTF_8)
-                    + "&dni=" + URLEncoder.encode(dni, StandardCharsets.UTF_8);
-
-            HttpRequest postReq = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .header("Cookie", cookieHeader)
-                    .header("Referer", url)
-                    .timeout(Duration.ofSeconds(8))
-                    .POST(HttpRequest.BodyPublishers.ofString(formData))
-                    .build();
-
-            HttpResponse<String> postResp = httpClient.send(postReq, HttpResponse.BodyHandlers.ofString());
-            if (postResp.statusCode() == 200 && postResp.body() != null) {
-                String html = postResp.body();
-                String nombres = extractInputValue(html, "nombres");
-                String apPaterno = extractInputValue(html, "apellidop");
-                String apMaterno = extractInputValue(html, "apellidom");
-                String completos = extractInputValue(html, "completos");
-
-                if ((completos == null || completos.isBlank()) && nombres != null && !nombres.isBlank()) {
-                    completos = (nombres + " " + (apPaterno != null ? apPaterno : "") + " " + (apMaterno != null ? apMaterno : ""))
-                            .trim().replaceAll("\\s+", " ");
-                }
-                if (completos != null && !completos.isBlank()) {
-                    log.info("DNI {} consultado exitosamente mediante servicio RENIEC secundario: {}", dni, completos);
-                    return new DniLookupResult(
-                            dni,
-                            nombres != null ? nombres.trim() : completos.trim(),
-                            apPaterno != null ? apPaterno.trim() : "",
-                            apMaterno != null ? apMaterno.trim() : "",
-                            completos.trim().replaceAll("\\s+", " "),
-                            "RENIEC_PERU"
-                    );
-                }
-            }
-        } catch (Exception ex) {
-            log.debug("Aviso en consulta RENIEC secundaria para DNI {}: {}", dni, ex.getMessage());
-        }
-        return null;
-    }
-
-    private String extractInputValue(String html, String inputId) {
-        Matcher m = Pattern.compile("<input[^>]*id=\"" + Pattern.quote(inputId) + "\"[^>]*value=\"([^\"]+)\"", Pattern.CASE_INSENSITIVE).matcher(html);
-        if (m.find()) {
-            return m.group(1).trim();
-        }
-        return null;
-    }
-
-    private DniLookupResult findInDbCache(String dni) {
-        try {
-            List<DniLookupResult> rows = jdbcTemplate.query("""
-                SELECT dni, nombres, apellido_paterno, apellido_materno, nombre_completo
-                FROM dbo.reniec_dni_cache
-                WHERE dni = ?
-                """, (rs, rowNum) -> new DniLookupResult(
-                    rs.getString("dni"),
-                    rs.getString("nombres"),
-                    rs.getString("apellido_paterno"),
-                    rs.getString("apellido_materno"),
-                    rs.getString("nombre_completo"),
-                    "CACHE_RENIEC"
-            ), dni);
-            return rows.isEmpty() ? null : rows.get(0);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private DniLookupResult findInUsersTable(String dni) {
-        try {
-            List<DniLookupResult> rows = jdbcTemplate.query("""
-                SELECT TOP 1 dni, name
-                FROM dbo.users
-                WHERE dni = ? AND name IS NOT NULL AND LTRIM(RTRIM(name)) <> ''
-                """, (rs, rowNum) -> {
-                String full = rs.getString("name").trim().toUpperCase(Locale.ROOT);
-                return new DniLookupResult(dni, full, "", "", full, "DB_USERS");
-            }, dni);
-            return rows.isEmpty() ? null : rows.get(0);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private void saveToCache(DniLookupResult res) {
-        if (res == null || res.dni() == null || res.nombreCompleto() == null) return;
-        memoryDniCache.put(res.dni(), res);
-        try {
-            jdbcTemplate.update("""
-                IF EXISTS (SELECT 1 FROM dbo.reniec_dni_cache WHERE dni = ?)
-                    UPDATE dbo.reniec_dni_cache
-                    SET nombres = ?, apellido_paterno = ?, apellido_materno = ?, nombre_completo = ?, updated_at = SYSDATETIME()
-                    WHERE dni = ?
-                ELSE
-                    INSERT INTO dbo.reniec_dni_cache (dni, nombres, apellido_paterno, apellido_materno, nombre_completo)
-                    VALUES (?, ?, ?, ?, ?)
-                """,
-                    res.dni(),
-                    res.nombres(), res.apellidoPaterno(), res.apellidoMaterno(), res.nombreCompleto(), res.dni(),
-                    res.dni(), res.nombres(), res.apellidoPaterno(), res.apellidoMaterno(), res.nombreCompleto()
-            );
-        } catch (Exception ignored) {
-        }
-    }
-
-    /**
-     * Guarda o actualiza el DNI de un usuario en la base de datos junto con la declaración
-     * de mayoría de edad (+18) y titularidad del documento.
-     */
-    @Transactional
-    @CacheEvict(value = "users", allEntries = true)
-    public Usuario configurarDniUsuario(Long userId, String rawDni, Boolean ageVerified, String optionalName) {
-        if (userId == null) {
-            throw new BadRequestException("Usuario no autenticado.");
-        }
-        if (rawDni == null || !rawDni.trim().matches("^\\d{8}$")) {
-            throw new BadRequestException("El DNI debe contener exactamente 8 dígitos numéricos.");
-        }
-        if (!Boolean.TRUE.equals(ageVerified)) {
-            throw new BadRequestException("Debe confirmar que es mayor de 18 años y titular del DNI ingresado.");
-        }
-
-        Usuario usuario = usuarioRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado."));
-        String cleanDni = rawDni.trim();
-        usuario.setDni(cleanDni);
-        usuario.setAgeVerified(true);
-
-        if (optionalName != null && !optionalName.isBlank()) {
-            String trimmedName = optionalName.trim();
-            List<Usuario> conflicts = usuarioRepository.findAll().stream()
-                    .filter(u -> u.getName() != null && u.getName().equalsIgnoreCase(trimmedName))
-                    .filter(u -> !u.getId().equals(usuario.getId()))
-                    .toList();
-            if (conflicts.isEmpty()) {
-                usuario.setName(trimmedName);
-            }
-        }
-        return usuarioRepository.saveAndFlush(usuario);
+        this.reniecService = reniecService;
     }
 
     /**
@@ -422,7 +100,7 @@ public class SunatReniecService {
      */
     @Transactional
     @CacheEvict(value = "users", allEntries = true)
-    public BoletaEmisionResult emitirBoletaParaPedido(Integer orderId, String requestedDni, String requestedNombre) {
+    public BoletaEmisionDTO emitirBoletaParaPedido(Integer orderId, String requestedDni, String requestedNombre) {
         if (orderId == null) {
             throw new BadRequestException("El ID del pedido es obligatorio.");
         }
@@ -467,9 +145,9 @@ public class SunatReniecService {
                 requestedNombre,
                 order.getBoletaClienteNombre()
         );
-        if (cleanNombre == null || cleanNombre.isBlank()) {
+        if ((cleanNombre == null || cleanNombre.isBlank()) && reniecService != null) {
             try {
-                DniLookupResult ren = consultarDni(cleanDni);
+                DniLookupDTO ren = reniecService.consultarDni(cleanDni);
                 if (ren != null && ren.nombreCompleto() != null && !ren.nombreCompleto().isBlank()) {
                     cleanNombre = ren.nombreCompleto();
                 }
@@ -844,11 +522,11 @@ public class SunatReniecService {
         return items;
     }
 
-    private BoletaEmisionResult buildBoletaResultFromOrder(Order order) {
+    private BoletaEmisionDTO buildBoletaResultFromOrder(Order order) {
         String serie = order.getBoletaSerie() != null ? order.getBoletaSerie() : DEFAULT_SERIE;
         int numero = order.getBoletaNumero() != null ? order.getBoletaNumero() : 1;
         String comprobante = serie + "-" + String.format("%06d", numero);
-        return new BoletaEmisionResult(
+        return new BoletaEmisionDTO(
                 order.getId(),
                 serie,
                 numero,

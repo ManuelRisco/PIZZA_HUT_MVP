@@ -1,6 +1,17 @@
 package com.example.controllers;
 
 import com.example.dtos.ApiResponse;
+import com.example.dtos.GoogleAuthRequestDTO;
+import com.example.dtos.GoogleAuthResponseDTO;
+import com.example.dtos.GoogleAuthResultDTO;
+import com.example.dtos.GoogleConfigDTO;
+import com.example.dtos.PasswordResetConfirmRequestDTO;
+import com.example.dtos.PasswordResetConfirmResponseDTO;
+import com.example.dtos.PasswordResetRequestDTO;
+import com.example.dtos.PasswordResetRequestResultDTO;
+import com.example.dtos.PasswordResetVerifyRequestDTO;
+import com.example.dtos.PasswordResetVerifyResponseDTO;
+import com.example.dtos.SetPasswordRequestDTO;
 import com.example.dtos.UsuarioDTO;
 import com.example.exceptions.BadRequestException;
 import com.example.mappers.UsuarioMapper;
@@ -20,7 +31,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -48,19 +58,18 @@ public class AuthRecoveryAndGoogleController {
     }
 
     @GetMapping("/auth/google/config")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> obtenerConfiguracionGoogle() {
+    public ResponseEntity<ApiResponse<GoogleConfigDTO>> obtenerConfiguracionGoogle() {
         return ResponseEntity.ok(ApiResponse.success(
                 authRecoveryAndGoogleService.obtenerConfiguracionGoogle()
         ));
     }
 
     @PostMapping("/auth/google")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> loginConGoogle(
-            @RequestBody Map<String, String> payload,
+    public ResponseEntity<ApiResponse<GoogleAuthResponseDTO>> loginConGoogle(
+            @RequestBody GoogleAuthRequestDTO payload,
             HttpServletRequest request) {
 
-        AuthRecoveryAndGoogleService.GoogleAuthResult result =
-                authRecoveryAndGoogleService.autenticarConGoogle(payload);
+        GoogleAuthResultDTO result = authRecoveryAndGoogleService.autenticarConGoogle(payload);
         Usuario user = result.usuario();
 
         String token = jwtTokenProvider.generateToken(
@@ -84,33 +93,35 @@ public class AuthRecoveryAndGoogleController {
                     user.getId().intValue(),
                     "Usuario",
                     user.getId().intValue(),
-                    "Cuenta creada autom\u00e1ticamente con Google OAuth: " + user.getEmail()
+                    "Cuenta creada automáticamente con Google OAuth: " + user.getEmail()
             );
         }
         auditLogService.registrarLogin(user.getId().intValue(), obtenerIP(request), obtenerUserAgent(request));
         sessionLogService.crearSesion(user.getId().intValue(), token, obtenerIP(request), obtenerUserAgent(request));
 
+        GoogleAuthResponseDTO responseDto = new GoogleAuthResponseDTO(
+                token,
+                refreshToken,
+                usuarioMapper.toDto(user),
+                result.newlyCreated(),
+                Boolean.FALSE.equals(user.getPasswordSet())
+        );
+
         return ResponseEntity.ok(ApiResponse.success(
-                Map.of(
-                        "token", token,
-                        "refreshToken", refreshToken,
-                        "usuario", usuarioMapper.toDto(user),
-                        "newlyCreated", result.newlyCreated(),
-                        "requiresPasswordSetup", Boolean.FALSE.equals(user.getPasswordSet())
-                ),
-                "Inicio de sesi\u00f3n con Google exitoso. Bienvenido " + user.getName()
+                responseDto,
+                "Inicio de sesión con Google exitoso. Bienvenido " + user.getName()
         ));
     }
 
     @PostMapping("/usuarios/me/vincular-google")
     public ResponseEntity<ApiResponse<UsuarioDTO>> vincularCuentaConGoogle(
             @RequestHeader("Authorization") String authHeader,
-            @RequestBody(required = false) Map<String, String> payload) {
+            @RequestBody(required = false) GoogleAuthRequestDTO payload) {
 
         String token = authHeader != null ? authHeader.replace("Bearer ", "").trim() : "";
         Long userId = jwtTokenProvider.getIdFromToken(token);
         if (userId == null) {
-            throw new BadRequestException("Token inv\u00e1lido");
+            throw new BadRequestException("Token inválido");
         }
 
         Usuario actualizado = authRecoveryAndGoogleService.vincularCuentaConGoogle(userId, payload);
@@ -123,16 +134,16 @@ public class AuthRecoveryAndGoogleController {
     @PostMapping("/usuarios/me/definir-password")
     public ResponseEntity<ApiResponse<UsuarioDTO>> definirPasswordCuentaGoogle(
             @RequestHeader("Authorization") String authHeader,
-            @RequestBody Map<String, String> body,
+            @RequestBody SetPasswordRequestDTO body,
             HttpServletRequest request) {
 
         String token = authHeader != null ? authHeader.replace("Bearer ", "").trim() : "";
         Long userId = jwtTokenProvider.getIdFromToken(token);
         if (userId == null) {
-            throw new BadRequestException("Token inv\u00e1lido");
+            throw new BadRequestException("Token inválido");
         }
 
-        String nuevaPassword = body != null ? body.get("password") : null;
+        String nuevaPassword = body != null ? body.password() : null;
         Usuario actualizado = authRecoveryAndGoogleService.definirPasswordCuentaGoogle(userId, nuevaPassword);
         auditLogService.registrarActualizacion(
                 actualizado.getId().intValue(),
@@ -140,55 +151,47 @@ public class AuthRecoveryAndGoogleController {
                 actualizado.getId().intValue(),
                 "{\"passwordSet\":false}",
                 "{\"passwordSet\":true}",
-                "Usuario defini\u00f3 contrase\u00f1a para su cuenta de Google (" + obtenerIP(request) + ")"
+                "Usuario definió contraseña para su cuenta de Google (" + obtenerIP(request) + ")"
         );
         return ResponseEntity.ok(ApiResponse.success(
                 usuarioMapper.toDto(actualizado),
-                "Contrase\u00f1a configurada correctamente. Ahora tambi\u00e9n puedes iniciar sesi\u00f3n con tu correo y contrase\u00f1a."
+                "Contraseña configurada correctamente. Ahora también puedes iniciar sesión con tu correo y contraseña."
         ));
     }
 
     @PostMapping("/recuperar-password/solicitar")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> solicitarRecuperacionPassword(
-            @RequestBody Map<String, String> body,
+    public ResponseEntity<ApiResponse<PasswordResetRequestResultDTO>> solicitarRecuperacionPassword(
+            @RequestBody PasswordResetRequestDTO body,
             HttpServletRequest request) {
 
-        String email = body != null ? body.get("email") : null;
-        AuthRecoveryAndGoogleService.PasswordResetRequestResult result =
-                authRecoveryAndGoogleService.solicitarRecuperacionPassword(email);
+        String email = body != null ? body.email() : null;
+        PasswordResetRequestResultDTO result = authRecoveryAndGoogleService.solicitarRecuperacionPassword(email);
 
-        return ResponseEntity.ok(ApiResponse.success(
-                Map.of(
-                        "emailSent", result.emailSent(),
-                        "maskedEmail", result.maskedEmail(),
-                        "expirationMinutes", result.expirationMinutes()
-                ),
-                result.message()
-        ));
+        return ResponseEntity.ok(ApiResponse.success(result, result.message()));
     }
 
     @PostMapping("/recuperar-password/verificar-codigo")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> verificarCodigoRecuperacion(
-            @RequestBody Map<String, String> body) {
+    public ResponseEntity<ApiResponse<PasswordResetVerifyResponseDTO>> verificarCodigoRecuperacion(
+            @RequestBody PasswordResetVerifyRequestDTO body) {
 
-        String email = body != null ? body.get("email") : null;
-        String code = body != null ? body.get("code") : null;
+        String email = body != null ? body.email() : null;
+        String code = body != null ? body.code() : null;
         boolean valid = authRecoveryAndGoogleService.verificarCodigoRecuperacion(email, code);
 
         return ResponseEntity.ok(ApiResponse.success(
-                Map.of("valid", valid),
-                "C\u00f3digo verificado correctamente."
+                new PasswordResetVerifyResponseDTO(valid),
+                "Código verificado correctamente."
         ));
     }
 
     @PostMapping("/recuperar-password/confirmar")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> confirmarRecuperacionPassword(
-            @RequestBody Map<String, String> body,
+    public ResponseEntity<ApiResponse<PasswordResetConfirmResponseDTO>> confirmarRecuperacionPassword(
+            @RequestBody PasswordResetConfirmRequestDTO body,
             HttpServletRequest request) {
 
-        String email = body != null ? body.get("email") : null;
-        String code = body != null ? body.get("code") : null;
-        String newPassword = body != null ? body.get("newPassword") : null;
+        String email = body != null ? body.email() : null;
+        String code = body != null ? body.code() : null;
+        String newPassword = body != null ? body.newPassword() : null;
 
         Usuario actualizado = authRecoveryAndGoogleService.confirmarRecuperacionPassword(email, code, newPassword);
 
@@ -198,15 +201,12 @@ public class AuthRecoveryAndGoogleController {
                 actualizado.getId().intValue(),
                 "{\"password\":\"***\"}",
                 "{\"password\":\"reset_by_otp\"}",
-                "Contrase\u00f1a restablecida mediante c\u00f3digo OTP enviado al correo (" + obtenerIP(request) + ")"
+                "Contraseña restablecida mediante código OTP enviado al correo (" + obtenerIP(request) + ")"
         );
 
         return ResponseEntity.ok(ApiResponse.success(
-                Map.of(
-                        "reset", true,
-                        "email", actualizado.getEmail()
-                ),
-                "Tu contrase\u00f1a ha sido restablecida con \u00e9xito. Ya puedes iniciar sesi\u00f3n."
+                new PasswordResetConfirmResponseDTO(true, actualizado.getEmail()),
+                "Tu contraseña ha sido restablecida con éxito. Ya puedes iniciar sesión."
         ));
     }
 

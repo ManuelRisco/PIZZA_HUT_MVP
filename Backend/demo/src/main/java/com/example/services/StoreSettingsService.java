@@ -1,5 +1,6 @@
 package com.example.services;
 
+import com.example.dtos.DeliveryFeeConfigDTO;
 import com.example.exceptions.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +21,6 @@ public class StoreSettingsService {
     public static final BigDecimal DEFAULT_DELIVERY_FEE = new BigDecimal("5.00");
     private static final BigDecimal MAX_DELIVERY_FEE = new BigDecimal("500.00");
 
-    public record DeliveryFeeConfig(
-            BigDecimal deliveryFee,
-            String currency,
-            LocalDateTime updatedAt
-    ) {}
-
     private final JdbcTemplate jdbcTemplate;
     private volatile BigDecimal cachedDeliveryFee;
     private volatile LocalDateTime cachedUpdatedAt;
@@ -42,15 +37,15 @@ public class StoreSettingsService {
         return loadDeliveryFeeFromDb().deliveryFee();
     }
 
-    public DeliveryFeeConfig getDeliveryFeeConfig() {
+    public DeliveryFeeConfigDTO getDeliveryFeeConfig() {
         BigDecimal cached = this.cachedDeliveryFee;
         if (cached != null) {
-            return new DeliveryFeeConfig(cached, "PEN", this.cachedUpdatedAt);
+            return new DeliveryFeeConfigDTO(cached, "PEN", this.cachedUpdatedAt);
         }
         return loadDeliveryFeeFromDb();
     }
 
-    public synchronized DeliveryFeeConfig updateDeliveryFee(BigDecimal rawFee) {
+    public synchronized DeliveryFeeConfigDTO updateDeliveryFee(BigDecimal rawFee) {
         if (rawFee == null) {
             throw new BadRequestException("El costo de delivery es obligatorio.");
         }
@@ -80,24 +75,24 @@ public class StoreSettingsService {
         this.cachedDeliveryFee = normalized;
         this.cachedUpdatedAt = now;
         log.info("Tarifa de delivery actualizada a S/ {}", normalized.toPlainString());
-        return new DeliveryFeeConfig(normalized, "PEN", now);
+        return new DeliveryFeeConfigDTO(normalized, "PEN", now);
     }
 
-    private DeliveryFeeConfig loadDeliveryFeeFromDb() {
+    private DeliveryFeeConfigDTO loadDeliveryFeeFromDb() {
         try {
-            List<DeliveryFeeConfig> rows = jdbcTemplate.query(
+            List<DeliveryFeeConfigDTO> rows = jdbcTemplate.query(
                     "SELECT setting_value, updated_at FROM app_settings WHERE setting_key = ?",
                     (rs, rowNum) -> {
                         String rawVal = rs.getString("setting_value");
                         Timestamp ts = rs.getTimestamp("updated_at");
                         BigDecimal parsed = parseFeeOrDefault(rawVal);
                         LocalDateTime updatedAt = ts != null ? ts.toLocalDateTime() : null;
-                        return new DeliveryFeeConfig(parsed, "PEN", updatedAt);
+                        return new DeliveryFeeConfigDTO(parsed, "PEN", updatedAt);
                     },
                     KEY_DELIVERY_FEE
             );
             if (!rows.isEmpty()) {
-                DeliveryFeeConfig cfg = rows.get(0);
+                DeliveryFeeConfigDTO cfg = rows.get(0);
                 this.cachedDeliveryFee = cfg.deliveryFee();
                 this.cachedUpdatedAt = cfg.updatedAt();
                 return cfg;
@@ -107,7 +102,7 @@ public class StoreSettingsService {
                     DEFAULT_DELIVERY_FEE, e.getMessage());
         }
         this.cachedDeliveryFee = DEFAULT_DELIVERY_FEE;
-        return new DeliveryFeeConfig(DEFAULT_DELIVERY_FEE, "PEN", null);
+        return new DeliveryFeeConfigDTO(DEFAULT_DELIVERY_FEE, "PEN", null);
     }
 
     private BigDecimal parseFeeOrDefault(String rawVal) {

@@ -1,10 +1,21 @@
 package com.example.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "audit_logs")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AuditLog {
 
     @Id
@@ -47,12 +58,13 @@ public class AuditLog {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
+    @Builder.Default
     private Status status = Status.SUCCESS;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    // ==== Enums ====
     public enum ActionType {
         LOGIN,
         LOGOUT,
@@ -70,13 +82,11 @@ public class AuditLog {
         WARNING
     }
 
-    // ==== Constructores ====
-    public AuditLog() {}
-
     public AuditLog(Integer userId, ActionType actionType, String description) {
         this.userId = userId;
         this.actionType = actionType;
         this.description = description;
+        this.status = Status.SUCCESS;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -85,192 +95,8 @@ public class AuditLog {
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();
         }
-    }
-
-    // ==== Builder est\u00e1tico para facilitar la creaci\u00f3n ====
-    public static AuditLog.Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-        private AuditLog auditLog = new AuditLog();
-
-        public Builder userId(Integer userId) {
-            auditLog.userId = userId;
-            return this;
+        if (this.status == null) {
+            this.status = Status.SUCCESS;
         }
-
-        public Builder actionType(ActionType actionType) {
-            auditLog.actionType = actionType;
-            return this;
-        }
-
-        public Builder entityType(String entityType) {
-            auditLog.entityType = entityType;
-            return this;
-        }
-
-        public Builder entityId(Integer entityId) {
-            auditLog.entityId = entityId;
-            return this;
-        }
-
-        public Builder ipAddress(String ipAddress) {
-            auditLog.ipAddress = ipAddress;
-            return this;
-        }
-
-        public Builder userAgent(String userAgent) {
-            auditLog.userAgent = userAgent;
-            return this;
-        }
-
-        public Builder requestMethod(String requestMethod) {
-            auditLog.requestMethod = requestMethod;
-            return this;
-        }
-
-        public Builder requestUrl(String requestUrl) {
-            auditLog.requestUrl = requestUrl;
-            return this;
-        }
-
-        public Builder oldValues(String oldValues) {
-            auditLog.oldValues = oldValues;
-            return this;
-        }
-
-        public Builder newValues(String newValues) {
-            auditLog.newValues = newValues;
-            return this;
-        }
-
-        public Builder description(String description) {
-            auditLog.description = description;
-            return this;
-        }
-
-        public Builder status(Status status) {
-            auditLog.status = status;
-            return this;
-        }
-
-        public AuditLog build() {
-            auditLog.createdAt = LocalDateTime.now();
-            return auditLog;
-        }
-    }
-
-    // ==== Getters y Setters ====
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Integer getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
-
-    public ActionType getActionType() {
-        return actionType;
-    }
-
-    public void setActionType(ActionType actionType) {
-        this.actionType = actionType;
-    }
-
-    public String getEntityType() {
-        return entityType;
-    }
-
-    public void setEntityType(String entityType) {
-        this.entityType = entityType;
-    }
-
-    public Integer getEntityId() {
-        return entityId;
-    }
-
-    public void setEntityId(Integer entityId) {
-        this.entityId = entityId;
-    }
-
-    public String getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
-    }
-
-    public String getUserAgent() {
-        return userAgent;
-    }
-
-    public void setUserAgent(String userAgent) {
-        this.userAgent = userAgent;
-    }
-
-    public String getRequestMethod() {
-        return requestMethod;
-    }
-
-    public void setRequestMethod(String requestMethod) {
-        this.requestMethod = requestMethod;
-    }
-
-    public String getRequestUrl() {
-        return requestUrl;
-    }
-
-    public void setRequestUrl(String requestUrl) {
-        this.requestUrl = requestUrl;
-    }
-
-    public String getOldValues() {
-        return oldValues;
-    }
-
-    public void setOldValues(String oldValues) {
-        this.oldValues = oldValues;
-    }
-
-    public String getNewValues() {
-        return newValues;
-    }
-
-    public void setNewValues(String newValues) {
-        this.newValues = newValues;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 }

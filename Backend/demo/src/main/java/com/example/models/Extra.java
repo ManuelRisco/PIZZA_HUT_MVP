@@ -1,11 +1,20 @@
 package com.example.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "extras")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Extra {
 
     @Id
@@ -52,16 +61,12 @@ public class Extra {
     @Column
     private LocalDateTime deletedAt;
 
-    // ==== Enum ====
     public enum ExtraCategory {
         BEBIDA,
         POSTRE,
         ENTRADA,
         COMPLEMENTO
     }
-
-    // ==== Constructores ====
-    public Extra() {}
 
     public Extra(String name, String description, String imageUrl, BigDecimal price, ExtraCategory category) {
         this.name = name;
@@ -85,118 +90,5 @@ public class Extra {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
-    }
-
-    // ==== Getters y Setters ====
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public ExtraCategory getCategory() {
-        return category;
-    }
-
-    public void setCategory(ExtraCategory category) {
-        this.category = category;
-    }
-
-    public Boolean getIsAvailable() {
-        return isAvailable;
-    }
-
-    public void setIsAvailable(Boolean isAvailable) {
-        this.isAvailable = isAvailable;
-    }
-
-    public Integer getDisplayOrder() {
-        return displayOrder;
-    }
-
-    public void setDisplayOrder(Integer displayOrder) {
-        this.displayOrder = displayOrder;
-    }
-
-    public Integer getStockQuantity() {
-        return stockQuantity;
-    }
-
-    public void setStockQuantity(Integer stockQuantity) {
-        this.stockQuantity = stockQuantity;
-    }
-
-    public Integer getMinStock() {
-        return minStock;
-    }
-
-    public void setMinStock(Integer minStock) {
-        this.minStock = minStock;
-    }
-
-    public BigDecimal getUnitCost() {
-        return unitCost;
-    }
-
-    public void setUnitCost(BigDecimal unitCost) {
-        this.unitCost = unitCost;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public LocalDateTime getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
     }
 }

@@ -1,12 +1,20 @@
 package com.example.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "sizes")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Size {
 
     @Id
@@ -26,10 +34,6 @@ public class Size {
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
 
-    // ==== Constructores ====
-    public Size() {
-    }
-
     public Size(Integer id, String name, BigDecimal extraCost, String description,
             Integer displayOrder, LocalDateTime createdAt, LocalDateTime updatedAt,
             LocalDateTime deletedAt) {
@@ -43,93 +47,12 @@ public class Size {
         this.deletedAt = deletedAt;
     }
 
-    // ==== Getters y Setters ====
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public BigDecimal getExtraCost() {
-        return extraCost;
-    }
-
-    public void setExtraCost(BigDecimal extraCost) {
-        this.extraCost = extraCost;
-    }
-
-    public BigDecimal getRecipeMultiplier() {
-        return recipeMultiplier;
-    }
-
-    public void setRecipeMultiplier(BigDecimal recipeMultiplier) {
-        this.recipeMultiplier = recipeMultiplier;
-    }
-
     public Integer getStockQuantity() {
         return stockQuantity != null ? stockQuantity : 0;
     }
 
-    public void setStockQuantity(Integer stockQuantity) {
-        this.stockQuantity = stockQuantity;
-    }
-
     public Integer getMinStock() {
         return minStock != null ? minStock : 0;
-    }
-
-    public void setMinStock(Integer minStock) {
-        this.minStock = minStock;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Integer getDisplayOrder() {
-        return displayOrder;
-    }
-
-    public void setDisplayOrder(Integer displayOrder) {
-        this.displayOrder = displayOrder;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public LocalDateTime getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
     }
 
     @PrePersist

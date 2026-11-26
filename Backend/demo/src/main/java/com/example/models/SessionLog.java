@@ -1,10 +1,20 @@
 package com.example.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "session_logs")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class SessionLog {
 
     @Id
@@ -48,17 +58,13 @@ public class SessionLog {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    // ==== Enum ====
     public enum LogoutReason {
-        MANUAL,         // Usuario cerr\u00f3 sesi\u00f3n manualmente
-        TIMEOUT,        // Sesi\u00f3n expir\u00f3 por inactividad
-        TOKEN_EXPIRED,  // Token JWT expir\u00f3
-        FORCED,         // Admin forz\u00f3 el cierre
-        SECURITY        // Cierre por razones de seguridad
+        MANUAL,
+        TIMEOUT,
+        TOKEN_EXPIRED,
+        FORCED,
+        SECURITY
     }
-
-    // ==== Constructores ====
-    public SessionLog() {}
 
     public SessionLog(Integer userId, String sessionToken, String ipAddress, String userAgent) {
         this.userId = userId;
@@ -80,7 +86,6 @@ public class SessionLog {
         }
     }
 
-    // ==== M\u00e9todos de utilidad ====
     public void endSession(LogoutReason reason) {
         this.isActive = false;
         this.logoutTime = LocalDateTime.now();
@@ -89,117 +94,12 @@ public class SessionLog {
 
     public Long getSessionDuration() {
         if (logoutTime == null) {
-            return java.time.Duration.between(loginTime, LocalDateTime.now()).toMinutes();
+            return Duration.between(loginTime, LocalDateTime.now()).toMinutes();
         }
-        return java.time.Duration.between(loginTime, logoutTime).toMinutes();
+        return Duration.between(loginTime, logoutTime).toMinutes();
     }
 
     public boolean isCurrentlyActive() {
         return isActive && logoutTime == null;
-    }
-
-    // ==== Getters y Setters ====
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Integer getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
-
-    public String getSessionToken() {
-        return sessionToken;
-    }
-
-    public void setSessionToken(String sessionToken) {
-        this.sessionToken = sessionToken;
-    }
-
-    public LocalDateTime getLoginTime() {
-        return loginTime;
-    }
-
-    public void setLoginTime(LocalDateTime loginTime) {
-        this.loginTime = loginTime;
-    }
-
-    public LocalDateTime getLogoutTime() {
-        return logoutTime;
-    }
-
-    public void setLogoutTime(LocalDateTime logoutTime) {
-        this.logoutTime = logoutTime;
-    }
-
-    public String getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
-    }
-
-    public String getUserAgent() {
-        return userAgent;
-    }
-
-    public void setUserAgent(String userAgent) {
-        this.userAgent = userAgent;
-    }
-
-    public String getDeviceType() {
-        return deviceType;
-    }
-
-    public void setDeviceType(String deviceType) {
-        this.deviceType = deviceType;
-    }
-
-    public String getBrowser() {
-        return browser;
-    }
-
-    public void setBrowser(String browser) {
-        this.browser = browser;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
-
-    public LogoutReason getLogoutReason() {
-        return logoutReason;
-    }
-
-    public void setLogoutReason(LogoutReason logoutReason) {
-        this.logoutReason = logoutReason;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 }

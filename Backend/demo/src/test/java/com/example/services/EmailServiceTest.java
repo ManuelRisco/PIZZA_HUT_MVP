@@ -1,5 +1,6 @@
 package com.example.services;
 
+import com.example.dtos.OrderEmailDispatchResultDTO;
 import com.example.dtos.StockAlertDTO;
 import com.example.models.Usuario;
 import com.example.repositories.UsuarioRepository;
@@ -118,7 +119,7 @@ class EmailServiceTest {
 
         doNothing().when(jdbcTemplate).query(contains("FROM order_item_extras"), any(RowCallbackHandler.class), any(Object[].class));
 
-        EmailService.OrderEmailDispatchResult result = emailService.sendOrderCreatedEmails(105);
+        OrderEmailDispatchResultDTO result = emailService.sendOrderCreatedEmails(105);
 
         assertTrue(result.customerEmailSent());
         assertEquals("carlos.cliente@gmail.com", result.customerEmail());

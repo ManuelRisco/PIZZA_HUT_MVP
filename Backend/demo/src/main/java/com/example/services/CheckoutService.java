@@ -1,6 +1,7 @@
 package com.example.services;
 
 import com.example.dtos.CheckoutRequestDTO;
+import com.example.dtos.MercadoPagoChargeResultDTO;
 import com.example.models.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +31,7 @@ public class CheckoutService {
     private final ExtraService extraService;
     private final SizeService sizeService;
     private final InventoryService inventoryService;
-    private final SunatReniecService sunatReniecService;
+    private final SunatService sunatService;
     private final MercadoPagoService mercadoPagoService;
     private final StoreSettingsService storeSettingsService;
 
@@ -39,7 +40,7 @@ public class CheckoutService {
                            OrderItemExtraService orderItemExtraService, IngredientService ingredientService,
                            PizzaService pizzaService, ExtraService extraService, SizeService sizeService,
                            InventoryService inventoryService,
-                           @org.springframework.beans.factory.annotation.Autowired(required = false) SunatReniecService sunatReniecService,
+                           @org.springframework.beans.factory.annotation.Autowired(required = false) SunatService sunatService,
                            @org.springframework.beans.factory.annotation.Autowired(required = false) MercadoPagoService mercadoPagoService,
                            @org.springframework.beans.factory.annotation.Autowired(required = false) StoreSettingsService storeSettingsService) {
         this.orderService = orderService;
@@ -53,7 +54,7 @@ public class CheckoutService {
         this.extraService = extraService;
         this.sizeService = sizeService;
         this.inventoryService = inventoryService;
-        this.sunatReniecService = sunatReniecService;
+        this.sunatService = sunatService;
         this.mercadoPagoService = mercadoPagoService;
         this.storeSettingsService = storeSettingsService;
     }
@@ -78,14 +79,14 @@ public class CheckoutService {
 
         boolean wantsBoleta = Boolean.TRUE.equals(req.getWantsBoleta())
                 || (req.getOrder() != null && Boolean.TRUE.equals(req.getOrder().getWantsBoleta()));
-        if (wantsBoleta && sunatReniecService != null) {
+        if (wantsBoleta && sunatService != null) {
             String reqDni = req.getClienteDni() != null && !req.getClienteDni().isBlank()
                     ? req.getClienteDni().trim()
                     : (req.getOrder() != null ? req.getOrder().getBoletaClienteDni() : null);
             String reqNombre = req.getClienteNombre() != null && !req.getClienteNombre().isBlank()
                     ? req.getClienteNombre().trim()
                     : (req.getOrder() != null ? req.getOrder().getBoletaClienteNombre() : null);
-            sunatReniecService.emitirBoletaParaPedido(savedOrder.getId(), reqDni, reqNombre);
+            sunatService.emitirBoletaParaPedido(savedOrder.getId(), reqDni, reqNombre);
             savedOrder = orderService.obtenerPorId(savedOrder.getId()).orElse(savedOrder);
         }
 
@@ -310,7 +311,7 @@ public class CheckoutService {
             // Si Mercado Pago rechaza el cobro, lanza BadRequestException y @Transactional revierte pedido + stock (y no emite boleta SUNAT).
             if (mercadoPagoService != null
                     && mercadoPagoService.requiresGatewayProcessing(payReq.getPaymentMethodId(), payReq)) {
-                MercadoPagoService.MercadoPagoChargeResult mpResult = mercadoPagoService.procesarPago(savedOrder, payReq);
+                MercadoPagoChargeResultDTO mpResult = mercadoPagoService.procesarPago(savedOrder, payReq);
                 if (mpResult.processedViaMercadoPago()) {
                     resolvedStatus = Payment.PaymentStatus.PAID;
                     resolvedTxId = mpResult.transactionId();

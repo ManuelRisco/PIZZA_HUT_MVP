@@ -1,6 +1,7 @@
 package com.example.controllers;
 
 import com.example.dtos.ApiResponse;
+import com.example.dtos.FileUploadResponseDTO;
 import com.example.exceptions.FileUploadException;
 import com.example.services.FileUploadService;
 
@@ -9,8 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/uploads")
@@ -27,7 +26,7 @@ public class FileUploadController {
      */
     @PostMapping("/pizzas")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Map<String, String>>> uploadPizzaImage(
+    public ResponseEntity<ApiResponse<FileUploadResponseDTO>> uploadPizzaImage(
             @RequestParam("file") MultipartFile file) {
         return uploadImage(file, "pizzas");
     }
@@ -37,7 +36,7 @@ public class FileUploadController {
      */
     @PostMapping("/extras")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Map<String, String>>> uploadExtraImage(
+    public ResponseEntity<ApiResponse<FileUploadResponseDTO>> uploadExtraImage(
             @RequestParam("file") MultipartFile file) {
         return uploadImage(file, "extras");
     }
@@ -46,19 +45,16 @@ public class FileUploadController {
      * Método genérico para subir imágenes.
      * Las excepciones son manejadas por el GlobalExceptionHandler.
      */
-    private ResponseEntity<ApiResponse<Map<String, String>>> uploadImage(
+    private ResponseEntity<ApiResponse<FileUploadResponseDTO>> uploadImage(
             MultipartFile file, String subdirectory) {
-        
+
         // FileUploadException es lanzada por el servicio y manejada por GlobalExceptionHandler
         String imageUrl = fileUploadService.saveFile(file, subdirectory);
         String thumbnailUrl = fileUploadService.getThumbnailUrl(imageUrl);
-        
-        Map<String, String> response = Map.of(
-            "imageUrl", imageUrl,
-            "thumbnailUrl", thumbnailUrl
-        );
+
+        FileUploadResponseDTO response = new FileUploadResponseDTO(imageUrl, thumbnailUrl);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success(response, "Imagen subida y redimensionada exitosamente"));
+                .body(ApiResponse.success(response, "Imagen subida y redimensionada exitosamente"));
     }
 
     /**
@@ -70,7 +66,7 @@ public class FileUploadController {
         if (imageUrl == null || imageUrl.isBlank()) {
             throw new FileUploadException("La URL de la imagen es requerida.");
         }
-        
+
         boolean deleted = fileUploadService.deleteFile(imageUrl);
         if (deleted) {
             return ResponseEntity.ok(ApiResponse.success(null, "Imagen eliminada correctamente"));

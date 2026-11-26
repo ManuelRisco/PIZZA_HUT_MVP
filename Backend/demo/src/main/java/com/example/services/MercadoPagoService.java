@@ -1,6 +1,8 @@
 package com.example.services;
 
 import com.example.dtos.CheckoutRequestDTO;
+import com.example.dtos.MercadoPagoChargeResultDTO;
+import com.example.dtos.MercadoPagoConfigDTO;
 import com.example.exceptions.BadRequestException;
 import com.example.models.Order;
 import com.example.models.PaymentMethod;
@@ -22,6 +24,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -37,16 +40,6 @@ public class MercadoPagoService {
 
     private static final Logger log = LoggerFactory.getLogger(MercadoPagoService.class);
     private static final String MP_PAYMENTS_URL = "https://api.mercadopago.com/v1/payments";
-
-    public record MercadoPagoChargeResult(
-            boolean processedViaMercadoPago,
-            String paymentId,
-            String status,
-            String statusDetail,
-            String paymentMethodId,
-            String transactionId,
-            String message
-    ) {}
 
     private final UsuarioRepository usuarioRepository;
     private final PaymentMethodService paymentMethodService;
@@ -81,19 +74,19 @@ public class MercadoPagoService {
                 && !at.startsWith("TU_");
     }
 
-    public Map<String, Object> obtenerConfiguracionPublica() {
+    public MercadoPagoConfigDTO obtenerConfiguracionPublica() {
         boolean configured = isConfigured();
         String pk = configured ? publicKey.trim() : "";
         boolean isTestCredentials = !configured || pk.startsWith("TEST-") || (accessToken != null && accessToken.trim().startsWith("TEST-"));
 
-        Map<String, Object> config = new LinkedHashMap<>();
-        config.put("configured", configured);
-        config.put("publicKey", pk);
-        config.put("sandboxMode", sandboxMode || isTestCredentials);
-        config.put("currency", "PEN");
-        config.put("locale", "es-PE");
-        config.put("supportedGateways", new String[]{"CARD", "YAPE"});
-        return config;
+        return new MercadoPagoConfigDTO(
+                configured,
+                pk,
+                sandboxMode || isTestCredentials,
+                "PEN",
+                "es-PE",
+                List.of("CARD", "YAPE")
+        );
     }
 
     /**
@@ -121,9 +114,9 @@ public class MercadoPagoService {
      * Procesa un cobro real en Mercado Pago (Sandbox o Producción según las llaves en .env)
      * usando el token PCI-DSS generado en el navegador por Card Payment Brick o Yape SDK v2.
      */
-    public MercadoPagoChargeResult procesarPago(Order savedOrder, CheckoutRequestDTO.PaymentDTO paymentDto) {
+    public MercadoPagoChargeResultDTO procesarPago(Order savedOrder, CheckoutRequestDTO.PaymentDTO paymentDto) {
         if (!isConfigured()) {
-            return new MercadoPagoChargeResult(
+            return new MercadoPagoChargeResultDTO(
                     false,
                     null,
                     "LOCAL_MODE",
@@ -238,7 +231,7 @@ public class MercadoPagoService {
 
                 if ("approved".equalsIgnoreCase(status)) {
                     String txId = "MP-" + mpId;
-                    return new MercadoPagoChargeResult(
+                    return new MercadoPagoChargeResultDTO(
                             true,
                             mpId,
                             "approved",

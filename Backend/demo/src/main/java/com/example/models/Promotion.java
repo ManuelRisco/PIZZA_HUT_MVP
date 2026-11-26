@@ -1,6 +1,11 @@
 package com.example.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -9,6 +14,10 @@ import java.time.LocalDateTime;
     @Index(name = "idx_promo_active", columnList = "is_active, deletedAt"),
     @Index(name = "idx_promo_dates", columnList = "start_date, end_date")
 })
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Promotion {
 
     @Id
@@ -68,22 +77,18 @@ public class Promotion {
     @Column
     private LocalDateTime deletedAt;
 
-    // ==== Enums ====
     public enum DiscountType {
-        PERCENTAGE,     // Descuento porcentual
-        FIXED_AMOUNT,   // Monto fijo de descuento
-        BUNDLE          // Combo/Paquete a precio especial
+        PERCENTAGE,
+        FIXED_AMOUNT,
+        BUNDLE
     }
 
     public enum ApplicableTo {
-        ALL,       // Aplicable a todo
-        PIZZAS,    // Solo pizzas
-        EXTRAS,    // Solo extras
-        SPECIFIC   // Productos espec\u00edficos definidos en promotion_pizzas/promotion_extras
+        ALL,
+        PIZZAS,
+        EXTRAS,
+        SPECIFIC
     }
-
-    // ==== Constructores ====
-    public Promotion() {}
 
     @PrePersist
     protected void onCreate() {
@@ -96,11 +101,10 @@ public class Promotion {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // ==== M\u00e9todos de utilidad ====
     public boolean isCurrentlyActive() {
         LocalDateTime now = LocalDateTime.now();
-        return isActive && 
-               !now.isBefore(startDate) && 
+        return isActive &&
+               !now.isBefore(startDate) &&
                !now.isAfter(endDate) &&
                deletedAt == null &&
                (usageLimit == null || usageCount < usageLimit);
@@ -139,7 +143,6 @@ public class Promotion {
                 }
                 break;
             case BUNDLE:
-                // Para bundles, el descuento se calcula en base al precio final
                 if (finalPrice != null) {
                     discount = orderTotal.subtract(finalPrice);
                     if (discount.compareTo(BigDecimal.ZERO) < 0) {
@@ -151,11 +154,7 @@ public class Promotion {
 
         return discount;
     }
-    
-    /**
-     * Calcula el descuento aplicable basado en los items del carrito
-     * Solo aplica descuento a los items que corresponden seg\u00fan applicableTo
-     */
+
     public BigDecimal calculateDiscountForItems(java.util.List<java.util.Map<String, Object>> items, BigDecimal orderTotal) {
         if (!canBeUsed()) {
             return BigDecimal.ZERO;
@@ -165,21 +164,20 @@ public class Promotion {
             return BigDecimal.ZERO;
         }
 
-        // Calcular el total de los items aplicables
         BigDecimal applicableTotal = BigDecimal.ZERO;
-        
+
         for (java.util.Map<String, Object> item : items) {
             String itemType = (String) item.get("type");
             Object unitPriceObj = item.get("unitPrice");
             Object quantityObj = item.get("quantity");
-            
-            BigDecimal unitPrice = unitPriceObj instanceof Number ? 
+
+            BigDecimal unitPrice = unitPriceObj instanceof Number ?
                 new BigDecimal(unitPriceObj.toString()) : BigDecimal.ZERO;
-            int quantity = quantityObj instanceof Number ? 
+            int quantity = quantityObj instanceof Number ?
                 ((Number) quantityObj).intValue() : 0;
-            
+
             boolean isApplicable = false;
-            
+
             switch (applicableTo) {
                 case ALL:
                     isApplicable = true;
@@ -191,17 +189,15 @@ public class Promotion {
                     isApplicable = "extra".equalsIgnoreCase(itemType);
                     break;
                 case SPECIFIC:
-                    // Para productos espec\u00edficos, se necesitar\u00eda una l\u00f3gica adicional
                     isApplicable = false;
                     break;
             }
-            
+
             if (isApplicable) {
                 applicableTotal = applicableTotal.add(unitPrice.multiply(new BigDecimal(quantity)));
             }
         }
-        
-        // Si no hay items aplicables, no hay descuento
+
         if (applicableTotal.compareTo(BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
         }
@@ -216,9 +212,7 @@ public class Promotion {
                 }
                 break;
             case FIXED_AMOUNT:
-                // Para descuento fijo, aplicar solo si hay items aplicables
                 discount = discountValue;
-                // No puede ser mayor al total aplicable
                 if (discount.compareTo(applicableTotal) > 0) {
                     discount = applicableTotal;
                 }
@@ -234,150 +228,5 @@ public class Promotion {
         }
 
         return discount;
-    }
-
-    // ==== Getters y Setters ====
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public DiscountType getDiscountType() {
-        return discountType;
-    }
-
-    public void setDiscountType(DiscountType discountType) {
-        this.discountType = discountType;
-    }
-
-    public BigDecimal getDiscountValue() {
-        return discountValue;
-    }
-
-    public void setDiscountValue(BigDecimal discountValue) {
-        this.discountValue = discountValue;
-    }
-
-    public BigDecimal getFinalPrice() {
-        return finalPrice;
-    }
-
-    public void setFinalPrice(BigDecimal finalPrice) {
-        this.finalPrice = finalPrice;
-    }
-
-    public BigDecimal getMinPurchase() {
-        return minPurchase;
-    }
-
-    public void setMinPurchase(BigDecimal minPurchase) {
-        this.minPurchase = minPurchase;
-    }
-
-    public BigDecimal getMaxDiscount() {
-        return maxDiscount;
-    }
-
-    public void setMaxDiscount(BigDecimal maxDiscount) {
-        this.maxDiscount = maxDiscount;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
-
-    public LocalDateTime getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(LocalDateTime startDate) {
-        this.startDate = startDate;
-    }
-
-    public LocalDateTime getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(LocalDateTime endDate) {
-        this.endDate = endDate;
-    }
-
-    public Integer getUsageLimit() {
-        return usageLimit;
-    }
-
-    public void setUsageLimit(Integer usageLimit) {
-        this.usageLimit = usageLimit;
-    }
-
-    public Integer getUsageCount() {
-        return usageCount;
-    }
-
-    public void setUsageCount(Integer usageCount) {
-        this.usageCount = usageCount;
-    }
-
-    public ApplicableTo getApplicableTo() {
-        return applicableTo;
-    }
-
-    public void setApplicableTo(ApplicableTo applicableTo) {
-        this.applicableTo = applicableTo;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public LocalDateTime getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
     }
 }

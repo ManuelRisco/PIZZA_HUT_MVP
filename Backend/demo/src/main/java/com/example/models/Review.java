@@ -1,18 +1,26 @@
 package com.example.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reviews")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private Integer userId;
-    private Integer orderId; // Cambiado de pizzaId a orderId
+    private Integer orderId;
     private Integer rating;
     private String comment;
     private Boolean active;
@@ -20,10 +28,6 @@ public class Review {
     private LocalDateTime updatedAt;
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-
-    // ==== Constructores ====
-    public Review() {
-    }
 
     public Review(Integer id, Integer userId, Integer orderId, Integer rating,
             String comment, Boolean active, LocalDateTime createdAt, LocalDateTime updatedAt) {
@@ -37,80 +41,6 @@ public class Review {
         this.updatedAt = updatedAt;
     }
 
-    // ==== Getters y Setters ====
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public Integer getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
-
-    public Integer getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(Integer orderId) {
-        this.orderId = orderId;
-    }
-
-    public Integer getRating() {
-        return rating;
-    }
-
-    public void setRating(Integer rating) {
-        this.rating = rating;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    public Boolean getActive() {
-        return active;
-    }
-
-    public void setActive(Boolean active) {
-        this.active = active;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-
-    public LocalDateTime getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -122,4 +52,3 @@ public class Review {
         updatedAt = LocalDateTime.now();
     }
 }
-

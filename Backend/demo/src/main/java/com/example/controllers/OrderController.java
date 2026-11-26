@@ -11,6 +11,7 @@ import com.example.services.StockAlertNotificationService;
 import com.example.services.StoreSettingsService;
 import com.example.dtos.OrderDTO;
 import com.example.dtos.OrderCompleteDTO;
+import com.example.dtos.OrderEmailDispatchResultDTO;
 import com.example.dtos.CheckoutRequestDTO;
 import com.example.models.Order;
 import com.example.models.Payment;
@@ -301,7 +302,7 @@ public class OrderController {
         }
         try {
             if (emailService != null) {
-                EmailService.OrderEmailDispatchResult mailResult = emailService.sendOrderCreatedEmails(orderCreado.getId());
+                OrderEmailDispatchResultDTO mailResult = emailService.sendOrderCreatedEmails(orderCreado.getId());
                 dto.setEmailSent(mailResult.customerEmailSent());
                 dto.setEmailSentTo(mailResult.customerEmail());
                 dto.setAdminEmailSent(mailResult.adminEmailSent());

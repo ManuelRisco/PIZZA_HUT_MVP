@@ -2,11 +2,21 @@ package com.example.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "pizza_ingredients")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class PizzaIngredient {
 
     @EmbeddedId
@@ -24,6 +34,8 @@ public class PizzaIngredient {
     private Ingredient ingredient;
 
     @Column(nullable = false)
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private boolean isDefault = true;
 
     @Column(nullable = false, precision = 10, scale = 2)
@@ -32,10 +44,6 @@ public class PizzaIngredient {
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // Constructor vacío
-    public PizzaIngredient() {}
-
-    // Constructor original preservado por compatibilidad
     public PizzaIngredient(PizzaIngredientId id, Pizza pizza, Ingredient ingredient, boolean isDefault, LocalDateTime createdAt) {
         this.id = id;
         this.pizza = pizza;
@@ -44,53 +52,12 @@ public class PizzaIngredient {
         this.createdAt = createdAt;
     }
 
-    // Getters y setters
-    public PizzaIngredientId getId() {
-        return id;
-    }
-
-    public void setId(PizzaIngredientId id) {
-        this.id = id;
-    }
-
-    public Pizza getPizza() {
-        return pizza;
-    }
-
-    public void setPizza(Pizza pizza) {
-        this.pizza = pizza;
-    }
-
-    public Ingredient getIngredient() {
-        return ingredient;
-    }
-
-    public void setIngredient(Ingredient ingredient) {
-        this.ingredient = ingredient;
-    }
-
     public boolean getIsDefault() {
         return isDefault;
     }
 
     public void setIsDefault(boolean isDefault) {
         this.isDefault = isDefault;
-    }
-
-    public BigDecimal getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(BigDecimal quantity) {
-        this.quantity = quantity;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 
     @PrePersist
