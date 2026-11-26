@@ -1,0 +1,431 @@
+<div class="space-y-6">
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel Ejecutivo</p>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Resumen General de Operaciones</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">Métricas en tiempo real de ventas, pedidos activos, almacén y satisfacción</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        (click)="cargarEstadisticas(true)"
+        [disabled]="loadingDashboard"
+        class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise" [class.animate-spin]="loadingDashboard"></i>
+        Actualizar
+      </button>
+      <button
+        type="button"
+        (click)="descargarReporte()"
+        [disabled]="exportandoExcel || loadingDashboard"
+        class="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi" [ngClass]="exportandoExcel ? 'bi-arrow-repeat animate-spin' : 'bi-file-earmark-excel'"></i>
+        {{ exportandoExcel ? 'Exportando...' : 'Reporte Excel' }}
+      </button>
+    </div>
+  </div>
+
+  <div
+    *ngIf="errorDashboard"
+    class="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+    role="alert"
+  >
+    <div class="flex items-start sm:items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-wifi-off text-lg"></i>
+      </div>
+      <div>
+        <p class="text-sm font-black text-red-900 m-0">No se pudo conectar con el servidor</p>
+        <p class="text-xs sm:text-sm text-red-700 m-0 mt-0.5">{{ errorDashboard }}</p>
+      </div>
+    </div>
+    <button
+      type="button"
+      (click)="cargarEstadisticas(true)"
+      class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
+    >
+      <i class="bi bi-arrow-clockwise"></i> Reintentar
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+          <i class="bi bi-cash-stack text-emerald-600 text-xl"></i>
+        </div>
+        <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+             [ngClass]="pedidosHoy > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'">
+          <i class="bi bi-bag-check text-[10px]"></i>
+          {{ pedidosHoy }} hoy
+        </div>
+      </div>
+      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Ventas Hoy</p>
+      <p class="text-2xl font-black text-gray-900 m-0">S/ {{ ventasHoy | number:'1.2-2' }}</p>
+    </div>
+
+    <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+         (click)="cambiarVista('orders')">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+          <i class="bi bi-clock-history text-amber-600 text-xl"></i>
+        </div>
+        <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+             [ngClass]="pedidosPendientes > 0 ? 'bg-amber-50 text-amber-700 animate-pulse' : 'bg-gray-100 text-gray-500'">
+          <i class="bi bi-exclamation-circle text-[10px]"></i>
+          En atención
+        </div>
+      </div>
+      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pedidos Pendientes</p>
+      <p class="text-2xl font-black m-0" [ngClass]="pedidosPendientes > 0 ? 'text-amber-600' : 'text-gray-900'">{{ pedidosPendientes }}</p>
+    </div>
+
+    <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+         (click)="cambiarVista('usuarios')">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+          <i class="bi bi-people-fill text-red-600 text-xl"></i>
+        </div>
+      </div>
+      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Clientes</p>
+      <p class="text-2xl font-black text-gray-900 m-0">{{ totalClientes }}</p>
+    </div>
+
+    <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+         (click)="cambiarVista('reviews')">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-11 h-11 rounded-xl bg-yellow-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+          <i class="bi bi-star-fill text-yellow-500 text-xl"></i>
+        </div>
+        <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-700">
+          {{ totalReviews }} reseñas
+        </div>
+      </div>
+      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Rating Promedio</p>
+      <p class="text-2xl font-black text-gray-900 m-0">
+        {{ ratingPromedio | number:'1.1-1' }}
+        <span class="text-sm font-bold text-gray-400">/ 5</span>
+      </p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <button
+      type="button"
+      (click)="cambiarVista('finanzas')"
+      class="text-left bg-gray-900 text-white rounded-2xl p-5 shadow-sm hover:bg-black transition-all group cursor-pointer"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+          <i class="bi bi-graph-up-arrow text-white text-lg"></i>
+        </div>
+        <i class="bi bi-arrow-up-right text-gray-400 group-hover:text-white"></i>
+      </div>
+      <p class="text-sm font-black m-0">Pérdidas y Ganancias</p>
+      <p class="text-xs text-gray-400 mt-1 mb-0">Estado de resultados (P&amp;L), COGS y utilidad neta</p>
+    </button>
+
+    <button
+      type="button"
+      (click)="cambiarVista('inventario')"
+      class="text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 transition-all group cursor-pointer"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+          <i class="bi bi-boxes text-lg"></i>
+        </div>
+        <span
+          *ngIf="alertasStockTotal > 0"
+          class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800"
+        >
+          {{ alertasStockTotal }} alertas
+        </span>
+      </div>
+      <p class="text-sm font-black text-gray-900 m-0">Stock e Inventario</p>
+      <p class="text-xs text-gray-500 mt-1 mb-0">Almacén valorizado: S/ {{ valorAlmacenTotal | number:'1.2-2' }}</p>
+    </button>
+
+    <button
+      type="button"
+      (click)="cambiarVista('perdidas')"
+      class="text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 transition-all group cursor-pointer"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+          <i class="bi bi-exclamation-octagon-fill text-lg"></i>
+        </div>
+        <i class="bi bi-arrow-up-right text-gray-400 group-hover:text-red-600"></i>
+      </div>
+      <p class="text-sm font-black text-gray-900 m-0">Pérdidas de Productos</p>
+      <p class="text-xs text-gray-500 mt-1 mb-0">Registro y control económico de mermas</p>
+    </button>
+
+    <button
+      type="button"
+      (click)="cambiarVista('costos-produccion')"
+      class="text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:border-red-300 transition-all group cursor-pointer"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-xl bg-gray-100 text-gray-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+          <i class="bi bi-calculator-fill text-lg"></i>
+        </div>
+        <i class="bi bi-arrow-up-right text-gray-400 group-hover:text-red-600"></i>
+      </div>
+      <p class="text-sm font-black text-gray-900 m-0">Costos de Producción</p>
+      <p class="text-xs text-gray-500 mt-1 mb-0">Recetas, márgenes y simulador de lotes</p>
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col">
+      <div class="flex flex-wrap justify-between items-start gap-3 mb-6">
+        <div>
+          <h3 class="text-lg sm:text-xl font-black text-gray-900 m-0">Ventas Semanales</h3>
+          <p class="text-sm text-gray-500 m-0 mt-0.5">Ingresos entregados en los últimos 7 días</p>
+        </div>
+        <div class="text-left sm:text-right">
+          <p class="text-2xl font-black text-gray-900 m-0">S/ {{ ventasSemanaTotal | number:'1.2-2' }}</p>
+          <div class="flex items-center sm:justify-end gap-1 mt-1">
+            <i class="bi text-xs"
+               [ngClass]="cambioSemanal >= 0 ? 'bi-arrow-up-short text-emerald-600' : 'bi-arrow-down-short text-red-600'"></i>
+            <span class="text-xs font-bold"
+                  [ngClass]="cambioSemanal >= 0 ? 'text-emerald-600' : 'text-red-600'">
+              {{ cambioSemanal >= 0 ? '+' : '' }}{{ cambioSemanal | number:'1.1-1' }}%
+            </span>
+            <span class="text-xs text-gray-400">vs semana anterior</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-1 flex items-end justify-between gap-2 sm:gap-3 mt-2 pt-4 border-t border-gray-100 min-h-[200px]">
+        <div
+          *ngFor="let dia of ventasSemanales; trackBy: trackByDia"
+          class="w-full flex flex-col items-center gap-2 h-full justify-end group relative"
+          [ngClass]="{'cursor-pointer hover:scale-105 transition-transform': dia.pedidos && dia.pedidos.length > 0}"
+          (click)="verPedidosDelDia(dia)"
+        >
+          <div
+            class="w-full rounded-lg transition-all duration-500"
+            [ngClass]="dia.porcentaje === 100 ? 'bg-gradient-to-t from-red-700 to-red-500 shadow-[0_0_20px_rgba(220,38,38,0.25)]' : 'bg-gray-100 group-hover:bg-gray-200'"
+            [style.height.%]="dia.porcentaje"
+          ></div>
+          <span class="text-[11px] font-bold" [ngClass]="dia.porcentaje === 100 ? 'text-gray-900' : 'text-gray-400'">{{ dia.dia }}</span>
+          <div class="absolute -top-10 bg-gray-900 text-white text-[11px] px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-lg">
+            S/ {{ dia.total | number:'1.2-2' }} · {{ dia.pedidos?.length || 0 }} ped.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col">
+      <div class="flex justify-between items-center mb-5">
+        <div>
+          <h3 class="text-lg sm:text-xl font-black text-gray-900 m-0">Más Vendidos</h3>
+          <p class="text-sm text-gray-500 m-0 mt-0.5">Ranking de productos</p>
+        </div>
+        <span class="text-xs font-black text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">TOP 5</span>
+      </div>
+
+      <div class="space-y-4 flex-1">
+        <div class="flex items-center gap-3" *ngFor="let producto of masVendidos; let i = index; trackBy: trackByProducto">
+          <div class="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center font-black text-sm"
+               [ngClass]="{
+                 'bg-yellow-100 text-yellow-700': i === 0,
+                 'bg-gray-100 text-gray-600': i === 1,
+                 'bg-orange-50 text-orange-600': i === 2,
+                 'bg-gray-50 text-gray-400': i > 2
+               }">
+            {{ i + 1 }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-1">
+              <h4 class="font-bold text-gray-900 text-sm truncate m-0">{{ producto.nombre }}</h4>
+              <span class="font-bold text-red-600 text-sm shrink-0 ml-2">S/ {{ producto.precio | number:'1.2-2' }}</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-1.5">
+              <div class="h-1.5 rounded-full transition-all duration-700"
+                   [ngClass]="i === 0 ? 'bg-red-600' : 'bg-gray-300'"
+                   [style.width.%]="producto.porcentaje"></div>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-1 mb-0 font-medium">{{ producto.cantidad }} vendidos · S/ {{ producto.ingresos | number:'1.2-2' }}</p>
+          </div>
+        </div>
+        <div *ngIf="!loadingDashboard && !errorDashboard && masVendidos.length === 0" class="text-center text-gray-400 py-8 text-sm">
+          <i class="bi bi-box-seam text-3xl block mb-2"></i>
+          No hay ventas registradas
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="w-full mt-5 py-2.5 px-4 bg-gray-900 hover:bg-black text-white rounded-xl font-bold transition-colors text-sm cursor-pointer"
+        (click)="cambiarVista('pizzas')"
+      >
+        Ver todo el catálogo
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="p-5 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <h3 class="text-lg sm:text-xl font-black text-gray-900 m-0">Pedidos Recientes</h3>
+        <p class="text-sm text-gray-500 m-0 mt-0.5">Últimas 5 órdenes registradas en el sistema</p>
+      </div>
+      <button
+        type="button"
+        class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl text-sm transition-colors self-start sm:self-auto cursor-pointer"
+        (click)="cambiarVista('orders')"
+      >
+        Ver todos los pedidos
+      </button>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse min-w-[720px]">
+        <thead>
+          <tr class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
+            <th class="py-3.5 px-4">ID Pedido</th>
+            <th class="py-3.5 px-4">Cliente</th>
+            <th class="py-3.5 px-4">Producto Principal</th>
+            <th class="py-3.5 px-4">Estado</th>
+            <th class="py-3.5 px-4">Total</th>
+            <th class="py-3.5 px-4">Fecha</th>
+            <th class="py-3.5 px-4 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50 transition-colors" *ngFor="let pedido of pedidosRecientes; trackBy: trackByPedido">
+            <td class="py-3.5 px-4 font-black text-gray-900">#PH-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
+            <td class="py-3.5 px-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center font-bold text-xs shrink-0">
+                  {{ pedido.userName ? pedido.userName.charAt(0).toUpperCase() : 'U' }}
+                </div>
+                <span class="font-semibold text-gray-800 truncate max-w-[180px]">{{ pedido.userName || 'Usuario Anónimo' }}</span>
+              </div>
+            </td>
+            <td class="py-3.5 px-4 text-gray-600 font-medium">
+              {{ pedido.items?.length ? pedido.items![0].quantity + 'x ' + (pedido.items![0].pizzaName || pedido.items![0].extraName) : 'Sin items' }}
+              <span *ngIf="(pedido.items?.length || 0) > 1" class="text-xs text-gray-400"> (+{{ (pedido.items?.length || 1) - 1 }})</span>
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider"
+                    [ngClass]="{
+                      'bg-amber-100 text-amber-800': pedido.status === 'PENDING' || pedido.status === 'PREPARING',
+                      'bg-blue-100 text-blue-800': pedido.status === 'CONFIRMED' || pedido.status === 'OUT_FOR_DELIVERY' || pedido.status === 'IN_DELIVERY',
+                      'bg-emerald-100 text-emerald-800': pedido.status === 'DELIVERED',
+                      'bg-red-100 text-red-800': pedido.status === 'CANCELLED'
+                    }">
+                {{ pedido.status }}
+              </span>
+            </td>
+            <td class="py-3.5 px-4 font-black text-gray-900">S/ {{ pedido.total | number:'1.2-2' }}</td>
+            <td class="py-3.5 px-4 text-gray-500 text-xs whitespace-nowrap">
+              {{ pedido.createdAt | date:'dd/MM/yy HH:mm' }}
+            </td>
+            <td class="py-3.5 px-4 text-center">
+              <button
+                type="button"
+                class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 inline-flex items-center justify-center transition-colors cursor-pointer"
+                (click)="verDetallePedido(pedido)"
+                title="Ver detalle del pedido"
+              >
+                <i class="bi bi-eye"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="!loadingDashboard && !errorDashboard && pedidosRecientes.length === 0">
+            <td colspan="7" class="py-10 text-center text-gray-400">
+              <i class="bi bi-inbox text-3xl block mb-2"></i>
+              No hay pedidos recientes
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div
+  *ngIf="diaSeleccionado"
+  class="fixed inset-0 bg-black/60 z-[6000] flex items-center justify-center p-4 backdrop-blur-xs"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden animate-fade-in-up">
+    <div class="flex justify-between items-center px-6 py-4 bg-gray-900 text-white shrink-0">
+      <div>
+        <p class="text-[10px] font-black uppercase tracking-widest text-red-400 m-0">Detalle Diario</p>
+        <h3 class="text-lg sm:text-xl font-black text-white m-0">Ventas: {{ diaSeleccionado.dia }} ({{ diaSeleccionado.fecha | date:'dd/MM/yyyy' }})</h3>
+      </div>
+      <button
+        type="button"
+        (click)="cerrarModalPedidosDia()"
+        class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors cursor-pointer"
+        aria-label="Cerrar modal"
+      >
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="p-4 sm:p-6 overflow-y-auto flex-1 bg-gray-50 space-y-5">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs">
+          <p class="text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Total Entregado</p>
+          <p class="text-xl sm:text-2xl font-black text-emerald-600 m-0">S/ {{ diaSeleccionado.total | number:'1.2-2' }}</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs">
+          <p class="text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Nº de Pedidos</p>
+          <p class="text-xl sm:text-2xl font-black text-gray-900 m-0">{{ diaSeleccionado.pedidos.length }}</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs">
+          <p class="text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1">Ticket Promedio</p>
+          <p class="text-xl sm:text-2xl font-black text-gray-900 m-0">S/ {{ (diaSeleccionado.total / diaSeleccionado.pedidos.length) | number:'1.2-2' }}</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-gray-900 text-white text-[11px] font-bold uppercase tracking-wider">
+              <tr>
+                <th class="px-5 py-3.5">ID Pedido</th>
+                <th class="px-5 py-3.5">Hora</th>
+                <th class="px-5 py-3.5">Cliente</th>
+                <th class="px-5 py-3.5 text-right">Monto</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr *ngFor="let pedido of diaModalPedidosPaginados; trackBy: trackByPedido" (click)="diaSeleccionado = null; verDetallePedido(pedido)" class="hover:bg-red-50/60 transition-colors cursor-pointer" title="Ver detalle de este pedido">
+                <td class="px-5 py-3.5 font-black text-gray-900">#PH-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
+                <td class="px-5 py-3.5 text-gray-600">{{ pedido.createdAt | date:'shortTime' }}</td>
+                <td class="px-5 py-3.5">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-full bg-red-50 text-red-600 flex items-center justify-center font-bold text-xs shrink-0">
+                      {{ pedido.userName ? pedido.userName.charAt(0).toUpperCase() : 'U' }}
+                    </div>
+                    <span class="font-medium text-gray-800">{{ pedido.userName || 'Usuario Anónimo' }}</span>
+                  </div>
+                </td>
+                <td class="px-5 py-3.5 text-right font-black text-gray-900">S/ {{ pedido.total | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="diaSeleccionado.pedidos.length > 0" class="px-5 py-3 border-t border-gray-100 bg-white">
+          <app-pagination
+            [currentPage]="diaModalPage"
+            [totalItems]="diaSeleccionado.pedidos.length"
+            [itemsPerPage]="diaModalPerPage"
+            [pageSizeOptions]="[10, 25, 50]"
+            (pageChange)="onDiaModalPageChange($event)"
+            (itemsPerPageChange)="onDiaModalPerPageChange($event)"
+          ></app-pagination>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

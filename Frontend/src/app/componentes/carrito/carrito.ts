@@ -20,6 +20,7 @@ import { ToastService } from '../../services/toast.service';
 import { Payment } from '../../services/payment.service';
 import { SunatService } from '../../services/sunat.service';
 import { UsuarioService } from '../../services/usuario.service';
+import { StoreSettingsService } from '../../services/store-settings.service';
 
 declare global {
   interface Window {
@@ -239,11 +240,21 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     private readonly paymentService: Payment,
     private readonly sunatService: SunatService,
     private readonly usuarioService: UsuarioService,
+    private readonly storeSettingsService: StoreSettingsService,
     private readonly router: Router,
     private readonly ngZone: NgZone,
   ) {}
 
   ngOnInit(): void {
+    this.subs.push(
+      this.storeSettingsService.deliveryFee$.subscribe((fee) => {
+        this.baseDeliveryFee = fee;
+        this.cartService.setDeliveryFeeRate(fee);
+        this.recalcularTotales();
+      }),
+    );
+    this.storeSettingsService.loadDeliveryFee().subscribe();
+
     this.subs.push(
       this.cartService.items$.subscribe((items) => {
         this.items = items;

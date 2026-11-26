@@ -1,0 +1,401 @@
+<div
+  class="fixed inset-0 bg-black/60 backdrop-blur-xs z-[5400] md:hidden transition-opacity duration-300 ease-out"
+  [ngClass]="!sidebarCollapsed ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
+  (click)="onToggleSidebar()"
+></div>
+
+<aside
+  class="bg-black text-white flex flex-col border-r border-gray-800/80 transition-transform md:transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] z-[5500] md:z-20 fixed inset-y-0 left-0 h-[100dvh] md:static md:h-full shrink-0 overscroll-contain will-change-transform shadow-2xl md:shadow-none"
+  [ngClass]="{
+    'w-[268px] translate-x-0': !sidebarCollapsed,
+    'w-[268px] -translate-x-full md:translate-x-0 md:w-[76px]': sidebarCollapsed
+  }"
+  aria-label="Menú de administración"
+>
+  <div class="flex items-center justify-between gap-2 px-3.5 py-3.5 border-b border-gray-800/90 shrink-0">
+    <div *ngIf="!sidebarCollapsed" class="flex items-center gap-2.5 min-w-0">
+      <div class="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-sm shrink-0">
+        <i class="bi bi-shield-lock-fill text-base" aria-hidden="true"></i>
+      </div>
+      <div class="min-w-0">
+        <h5 class="text-white font-black text-sm tracking-wide m-0 leading-tight truncate" id="admin-panel-title">
+          PANEL ADMIN
+        </h5>
+        <p class="text-[10px] font-bold text-red-500 uppercase tracking-widest m-0 leading-tight">Pizza Hut</p>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="w-9 h-9 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+      [class.mx-auto]="sidebarCollapsed"
+      (click)="onToggleSidebar()"
+      [title]="sidebarCollapsed ? 'Desplegar barra lateral' : 'Contraer barra lateral'"
+      [attr.aria-label]="sidebarCollapsed ? 'Desplegar menú' : 'Contraer menú'"
+      [attr.aria-expanded]="!sidebarCollapsed"
+    >
+      <i
+        class="bi text-base hidden md:inline-block"
+        [ngClass]="sidebarCollapsed ? 'bi-layout-sidebar-inset-reverse' : 'bi-layout-sidebar-inset'"
+        aria-hidden="true"
+      ></i>
+      <i class="bi bi-x-lg text-sm md:hidden" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <nav class="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-2 sidebar-scroll" aria-label="Opciones de administración">
+    <a
+      class="sidebar-item"
+      [class.collapsed-item]="sidebarCollapsed"
+      [ngClass]="vistaActual === 'dashboard' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+      [title]="sidebarCollapsed ? 'Dashboard' : ''"
+      (click)="onCambiarVista('dashboard')"
+    >
+      <i class="bi bi-grid-fill text-base min-w-[22px] text-center"></i>
+      <span *ngIf="!sidebarCollapsed" class="truncate">Dashboard</span>
+    </a>
+
+    <div class="sidebar-group" [class.sidebar-group-collapsed]="sidebarCollapsed">
+      <button
+        *ngIf="!sidebarCollapsed"
+        type="button"
+        class="sidebar-group-trigger"
+        [class.group-active]="esGrupoConVistaActiva('comunidad')"
+        [attr.aria-expanded]="gruposAbiertos.comunidad"
+        (click)="toggleGrupo('comunidad')"
+      >
+        <span class="flex items-center gap-2 min-w-0">
+          <i class="bi bi-people-fill text-xs text-red-500"></i>
+          <span class="truncate">Usuarios y Reseñas</span>
+        </span>
+        <span class="flex items-center gap-1.5 shrink-0">
+          <span *ngIf="!gruposAbiertos.comunidad && esGrupoConVistaActiva('comunidad')" class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          <i class="bi bi-chevron-down text-[11px] transition-transform duration-200" [class.rotate-180]="gruposAbiertos.comunidad"></i>
+        </span>
+      </button>
+      <div *ngIf="sidebarCollapsed" class="sidebar-rail-divider"></div>
+
+      <div class="sidebar-group-body" [class.open]="sidebarCollapsed || gruposAbiertos.comunidad">
+        <div class="sidebar-group-inner" [class.pl-2]="!sidebarCollapsed">
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'usuarios' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Usuarios' : ''"
+            (click)="onCambiarVista('usuarios')"
+          >
+            <i class="bi bi-people text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Usuarios</span>
+          </a>
+
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'reviews' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Reseñas' : ''"
+            (click)="onCambiarVista('reviews')"
+          >
+            <i class="bi bi-star text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Reseñas</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-group" [class.sidebar-group-collapsed]="sidebarCollapsed">
+      <button
+        *ngIf="!sidebarCollapsed"
+        type="button"
+        class="sidebar-group-trigger"
+        [class.group-active]="esGrupoConVistaActiva('catalogo')"
+        [attr.aria-expanded]="gruposAbiertos.catalogo"
+        (click)="toggleGrupo('catalogo')"
+      >
+        <span class="flex items-center gap-2 min-w-0">
+          <i class="bi bi-pie-chart-fill text-xs text-red-500"></i>
+          <span class="truncate">Catálogo y Menú</span>
+        </span>
+        <span class="flex items-center gap-1.5 shrink-0">
+          <span *ngIf="!gruposAbiertos.catalogo && esGrupoConVistaActiva('catalogo')" class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          <i class="bi bi-chevron-down text-[11px] transition-transform duration-200" [class.rotate-180]="gruposAbiertos.catalogo"></i>
+        </span>
+      </button>
+      <div *ngIf="sidebarCollapsed" class="sidebar-rail-divider"></div>
+
+      <div class="sidebar-group-body" [class.open]="sidebarCollapsed || gruposAbiertos.catalogo">
+        <div class="sidebar-group-inner" [class.pl-2]="!sidebarCollapsed">
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'pizzas' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Pizzas y Recetas' : ''"
+            (click)="onCambiarVista('pizzas')"
+          >
+            <i class="bi bi-pie-chart text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Pizzas y Recetas</span>
+          </a>
+
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'categorias' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Categorías' : ''"
+            (click)="onCambiarVista('categorias')"
+          >
+            <i class="bi bi-tags text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Categorías</span>
+          </a>
+
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'sizes' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Tamaños' : ''"
+            (click)="onCambiarVista('sizes')"
+          >
+            <i class="bi bi-rulers text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Tamaños</span>
+          </a>
+
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'ingredientes' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Ingredientes' : ''"
+            (click)="onCambiarVista('ingredientes')"
+          >
+            <i class="bi bi-droplet text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Ingredientes</span>
+          </a>
+
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'extras' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Extras' : ''"
+            (click)="onCambiarVista('extras')"
+          >
+            <i class="bi bi-plus-square text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Extras</span>
+          </a>
+
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'promociones' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Promociones' : ''"
+            (click)="onCambiarVista('promociones')"
+          >
+            <i class="bi bi-tag text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Promociones</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-group" [class.sidebar-group-collapsed]="sidebarCollapsed">
+      <button
+        *ngIf="!sidebarCollapsed"
+        type="button"
+        class="sidebar-group-trigger"
+        [class.group-active]="esGrupoConVistaActiva('operaciones')"
+        [attr.aria-expanded]="gruposAbiertos.operaciones"
+        (click)="toggleGrupo('operaciones')"
+      >
+        <span class="flex items-center gap-2 min-w-0">
+          <i class="bi bi-bag-check-fill text-xs text-red-500"></i>
+          <span class="truncate">Operaciones y Ventas</span>
+        </span>
+        <span class="flex items-center gap-1.5 shrink-0">
+          <span *ngIf="!gruposAbiertos.operaciones && esGrupoConVistaActiva('operaciones')" class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          <i class="bi bi-chevron-down text-[11px] transition-transform duration-200" [class.rotate-180]="gruposAbiertos.operaciones"></i>
+        </span>
+      </button>
+      <div *ngIf="sidebarCollapsed" class="sidebar-rail-divider"></div>
+
+      <div class="sidebar-group-body" [class.open]="sidebarCollapsed || gruposAbiertos.operaciones">
+        <div class="sidebar-group-inner" [class.pl-2]="!sidebarCollapsed">
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'orders' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Pedidos' : ''"
+            (click)="onCambiarVista('orders')"
+          >
+            <i class="bi bi-receipt text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Pedidos</span>
+          </a>
+
+          <a
+            class="sidebar-item justify-between"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'delivery' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Tarifa de Delivery' : ''"
+            (click)="onCambiarVista('delivery')"
+          >
+            <span class="flex items-center gap-3 min-w-0">
+              <i class="bi bi-bicycle text-base min-w-[22px] text-center"></i>
+              <span *ngIf="!sidebarCollapsed" class="truncate">Tarifa de Delivery</span>
+            </span>
+            <span
+              *ngIf="!sidebarCollapsed"
+              class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0"
+              [ngClass]="vistaActual === 'delivery' ? 'bg-white text-red-600' : 'bg-gray-800 text-emerald-400'"
+            >
+              {{ deliveryFeeActual === 0 ? 'Gratis' : ('S/ ' + (deliveryFeeActual | number:'1.2-2')) }}
+            </span>
+          </a>
+
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'payments' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Pagos' : ''"
+            (click)="onCambiarVista('payments')"
+          >
+            <i class="bi bi-cash-coin text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Pagos</span>
+          </a>
+
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'metodos-pago' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Métodos de Pago' : ''"
+            (click)="onCambiarVista('metodos-pago')"
+          >
+            <i class="bi bi-credit-card-fill text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Métodos de Pago</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-group" [class.sidebar-group-collapsed]="sidebarCollapsed">
+      <button
+        *ngIf="!sidebarCollapsed"
+        type="button"
+        class="sidebar-group-trigger"
+        [class.group-active]="esGrupoConVistaActiva('finanzas')"
+        [attr.aria-expanded]="gruposAbiertos.finanzas"
+        (click)="toggleGrupo('finanzas')"
+      >
+        <span class="flex items-center gap-2 min-w-0">
+          <i class="bi bi-bar-chart-line-fill text-xs text-red-500"></i>
+          <span class="truncate">Finanzas e Inventario</span>
+        </span>
+        <span class="flex items-center gap-1.5 shrink-0">
+          <span
+            *ngIf="alertasStockTotal > 0 && !gruposAbiertos.finanzas"
+            class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-black leading-tight"
+          >
+            {{ alertasStockTotal }}
+          </span>
+          <span *ngIf="!gruposAbiertos.finanzas && esGrupoConVistaActiva('finanzas')" class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          <i class="bi bi-chevron-down text-[11px] transition-transform duration-200" [class.rotate-180]="gruposAbiertos.finanzas"></i>
+        </span>
+      </button>
+      <div *ngIf="sidebarCollapsed" class="sidebar-rail-divider"></div>
+
+      <div class="sidebar-group-body" [class.open]="sidebarCollapsed || gruposAbiertos.finanzas">
+        <div class="sidebar-group-inner" [class.pl-2]="!sidebarCollapsed">
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'finanzas' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Pérdidas y Ganancias' : ''"
+            (click)="onCambiarVista('finanzas')"
+          >
+            <i class="bi bi-graph-up-arrow text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Pérdidas y Ganancias</span>
+          </a>
+
+          <a
+            class="sidebar-item justify-between relative"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'inventario' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Stock e Inventario' : ''"
+            (click)="onCambiarVista('inventario')"
+          >
+            <span class="flex items-center gap-3 min-w-0">
+              <i class="bi bi-boxes text-base min-w-[22px] text-center"></i>
+              <span *ngIf="!sidebarCollapsed" class="truncate">Stock e Inventario</span>
+            </span>
+            <span
+              *ngIf="!sidebarCollapsed && alertasStockTotal > 0"
+              class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0"
+              [ngClass]="vistaActual === 'inventario' ? 'bg-white text-red-600' : 'bg-amber-500 text-black'"
+            >
+              {{ alertasStockTotal }}
+            </span>
+            <span
+              *ngIf="sidebarCollapsed && alertasStockTotal > 0"
+              class="w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-1.5"
+            ></span>
+          </a>
+
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'costos-produccion' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Costos de Producción' : ''"
+            (click)="onCambiarVista('costos-produccion')"
+          >
+            <i class="bi bi-calculator text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Costos de Producción</span>
+          </a>
+
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'perdidas' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Pérdidas de Productos' : ''"
+            (click)="onCambiarVista('perdidas')"
+          >
+            <i class="bi bi-exclamation-octagon text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Pérdidas de Productos</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="border-t border-gray-800/90 p-3 shrink-0 space-y-1.5">
+    <div
+      class="flex items-center gap-3 cursor-pointer p-2 rounded-xl transition-colors"
+      [class.justify-center]="sidebarCollapsed"
+      [ngClass]="vistaActual === 'mi-perfil' ? 'bg-gray-800' : 'hover:bg-gray-900'"
+      [title]="sidebarCollapsed ? (currentUser?.name || 'Mi Perfil') : ''"
+      (click)="onCambiarVista('mi-perfil')"
+      *ngIf="currentUser"
+    >
+      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center font-black text-white text-sm shadow shrink-0">
+        <span>{{ currentUserInitial }}</span>
+      </div>
+      <div *ngIf="!sidebarCollapsed" class="flex-1 overflow-hidden">
+        <p class="text-sm font-bold text-white truncate m-0">{{ currentUser?.name || 'Administrador' }}</p>
+        <div class="flex items-center gap-1.5 mt-0.5">
+          <p class="text-[11px] text-gray-400 uppercase tracking-wider m-0">{{ currentUser?.role || 'ADMIN' }}</p>
+          <span
+            *ngIf="currentUser?.googleLinked || currentUser?.authProvider === 'GOOGLE'"
+            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[9px] font-bold"
+            title="Sesión vinculada con Google"
+          >
+            <i class="bi bi-google text-[9px]"></i> Google
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="w-full flex items-center gap-3 text-red-500 hover:text-red-400 hover:bg-gray-900 p-2 rounded-xl transition-colors text-sm cursor-pointer"
+      [class.justify-center]="sidebarCollapsed"
+      [title]="sidebarCollapsed ? 'Cerrar Sesión' : ''"
+      (click)="onCerrarSesion()"
+    >
+      <i class="bi bi-box-arrow-left text-lg min-w-[22px] text-center"></i>
+      <span *ngIf="!sidebarCollapsed" class="font-bold">Cerrar Sesión</span>
+    </button>
+  </div>
+</aside>

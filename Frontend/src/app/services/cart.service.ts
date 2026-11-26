@@ -8,6 +8,17 @@ const STORAGE_KEY = 'pizza-hut-cart';
 export class CartService {
   private readonly itemsSubject = new BehaviorSubject<CartItem[]>(this.loadItemsFromStorage());
   readonly items$ = this.itemsSubject.asObservable();
+  private deliveryFeeRate = 5.0;
+
+  setDeliveryFeeRate(fee: number): void {
+    if (!Number.isNaN(fee) && fee >= 0) {
+      this.deliveryFeeRate = Number(fee.toFixed(2));
+    }
+  }
+
+  getDeliveryFeeRate(): number {
+    return this.deliveryFeeRate;
+  }
 
   getItemsSnapshot(): CartItem[] {
     return [...this.itemsSubject.value];
@@ -16,7 +27,7 @@ export class CartService {
   getTotals(): CartTotals {
     const items = this.itemsSubject.value;
     const subtotal = items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
-    const deliveryFee = subtotal > 0 ? 5.0 : 0;
+    const deliveryFee = subtotal > 0 ? this.deliveryFeeRate : 0;
     return {
       itemsCount: items.reduce((count, item) => count + item.quantity, 0),
       subtotal,

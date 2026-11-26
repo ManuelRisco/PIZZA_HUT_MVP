@@ -8,6 +8,7 @@ import com.example.services.EmailService;
 import com.example.services.InventoryService;
 import com.example.services.ProductLossService;
 import com.example.services.StockAlertNotificationService;
+import com.example.services.StoreSettingsService;
 import com.example.dtos.OrderDTO;
 import com.example.dtos.OrderCompleteDTO;
 import com.example.dtos.CheckoutRequestDTO;
@@ -55,6 +56,7 @@ public class OrderController {
     private final ProductLossService productLossService;
     private final EmailService emailService;
     private final StockAlertNotificationService stockAlertNotificationService;
+    private final StoreSettingsService storeSettingsService;
 
     public OrderController(OrderService orderService,
                            CheckoutService checkoutService,
@@ -65,7 +67,8 @@ public class OrderController {
                            InventoryService inventoryService,
                            ProductLossService productLossService,
                            EmailService emailService,
-                           StockAlertNotificationService stockAlertNotificationService) {
+                           StockAlertNotificationService stockAlertNotificationService,
+                           @org.springframework.beans.factory.annotation.Autowired(required = false) StoreSettingsService storeSettingsService) {
         this.orderService = orderService;
         this.checkoutService = checkoutService;
         this.promotionService = promotionService;
@@ -76,6 +79,7 @@ public class OrderController {
         this.productLossService = productLossService;
         this.emailService = emailService;
         this.stockAlertNotificationService = stockAlertNotificationService;
+        this.storeSettingsService = storeSettingsService;
     }
 
     @GetMapping
@@ -178,9 +182,13 @@ public class OrderController {
                     .body(Map.of(MSG_KEY, "La direcci\u00f3n es requerida para entregas a domicilio"));
             }
 
-            BigDecimal deliveryFee = orderDTO.getDeliveryFee();
+            BigDecimal deliveryFee;
             if (deliveryType == Order.DeliveryType.PICKUP) {
                 deliveryFee = BigDecimal.ZERO;
+            } else if (storeSettingsService != null) {
+                deliveryFee = storeSettingsService.getDeliveryFee();
+            } else {
+                deliveryFee = orderDTO.getDeliveryFee() != null ? orderDTO.getDeliveryFee() : BigDecimal.ZERO;
             }
 
             BigDecimal discount = BigDecimal.ZERO;

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Order } from '../../services/order.service';
 import { SunatService } from '../../services/sunat.service';
+import { StoreSettingsService } from '../../services/store-settings.service';
 import { OrderCompleteDTO } from '../../models/admin.interface';
 import { PaginationComponent } from '../pagination/pagination';
 
@@ -37,6 +38,10 @@ export class Orders implements OnInit, OnChanges {
   updatingOrderId: number | null = null;
   emitiendoBoletaOrderId: number | null = null;
 
+  deliveryFeeActual = 5.0;
+  deliveryFeeInput = 5.0;
+  guardandoDeliveryFee = false;
+
   kpiTotalOrders = 0;
   kpiPendientes = 0;
   kpiEntregados = 0;
@@ -47,6 +52,7 @@ export class Orders implements OnInit, OnChanges {
   constructor(
     private readonly orderService: Order,
     private readonly sunatService: SunatService,
+    private readonly storeSettingsService: StoreSettingsService,
     private readonly route: ActivatedRoute
   ) {}
 
@@ -55,7 +61,42 @@ export class Orders implements OnInit, OnChanges {
     if (queryId && !isNaN(Number(queryId))) {
       this.orderIdToOpen = Number(queryId);
     }
+    this.storeSettingsService.loadDeliveryFee().subscribe((cfg) => {
+      const fee = Number(cfg?.deliveryFee);
+      if (!Number.isNaN(fee) && fee >= 0) {
+        this.deliveryFeeActual = fee;
+        this.deliveryFeeInput = fee;
+      }
+    });
     this.cargarOrders();
+  }
+
+  guardarDeliveryFee(): void {
+    const valor = Number(this.deliveryFeeInput);
+    if (Number.isNaN(valor) || valor < 0 || valor > 500) {
+      this.error = true;
+      this.mensaje = 'Ingresa un costo de delivery válido entre S/ 0.00 y S/ 500.00';
+      return;
+    }
+    const normalizado = Number(valor.toFixed(2));
+    this.guardandoDeliveryFee = true;
+    this.storeSettingsService.updateDeliveryFee(normalizado).subscribe({
+      next: (res) => {
+        const guardado = Number(res?.deliveryFee ?? normalizado);
+        this.deliveryFeeActual = guardado;
+        this.deliveryFeeInput = guardado;
+        this.guardandoDeliveryFee = false;
+        this.error = false;
+        this.mensaje = guardado === 0
+          ? 'Delivery actualizado a gratis (S/ 0.00)'
+          : `Costo de delivery actualizado a S/ ${guardado.toFixed(2)}`;
+      },
+      error: (err) => {
+        this.guardandoDeliveryFee = false;
+        this.error = true;
+        this.mensaje = err?.error?.message || 'No se pudo actualizar el costo de delivery';
+      }
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {

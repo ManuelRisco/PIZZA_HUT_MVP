@@ -80,6 +80,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/recuperar-password/**").permitAll()
                 .requestMatchers("/api/verificar-email", "/api/verificar-nombre").permitAll()
                 .requestMatchers("/api/refresh-token").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/settings/delivery-fee").permitAll()
+                .requestMatchers("/api/settings/**").hasRole("ADMIN")
 
                 // Logout - Cualquier usuario autenticado
                 .requestMatchers("/api/logout").authenticated()

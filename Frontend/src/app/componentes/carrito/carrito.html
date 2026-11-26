@@ -92,7 +92,7 @@
                 [ngModelOptions]="{ standalone: true }"
                 aria-label="Delivery a domicilio"
               >
-              <span aria-hidden="true">🛵 Delivery a domicilio</span>
+              <span aria-hidden="true">🛵 Delivery a domicilio ({{ baseDeliveryFee === 0 ? 'Gratis' : 'S/ ' + (baseDeliveryFee | number:'1.2-2') }})</span>
             </label>
           </fieldset>
         </div>

@@ -50,6 +50,8 @@ public class SunatReniecService {
     private static final Logger log = LoggerFactory.getLogger(SunatReniecService.class);
     private static final String DEFAULT_SERIE = "BBB1";
     private static final int TIPO_COMPROBANTE_BOLETA = 2;
+    private static final String UNIDAD_MEDIDA_BIEN = "NIU";
+    private static final String UNIDAD_MEDIDA_SERVICIO = "ZZ";
     private static final BigDecimal IGV_DIVISOR = new BigDecimal("1.18");
     private static final DateTimeFormatter NUBEFACT_DATE_FMT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
@@ -81,6 +83,14 @@ public class SunatReniecService {
             String qr,
             String estado,
             LocalDateTime emitidaAt
+    ) {}
+
+    private record RawBoletaLine(
+            String unidadMedida,
+            String codigo,
+            String descripcion,
+            int cantidad,
+            BigDecimal rawLineTotal
     ) {}
 
     private final JdbcTemplate jdbcTemplate;
@@ -517,8 +527,7 @@ public class SunatReniecService {
             targetTotal = rawLinesSum.setScale(2, RoundingMode.HALF_UP);
         }
 
-        // Lista de líneas brutas (código, descripción, cantidad, monto bruto original)
-        record RawBoletaLine(String codigo, String descripcion, int cantidad, BigDecimal rawLineTotal) {}
+        // Lista de líneas brutas (unidad de medida SUNAT, código, descripción, cantidad, monto bruto original)
         List<RawBoletaLine> rawLines = new ArrayList<>();
 
         int pzCounter = 1;
@@ -553,12 +562,12 @@ public class SunatReniecService {
             int qty = (item.getQuantity() != null && item.getQuantity() > 0) ? item.getQuantity() : 1;
             BigDecimal lineTot = item.getLineTotal() != null ? item.getLineTotal() : BigDecimal.ZERO;
             if (lineTot.compareTo(BigDecimal.ZERO) > 0) {
-                rawLines.add(new RawBoletaLine(codigo, descripcion, qty, lineTot));
+                rawLines.add(new RawBoletaLine(UNIDAD_MEDIDA_BIEN, codigo, descripcion, qty, lineTot));
             }
         }
 
         if (deliveryFee.compareTo(BigDecimal.ZERO) > 0) {
-            rawLines.add(new RawBoletaLine("DLV001", "SERVICIO DE ENTREGA A DOMICILIO (DELIVERY)", 1, deliveryFee));
+            rawLines.add(new RawBoletaLine(UNIDAD_MEDIDA_SERVICIO, "DLV001", "SERVICIO DE ENTREGA A DOMICILIO (DELIVERY)", 1, deliveryFee));
         }
 
         BigDecimal accumulatedTotal = BigDecimal.ZERO;
@@ -601,7 +610,7 @@ public class SunatReniecService {
             totalIgv = totalIgv.add(lineIgv);
 
             Map<String, Object> itemMap = new LinkedHashMap<>();
-            itemMap.put("unidad_de_medida", "NIU");
+            itemMap.put("unidad_de_medida", rl.unidadMedida());
             itemMap.put("codigo", rl.codigo());
             itemMap.put("descripcion", descripcion);
             itemMap.put("cantidad", qty);
@@ -902,12 +911,12 @@ public class SunatReniecService {
             name = sanitizePdfText(name);
             if (name.length() > 45) name = name.substring(0, 45);
             String line = String.format(Locale.US, "%-7s %-52s S/ %8.2f",
-                    item.getQuantity() + " NIU", name, item.getLineTotal() != null ? item.getLineTotal() : BigDecimal.ZERO);
+                    item.getQuantity() + " " + UNIDAD_MEDIDA_BIEN, name, item.getLineTotal() != null ? item.getLineTotal() : BigDecimal.ZERO);
             stream.append("0 -15 Td\n(").append(line).append(") Tj\n");
         }
         if (order.getDeliveryFee() != null && order.getDeliveryFee().compareTo(BigDecimal.ZERO) > 0) {
             String line = String.format(Locale.US, "%-7s %-52s S/ %8.2f",
-                    "1 NIU", "SERVICIO DE ENTREGA A DOMICILIO (DELIVERY)", order.getDeliveryFee());
+                    "1 " + UNIDAD_MEDIDA_SERVICIO, "SERVICIO DE ENTREGA A DOMICILIO (DELIVERY)", order.getDeliveryFee());
             stream.append("0 -15 Td\n(").append(line).append(") Tj\n");
         }
         stream.append("0 -16 Td\n(--------------------------------------------------------------------------------) Tj\n");

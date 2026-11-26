@@ -15,6 +15,7 @@ import { ToastService } from './services/toast.service';
 
 const PANEL_EXACT_PATHS = new Set<string>([
   '/panel-admin',
+  '/panel-cliente',
   '/usuarios',
   '/pizzas',
   '/categorias',

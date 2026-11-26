@@ -32,6 +32,7 @@ public class CheckoutService {
     private final InventoryService inventoryService;
     private final SunatReniecService sunatReniecService;
     private final MercadoPagoService mercadoPagoService;
+    private final StoreSettingsService storeSettingsService;
 
     public CheckoutService(OrderService orderService, OrderItemService orderItemService, AddressService addressService,
                            PaymentService paymentService, PromotionService promotionService,
@@ -39,7 +40,8 @@ public class CheckoutService {
                            PizzaService pizzaService, ExtraService extraService, SizeService sizeService,
                            InventoryService inventoryService,
                            @org.springframework.beans.factory.annotation.Autowired(required = false) SunatReniecService sunatReniecService,
-                           @org.springframework.beans.factory.annotation.Autowired(required = false) MercadoPagoService mercadoPagoService) {
+                           @org.springframework.beans.factory.annotation.Autowired(required = false) MercadoPagoService mercadoPagoService,
+                           @org.springframework.beans.factory.annotation.Autowired(required = false) StoreSettingsService storeSettingsService) {
         this.orderService = orderService;
         this.orderItemService = orderItemService;
         this.addressService = addressService;
@@ -53,6 +55,7 @@ public class CheckoutService {
         this.inventoryService = inventoryService;
         this.sunatReniecService = sunatReniecService;
         this.mercadoPagoService = mercadoPagoService;
+        this.storeSettingsService = storeSettingsService;
     }
 
     public Order checkout(CheckoutRequestDTO req) {
@@ -140,10 +143,19 @@ public class CheckoutService {
         order.setUserId(req.getOrder().getUserId());
         order.setAddressId(addressId);
         order.setStatus(Order.OrderStatus.PENDING);
-        order.setDeliveryType(Order.DeliveryType.valueOf(req.getOrder().getDeliveryType().toUpperCase()));
+        Order.DeliveryType deliveryType = Order.DeliveryType.valueOf(req.getOrder().getDeliveryType().toUpperCase());
+        order.setDeliveryType(deliveryType);
         order.setPaymentMethodId(req.getOrder().getPaymentMethodId());
         order.setSubtotal(req.getOrder().getSubtotal());
-        order.setDeliveryFee(req.getOrder().getDeliveryFee() != null ? req.getOrder().getDeliveryFee() : BigDecimal.ZERO);
+        BigDecimal resolvedDeliveryFee;
+        if (deliveryType == Order.DeliveryType.PICKUP) {
+            resolvedDeliveryFee = BigDecimal.ZERO;
+        } else if (storeSettingsService != null) {
+            resolvedDeliveryFee = storeSettingsService.getDeliveryFee();
+        } else {
+            resolvedDeliveryFee = req.getOrder().getDeliveryFee() != null ? req.getOrder().getDeliveryFee() : BigDecimal.ZERO;
+        }
+        order.setDeliveryFee(resolvedDeliveryFee);
         order.setDiscount(discount);
         order.setTotal(req.getOrder().getSubtotal().add(order.getDeliveryFee()).subtract(discount));
         order.setPromoCode(req.getOrder().getPromoCode());

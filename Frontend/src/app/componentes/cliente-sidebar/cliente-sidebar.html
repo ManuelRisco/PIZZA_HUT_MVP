@@ -1,0 +1,219 @@
+<div
+  class="fixed inset-0 bg-black/60 backdrop-blur-xs z-[5400] md:hidden transition-opacity duration-300 ease-out"
+  [ngClass]="!sidebarCollapsed ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
+  (click)="onToggleSidebar()"
+></div>
+
+<aside
+  class="bg-black text-white flex flex-col border-r border-gray-800/80 transition-transform md:transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] z-[5500] md:z-20 fixed inset-y-0 left-0 h-[100dvh] md:static md:h-full shrink-0 overscroll-contain will-change-transform shadow-2xl md:shadow-none"
+  [ngClass]="{
+    'w-[268px] translate-x-0': !sidebarCollapsed,
+    'w-[268px] -translate-x-full md:translate-x-0 md:w-[76px]': sidebarCollapsed
+  }"
+  aria-label="Menú del panel de cliente"
+>
+  <div class="flex items-center justify-between gap-2 px-3.5 py-3.5 border-b border-gray-800/90 shrink-0">
+    <div *ngIf="!sidebarCollapsed" class="flex items-center gap-2.5 min-w-0">
+      <div class="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-sm shrink-0">
+        <i class="bi bi-person-badge-fill text-base" aria-hidden="true"></i>
+      </div>
+      <div class="min-w-0">
+        <h5 class="text-white font-black text-sm tracking-wide m-0 leading-tight truncate">
+          PANEL CLIENTE
+        </h5>
+        <p class="text-[10px] font-bold text-red-500 uppercase tracking-widest m-0 leading-tight">Mi Cuenta</p>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="w-9 h-9 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+      [class.mx-auto]="sidebarCollapsed"
+      (click)="onToggleSidebar()"
+      [title]="sidebarCollapsed ? 'Desplegar barra lateral' : 'Contraer barra lateral'"
+      [attr.aria-label]="sidebarCollapsed ? 'Desplegar menú' : 'Contraer menú'"
+      [attr.aria-expanded]="!sidebarCollapsed"
+    >
+      <i
+        class="bi text-base hidden md:inline-block"
+        [ngClass]="sidebarCollapsed ? 'bi-layout-sidebar-inset-reverse' : 'bi-layout-sidebar-inset'"
+        aria-hidden="true"
+      ></i>
+      <i class="bi bi-x-lg text-sm md:hidden" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <nav class="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-2 sidebar-scroll" aria-label="Opciones del cliente">
+    <a
+      class="sidebar-item"
+      [class.collapsed-item]="sidebarCollapsed"
+      [ngClass]="vistaActual === 'dashboard' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+      [title]="sidebarCollapsed ? 'Dashboard' : ''"
+      (click)="onCambiarVista('dashboard')"
+    >
+      <i class="bi bi-grid-fill text-base min-w-[22px] text-center"></i>
+      <span *ngIf="!sidebarCollapsed" class="truncate">Dashboard</span>
+    </a>
+
+    <div class="sidebar-group" [class.sidebar-group-collapsed]="sidebarCollapsed">
+      <button
+        *ngIf="!sidebarCollapsed"
+        type="button"
+        class="sidebar-group-trigger"
+        [class.group-active]="esGrupoConVistaActiva('actividad')"
+        [attr.aria-expanded]="gruposAbiertos.actividad"
+        (click)="toggleGrupo('actividad')"
+      >
+        <span class="flex items-center gap-2 min-w-0">
+          <i class="bi bi-bag-heart-fill text-xs text-red-500"></i>
+          <span class="truncate">Actividad y Pedidos</span>
+        </span>
+        <span class="flex items-center gap-1.5 shrink-0">
+          <span
+            *ngIf="pedidosActivos > 0 && !gruposAbiertos.actividad"
+            class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-black leading-tight"
+          >
+            {{ pedidosActivos }}
+          </span>
+          <span *ngIf="!gruposAbiertos.actividad && esGrupoConVistaActiva('actividad')" class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          <i class="bi bi-chevron-down text-[11px] transition-transform duration-200" [class.rotate-180]="gruposAbiertos.actividad"></i>
+        </span>
+      </button>
+      <div *ngIf="sidebarCollapsed" class="sidebar-rail-divider"></div>
+
+      <div class="sidebar-group-body" [class.open]="sidebarCollapsed || gruposAbiertos.actividad">
+        <div class="sidebar-group-inner" [class.pl-2]="!sidebarCollapsed">
+          <a
+            class="sidebar-item justify-between relative"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'pedidos' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Mis Pedidos' : ''"
+            (click)="onCambiarVista('pedidos')"
+          >
+            <span class="flex items-center gap-3 min-w-0">
+              <i class="bi bi-bag-check text-base min-w-[22px] text-center"></i>
+              <span *ngIf="!sidebarCollapsed" class="truncate">Mis Pedidos</span>
+            </span>
+            <span
+              *ngIf="!sidebarCollapsed && pedidosActivos > 0"
+              class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0"
+              [ngClass]="vistaActual === 'pedidos' ? 'bg-white text-red-600' : 'bg-amber-500/20 text-amber-400'"
+            >
+              {{ pedidosActivos }}
+            </span>
+            <span
+              *ngIf="sidebarCollapsed && pedidosActivos > 0"
+              class="w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-1.5"
+            ></span>
+          </a>
+
+          <a
+            class="sidebar-item justify-between"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'favoritos' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Mis Favoritos' : ''"
+            (click)="onCambiarVista('favoritos')"
+          >
+            <span class="flex items-center gap-3 min-w-0">
+              <i class="bi bi-heart text-base min-w-[22px] text-center"></i>
+              <span *ngIf="!sidebarCollapsed" class="truncate">Mis Favoritos</span>
+            </span>
+            <span
+              *ngIf="!sidebarCollapsed && totalFavoritos > 0"
+              class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0"
+              [ngClass]="vistaActual === 'favoritos' ? 'bg-white text-red-600' : 'bg-gray-800 text-gray-300'"
+            >
+              {{ totalFavoritos }}
+            </span>
+          </a>
+
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'resenas' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Mis Reseñas' : ''"
+            (click)="onCambiarVista('resenas')"
+          >
+            <i class="bi bi-star text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Mis Reseñas</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-group" [class.sidebar-group-collapsed]="sidebarCollapsed">
+      <button
+        *ngIf="!sidebarCollapsed"
+        type="button"
+        class="sidebar-group-trigger"
+        [class.group-active]="esGrupoConVistaActiva('cuenta')"
+        [attr.aria-expanded]="gruposAbiertos.cuenta"
+        (click)="toggleGrupo('cuenta')"
+      >
+        <span class="flex items-center gap-2 min-w-0">
+          <i class="bi bi-shield-check text-xs text-red-500"></i>
+          <span class="truncate">Cuenta y Seguridad</span>
+        </span>
+        <span class="flex items-center gap-1.5 shrink-0">
+          <span *ngIf="!gruposAbiertos.cuenta && esGrupoConVistaActiva('cuenta')" class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          <i class="bi bi-chevron-down text-[11px] transition-transform duration-200" [class.rotate-180]="gruposAbiertos.cuenta"></i>
+        </span>
+      </button>
+      <div *ngIf="sidebarCollapsed" class="sidebar-rail-divider"></div>
+
+      <div class="sidebar-group-body" [class.open]="sidebarCollapsed || gruposAbiertos.cuenta">
+        <div class="sidebar-group-inner" [class.pl-2]="!sidebarCollapsed">
+          <a
+            class="sidebar-item"
+            [class.collapsed-item]="sidebarCollapsed"
+            [ngClass]="vistaActual === 'perfil' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
+            [title]="sidebarCollapsed ? 'Mi Perfil' : ''"
+            (click)="onCambiarVista('perfil')"
+          >
+            <i class="bi bi-person-gear text-base min-w-[22px] text-center"></i>
+            <span *ngIf="!sidebarCollapsed" class="truncate">Mi Perfil</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="border-t border-gray-800/90 p-3 shrink-0 space-y-1.5">
+    <div
+      class="flex items-center gap-3 cursor-pointer p-2 rounded-xl transition-colors"
+      [class.justify-center]="sidebarCollapsed"
+      [ngClass]="vistaActual === 'perfil' ? 'bg-gray-800' : 'hover:bg-gray-900'"
+      [title]="sidebarCollapsed ? (currentUser?.name || 'Mi Perfil') : ''"
+      (click)="onCambiarVista('perfil')"
+      *ngIf="currentUser"
+    >
+      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center font-black text-white text-sm shadow shrink-0">
+        <span>{{ inicialUsuario }}</span>
+      </div>
+      <div *ngIf="!sidebarCollapsed" class="flex-1 overflow-hidden">
+        <p class="text-sm font-bold text-white truncate m-0">{{ currentUser?.name || 'Cliente' }}</p>
+        <div class="flex items-center gap-1.5 mt-0.5">
+          <p class="text-[11px] text-gray-400 uppercase tracking-wider m-0">CLIENTE</p>
+          <span
+            *ngIf="currentUser?.googleLinked || currentUser?.authProvider === 'GOOGLE'"
+            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[9px] font-bold"
+            title="Sesión vinculada con Google"
+          >
+            <i class="bi bi-google text-[9px]"></i> Google
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="w-full flex items-center gap-3 text-red-500 hover:text-red-400 hover:bg-gray-900 p-2 rounded-xl transition-colors text-sm cursor-pointer"
+      [class.justify-center]="sidebarCollapsed"
+      [title]="sidebarCollapsed ? 'Cerrar Sesión' : ''"
+      (click)="onCerrarSesion()"
+    >
+      <i class="bi bi-box-arrow-left text-lg min-w-[22px] text-center"></i>
+      <span *ngIf="!sidebarCollapsed" class="font-bold">Cerrar Sesión</span>
+    </button>
+  </div>
+</aside>

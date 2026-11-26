@@ -20,58 +20,55 @@
 
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
 
-      <div class="form-group" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-          <label for="dni" style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #1f2937;">
-            <i class="fas fa-id-card" style="color: #c8102e; margin-right: 4px;"></i>
-            DNI (Opcional - Para Boleta Electrónica SUNAT)
-          </label>
-          <span style="font-size: 0.72rem; background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 999px; font-weight: 700;">RENIEC</span>
+      <div class="form-group">
+        <div class="dni-label-row">
+          <label for="dni">DNI <span class="optional-tag">(Opcional)</span></label>
         </div>
-        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          <div class="input-with-icon" style="flex: 1; min-width: 165px; margin: 0;">
-            <i class="fas fa-address-card" aria-hidden="true"></i>
+        <div class="dni-input-row">
+          <div class="input-with-icon dni-input-wrap">
+            <i class="fas fa-id-card" aria-hidden="true"></i>
             <input
               type="text"
               id="dni"
               formControlName="dni"
               maxlength="8"
-              placeholder="Ingresa tu DNI de 8 dígitos"
+              placeholder="Ingresa tu DNI (8 dígitos)"
+              [class.error]="registerForm.get('dni')?.invalid && registerForm.get('dni')?.touched"
               (keyup.enter)="$event.preventDefault(); consultarDniReniec(false)"
             />
           </div>
           <button
             type="button"
+            class="btn-dni-lookup"
             (click)="consultarDniReniec(false)"
             [disabled]="buscandoDni || !(registerForm.get('dni')?.value?.length === 8)"
-            style="background: #111827; color: #fff; border: none; border-radius: 10px; padding: 10px 14px; font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px;"
           >
             <i class="fas" [ngClass]="buscandoDni ? 'fa-spinner fa-spin' : 'fa-search'"></i>
-            {{ buscandoDni ? 'Buscando...' : 'Autocompletar' }}
+            <span>{{ buscandoDni ? 'Buscando...' : 'Buscar' }}</span>
           </button>
         </div>
-        <small style="display: block; font-size: 0.75rem; color: #6b7280; margin-top: 5px;">
-          Si ingresas tu DNI, autocompletaremos tu nombre con RENIEC y quedará guardado para emitir tus Boletas de Venta Electrónicas.
+        <small class="dni-hint">
+          Autocompleta tu nombre y guárdalo para tus boletas electrónicas.
         </small>
-        <div *ngIf="dniMensaje" style="margin-top: 6px; font-size: 0.78rem; color: #15803d; font-weight: 600;">
+        <div *ngIf="dniMensaje" class="dni-feedback dni-feedback-ok">
           <i class="fas fa-check-circle"></i> {{ dniMensaje }}
         </div>
-        <div *ngIf="dniError" style="margin-top: 6px; font-size: 0.78rem; color: #b91c1c; font-weight: 600;">
+        <div *ngIf="dniError" class="dni-feedback dni-feedback-error">
           <i class="fas fa-exclamation-triangle"></i> {{ dniError }}
         </div>
         <div class="error-message" *ngIf="registerForm.get('dni')?.invalid && registerForm.get('dni')?.touched">
           <span *ngIf="registerForm.get('dni')?.errors?.['pattern']">El DNI debe tener exactamente 8 dígitos numéricos</span>
         </div>
 
-        <div *ngIf="registerForm.get('dni')?.value" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #d1d5db;">
-          <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.78rem; color: #111827; font-weight: 600; cursor: pointer; margin: 0;">
+        <div *ngIf="registerForm.get('dni')?.value" class="dni-consent-box">
+          <label class="dni-consent-label">
             <input
               type="checkbox"
               formControlName="ageVerified"
-              style="margin-top: 3px; width: 16px; height: 16px; accent-color: #c8102e; cursor: pointer;"
+              class="dni-consent-checkbox"
             />
             <span>
-              Declaro bajo juramento ser <strong>mayor de edad (+18 años)</strong> y que el <strong>DNI ingresado me pertenece</strong> para la emisión de comprobantes electrónicos.
+              Declaro ser <strong>mayor de edad (+18)</strong> y que el <strong>DNI ingresado me pertenece</strong> para emitir comprobantes electrónicos.
             </span>
           </label>
         </div>
@@ -272,38 +269,38 @@
           (keyup.enter)="onConfirmGoogleModal()"
         />
 
-        <label for="regGoogleDni">DNI (Opcional - Para Boletas Electrónicas SUNAT)</label>
-        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+        <label for="regGoogleDni">DNI <span class="optional-tag">(Opcional · Boleta SUNAT)</span></label>
+        <div class="modal-dni-row">
           <input
             type="text"
             id="regGoogleDni"
             name="regGoogleDni"
             maxlength="8"
             class="modal-input"
-            style="margin-bottom: 0; flex: 1;"
             placeholder="8 dígitos (opcional)"
             [(ngModel)]="googleDni"
           />
           <button
             type="button"
-            class="btn-modal-secondary"
-            style="white-space: nowrap; padding: 0 12px;"
+            class="btn-modal-secondary btn-modal-dni"
             [disabled]="buscandoDni || googleDni.trim().length !== 8"
             (click)="consultarDniReniec(true)"
           >
-            {{ buscandoDni ? 'Buscando...' : 'Buscar RENIEC' }}
+            {{ buscandoDni ? 'Buscando...' : 'RENIEC' }}
           </button>
         </div>
 
-        <label *ngIf="googleDni.trim().length > 0" style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.78rem; color: #1f2937; font-weight: 600; margin-bottom: 12px; cursor: pointer;">
-          <input
-            type="checkbox"
-            name="regGoogleAgeVerified"
-            [(ngModel)]="googleAgeVerified"
-            style="margin-top: 2px; width: 16px; height: 16px; accent-color: #c8102e;"
-          />
-          <span>Confirmo que soy mayor de 18 años (+18) y que estoy usando mi propio DNI.</span>
-        </label>
+        <div *ngIf="googleDni.trim().length > 0" class="dni-consent-box">
+          <label class="dni-consent-label">
+            <input
+              type="checkbox"
+              name="regGoogleAgeVerified"
+              [(ngModel)]="googleAgeVerified"
+              class="dni-consent-checkbox"
+            />
+            <span>Confirmo que soy mayor de 18 años (+18) y que estoy usando mi propio DNI.</span>
+          </label>
+        </div>
 
         <div class="auth-modal-actions">
           <button type="button" class="btn-modal-secondary" (click)="closeGoogleModal()" [disabled]="googleLoading">
