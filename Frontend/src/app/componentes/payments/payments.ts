@@ -4,10 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { Payment } from '../../services/payment.service';
 import { PaymentDTO } from '../../models/admin.interface';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-payments',
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './payments.html',
   styleUrl: './payments.css'
 })

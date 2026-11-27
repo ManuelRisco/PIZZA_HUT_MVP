@@ -5,11 +5,12 @@ import { ExtraService, Extra } from '../../services/extra.service';
 import { FileUploadService } from '../../services/file-upload.service';
 import { ImageOptimizerService } from '../../services/image-optimizer.service';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-extras',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './extras.html',
   styleUrl: './extras.css'
 })

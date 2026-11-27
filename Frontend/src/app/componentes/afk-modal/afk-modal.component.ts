@@ -17,8 +17,8 @@ import { IdleTimeoutService } from '../../services/idle-timeout.service';
               </div>
             </div>
             <div class="modal-body border-0 pt-2">
-              <h4 class="modal-title mb-3" id="afkModalLabel" style="font-weight: 700; color: #2c3e50;">¿Sigues ahí?</h4>
-              <p class="text-muted" style="font-size: 1.1rem;">
+              <h4 class="modal-title mb-3" id="afkModalLabel" style="font-weight: 700; color: var(--text-primary);">¿Sigues ahí?</h4>
+              <p style="font-size: 1.05rem; color: var(--text-secondary);">
                 Tu sesión expirará pronto por inactividad. ¿Deseas mantener tu sesión activa?
               </p>
             </div>

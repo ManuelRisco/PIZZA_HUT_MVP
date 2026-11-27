@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { PaymentMethodService } from '../../services/payment-method.service';
 import { PaymentMethodDTO } from '../../models/payment-method.interface';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-metodos-pago',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './metodos-pago.html',
   styleUrls: ['./metodos-pago.css']
 })

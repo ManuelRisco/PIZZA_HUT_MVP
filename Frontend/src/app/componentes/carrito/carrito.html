@@ -296,7 +296,11 @@
             <div class="summary-field">
               <span class="field-label-text">Método de pago</span>
               @if (!paymentMethodsLoaded) {
-                <output class="loading-placeholder" aria-label="Cargando opciones de pago">Cargando opciones...</output>
+                <div class="space-y-2 py-1" role="status" aria-busy="true" aria-label="Cargando opciones de pago">
+                  <div class="eco-skeleton h-10 w-full rounded-xl"></div>
+                  <div class="eco-skeleton h-10 w-3/4 rounded-xl"></div>
+                  <span class="sr-only">Cargando opciones de pago</span>
+                </div>
               } @else if (paymentMethods.length === 0) {
                 <p class="helper-text" role="alert">No hay métodos de pago disponibles.</p>
               } @else {
@@ -338,9 +342,13 @@
                   </div>
 
                   @if (mpBrickLoading) {
-                    <div class="mp-loading-box">
-                      <i class="bi bi-arrow-repeat spin-icon" aria-hidden="true"></i>
-                      <span>Cargando módulo de tarjeta...</span>
+                    <div class="space-y-3 py-2" role="status" aria-busy="true" aria-label="Cargando módulo de tarjeta">
+                      <div class="eco-skeleton h-10 w-full rounded-xl"></div>
+                      <div class="grid grid-cols-2 gap-3">
+                        <div class="eco-skeleton h-10 w-full rounded-xl"></div>
+                        <div class="eco-skeleton h-10 w-full rounded-xl"></div>
+                      </div>
+                      <span class="sr-only">Cargando módulo de tarjeta</span>
                     </div>
                   }
 

@@ -158,8 +158,13 @@
             aria-required="true"
             [attr.aria-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched ? 'true' : 'false'"
           />
-          <i class="fas password-toggle-icon" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"
-             (click)="showPassword = !showPassword"></i>
+          <button
+            type="button"
+            class="password-toggle-icon"
+            (click)="showPassword = !showPassword"
+            [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+            <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'" aria-hidden="true"></i>
+          </button>
         </div>
         <div class="error-message" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
           <span *ngIf="registerForm.get('password')?.errors?.['required']">La contraseña es obligatoria</span>
@@ -182,8 +187,13 @@
             aria-required="true"
             [attr.aria-invalid]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched ? 'true' : 'false'"
           />
-          <i class="fas password-toggle-icon" [ngClass]="showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'"
-             (click)="showConfirmPassword = !showConfirmPassword"></i>
+          <button
+            type="button"
+            class="password-toggle-icon"
+            (click)="showConfirmPassword = !showConfirmPassword"
+            [attr.aria-label]="showConfirmPassword ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'">
+            <i class="fas" [ngClass]="showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'" aria-hidden="true"></i>
+          </button>
         </div>
         <div class="error-message" *ngIf="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched">
           <span *ngIf="registerForm.get('confirmPassword')?.errors?.['required']">La confirmación es requerida</span>

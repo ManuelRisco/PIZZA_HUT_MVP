@@ -1,28 +1,40 @@
 <main class="container mx-auto px-4 md:px-8 py-8" aria-label="Menú de Pizzas">
   <div class="mb-8">
     <div class="relative">
-      <h2 class="text-3xl font-black uppercase tracking-tight text-gray-900">
+      <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
         Favoritos del Menú
       </h2>
-      <div class="w-20 h-1.5 rounded-full bg-gradient-to-r from-[#039340] to-[#d9251b] mt-2 eco-section-bar"></div>
+      <div class="w-16 h-1 rounded-full bg-[#b91c1c] mt-2 eco-section-bar"></div>
     </div>
   </div>
 
-  @if (!loading && pizzas.length > 0) {
+  @if (error && !loading) {
+    <div class="eco-state-error mb-8" role="alert">
+      <i class="bi bi-exclamation-triangle-fill text-3xl text-red-600 mb-3" aria-hidden="true"></i>
+      <h3 class="text-lg font-bold text-gray-900 mb-1">No pudimos cargar el menú</h3>
+      <p class="text-sm text-gray-600 mb-4">{{ error }}</p>
+      <button type="button" class="eco-btn eco-btn-primary" (click)="cargarDatosIniciales()">
+        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Reintentar
+      </button>
+    </div>
+  }
+
+  @if (!loading && !error && pizzas.length > 0) {
     <div class="mb-8">
       <div class="relative max-w-md">
-        <i class="bi bi-search absolute left-3 top-3 text-gray-400"></i>
+        <i class="bi bi-search absolute left-3 top-3 text-gray-400" aria-hidden="true"></i>
         <input 
           #searchInput
           type="text" 
-          class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent font-sans" 
+          aria-label="Buscar pizzas"
+          class="eco-input pl-10 pr-10" 
           placeholder="Buscar pizzas..."
           [(ngModel)]="searchTerm"
           (ngModelChange)="filtrarPizzas()"
         >
         @if (searchTerm) {
-          <button class="absolute right-3 top-2 text-gray-400 hover:text-gray-600" (click)="limpiarBuscador()">
-            <i class="bi bi-x-lg text-lg"></i>
+          <button type="button" aria-label="Limpiar búsqueda" class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-700 cursor-pointer bg-transparent border-0" (click)="limpiarBuscador()">
+            <i class="bi bi-x-lg text-base" aria-hidden="true"></i>
           </button>
         }
       </div>
@@ -30,8 +42,8 @@
   }
 
   @if (loading) {
-    <div class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-red-600"></div>
+    <div class="py-4">
+      <app-ui-skeleton variant="cards" [count]="6" [columns]="3" label="Cargando menú de pizzas..."></app-ui-skeleton>
     </div>
   }
 
@@ -52,34 +64,25 @@
     @for (pizza of pizzasPaginadas; track pizza.id; let i = $index) {
       <div class="animate-fadeIn transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1.5 flex flex-col h-full relative font-sans group cursor-pointer" [id]="'pizza-' + pizza.id">
         
-        <div class="absolute top-4 right-4 z-10 flex flex-col items-end gap-1.5">
-          @if ((i < 2 && !searchTerm) || pizza.isPopular) {
-            <div class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-sm uppercase tracking-wider shadow">
-              Popular
-            </div>
-          }
+        <div class="absolute top-3 right-3 z-10 flex flex-col items-end gap-1">
           @if (esPizzaAgotada(pizza)) {
-            <div class="bg-gray-900 text-white text-xs font-bold px-2.5 py-1 rounded-sm uppercase tracking-wider shadow">
-              Agotado
-            </div>
+            <span class="eco-badge eco-badge-neutral shadow-sm">Agotado</span>
           } @else if (pizza.lowStock || (pizza.availableStock !== undefined && pizza.availableStock <= 5)) {
-            <div class="bg-amber-500 text-white text-xs font-bold px-2.5 py-1 rounded-sm shadow">
-              ¡Últimas {{ pizza.availableStock }}!
-            </div>
-          } @else if (pizza.availableStock !== undefined) {
-            <div class="bg-emerald-600/90 text-white text-[11px] font-bold px-2 py-0.5 rounded-sm shadow">
-              Disponible: {{ pizza.availableStock }}
-            </div>
+            <span class="eco-badge eco-badge-warning shadow-sm">Últimas {{ pizza.availableStock }}</span>
+          } @else if ((i < 2 && !searchTerm) || pizza.isPopular) {
+            <span class="eco-badge bg-red-700 text-white border-red-700 shadow-sm">Popular</span>
           }
         </div>
 
         <button
           type="button"
-          class="absolute top-4 left-4 z-10 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center shadow hover:bg-white transition-colors"
+          class="absolute top-3 left-3 z-10 bg-white/95 rounded-full w-9 h-9 flex items-center justify-center shadow-sm border border-gray-200 hover:bg-white transition-colors cursor-pointer"
           (click)="toggleFavorito(pizza.id || 0, $event)"
+          [attr.aria-pressed]="esFavorito(pizza.id || 0)"
+          [attr.aria-label]="esFavorito(pizza.id || 0) ? 'Quitar ' + pizza.name + ' de favoritos' : 'Agregar ' + pizza.name + ' a favoritos'"
           [title]="esFavorito(pizza.id || 0) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
         >
-          <i class="bi text-lg" [class.bi-heart-fill]="esFavorito(pizza.id || 0)" [class.bi-heart]="!esFavorito(pizza.id || 0)" [class.text-red-600]="esFavorito(pizza.id || 0)" [class.text-gray-500]="!esFavorito(pizza.id || 0)"></i>
+          <i class="bi text-base" aria-hidden="true" [class.bi-heart-fill]="esFavorito(pizza.id || 0)" [class.bi-heart]="!esFavorito(pizza.id || 0)" [class.text-red-600]="esFavorito(pizza.id || 0)" [class.text-gray-600]="!esFavorito(pizza.id || 0)"></i>
         </button>
 
         <div class="relative pt-[75%] bg-gray-50 overflow-hidden cursor-pointer"
@@ -100,22 +103,23 @@
         </div>
 
         <div class="p-6 flex flex-col flex-grow border-t border-gray-100">
-          <h3 class="text-xl font-black text-gray-900 uppercase mb-2 hover:text-red-600 transition-colors cursor-pointer"
+          <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-2 hover:text-red-700 transition-colors cursor-pointer"
               (click)="!esPizzaAgotada(pizza) && abrirModalPersonalizacion(pizza)">{{ pizza.name }}</h3>
-          <p class="text-gray-500 text-sm mb-6 flex-grow leading-relaxed">{{ pizza.description || 'Deliciosa pizza con ingredientes frescos' }}</p>
+          <p class="text-gray-600 text-sm mb-5 flex-grow leading-relaxed">{{ pizza.description || 'Masa artesanal con ingredientes frescos' }}</p>
           
           <div class="flex items-center justify-between mt-auto">
-            <div class="text-red-600 font-bold text-xl">
+            <div class="text-red-700 font-bold text-xl eco-num">
               S/ {{ pizza.price | number:'1.2-2' }}
             </div>
             <button 
-              class="w-10 h-10 rounded flex items-center justify-center transition-colors"
-              [ngClass]="esPizzaAgotada(pizza) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#161616] hover:bg-[#039340] text-white'"
+              type="button"
+              class="w-10 h-10 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
+              [ngClass]="esPizzaAgotada(pizza) ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-[#161616] hover:bg-[#166534] text-white'"
               [disabled]="esPizzaAgotada(pizza)"
               (click)="abrirModalPersonalizacion(pizza)"
-              aria-label="Agregar al carrito"
+              [attr.aria-label]="'Agregar ' + pizza.name + ' al carrito'"
             >
-              <i class="bi bi-cart-plus text-lg"></i>
+              <i class="bi bi-cart-plus text-lg" aria-hidden="true"></i>
             </button>
           </div>
         </div>
@@ -136,11 +140,16 @@
     </div>
   }
 
-  @if (!loading && pizzasFiltradas.length === 0) {
-    <div class="text-center py-16 text-gray-500">
-      <i class="bi bi-search text-5xl mb-4 opacity-50"></i>
-      <h3 class="text-xl font-bold">No encontramos pizzas</h3>
-      <p>Intenta con otra búsqueda o vuelve más tarde.</p>
+  @if (!loading && !error && pizzasFiltradas.length === 0) {
+    <div class="eco-state-empty my-6">
+      <i class="bi bi-search text-4xl text-gray-400 mb-3" aria-hidden="true"></i>
+      <h3 class="text-xl font-bold text-gray-900 mb-1">No encontramos pizzas</h3>
+      <p class="text-sm text-gray-600 mb-4">Intenta con otra búsqueda o vuelve más tarde.</p>
+      @if (searchTerm) {
+        <button type="button" class="eco-btn eco-btn-secondary" (click)="limpiarBuscador()">
+          Ver todas las pizzas
+        </button>
+      }
     </div>
   }
 </main>
@@ -169,24 +178,26 @@
         </h6>
         <div class="grid grid-cols-2 gap-3" aria-labelledby="sizes-label">
           @for (tamano of tamanosDisponibles; track tamano.id) {
-            <div 
-              class="relative border-2 rounded-xl p-3 sm:p-4 transition-all duration-200 flex flex-col items-center justify-center text-center group"
+            <button
+              type="button"
+              class="relative border-2 rounded-xl p-3 sm:p-4 transition-all duration-200 flex flex-col items-center justify-center text-center group bg-transparent"
+              [disabled]="getStockParaTamano(pizzaSeleccionada, tamano) <= 0"
               [ngClass]="getStockParaTamano(pizzaSeleccionada, tamano) <= 0 ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed' : (tamanoSeleccionado?.id === tamano.id ? 'border-red-600 bg-red-50/50 cursor-pointer' : 'border-gray-200 hover:border-red-300 hover:bg-gray-50 cursor-pointer')"
               (click)="seleccionarTamano(tamano)"
               [attr.aria-pressed]="tamanoSeleccionado?.id === tamano.id"
             >
               @if (tamanoSeleccionado?.id === tamano.id) {
                 <div class="absolute top-2 right-2 text-red-600">
-                  <i class="bi bi-check-circle-fill"></i>
+                  <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
                 </div>
               }
-              <i class="bi bi-pie-chart-fill text-2xl mb-1.5" [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'text-red-600' : 'text-gray-400 group-hover:text-red-400'"></i>
+              <i class="bi bi-pie-chart-fill text-2xl mb-1.5" aria-hidden="true" [ngClass]="tamanoSeleccionado?.id === tamano.id ? 'text-red-600' : 'text-gray-400 group-hover:text-red-400'"></i>
               <span class="font-bold text-gray-900 text-sm sm:text-base">{{ tamano.name }}</span>
-              <span class="text-xs sm:text-sm text-gray-500 font-medium mt-1">{{ formatearPrecio((pizzaSeleccionada.price || 0) + (tamano.extraCost || 0)) }}</span>
+              <span class="text-xs sm:text-sm text-gray-500 font-medium mt-1 eco-num">{{ formatearPrecio((pizzaSeleccionada.price || 0) + (tamano.extraCost || 0)) }}</span>
               <span class="text-[11px] font-bold mt-1" [ngClass]="getStockParaTamano(pizzaSeleccionada, tamano) > 0 ? 'text-emerald-600' : 'text-red-500'">
                 {{ getStockParaTamano(pizzaSeleccionada, tamano) > 0 ? ('Disp: ' + getStockParaTamano(pizzaSeleccionada, tamano)) : 'Agotado' }}
               </span>
-            </div>
+            </button>
           }
         </div>
       </div>

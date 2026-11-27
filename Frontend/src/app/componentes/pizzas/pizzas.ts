@@ -12,11 +12,12 @@ import { FileUploadService } from '../../services/file-upload.service';
 import { PizzaDTO, PizzaCreateDTO, PizzaIngredientDTO, CategoryDTO } from '../../models/pizza.interface';
 import { IngredientDTO, SizeDTO } from '../../models/admin.interface';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-pizzas',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './pizzas.html',
   styleUrls: ['./pizzas.css']
 })

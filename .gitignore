@@ -70,7 +70,7 @@ build/
 **/.settings/
 **/.factorypath
 **/.apt_generated/
-Backend/demo/bin/
+Backend/ecopizza/bin/
 *.suo
 *.sln
 *.sw?

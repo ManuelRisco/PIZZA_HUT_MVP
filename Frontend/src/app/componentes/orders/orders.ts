@@ -7,11 +7,12 @@ import { SunatService } from '../../services/sunat.service';
 import { StoreSettingsService } from '../../services/store-settings.service';
 import { OrderCompleteDTO } from '../../models/admin.interface';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './orders.html',
   styleUrl: './orders.css'
 })

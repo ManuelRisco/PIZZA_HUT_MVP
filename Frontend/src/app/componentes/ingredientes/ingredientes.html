@@ -1,9 +1,8 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Catálogo y Operaciones</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Gestión de Ingredientes e Insumos</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Control de insumos de cocina, stocks mínimos, costeo directo y porciones para recetas y extras.</p>
+      <h2 class="eco-page-title">Gestión de Ingredientes e Insumos</h2>
+      <p class="eco-page-subtitle">Insumos de cocina, stocks mínimos, costeo directo y porciones.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button
@@ -146,10 +145,7 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
-    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
-    <p class="text-sm font-bold text-gray-500 m-0">Cargando catálogo de insumos...</p>
-  </div>
+  <app-ui-skeleton *ngIf="loading" variant="table" [rows]="6" [cols]="6" label="Cargando catálogo de insumos..."></app-ui-skeleton>
 
   <div *ngIf="!loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
@@ -177,7 +173,7 @@
                 <span class="font-bold text-gray-900" [ngClass]="{'line-through text-gray-400': !ing.isAvailable}">
                   {{ ing.name }}
                 </span>
-                <span class="text-[10px] text-gray-400 font-mono">#{{ ing.id }}</span>
+                <span class="text-[10px] text-gray-400 eco-num">#{{ ing.id }}</span>
               </div>
             </td>
             <td class="py-3 px-4 text-right">

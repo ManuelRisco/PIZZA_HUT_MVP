@@ -1,9 +1,8 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel de Cliente</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Mi Perfil y Seguridad</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Actualiza tus datos de contacto, credenciales de acceso y vinculación con Google</p>
+      <h2 class="eco-page-title">Mi Perfil y Seguridad</h2>
+      <p class="eco-page-subtitle">Actualiza tus datos de contacto, contraseña y vinculación con Google.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button
@@ -39,10 +38,7 @@
   }
 
   @if (loading) {
-    <div class="bg-white rounded-2xl border border-gray-200 p-16 flex flex-col items-center justify-center shadow-sm">
-      <div class="animate-spin rounded-full h-11 w-11 border-4 border-red-100 border-t-red-600 mb-4"></div>
-      <p class="text-gray-500 font-medium text-sm m-0">Cargando tu información...</p>
-    </div>
+    <app-ui-skeleton variant="form" [count]="6" label="Cargando información de tu perfil..."></app-ui-skeleton>
   }
 
   @if (!loading && usuario) {

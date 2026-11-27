@@ -6,7 +6,7 @@
   background: radial-gradient(circle at 20% 20%, rgba(3, 147, 64, 0.14) 0%, transparent 45%),
     radial-gradient(circle at 80% 80%, rgba(217, 37, 27, 0.14) 0%, transparent 45%),
     radial-gradient(circle at center, #1b1b1b 0%, #0e0e0e 100%);
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: var(--font-base);
   padding: 24px 16px;
 }
 
@@ -78,8 +78,8 @@
 
 .auth-brand-name {
   font-size: 20px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: #ffffff;
 }
 
@@ -98,7 +98,7 @@
 
 .login-header h2 {
   font-size: 24px;
-  font-weight: 800;
+  font-weight: 700;
   color: #ffffff;
   margin-bottom: 14px;
 }
@@ -166,9 +166,15 @@ label {
   top: 50%;
   right: 12px;
   transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: #9ca3af;
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
+  border-radius: 6px;
   transition: color 0.2s ease;
 }
 
@@ -436,8 +442,9 @@ label {
   text-align: center;
   font-size: 22px;
   font-weight: 700;
-  letter-spacing: 8px;
-  font-family: monospace;
+  letter-spacing: 6px;
+  font-family: var(--font-base);
+  font-variant-numeric: tabular-nums;
   color: #18b55b;
 }
 

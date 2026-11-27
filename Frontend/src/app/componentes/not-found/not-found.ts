@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-not-found',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <div class="not-found-container">
       <div class="not-found-content">
@@ -17,22 +17,22 @@ import { CommonModule } from '@angular/common';
         <p>La página que buscas no existe, pero en Eco Pizza tenemos deliciosas pizzas esperándote.</p>
 
         <div class="action-buttons">
-          <button class="btn-home" (click)="navegarA('/')">
-            <i class="fas fa-home"></i> Ir al Inicio
+          <button type="button" class="btn-home" (click)="navegarA('/')">
+            <i class="fas fa-home" aria-hidden="true"></i> Ir al Inicio
           </button>
-          <button class="btn-menu" (click)="navegarA('/menu')">
-            <i class="fas fa-pizza-slice"></i> Ver Menú
+          <button type="button" class="btn-menu" (click)="navegarA('/menu')">
+            <i class="fas fa-pizza-slice" aria-hidden="true"></i> Ver Menú
           </button>
         </div>
 
         <div class="suggested-links">
           <h3>¿Quizás buscabas?</h3>
           <ul>
-            <li><a (click)="navegarA('/menu')" href="javascript:void(0)">Menú</a></li>
-            <li><a (click)="navegarA('/extras')" href="javascript:void(0)">Extras</a></li>
-            <li><a (click)="navegarA('/promociones')" href="javascript:void(0)">Promociones</a></li>
-            <li><a (click)="navegarA('/cart')" href="javascript:void(0)">Carrito</a></li>
-            <li><a (click)="navegarA('/ubicacion')" href="javascript:void(0)">Ubicación</a></li>
+            <li><a routerLink="/menu">Menú</a></li>
+            <li><a routerLink="/extras">Extras</a></li>
+            <li><a routerLink="/promociones">Promociones</a></li>
+            <li><a routerLink="/cart">Carrito</a></li>
+            <li><a routerLink="/ubicacion">Ubicación</a></li>
           </ul>
         </div>
       </div>
@@ -80,21 +80,21 @@ import { CommonModule } from '@angular/common';
     }
 
     h1 {
-      color: #161616;
+      color: var(--text-primary);
       margin-bottom: 8px;
       font-size: 26px;
-      font-weight: 800;
+      font-weight: 700;
     }
 
     h2 {
-      color: #d9251b;
+      color: var(--eco-brand);
       margin-bottom: 18px;
       font-size: 46px;
-      font-weight: 900;
+      font-weight: 700;
     }
 
     p {
-      color: #4b5563;
+      color: var(--text-secondary);
       margin-bottom: 28px;
       line-height: 1.6;
     }

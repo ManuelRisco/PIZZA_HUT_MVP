@@ -1,14 +1,11 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">
-        {{ isAdmin ? 'Panel Ejecutivo' : 'Panel de Cliente' }}
-      </p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">
+      <h2 class="eco-page-title">
         {{ isAdmin ? 'Gestión y Moderación de Reseñas' : 'Mis Reseñas de Pedidos' }}
       </h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">
-        {{ isAdmin ? 'Supervisa las calificaciones de clientes, opiniones de órdenes y visibilidad en el menú.' : 'Consulta las calificaciones y comentarios que has registrado en tus órdenes entregadas.' }}
+      <p class="eco-page-subtitle">
+        {{ isAdmin ? 'Calificaciones de clientes, opiniones de órdenes y visibilidad en el menú.' : 'Calificaciones y comentarios que has registrado en tus órdenes entregadas.' }}
       </p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
@@ -188,10 +185,7 @@
     </div>
   </div>
 
-  <div *ngIf="cargando" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
-    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
-    <p class="text-sm font-bold text-gray-500 m-0">Cargando opiniones...</p>
-  </div>
+  <app-ui-skeleton *ngIf="cargando" variant="cards" [count]="6" [columns]="3" label="Cargando opiniones..."></app-ui-skeleton>
 
   <div *ngIf="!cargando" class="space-y-4">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" *ngIf="reviews.length > 0">
@@ -207,7 +201,7 @@
                 <i class="bi bi-person-circle text-red-600"></i>
                 {{ isAdmin ? ('Usuario #' + review.userId) : 'Mi Calificación' }}
               </p>
-              <p class="text-[11px] text-gray-500 font-bold m-0 mt-0.5">#PH-{{ review.orderId.toString().padStart(4, '0') }}</p>
+              <p class="text-[11px] text-gray-500 font-bold eco-num m-0 mt-0.5">#EP-{{ review.orderId.toString().padStart(4, '0') }}</p>
             </div>
             <div class="flex items-center gap-0.5 text-amber-400 text-sm">
               <i *ngFor="let active of getStarArray(review.rating)" class="bi" [ngClass]="active ? 'bi-star-fill' : 'bi-star text-gray-200'"></i>

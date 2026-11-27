@@ -6,6 +6,7 @@ import { saveAs } from 'file-saver';
 import { FinancialDashboardService } from '../../services/financial-dashboard.service';
 import { ToastService } from '../../services/toast.service';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 import {
   ProfitLossDashboardDTO,
   ProfitLossTimelinePointDTO
@@ -18,7 +19,7 @@ type LossCategoryBreakdownRow = ProfitLossDashboardDTO['lossesByCategory'][numbe
 @Component({
   selector: 'app-finanzas-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './finanzas-dashboard.html',
   styleUrls: ['./finanzas-dashboard.css']
 })

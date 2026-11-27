@@ -7,6 +7,7 @@ import { IngredientService } from '../../services/ingredient.service';
 import { ExtraService, Extra } from '../../services/extra.service';
 import { ToastService } from '../../services/toast.service';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 import {
   IngredientDTO,
   InventorySummaryDTO,
@@ -33,7 +34,7 @@ interface UnifiedStockRow {
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './inventario.html',
   styleUrls: ['./inventario.css']
 })

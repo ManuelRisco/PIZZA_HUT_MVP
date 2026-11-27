@@ -13,11 +13,12 @@ import { ToastService } from '../../services/toast.service';
 import { StoreSettingsService } from '../../services/store-settings.service';
 import { CartService } from '../../services/cart.service';
 import { OrderCompleteDTO } from '../../models/admin.interface';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.css'],
 })

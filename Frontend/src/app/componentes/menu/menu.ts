@@ -17,11 +17,12 @@ import { ToastService } from '../../services/toast.service';
 import { TranslateService } from '../../services/translate.service';
 import { SizeDTO, IngredientDTO } from '../../models/admin.interface';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, RouterModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './menu.html',
   styleUrls: ['./menu.css']
 })
@@ -166,6 +167,7 @@ export class MenuComponent implements OnInit, AfterViewInit {
 
   cargarDatosIniciales(): void {
     this.loading = true;
+    this.error = '';
 
     forkJoin({
       pizzas: this.pizzaService.listarPizzas(),

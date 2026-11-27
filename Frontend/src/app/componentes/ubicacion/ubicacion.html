@@ -2,11 +2,11 @@
   <div class="container mx-auto px-4 md:px-8 max-w-6xl">
 
     <div class="text-center mb-10 sm:mb-14">
-      <h1 class="text-3xl sm:text-4xl md:text-5xl font-black mb-3 tracking-tight text-white font-serif">
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 tracking-tight text-white">
         Ubicación y Contacto
       </h1>
-      <p class="text-gray-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto font-medium">
-        Visítanos y vive la experiencia Eco Pizza. Estamos listos para atenderte con el calor de nuestros hornos.
+      <p class="text-gray-300 text-base sm:text-lg max-w-2xl mx-auto">
+        Visítanos en Chorrillos o haz tu pedido para disfrutar el sabor de Eco Pizza.
       </p>
     </div>
 
@@ -53,12 +53,13 @@
 
       <div class="rounded-2xl overflow-hidden border border-[#2f2f2f] shadow-2xl h-[300px] sm:h-[380px] lg:h-auto min-h-[300px] relative">
 
-        <div *ngIf="!mapLoaded" class="absolute inset-0 bg-[#1f1f1f] flex flex-col items-center justify-center z-10 animate-pulse">
-          <div class="w-12 h-12 border-4 border-[#039340] border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p class="text-gray-400 font-medium tracking-wide">Cargando mapa interactivo...</p>
+        <div *ngIf="!mapLoaded" class="absolute inset-0 bg-[#1f1f1f] flex flex-col items-center justify-center z-10 p-6" role="status" aria-busy="true" aria-label="Cargando mapa de ubicación">
+          <div class="eco-skeleton w-full h-full rounded-xl"></div>
+          <span class="sr-only">Cargando mapa interactivo...</span>
         </div>
 
         <iframe
+          title="Mapa de ubicación de Eco Pizza en Chorrillos"
           (load)="onMapLoad()"
           src="https://maps.google.com/maps?q=Eco%20Pizza%20Av.%20Defensores%20del%20Morro%202471%2C%20Chorrillos%2015064&t=&z=16&ie=UTF8&iwloc=&output=embed"
           width="100%"
@@ -72,21 +73,18 @@
       </div>
     </div>
 
-    <div class="bg-gradient-to-r from-[#d9251b] via-[#b31d15] to-[#161616] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl relative mt-12 sm:mt-16 border border-white/10">
+    <div class="bg-gradient-to-r from-[#b91c1c] via-[#991b1b] to-[#161616] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl relative mt-12 sm:mt-16 border border-white/10">
       <div class="grid grid-cols-1 md:grid-cols-2">
 
         <div class="p-6 sm:p-10 md:p-14 flex flex-col justify-center">
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#039340] text-white font-bold text-xs uppercase tracking-widest w-max mb-4 sm:mb-6 shadow-sm">
-            <i class="bi bi-bicycle"></i> Entrega Rápida
-          </div>
-          <h2 class="text-2xl sm:text-3xl md:text-5xl font-black mb-4 sm:mb-6 text-white leading-tight">
+          <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-5 text-white leading-tight">
             También lo llevamos a la puerta de tu casa
           </h2>
-          <p class="text-white/90 text-base sm:text-lg font-medium mb-6 sm:mb-8">
-            Nuestros repartidores se aseguran de que tu Eco Pizza llegue siempre caliente y en perfectas condiciones. ¡Pide ahora y disfruta sin salir de casa!
+          <p class="text-white/90 text-base sm:text-lg mb-6 sm:mb-8">
+            Nuestros repartidores aseguran que tu pedido llegue caliente y en perfectas condiciones.
           </p>
-          <a [routerLink]="['/menu']" class="bg-white text-[#d9251b] hover:bg-[#eaf9f0] hover:text-[#027a35] font-bold py-3.5 px-7 sm:py-4 sm:px-8 rounded-full shadow-lg transition-all duration-300 hover:-translate-y-0.5 w-max inline-flex items-center gap-2 text-sm sm:text-base">
-            Hacer un Pedido <i class="bi bi-arrow-right"></i>
+          <a [routerLink]="['/menu']" class="bg-white text-[#b91c1c] hover:bg-[#f0fdf4] hover:text-[#166534] font-bold py-3.5 px-7 sm:py-4 sm:px-8 rounded-xl shadow-lg transition-all duration-200 hover:-translate-y-0.5 w-max inline-flex items-center gap-2 text-sm sm:text-base">
+            Hacer un Pedido <i class="bi bi-arrow-right" aria-hidden="true"></i>
           </a>
         </div>
 

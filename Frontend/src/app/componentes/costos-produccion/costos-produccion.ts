@@ -10,6 +10,7 @@ import { IngredientService } from '../../services/ingredient.service';
 import { ImageOptimizerService } from '../../services/image-optimizer.service';
 import { ToastService } from '../../services/toast.service';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 import { PizzaDTO } from '../../models/pizza.interface';
 import {
   BatchItemRequestDTO,
@@ -29,7 +30,7 @@ export interface BatchBuilderRow extends BatchItemRequestDTO {
 @Component({
   selector: 'app-costos-produccion',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './costos-produccion.html',
   styleUrls: ['./costos-produccion.css']
 })

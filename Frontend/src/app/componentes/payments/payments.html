@@ -1,9 +1,8 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Finanzas y Facturación</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Gestión y Registro de Pagos</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Auditoría de pasarelas de pago, confirmaciones de transferencias y conciliación bancaria.</p>
+      <h2 class="eco-page-title">Gestión y Registro de Pagos</h2>
+      <p class="eco-page-subtitle">Pasarelas de pago, confirmaciones de transferencias y conciliación.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button
@@ -140,10 +139,7 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
-    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
-    <p class="text-sm font-bold text-gray-500 m-0">Cargando registros de pagos...</p>
-  </div>
+  <app-ui-skeleton *ngIf="loading" variant="table" [rows]="6" [cols]="6" label="Cargando registros de pagos..."></app-ui-skeleton>
 
   <div *ngIf="!loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
@@ -163,7 +159,7 @@
             *ngFor="let payment of paymentsPaginados; trackBy: trackByPaymentId"
             class="hover:bg-gray-50 transition-colors"
           >
-            <td class="py-3 px-4 font-mono font-bold text-gray-800">#{{ payment.id }}</td>
+            <td class="py-3 px-4 eco-num font-bold text-gray-800">#{{ payment.id }}</td>
             <td class="py-3 px-4">
               <span class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg text-xs font-bold border border-blue-100">
                 <i class="bi bi-bag-check"></i> Pedido #{{ payment.orderId }}
@@ -192,7 +188,7 @@
               </span>
             </td>
             <td class="py-3 px-4">
-              <span class="text-xs font-mono bg-gray-100 text-gray-700 px-2.5 py-1 rounded-lg border border-gray-200" *ngIf="payment.transactionId">
+              <span class="text-xs eco-num bg-gray-100 text-gray-700 px-2.5 py-1 rounded-lg border border-gray-200" *ngIf="payment.transactionId">
                 {{ payment.transactionId }}
               </span>
               <span class="text-xs text-gray-400 italic" *ngIf="!payment.transactionId">N/A</span>

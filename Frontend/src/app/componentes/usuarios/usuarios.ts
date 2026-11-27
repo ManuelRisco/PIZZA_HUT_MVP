@@ -14,6 +14,7 @@ import { AuditLog } from '../../models/audit-log.model';
 import { SessionLogService } from '../../services/session-log.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { SunatService } from '../../services/sunat.service';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 export type FiltroUsuario = 'todos' | 'admins' | 'clientes' | 'activos' | 'inactivos' | 'admins-activos';
 
@@ -25,7 +26,8 @@ export type FiltroUsuario = 'todos' | 'admins' | 'clientes' | 'activos' | 'inact
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
-    PaginationComponent
+    PaginationComponent,
+    UiSkeletonComponent
   ],
   templateUrl: './usuarios.html',
   styleUrl: './usuarios.css'

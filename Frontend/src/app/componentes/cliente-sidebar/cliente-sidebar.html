@@ -40,7 +40,7 @@
   </div>
 
   <nav class="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-2 sidebar-scroll" aria-label="Opciones del cliente">
-    <a
+    <button type="button"
       class="sidebar-item"
       [class.collapsed-item]="sidebarCollapsed"
       [ngClass]="vistaActual === 'dashboard' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -49,7 +49,7 @@
     >
       <i class="bi bi-grid-fill text-base min-w-[22px] text-center"></i>
       <span *ngIf="!sidebarCollapsed" class="truncate">Dashboard</span>
-    </a>
+    </button>
 
     <div class="sidebar-group" [class.sidebar-group-collapsed]="sidebarCollapsed">
       <button
@@ -79,7 +79,7 @@
 
       <div class="sidebar-group-body" [class.open]="sidebarCollapsed || gruposAbiertos.actividad">
         <div class="sidebar-group-inner" [class.pl-2]="!sidebarCollapsed">
-          <a
+          <button type="button"
             class="sidebar-item justify-between relative"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'pedidos' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -101,9 +101,9 @@
               *ngIf="sidebarCollapsed && pedidosActivos > 0"
               class="w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-1.5"
             ></span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item justify-between"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'favoritos' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -121,9 +121,9 @@
             >
               {{ totalFavoritos }}
             </span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'resenas' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -132,7 +132,7 @@
           >
             <i class="bi bi-star text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Mis Reseñas</span>
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -159,7 +159,7 @@
 
       <div class="sidebar-group-body" [class.open]="sidebarCollapsed || gruposAbiertos.cuenta">
         <div class="sidebar-group-inner" [class.pl-2]="!sidebarCollapsed">
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'perfil' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -168,22 +168,23 @@
           >
             <i class="bi bi-person-gear text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Mi Perfil</span>
-          </a>
+          </button>
         </div>
       </div>
     </div>
   </nav>
 
   <div class="border-t border-gray-800/90 p-3 shrink-0 space-y-1.5">
-    <div
-      class="flex items-center gap-3 cursor-pointer p-2 rounded-xl transition-colors"
+    <button
+      type="button"
+      class="w-full flex items-center gap-3 cursor-pointer p-2 rounded-xl transition-colors border-0 bg-transparent text-left"
       [class.justify-center]="sidebarCollapsed"
       [ngClass]="vistaActual === 'perfil' ? 'bg-gray-800' : 'hover:bg-gray-900'"
       [title]="sidebarCollapsed ? (currentUser?.name || 'Mi Perfil') : ''"
       (click)="onCambiarVista('perfil')"
       *ngIf="currentUser"
     >
-      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center font-black text-white text-sm shadow shrink-0">
+      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center font-bold text-white text-sm shadow shrink-0">
         <span>{{ inicialUsuario }}</span>
       </div>
       <div *ngIf="!sidebarCollapsed" class="flex-1 overflow-hidden">
@@ -195,11 +196,11 @@
             class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[9px] font-bold"
             title="Sesión vinculada con Google"
           >
-            <i class="bi bi-google text-[9px]"></i> Google
+            <i class="bi bi-google text-[9px]" aria-hidden="true"></i> Google
           </span>
         </div>
       </div>
-    </div>
+    </button>
 
     <button
       type="button"

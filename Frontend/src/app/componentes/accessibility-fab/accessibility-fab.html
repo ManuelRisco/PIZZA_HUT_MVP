@@ -57,6 +57,27 @@
         <button
           type="button"
           class="toggle-option"
+          (click)="toggleDarkMode()"
+          [class.active]="modoOscuro"
+          role="switch"
+          [attr.aria-checked]="modoOscuro"
+          aria-label="Modo oscuro">
+          <span class="option-info">
+            <i class="bi bi-moon-stars-fill" aria-hidden="true"></i>
+            <span>Modo Oscuro</span>
+          </span>
+          <span class="toggle-switch" [class.on]="modoOscuro">
+            <span class="toggle-knob"></span>
+          </span>
+        </button>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <div class="panel-section">
+        <button
+          type="button"
+          class="toggle-option"
           (click)="toggleAltoContraste()"
           [class.active]="contrasteAlto"
           role="switch"

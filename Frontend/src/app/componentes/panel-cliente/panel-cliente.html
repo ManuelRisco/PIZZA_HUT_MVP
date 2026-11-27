@@ -23,18 +23,19 @@
           <i class="bi bi-list text-xl"></i>
         </button>
         <div class="min-w-0">
-          <p class="text-[10px] font-black uppercase tracking-widest text-red-600 m-0 leading-none">Panel Cliente</p>
-          <h2 class="font-black text-gray-900 text-sm truncate m-0 mt-0.5">{{ getVistaTituloActual() }}</h2>
+          <h2 class="font-bold text-gray-900 text-sm sm:text-base truncate m-0">{{ getVistaTituloActual() }}</h2>
         </div>
       </div>
       <div class="flex items-center gap-2 shrink-0">
-        <span
+        <button
+          type="button"
           *ngIf="pedidosActivos > 0"
           (click)="cambiarVista('pedidos')"
-          class="px-2.5 py-1 rounded-full text-[11px] font-black bg-amber-100 text-amber-800 cursor-pointer"
+          class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors cursor-pointer border-0"
+          [attr.aria-label]="'Ver ' + pedidosActivos + ' pedidos activos'"
         >
-          <i class="bi bi-clock-history mr-1"></i>{{ pedidosActivos }}
-        </span>
+          <i class="bi bi-clock-history mr-1" aria-hidden="true"></i>{{ pedidosActivos }}
+        </button>
         <button
           type="button"
           class="bg-red-600 hover:bg-red-700 text-white font-bold py-1.5 px-3 rounded-xl text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
@@ -74,8 +75,7 @@
             <i class="bi bi-box-arrow-left text-sm"></i>
           </div>
           <div>
-            <p class="text-[10px] font-black uppercase tracking-widest text-red-400 m-0">Seguridad de Sesión</p>
-            <h3 id="logout-modal-title-cliente" class="text-base font-black text-white m-0">Cerrar Sesión</h3>
+            <h3 id="logout-modal-title-cliente" class="text-base font-bold text-white m-0">Cerrar Sesión</h3>
           </div>
         </div>
         <button

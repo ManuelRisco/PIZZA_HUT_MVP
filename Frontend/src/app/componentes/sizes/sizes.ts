@@ -4,10 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { Size } from '../../services/size.service';
 import { SizeDTO } from '../../models/admin.interface';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-sizes',
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './sizes.html',
   styleUrl: './sizes.css',
 })

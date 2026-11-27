@@ -1,10 +1,9 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Finanzas, Stock y Costos</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Pérdidas de Productos y Mermas</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">
-        Control económico y trazabilidad de mermas por vencimiento, daño, error en cocina y pedidos cancelados
+      <h2 class="eco-page-title">Pérdidas de Productos y Mermas</h2>
+      <p class="eco-page-subtitle">
+        Registro y trazabilidad de mermas por vencimiento, daño, cocina o pedidos cancelados.
       </p>
     </div>
 
@@ -186,10 +185,7 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="bg-white rounded-2xl border border-gray-200 p-16 flex flex-col items-center justify-center shadow-sm">
-    <div class="animate-spin rounded-full h-11 w-11 border-4 border-red-100 border-t-red-600 mb-4"></div>
-    <p class="text-gray-500 font-medium text-sm m-0">Cargando registros de pérdidas...</p>
-  </div>
+  <app-ui-skeleton *ngIf="loading" variant="table" [rows]="6" [cols]="6" label="Cargando registros de pérdidas..."></app-ui-skeleton>
 
   <div *ngIf="!loading && !errorMessage" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
@@ -496,8 +492,8 @@
               </button>
             </div>
 
-            <div *ngIf="loadingOrders && pullableOrders.length === 0" class="p-4 rounded-xl border border-gray-200 bg-gray-50 text-center text-xs text-gray-500">
-              Cargando pedidos activos...
+            <div *ngIf="loadingOrders && pullableOrders.length === 0" class="py-1">
+              <app-ui-skeleton variant="list" [rows]="2" label="Cargando pedidos activos..."></app-ui-skeleton>
             </div>
 
             <div *ngIf="!loadingOrders && pullableOrders.length === 0" class="p-4 rounded-xl border border-amber-200 bg-amber-50 text-center">

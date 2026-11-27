@@ -1,9 +1,8 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Catálogo y Operaciones</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Gestión de Pizzas, Recetas y Costos</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Administra el menú de pizzas, insumos por receta base, costos directos y disponibilidad.</p>
+      <h2 class="eco-page-title">Gestión de Pizzas, Recetas y Costos</h2>
+      <p class="eco-page-subtitle">Menú de pizzas, insumos por receta base, costos directos y disponibilidad.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button type="button" (click)="recargar()" [disabled]="loading" class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer">
@@ -153,10 +152,7 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm py-16 flex flex-col items-center justify-center text-gray-500">
-    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
-    <span class="text-sm font-bold text-gray-600">Cargando catálogo de pizzas...</span>
-  </div>
+  <app-ui-skeleton *ngIf="loading" variant="cards" [count]="6" [columns]="3" label="Cargando catálogo de pizzas..."></app-ui-skeleton>
 
   <div *ngIf="!loading && (!loadError || todasLasPizzas.length > 0)" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100 bg-gray-50/70 flex flex-wrap justify-between items-center gap-3">
@@ -215,7 +211,7 @@
                       <i class="bi bi-slash-circle mr-1"></i>Eliminada
                     </span>
                   </div>
-                  <p class="text-[11px] text-gray-400 font-mono truncate m-0">
+                  <p class="text-[11px] text-gray-400 eco-num truncate m-0">
                     #{{ pizza.id }}{{ pizza.imageUrl ? ' · ' + pizza.imageUrl : '' }}
                   </p>
                 </div>

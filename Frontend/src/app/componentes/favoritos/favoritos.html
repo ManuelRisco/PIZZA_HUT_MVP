@@ -1,9 +1,8 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel de Cliente</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Mis Pizzas Favoritas</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Accede rápidamente a tus especialidades preferidas ({{ pizzasFavoritas.length }})</p>
+      <h2 class="eco-page-title">Mis Pizzas Favoritas</h2>
+      <p class="eco-page-subtitle">Accede rápidamente a tus especialidades preferidas ({{ pizzasFavoritas.length }}).</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button
@@ -54,10 +53,7 @@
   }
 
   @if (loading) {
-    <div class="bg-white rounded-2xl border border-gray-200 p-16 flex flex-col items-center justify-center shadow-sm">
-      <div class="animate-spin rounded-full h-11 w-11 border-4 border-red-100 border-t-red-600 mb-4"></div>
-      <p class="text-gray-500 font-medium text-sm m-0">Cargando tus pizzas favoritas...</p>
-    </div>
+    <app-ui-skeleton variant="cards" [count]="4" [columns]="4" label="Cargando tus pizzas favoritas..."></app-ui-skeleton>
   }
 
   @if (!loading && !loadError && pizzasFavoritas.length === 0) {
@@ -96,9 +92,10 @@
               [disabled]="eliminandoId === pizza.id"
               class="absolute top-3 right-3 w-9 h-9 bg-white/95 backdrop-blur rounded-full flex items-center justify-center text-red-600 hover:bg-red-50 shadow-sm transition-colors border border-red-100 z-10 cursor-pointer disabled:opacity-50"
               (click)="eliminarFavorito(pizza.id!)"
+              [attr.aria-label]="'Quitar ' + pizza.name + ' de favoritos'"
               title="Quitar de favoritos"
             >
-              <i class="bi bi-heart-fill"></i>
+              <i class="bi bi-heart-fill" aria-hidden="true"></i>
             </button>
 
             <div class="absolute bottom-3 left-3 flex flex-wrap gap-1.5 z-10">
@@ -120,8 +117,8 @@
 
             <div class="flex items-center justify-between mt-auto pt-3.5 border-t border-gray-100">
               <div>
-                <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Desde</span>
-                <span class="text-lg font-black text-gray-900">{{ formatearPrecio(pizza.price) }}</span>
+                <span class="text-xs text-gray-500 font-medium block">Desde</span>
+                <span class="text-lg font-bold text-gray-900 eco-num">{{ formatearPrecio(pizza.price) }}</span>
               </div>
               <button type="button" class="bg-gray-900 hover:bg-black text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer" (click)="verPizza(pizza.id!)">
                 <i class="bi bi-eye"></i> Ver Menú

@@ -1,10 +1,9 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-rose-600 mb-1">Facturación Electrónica SUNAT</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Notas de Crédito Electrónicas (FFF1)</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">
-        Al cancelar un pedido que ya cuenta con Boleta Electrónica emitida, el sistema genera automáticamente la Nota de Crédito FFF1 para anularla ante SUNAT y notificar al cliente.
+      <h2 class="eco-page-title">Notas de Crédito Electrónicas (FFF1)</h2>
+      <p class="eco-page-subtitle">
+        Emisión automática al cancelar pedidos con boleta emitida para anulación ante SUNAT.
       </p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
@@ -136,10 +135,7 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
-    <div class="animate-spin rounded-full h-10 w-10 border-4 border-rose-200 border-t-rose-600 mb-3"></div>
-    <p class="text-sm font-bold text-gray-500 m-0">Cargando comprobantes electrónicos...</p>
-  </div>
+  <app-ui-skeleton *ngIf="loading" variant="table" [rows]="6" [cols]="6" label="Cargando comprobantes electrónicos..."></app-ui-skeleton>
 
   <div *ngIf="!loading && activeTab === 'EMITIDAS'" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="overflow-x-auto" *ngIf="paginatedList.length > 0">
@@ -158,7 +154,7 @@
           <tr *ngFor="let order of paginatedList; trackBy: trackByOrderId" class="hover:bg-gray-50/80 transition-colors">
             <td class="px-4 py-3.5 align-top">
               <div class="flex items-center gap-1.5">
-                <span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-black font-mono text-xs">
+                <span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-black eco-num text-xs">
                   {{ order.ncComprobante || (order.ncSerie + '-' + order.ncNumero) }}
                 </span>
                 <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] uppercase">
@@ -168,13 +164,13 @@
               <p class="text-[11px] text-gray-400 m-0 mt-1">
                 <i class="bi bi-clock mr-1"></i>{{ (order.ncEmitidaAt || order.createdAt) | date:'dd/MM/yyyy HH:mm' }}
               </p>
-              <p class="text-[10px] text-gray-400 font-mono m-0 mt-0.5 truncate max-w-[190px]" *ngIf="order.ncHash" [title]="order.ncHash">
+              <p class="text-[10px] text-gray-400 eco-num m-0 mt-0.5 truncate max-w-[190px]" *ngIf="order.ncHash" [title]="order.ncHash">
                 Hash: {{ order.ncHash }}
               </p>
             </td>
 
             <td class="px-4 py-3.5 align-top">
-              <span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-mono font-bold line-through">
+              <span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 eco-num font-bold line-through">
                 {{ order.boletaComprobante || (order.boletaSerie + '-' + order.boletaNumero) }}
               </span>
               <p class="text-[11px] text-rose-700 font-bold m-0 mt-1">ANULADA ANTE SUNAT</p>
@@ -272,7 +268,7 @@
           <tr *ngFor="let order of paginatedList; trackBy: trackByOrderId" class="hover:bg-gray-50/80 transition-colors">
             <td class="px-4 py-3.5">
               <span
-                class="px-2.5 py-1 rounded-md border font-mono font-black"
+                class="px-2.5 py-1 rounded-md border eco-num font-black"
                 [ngClass]="esFactura(order) ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'"
               >
                 {{ esFactura(order) ? 'FAC' : 'BOL' }} {{ order.boletaComprobante || (order.boletaSerie + '-' + order.boletaNumero) }}
@@ -362,8 +358,7 @@
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200">
     <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center">
       <div>
-        <p class="text-[10px] font-black uppercase tracking-widest text-rose-400 m-0">SUNAT · Serie FFF1</p>
-        <h5 class="text-base sm:text-lg font-black m-0">Emitir Nota de Crédito Electrónica</h5>
+        <h5 class="text-base sm:text-lg font-bold m-0">Emitir Nota de Crédito Electrónica (FFF1)</h5>
       </div>
       <button
         type="button"
@@ -383,7 +378,7 @@
         </div>
         <div class="flex justify-between">
           <span class="text-gray-600">Boleta a anular ante SUNAT:</span>
-          <strong class="font-mono text-rose-700">{{ orderParaAnular.boletaComprobante }}</strong>
+          <strong class="eco-num text-rose-700">{{ orderParaAnular.boletaComprobante }}</strong>
         </div>
         <div class="flex justify-between">
           <span class="text-gray-600">Cliente / DNI:</span>

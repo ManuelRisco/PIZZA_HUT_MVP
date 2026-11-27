@@ -8,11 +8,12 @@ import { UsuarioService } from '../../services/usuario.service';
 import { Order } from '../../services/order.service';
 import { FavoriteService } from '../../services/favorite.service';
 import { Review } from '../../services/review.service';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-cliente-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, UiSkeletonComponent],
   templateUrl: './cliente-dashboard.html',
   styleUrls: ['./cliente-dashboard.css'],
 })

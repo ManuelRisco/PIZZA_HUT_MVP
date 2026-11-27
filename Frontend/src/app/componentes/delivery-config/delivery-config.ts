@@ -6,16 +6,19 @@ import { finalize } from 'rxjs/operators';
 import { StoreSettingsService } from '../../services/store-settings.service';
 import { CartService } from '../../services/cart.service';
 import { ToastService } from '../../services/toast.service';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-delivery-config',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, UiSkeletonComponent],
   templateUrl: './delivery-config.html',
 })
 export class DeliveryConfigComponent implements OnInit, OnDestroy {
   deliveryFeeActual: number = 5.0;
   deliveryFeeInput: number = 5.0;
+  loadingTarifa: boolean = false;
+  loadErrorTarifa: string = '';
   guardandoDeliveryFee: boolean = false;
   deliveryFeeActualizadoAt: string | null = null;
   deliveryFeeMensaje: string = '';
@@ -43,15 +46,29 @@ export class DeliveryConfigComponent implements OnInit, OnDestroy {
   }
 
   cargarTarifaDelivery(): void {
-    this.storeSettingsService.loadDeliveryFee().subscribe((cfg) => {
-      const fee = Number(cfg?.deliveryFee);
-      if (!Number.isNaN(fee) && fee >= 0) {
-        this.deliveryFeeActual = fee;
-        this.deliveryFeeInput = fee;
-        this.deliveryFeeActualizadoAt = cfg?.updatedAt ?? null;
-        this.cartService.setDeliveryFeeRate(fee);
-      }
-    });
+    this.loadingTarifa = true;
+    this.loadErrorTarifa = '';
+    this.storeSettingsService
+      .loadDeliveryFee()
+      .pipe(
+        finalize(() => {
+          this.loadingTarifa = false;
+        }),
+      )
+      .subscribe({
+        next: (cfg) => {
+          const fee = Number(cfg?.deliveryFee);
+          if (!Number.isNaN(fee) && fee >= 0) {
+            this.deliveryFeeActual = fee;
+            this.deliveryFeeInput = fee;
+            this.deliveryFeeActualizadoAt = cfg?.updatedAt ?? null;
+            this.cartService.setDeliveryFeeRate(fee);
+          }
+        },
+        error: () => {
+          this.loadErrorTarifa = 'No se pudo cargar la tarifa de delivery desde el servidor.';
+        },
+      });
   }
 
   seleccionarTarifaRapida(monto: number): void {

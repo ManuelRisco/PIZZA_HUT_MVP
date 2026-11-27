@@ -6,6 +6,7 @@ import { CategoriaService } from '../../services/categoria.service';
 import { PizzaService } from '../../services/pizza.service';
 import { CategoryDTO, PizzaDTO } from '../../models/pizza.interface';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-categorias',
@@ -14,7 +15,8 @@ import { PaginationComponent } from '../pagination/pagination';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    PaginationComponent
+    PaginationComponent,
+    UiSkeletonComponent
   ],
   templateUrl: './categorias.html',
   styleUrl: './categorias.css'

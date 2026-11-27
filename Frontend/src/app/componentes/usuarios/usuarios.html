@@ -1,9 +1,8 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Catálogo y Operaciones</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Gestión de Usuarios</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Administra cuentas de clientes y administradores, estados de acceso y auditoría</p>
+      <h2 class="eco-page-title">Gestión de Usuarios</h2>
+      <p class="eco-page-subtitle">Cuentas de clientes y administradores, estados de acceso y auditoría.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button type="button" (click)="recargar()" [disabled]="loading"
@@ -163,10 +162,7 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm py-16 flex flex-col items-center justify-center text-gray-500">
-    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
-    <span class="text-sm font-bold text-gray-600">Cargando usuarios...</span>
-  </div>
+  <app-ui-skeleton *ngIf="loading" variant="table" [rows]="6" [cols]="6" label="Cargando usuarios..."></app-ui-skeleton>
 
   <div *ngIf="!loading && !loadError" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div *ngIf="usuarios.length > 0">
@@ -200,7 +196,7 @@
                       {{ usuario.name }}
                       <span *ngIf="esUsuarioActual(usuario.email)" class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider">Tú</span>
                     </p>
-                    <p class="text-xs text-gray-400 font-mono m-0 mt-0.5">ID #{{ usuario.id }}</p>
+                    <p class="text-xs text-gray-400 eco-num m-0 mt-0.5">ID #{{ usuario.id }}</p>
                   </div>
                 </div>
               </td>
@@ -571,10 +567,7 @@
         </button>
       </div>
 
-      <div *ngIf="loadingLogs" class="bg-white rounded-2xl border border-gray-200 py-14 flex flex-col justify-center items-center">
-        <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
-        <span class="font-bold text-sm text-gray-600">Cargando registros del sistema...</span>
-      </div>
+      <app-ui-skeleton *ngIf="loadingLogs" variant="table" [rows]="5" [cols]="5" label="Cargando registros del sistema..."></app-ui-skeleton>
 
       <div *ngIf="!loadingLogs && !logsError && activeLogTab === 'sesiones'">
         <div *ngIf="sesionesActivas.length > 0" class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
@@ -597,7 +590,7 @@
                       </div>
                       <div>
                         <div class="font-bold text-gray-900">{{ session.userName || 'Usuario' }}</div>
-                        <div class="text-[11px] text-gray-400 font-mono">ID #{{ session.userId }}</div>
+                        <div class="text-[11px] text-gray-400 eco-num">ID #{{ session.userId }}</div>
                       </div>
                     </div>
                   </td>
@@ -611,7 +604,7 @@
                     <div class="truncate max-w-[220px] text-xs font-medium" [title]="session.userAgent">
                       <i class="bi bi-display text-gray-400 mr-1"></i> {{ session.userAgent || 'Desconocido' }}
                     </div>
-                    <div class="text-[11px] font-mono text-gray-500 mt-1 bg-gray-100 inline-block px-2 py-0.5 rounded-md">
+                    <div class="text-[11px] eco-num text-gray-500 mt-1 bg-gray-100 inline-block px-2 py-0.5 rounded-md">
                       <i class="bi bi-globe mr-1"></i>{{ session.ipAddress }}
                     </div>
                   </td>
@@ -691,7 +684,7 @@
                   </td>
                   <td class="py-3 px-4">
                     <div class="font-bold text-gray-900 text-xs">{{ log.userName || 'Sistema / Anónimo' }}</div>
-                    <div class="text-[10px] text-gray-400 font-mono" *ngIf="log.userId">ID #{{ log.userId }}</div>
+                    <div class="text-[10px] text-gray-400 eco-num" *ngIf="log.userId">ID #{{ log.userId }}</div>
                   </td>
                   <td class="py-3 px-4">
                     <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase border inline-flex items-center gap-1"

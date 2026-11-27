@@ -1,9 +1,8 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Marketing y Campañas</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Gestión de Promociones y Descuentos</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Configura cupones comerciales, descuentos porcentuales, combos cerrados y vigencias temporales.</p>
+      <h2 class="eco-page-title">Gestión de Promociones y Descuentos</h2>
+      <p class="eco-page-subtitle">Cupones comerciales, descuentos porcentuales, combos y vigencias.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button
@@ -172,10 +171,7 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
-    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
-    <p class="text-sm font-bold text-gray-500 m-0">Cargando promociones...</p>
-  </div>
+  <app-ui-skeleton *ngIf="loading" variant="table" [rows]="6" [cols]="6" label="Cargando promociones..."></app-ui-skeleton>
 
   <div *ngIf="!loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
@@ -199,7 +195,7 @@
             [ngClass]="{'opacity-60': !esVigente(promo)}"
           >
             <td class="py-3 px-4">
-              <span class="inline-block bg-blue-50 border border-blue-200 text-blue-700 font-mono font-black px-2.5 py-1 rounded-lg text-xs uppercase tracking-wider">
+              <span class="inline-block bg-blue-50 border border-blue-200 text-blue-700 eco-num font-black px-2.5 py-1 rounded-lg text-xs uppercase tracking-wider">
                 {{ promo.code }}
               </span>
             </td>
@@ -330,7 +326,7 @@
               type="text"
               formControlName="code"
               placeholder="VERANO2025"
-              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm font-mono uppercase focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm eco-num uppercase focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
             />
           </div>
 

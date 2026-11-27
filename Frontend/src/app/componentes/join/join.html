@@ -67,8 +67,13 @@
               required
               [class.input-error]="fieldErrors['password']"
             />
-            <i class="fas password-toggle-icon" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"
-               (click)="showPassword = !showPassword"></i>
+            <button
+              type="button"
+              class="password-toggle-icon"
+              (click)="showPassword = !showPassword"
+              [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+              <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'" aria-hidden="true"></i>
+            </button>
           </div>
           @if (fieldErrors['password']) {
             <small class="error-message">

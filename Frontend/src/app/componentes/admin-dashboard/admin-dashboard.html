@@ -1,9 +1,8 @@
 <div class="space-y-6">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel Ejecutivo</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Resumen General de Operaciones</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Métricas en tiempo real de ventas, pedidos activos, almacén y satisfacción</p>
+      <h2 class="eco-page-title">Resumen General de Operaciones</h2>
+      <p class="eco-page-subtitle">Ventas, pedidos activos, inventario y reseñas en tiempo real.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button
@@ -50,65 +49,72 @@
     </button>
   </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <app-ui-skeleton
+    *ngIf="loadingDashboard && pedidosRecientes.length === 0 && masVendidos.length === 0"
+    variant="dashboard"
+    [rows]="4"
+    label="Cargando métricas de operaciones..."
+  ></app-ui-skeleton>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" *ngIf="!loadingDashboard || pedidosRecientes.length > 0 || masVendidos.length > 0">
     <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group">
       <div class="flex items-center justify-between mb-3">
         <div class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-          <i class="bi bi-cash-stack text-emerald-600 text-xl"></i>
+          <i class="bi bi-cash-stack text-emerald-600 text-xl" aria-hidden="true"></i>
         </div>
-        <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+        <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full eco-num"
              [ngClass]="pedidosHoy > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'">
-          <i class="bi bi-bag-check text-[10px]"></i>
+          <i class="bi bi-bag-check text-[10px]" aria-hidden="true"></i>
           {{ pedidosHoy }} hoy
         </div>
       </div>
-      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Ventas Hoy</p>
-      <p class="text-2xl font-black text-gray-900 m-0">S/ {{ ventasHoy | number:'1.2-2' }}</p>
+      <p class="text-xs font-semibold text-gray-500 mb-1">Ventas Hoy</p>
+      <p class="text-2xl font-bold text-gray-900 m-0 eco-num">S/ {{ ventasHoy | number:'1.2-2' }}</p>
     </div>
 
-    <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+    <button type="button" class="kpi-card w-full text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
          (click)="cambiarVista('orders')">
       <div class="flex items-center justify-between mb-3">
         <div class="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-          <i class="bi bi-clock-history text-amber-600 text-xl"></i>
+          <i class="bi bi-clock-history text-amber-600 text-xl" aria-hidden="true"></i>
         </div>
         <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
-             [ngClass]="pedidosPendientes > 0 ? 'bg-amber-50 text-amber-700 animate-pulse' : 'bg-gray-100 text-gray-500'">
-          <i class="bi bi-exclamation-circle text-[10px]"></i>
+             [ngClass]="pedidosPendientes > 0 ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-500'">
+          <i class="bi bi-exclamation-circle text-[10px]" aria-hidden="true"></i>
           En atención
         </div>
       </div>
-      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pedidos Pendientes</p>
-      <p class="text-2xl font-black m-0" [ngClass]="pedidosPendientes > 0 ? 'text-amber-600' : 'text-gray-900'">{{ pedidosPendientes }}</p>
-    </div>
+      <p class="text-xs font-semibold text-gray-500 mb-1">Pedidos Pendientes</p>
+      <p class="text-2xl font-bold m-0 eco-num" [ngClass]="pedidosPendientes > 0 ? 'text-amber-600' : 'text-gray-900'">{{ pedidosPendientes }}</p>
+    </button>
 
-    <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+    <button type="button" class="kpi-card w-full text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
          (click)="cambiarVista('usuarios')">
       <div class="flex items-center justify-between mb-3">
         <div class="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-          <i class="bi bi-people-fill text-red-600 text-xl"></i>
+          <i class="bi bi-people-fill text-red-600 text-xl" aria-hidden="true"></i>
         </div>
       </div>
-      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Clientes</p>
-      <p class="text-2xl font-black text-gray-900 m-0">{{ totalClientes }}</p>
-    </div>
+      <p class="text-xs font-semibold text-gray-500 mb-1">Total Clientes</p>
+      <p class="text-2xl font-bold text-gray-900 m-0 eco-num">{{ totalClientes }}</p>
+    </button>
 
-    <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+    <button type="button" class="kpi-card w-full text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
          (click)="cambiarVista('reviews')">
       <div class="flex items-center justify-between mb-3">
         <div class="w-11 h-11 rounded-xl bg-yellow-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-          <i class="bi bi-star-fill text-yellow-500 text-xl"></i>
+          <i class="bi bi-star-fill text-yellow-500 text-xl" aria-hidden="true"></i>
         </div>
-        <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-700">
+        <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-700 eco-num">
           {{ totalReviews }} reseñas
         </div>
       </div>
-      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Rating Promedio</p>
-      <p class="text-2xl font-black text-gray-900 m-0">
+      <p class="text-xs font-semibold text-gray-500 mb-1">Rating Promedio</p>
+      <p class="text-2xl font-bold text-gray-900 m-0 eco-num">
         {{ ratingPromedio | number:'1.1-1' }}
-        <span class="text-sm font-bold text-gray-400">/ 5</span>
+        <span class="text-sm font-semibold text-gray-500">/ 5</span>
       </p>
-    </div>
+    </button>
   </div>
 
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -298,7 +304,7 @@
         </thead>
         <tbody class="text-sm divide-y divide-gray-100">
           <tr class="hover:bg-gray-50 transition-colors" *ngFor="let pedido of pedidosRecientes; trackBy: trackByPedido">
-            <td class="py-3.5 px-4 font-black text-gray-900">#PH-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
+            <td class="py-3.5 px-4 font-bold text-gray-900 eco-num">#EP-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
             <td class="py-3.5 px-4">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center font-bold text-xs shrink-0">
@@ -331,9 +337,10 @@
                 type="button"
                 class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 inline-flex items-center justify-center transition-colors cursor-pointer"
                 (click)="verDetallePedido(pedido)"
+                [attr.aria-label]="'Ver detalle del pedido #' + pedido.id"
                 title="Ver detalle del pedido"
               >
-                <i class="bi bi-eye"></i>
+                <i class="bi bi-eye" aria-hidden="true"></i>
               </button>
             </td>
           </tr>
@@ -358,8 +365,7 @@
   <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden animate-fade-in-up">
     <div class="flex justify-between items-center px-6 py-4 bg-gray-900 text-white shrink-0">
       <div>
-        <p class="text-[10px] font-black uppercase tracking-widest text-red-400 m-0">Detalle Diario</p>
-        <h3 class="text-lg sm:text-xl font-black text-white m-0">Ventas: {{ diaSeleccionado.dia }} ({{ diaSeleccionado.fecha | date:'dd/MM/yyyy' }})</h3>
+        <h3 class="text-lg sm:text-xl font-bold text-white m-0">Ventas: {{ diaSeleccionado.dia }} ({{ diaSeleccionado.fecha | date:'dd/MM/yyyy' }})</h3>
       </div>
       <button
         type="button"
@@ -400,7 +406,7 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
               <tr *ngFor="let pedido of diaModalPedidosPaginados; trackBy: trackByPedido" (click)="diaSeleccionado = null; verDetallePedido(pedido)" class="hover:bg-red-50/60 transition-colors cursor-pointer" title="Ver detalle de este pedido">
-                <td class="px-5 py-3.5 font-black text-gray-900">#PH-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
+                <td class="px-5 py-3.5 font-bold text-gray-900 eco-num">#EP-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
                 <td class="px-5 py-3.5 text-gray-600">{{ pedido.createdAt | date:'shortTime' }}</td>
                 <td class="px-5 py-3.5">
                   <div class="flex items-center gap-2.5">

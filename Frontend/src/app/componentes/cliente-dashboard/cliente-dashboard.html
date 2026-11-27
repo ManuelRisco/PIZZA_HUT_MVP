@@ -1,9 +1,8 @@
 <div class="space-y-6">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel de Cliente</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">¡Hola, {{ primerNombre }}!</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Resumen en tiempo real de tus pedidos, especialidades favoritas y seguridad de cuenta</p>
+      <h2 class="eco-page-title">¡Hola, {{ primerNombre }}!</h2>
+      <p class="eco-page-subtitle">Resumen de tus pedidos, favoritos y estado de cuenta.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button
@@ -44,70 +43,74 @@
     </button>
   </div>
 
+  @if (loading && !currentUser) {
+    <app-ui-skeleton variant="dashboard" [rows]="4" label="Cargando resumen de cuenta..."></app-ui-skeleton>
+  } @else {
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+    <button type="button" class="kpi-card w-full text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
          (click)="cambiarVista('pedidos')">
       <div class="flex items-center justify-between mb-3">
         <div class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-          <i class="bi bi-bag-check-fill text-emerald-600 text-xl"></i>
+          <i class="bi bi-bag-check-fill text-emerald-600 text-xl" aria-hidden="true"></i>
         </div>
-        <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+        <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full eco-num"
              [ngClass]="totalPedidos > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'">
-          <i class="bi bi-receipt text-[10px]"></i>
+          <i class="bi bi-receipt text-[10px]" aria-hidden="true"></i>
           S/ {{ gastoTotal | number:'1.2-2' }}
         </div>
       </div>
-      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total de Pedidos</p>
-      <p class="text-2xl font-black text-gray-900 m-0">{{ totalPedidos }}</p>
-    </div>
+      <p class="text-xs font-semibold text-gray-500 mb-1">Total de Pedidos</p>
+      <p class="text-2xl font-bold text-gray-900 m-0 eco-num">{{ totalPedidos }}</p>
+    </button>
 
-    <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+    <button type="button" class="kpi-card w-full text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
          (click)="cambiarVista('pedidos')">
       <div class="flex items-center justify-between mb-3">
         <div class="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-          <i class="bi bi-clock-history text-amber-600 text-xl"></i>
+          <i class="bi bi-clock-history text-amber-600 text-xl" aria-hidden="true"></i>
         </div>
         <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
-             [ngClass]="pedidosActivos > 0 ? 'bg-amber-50 text-amber-700 animate-pulse' : 'bg-gray-100 text-gray-500'">
-          <i class="bi bi-scooter text-[10px]"></i>
+             [ngClass]="pedidosActivos > 0 ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-500'">
+          <i class="bi bi-scooter text-[10px]" aria-hidden="true"></i>
           {{ pedidosActivos > 0 ? 'En preparación / envío' : 'Al día' }}
         </div>
       </div>
-      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pedidos en Curso</p>
-      <p class="text-2xl font-black m-0" [ngClass]="pedidosActivos > 0 ? 'text-amber-600' : 'text-gray-900'">{{ pedidosActivos }}</p>
-    </div>
+      <p class="text-xs font-semibold text-gray-500 mb-1">Pedidos en Curso</p>
+      <p class="text-2xl font-bold m-0 eco-num" [ngClass]="pedidosActivos > 0 ? 'text-amber-600' : 'text-gray-900'">{{ pedidosActivos }}</p>
+    </button>
 
-    <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+    <button type="button" class="kpi-card w-full text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
          (click)="cambiarVista('favoritos')">
       <div class="flex items-center justify-between mb-3">
         <div class="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-          <i class="bi bi-heart-fill text-red-600 text-xl"></i>
+          <i class="bi bi-heart-fill text-red-600 text-xl" aria-hidden="true"></i>
         </div>
         <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-red-50 text-red-700">
           Guardadas
         </div>
       </div>
-      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pizzas Favoritas</p>
-      <p class="text-2xl font-black text-gray-900 m-0">{{ totalFavoritos }}</p>
-    </div>
+      <p class="text-xs font-semibold text-gray-500 mb-1">Pizzas Favoritas</p>
+      <p class="text-2xl font-bold text-gray-900 m-0 eco-num">{{ totalFavoritos }}</p>
+    </button>
 
-    <div class="kpi-card bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
+    <button type="button" class="kpi-card w-full text-left bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer"
          (click)="cambiarVista('resenas')">
       <div class="flex items-center justify-between mb-3">
         <div class="w-11 h-11 rounded-xl bg-yellow-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-          <i class="bi bi-star-fill text-yellow-500 text-xl"></i>
+          <i class="bi bi-star-fill text-yellow-500 text-xl" aria-hidden="true"></i>
         </div>
-        <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-700">
+        <div class="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-700 eco-num">
           {{ totalResenas }} reseñas
         </div>
       </div>
-      <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Mi Calificación Media</p>
-      <p class="text-2xl font-black text-gray-900 m-0">
+      <p class="text-xs font-semibold text-gray-500 mb-1">Mi Calificación Media</p>
+      <p class="text-2xl font-bold text-gray-900 m-0 eco-num">
         {{ promedioResenas | number:'1.1-1' }}
-        <span class="text-sm font-bold text-gray-400">/ 5</span>
+        <span class="text-sm font-semibold text-gray-500">/ 5</span>
       </p>
-    </div>
+    </button>
   </div>
+  }
 
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <button
@@ -206,7 +209,7 @@
         </thead>
         <tbody class="text-sm divide-y divide-gray-100">
           <tr class="hover:bg-gray-50 transition-colors" *ngFor="let pedido of pedidosRecientes; trackBy: trackByPedido">
-            <td class="py-3.5 px-4 font-black text-gray-900">#PH-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
+            <td class="py-3.5 px-4 font-bold text-gray-900 eco-num">#EP-{{ pedido.id?.toString()?.padStart(4, '0') }}</td>
             <td class="py-3.5 px-4">
               <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-700">
                 <i class="bi" [ngClass]="esPickup(pedido) ? 'bi-shop text-gray-600' : 'bi-scooter text-red-600'"></i>
@@ -233,9 +236,10 @@
                 type="button"
                 class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 inline-flex items-center justify-center transition-colors cursor-pointer"
                 (click)="cambiarVista('pedidos')"
+                aria-label="Ver detalle del pedido en Mis Pedidos"
                 title="Ver detalle en Mis Pedidos"
               >
-                <i class="bi bi-eye"></i>
+                <i class="bi bi-eye" aria-hidden="true"></i>
               </button>
             </td>
           </tr>

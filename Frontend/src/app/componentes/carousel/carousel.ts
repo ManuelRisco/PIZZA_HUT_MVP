@@ -66,5 +66,11 @@ export class Carousel implements OnInit, OnDestroy {
       this.startAutoPlay();
     }
   }
+
+  scrollToMenu(): void {
+    if (typeof document !== 'undefined') {
+      document.getElementById('menu-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
 }
 

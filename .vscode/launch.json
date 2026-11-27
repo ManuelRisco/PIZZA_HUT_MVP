@@ -2,11 +2,11 @@
   "configurations": [
     {
       "type": "java",
-      "name": "Spring Boot-DemoApplication<demo>",
+      "name": "Spring Boot-EcoPizzaApplication<ecopizza>",
       "request": "launch",
-      "cwd": "${workspaceFolder}/Backend/demo",
-      "mainClass": "com.example.DemoApplication",
-      "projectName": "demo",
+      "cwd": "${workspaceFolder}/Backend/ecopizza",
+      "mainClass": "com.ecopizza.EcoPizzaApplication",
+      "projectName": "ecopizza",
       "args": "",
       "envFile": "${workspaceFolder}/.env"
     }

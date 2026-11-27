@@ -8,11 +8,12 @@ import { AuthService } from '../../services/auth.service';
 import { Review } from '../../services/review.service';
 import { SunatService } from '../../services/sunat.service';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-cliente-pedidos',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './cliente-pedidos.html',
   styleUrls: ['./cliente-pedidos.css']
 })
@@ -159,7 +160,7 @@ export class ClientePedidosComponent implements OnInit {
 
     if (term) {
       resultado = resultado.filter(o => {
-        const idStr = `#${o.id} #ph-${o.id?.toString().padStart(4, '0')}`.toLowerCase();
+        const idStr = `#${o.id} #ep-${o.id?.toString().padStart(4, '0')} #ph-${o.id?.toString().padStart(4, '0')}`.toLowerCase();
         const addr = `${o.addressLine1 || ''} ${o.addressDistrict || ''}`.toLowerCase();
         return idStr.includes(term) || addr.includes(term);
       });

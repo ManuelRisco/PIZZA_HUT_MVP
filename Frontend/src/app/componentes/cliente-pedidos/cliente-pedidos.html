@@ -1,9 +1,8 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Panel de Cliente</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Historial de Pedidos</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Consulta el estado en tiempo real, comprobantes y calificaciones de tus órdenes ({{ filteredOrders.length }})</p>
+      <h2 class="eco-page-title">Historial de Pedidos</h2>
+      <p class="eco-page-subtitle">Consulta el estado, comprobantes y calificaciones de tus órdenes ({{ filteredOrders.length }}).</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button
@@ -85,10 +84,7 @@
   </div>
 
   @if (loading) {
-    <div class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200">
-      <div class="animate-spin rounded-full h-11 w-11 border-4 border-red-100 border-t-red-600 mb-4"></div>
-      <p class="text-gray-500 font-medium text-sm m-0">Cargando historial de pedidos...</p>
-    </div>
+    <app-ui-skeleton variant="list" [rows]="5" label="Cargando historial de pedidos..."></app-ui-skeleton>
   }
 
   @if (!loading && !loadError) {
@@ -100,7 +96,7 @@
         >
           <div class="px-5 py-4 border-b border-gray-100 bg-gray-50/70 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div class="flex items-center gap-2.5 flex-wrap">
-              <span class="text-base font-black text-gray-900">#PH-{{ order.id?.toString()?.padStart(4, '0') }}</span>
+              <span class="text-base font-bold text-gray-900 eco-num">#EP-{{ order.id?.toString()?.padStart(4, '0') }}</span>
               <span class="px-2.5 py-1 rounded-lg text-xs font-bold border flex items-center gap-1.5"
                     [ngClass]="{
                       'bg-amber-50 text-amber-800 border-amber-200': order.status === 'PENDING',
@@ -256,11 +252,10 @@
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90dvh] flex flex-col overflow-hidden">
     <div class="px-6 py-4 bg-gray-900 text-white flex justify-between items-center shrink-0">
       <div>
-        <p class="text-[10px] font-black uppercase tracking-widest text-red-400 m-0">Comprobante de Orden</p>
-        <h5 class="font-black text-lg m-0">Pedido #PH-{{ selectedOrder?.id?.toString()?.padStart(4, '0') }}</h5>
+        <h5 class="font-bold text-lg m-0 eco-num">Pedido #EP-{{ selectedOrder?.id?.toString()?.padStart(4, '0') }}</h5>
       </div>
-      <button type="button" class="w-9 h-9 rounded-xl bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white flex items-center justify-center transition-colors cursor-pointer" (click)="cerrarModal()">
-        <i class="bi bi-x-lg"></i>
+      <button type="button" class="w-9 h-9 rounded-xl bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white flex items-center justify-center transition-colors cursor-pointer" (click)="cerrarModal()" aria-label="Cerrar detalle del pedido">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
       </button>
     </div>
 
@@ -296,8 +291,8 @@
 
         <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs flex flex-col items-center justify-center text-center" *ngIf="esPickup(selectedOrder)">
           <i class="bi bi-shop text-3xl text-red-600 mb-2"></i>
-          <h6 class="font-black text-gray-900 text-sm mb-1">Retiro en Tienda</h6>
-          <p class="text-xs text-gray-500 m-0">Indica tu código #PH-{{ selectedOrder.id?.toString()?.padStart(4, '0') }} en mostrador.</p>
+          <h6 class="font-bold text-gray-900 text-sm mb-1">Retiro en Tienda</h6>
+          <p class="text-xs text-gray-500 m-0 eco-num">Indica tu código #EP-{{ selectedOrder.id?.toString()?.padStart(4, '0') }} en mostrador.</p>
         </div>
       </div>
 

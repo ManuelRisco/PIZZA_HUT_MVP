@@ -6,11 +6,12 @@ import { UsuarioService } from '../../services/usuario.service';
 import { UsuarioDTO, UsuarioCreateDTO } from '../../models/usuario.interface';
 import { ToastService } from '../../services/toast.service';
 import { SunatService } from '../../services/sunat.service';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-perfil-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, UiSkeletonComponent],
   templateUrl: './perfil-admin.html',
   styleUrls: ['./perfil-admin.css'],
 })

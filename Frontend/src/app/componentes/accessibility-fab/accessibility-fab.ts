@@ -18,6 +18,7 @@ export class AccessibilityFabComponent implements OnInit {
   readonly mobileFontSizes: FontSizeMode[] = ['pequena', 'normal', 'grande'];
 
   contrasteAlto = false;
+  modoOscuro = false;
   modoColorblind: ColorblindMode = 'none';
   tamanoFuente: FontSizeMode = 'normal';
   modoDislexia = false;
@@ -76,10 +77,15 @@ export class AccessibilityFabComponent implements OnInit {
 
   cargarEstadosAccesibilidad(): void {
     this.contrasteAlto = this.accessibilityService.getHighContrast();
+    this.modoOscuro = this.accessibilityService.getDarkMode();
     this.modoColorblind = this.accessibilityService.getColorblindMode();
     this.tamanoFuente = this.accessibilityService.getFontSize();
     this.modoDislexia = this.accessibilityService.getDyslexiaMode();
     this.reducirMovimiento = this.accessibilityService.getReduceMotion();
+  }
+
+  toggleDarkMode(): void {
+    this.modoOscuro = this.accessibilityService.toggleDarkMode();
   }
 
   toggleAltoContraste(): void {
@@ -118,6 +124,10 @@ export class AccessibilityFabComponent implements OnInit {
     if (this.contrasteAlto) {
       this.contrasteAlto = this.accessibilityService.toggleHighContrast();
     }
+    if (this.modoOscuro) {
+      this.modoOscuro = false;
+      this.accessibilityService.setDarkMode(false);
+    }
     this.setColorblindMode('none');
     this.setFontSize('normal');
     if (this.modoDislexia) {
@@ -134,6 +144,7 @@ export class AccessibilityFabComponent implements OnInit {
   get tieneCambiosActivos(): boolean {
     return (
       this.contrasteAlto ||
+      this.modoOscuro ||
       this.modoColorblind !== 'none' ||
       this.tamanoFuente !== 'normal' ||
       this.modoDislexia ||

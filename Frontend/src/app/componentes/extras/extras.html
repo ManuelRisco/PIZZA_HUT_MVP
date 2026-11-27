@@ -1,9 +1,8 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Catálogo y Operaciones</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Gestión de Extras, Bebidas y Postres</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Control de productos complementarios, existencias de almacén, costos directos y márgenes comerciales.</p>
+      <h2 class="eco-page-title">Gestión de Extras, Bebidas y Postres</h2>
+      <p class="eco-page-subtitle">Productos complementarios, stock de almacén, costos y márgenes.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button
@@ -173,10 +172,7 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
-    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
-    <p class="text-sm font-bold text-gray-500 m-0">Cargando catálogo de extras...</p>
-  </div>
+  <app-ui-skeleton *ngIf="loading" variant="table" [rows]="6" [cols]="6" label="Cargando catálogo de extras..."></app-ui-skeleton>
 
   <div *ngIf="!loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
@@ -220,7 +216,7 @@
                       Eliminado
                     </span>
                   </p>
-                  <p class="text-[11px] text-gray-400 font-mono m-0 truncate max-w-[180px]">{{ extra.imageUrl || 'Sin imagen' }}</p>
+                  <p class="text-[11px] text-gray-400 eco-num m-0 truncate max-w-[180px]">{{ extra.imageUrl || 'Sin imagen' }}</p>
                 </div>
               </div>
             </td>

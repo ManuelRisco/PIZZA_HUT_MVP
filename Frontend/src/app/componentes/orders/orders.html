@@ -1,9 +1,8 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Operaciones y Despacho</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Gestión y Despacho de Pedidos</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Seguimiento en tiempo real de órdenes de clientes, sincronización de estados y entrega.</p>
+      <h2 class="eco-page-title">Gestión y Despacho de Pedidos</h2>
+      <p class="eco-page-subtitle">Seguimiento de órdenes de clientes, estados y entrega.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button
@@ -162,10 +161,7 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
-    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
-    <p class="text-sm font-bold text-gray-500 m-0">Cargando pedidos...</p>
-  </div>
+  <app-ui-skeleton *ngIf="loading" variant="list" [rows]="5" label="Cargando pedidos..."></app-ui-skeleton>
 
   <div *ngIf="!loading" class="space-y-4">
     <div
@@ -174,7 +170,7 @@
     >
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3">
         <div class="flex items-center gap-2.5">
-          <span class="font-mono font-black text-base text-gray-900">#{{ order.id }}</span>
+          <span class="font-bold text-base text-gray-900 eco-num">#{{ order.id }}</span>
           <span
             class="px-2.5 py-0.5 rounded-full text-xs font-black uppercase"
             [ngClass]="{
@@ -532,7 +528,7 @@
             <strong>Op. Gravada:</strong> S/ {{ (selectedOrder.boletaTotalGravada || (selectedOrder.total / 1.18)) | number:'1.2-2' }} &nbsp;|&nbsp;
             <strong>I.G.V. (18%):</strong> S/ {{ (selectedOrder.boletaTotalIgv || (selectedOrder.total - (selectedOrder.total / 1.18))) | number:'1.2-2' }}
           </p>
-          <p class="text-gray-500 m-0 font-mono text-[11px]" *ngIf="selectedOrder.boletaHash">
+          <p class="text-gray-500 m-0 text-[11px] eco-num" *ngIf="selectedOrder.boletaHash">
             Hash CPE: {{ selectedOrder.boletaHash }}
           </p>
         </div>
@@ -590,7 +586,7 @@
           <p class="text-gray-600 m-0" *ngIf="tieneNotaCredito(selectedOrder)">
             <strong>Motivo:</strong> {{ selectedOrder.ncMotivo || ('Anulación de pedido #' + selectedOrder.id) }}
           </p>
-          <p class="text-gray-500 m-0 font-mono text-[11px]" *ngIf="selectedOrder.ncHash">
+          <p class="text-gray-500 m-0 eco-num text-[11px]" *ngIf="selectedOrder.ncHash">
             Hash NC CPE: {{ selectedOrder.ncHash }}
           </p>
           <p class="text-rose-800 m-0" *ngIf="!tieneNotaCredito(selectedOrder) && puedeEmitirNotaCredito(selectedOrder)">

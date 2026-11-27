@@ -450,3 +450,56 @@
 .accessibility-panel.compact-panel .option-info {
   font-size: 0.84rem;
 }
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .accessibility-panel {
+  background: rgba(30, 41, 59, 0.98);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-xl), 0 0 0 1px var(--border-subtle);
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .section-title {
+  color: var(--text-muted);
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .panel-divider {
+  background: var(--border-subtle);
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .option-info {
+  color: var(--text-primary);
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .option-info i {
+  color: var(--text-muted);
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .chip-option,
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .font-option {
+  background: var(--surface-subtle);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .chip-option.active {
+  background: #039340;
+  color: #ffffff;
+  border-color: #039340;
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .font-segmented {
+  background: var(--surface-subtle);
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .segmented-btn {
+  color: var(--text-secondary);
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .shortcut-item {
+  color: var(--text-secondary);
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .shortcut-item kbd {
+  background: var(--surface-subtle);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}

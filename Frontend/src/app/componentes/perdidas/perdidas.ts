@@ -9,6 +9,7 @@ import { PizzaService } from '../../services/pizza.service';
 import { Size } from '../../services/size.service';
 import { ToastService } from '../../services/toast.service';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 import { PizzaDTO } from '../../models/pizza.interface';
 import {
   IngredientDTO,
@@ -49,7 +50,7 @@ export interface CategoryStatCard {
 @Component({
   selector: 'app-perdidas',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './perdidas.html',
   styleUrls: ['./perdidas.css']
 })

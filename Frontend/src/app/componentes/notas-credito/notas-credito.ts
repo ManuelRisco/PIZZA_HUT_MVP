@@ -5,11 +5,12 @@ import { Order } from '../../services/order.service';
 import { SunatService } from '../../services/sunat.service';
 import { OrderCompleteDTO } from '../../models/admin.interface';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-notas-credito',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './notas-credito.html',
   styleUrl: './notas-credito.css'
 })

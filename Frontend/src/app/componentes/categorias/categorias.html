@@ -1,9 +1,8 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Catálogo y Operaciones</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Gestión de Categorías</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Organiza la estructura visual del menú, orden de exhibición y agrupación de pizzas.</p>
+      <h2 class="eco-page-title">Gestión de Categorías</h2>
+      <p class="eco-page-subtitle">Estructura del menú, orden de exhibición y agrupación de pizzas.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
       <button type="button" (click)="recargar()" [disabled]="loading" class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer">
@@ -121,10 +120,7 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="bg-white rounded-2xl border border-gray-200 shadow-sm py-16 flex flex-col items-center justify-center text-gray-500">
-    <div class="animate-spin rounded-full h-10 w-10 border-4 border-red-200 border-t-red-600 mb-3"></div>
-    <span class="text-sm font-bold text-gray-600">Cargando categorías...</span>
-  </div>
+  <app-ui-skeleton *ngIf="loading" variant="list" [rows]="5" label="Cargando categorías..."></app-ui-skeleton>
 
   <div *ngIf="!loading && (!loadError || categorias.length > 0)" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100 bg-gray-50/70 flex flex-wrap justify-between items-center gap-3">
@@ -153,7 +149,7 @@
                 <h4 class="font-black text-gray-900 text-base sm:text-lg leading-tight mb-0.5 group-hover:text-red-600 transition-colors truncate m-0">
                   {{ categoria.name }}
                 </h4>
-                <p class="text-[11px] text-gray-400 font-mono m-0">#{{ categoria.id }}</p>
+                <p class="text-[11px] text-gray-400 eco-num m-0">#{{ categoria.id }}</p>
               </div>
               <span
                 class="bg-gray-100 text-gray-700 text-xs font-black px-2.5 py-1 rounded-lg border border-gray-200 shrink-0"

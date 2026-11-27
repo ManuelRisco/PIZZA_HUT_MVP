@@ -9,11 +9,12 @@ import { PizzaService } from '../../services/pizza.service';
 import { ImageOptimizerService } from '../../services/image-optimizer.service';
 import { PizzaDTO } from '../../models/pizza.interface';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-favoritos',
   standalone: true,
-  imports: [CommonModule, PaginationComponent],
+  imports: [CommonModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './favoritos.html',
   styleUrls: ['./favoritos.css']
 })

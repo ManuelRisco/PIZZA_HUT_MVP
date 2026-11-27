@@ -29,7 +29,9 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "src/styles/tokens.css",
+              "src/styles.css",
+              "src/styles/components.css"
             ],
             "outputMode": "static"
           },
@@ -93,7 +95,9 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "src/styles/tokens.css",
+              "src/styles.css",
+              "src/styles/components.css"
             ],
             "karmaConfig": "karma.conf.js"
           }

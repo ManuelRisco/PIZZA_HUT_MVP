@@ -7,11 +7,12 @@ import { AccessibilityService } from '../../services/accessibility.service';
 import { ToastService } from '../../services/toast.service';
 import { ImageOptimizerService } from '../../services/image-optimizer.service';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-extras-cliente',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './extras-cliente.html',
   styleUrls: ['./extras-cliente.css']
 })

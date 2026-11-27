@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { IngredientService } from '../../services/ingredient.service';
 import { IngredientDTO } from '../../models/admin.interface';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-ingredientes',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './ingredientes.html',
   styleUrls: ['./ingredientes.css']
 })

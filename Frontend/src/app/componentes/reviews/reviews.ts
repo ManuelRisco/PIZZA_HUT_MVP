@@ -5,11 +5,12 @@ import { Review } from '../../services/review.service';
 import { ReviewDTO } from '../../models/admin.interface';
 import { AuthService } from '../../services/auth.service';
 import { PaginationComponent } from '../pagination/pagination';
+import { UiSkeletonComponent } from '../ui-skeleton/ui-skeleton';
 
 @Component({
   selector: 'app-reviews',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, UiSkeletonComponent],
   templateUrl: './reviews.html',
   styleUrl: './reviews.css'
 })

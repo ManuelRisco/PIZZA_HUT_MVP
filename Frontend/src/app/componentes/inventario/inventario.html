@@ -1,13 +1,9 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <div class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1 flex items-center gap-1.5">
-        <i class="bi bi-boxes"></i>
-        <span>Control de Almacén y Kardex</span>
-      </div>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Stock e Inventario</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">
-        Supervisa existencias de ingredientes y extras, alertas de reposición, valoración a costo directo y movimientos del Kardex.
+      <h2 class="eco-page-title">Stock e Inventario</h2>
+      <p class="eco-page-subtitle">
+        Existencias de ingredientes y extras, alertas de reposición y movimientos de Kardex.
       </p>
     </div>
 
@@ -67,13 +63,12 @@
     </button>
   </div>
 
-  <div
+  <app-ui-skeleton
     *ngIf="loading && !hasLoadedOnce"
-    class="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center"
-  >
-    <div class="w-10 h-10 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin mx-auto mb-3"></div>
-    <p class="text-sm font-bold text-gray-600 m-0">Sincronizando almacén, existencias y Kardex...</p>
-  </div>
+    variant="dashboard"
+    [rows]="5"
+    label="Cargando existencias e inventario..."
+  ></app-ui-skeleton>
 
   <ng-container *ngIf="hasLoadedOnce">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

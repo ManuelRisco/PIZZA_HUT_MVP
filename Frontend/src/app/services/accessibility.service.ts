@@ -97,7 +97,7 @@ export class AccessibilityService {
   }
 
   public announceCartTotal(total: number): void {
-    this.announce(`Total del carrito: ${total.toFixed(2)} pesos`, 'polite');
+    this.announce(`Total del carrito: ${total.toFixed(2)} soles`, 'polite');
   }
 
   public announceValidationError(fieldName: string, error: string): void {
@@ -273,6 +273,33 @@ export class AccessibilityService {
   public getReduceMotion(): boolean {
     if (typeof document !== 'undefined') {
       return document.documentElement.dataset['reduceMotion'] === 'true';
+    }
+    return false;
+  }
+
+  public setDarkMode(enabled: boolean): void {
+    if (typeof document !== 'undefined') {
+      if (enabled) {
+        document.documentElement.dataset['theme'] = 'dark';
+        localStorage.setItem('eco-theme', 'dark');
+        this.announce('Modo oscuro activado', 'polite');
+      } else {
+        delete document.documentElement.dataset['theme'];
+        localStorage.setItem('eco-theme', 'light');
+        this.announce('Modo oscuro desactivado', 'polite');
+      }
+    }
+  }
+
+  public toggleDarkMode(): boolean {
+    const newState = !this.getDarkMode();
+    this.setDarkMode(newState);
+    return newState;
+  }
+
+  public getDarkMode(): boolean {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.dataset['theme'] === 'dark';
     }
     return false;
   }

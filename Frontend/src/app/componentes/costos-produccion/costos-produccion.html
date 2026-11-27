@@ -1,10 +1,9 @@
 <div class="space-y-6 font-sans">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Finanzas, Stock y Costos</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Costos de Producción y Recetas</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">
-        Costeo directo unitario por tamaño, márgenes brutos y simulador de lotes con explosión de insumos contra stock de almacén
+      <h2 class="eco-page-title">Costos de Producción y Recetas</h2>
+      <p class="eco-page-subtitle">
+        Costeo unitario por tamaño, márgenes y simulación de producción contra inventario.
       </p>
     </div>
 
@@ -203,7 +202,15 @@
         </div>
       </div>
 
-      <div *ngIf="catalogView === 'PIZZAS'" class="space-y-4">
+      <app-ui-skeleton
+        *ngIf="loadingCatalog && pizzaCosts.length === 0 && extraCosts.length === 0"
+        variant="table"
+        [rows]="6"
+        [cols]="6"
+        label="Cargando costos de producción..."
+      ></app-ui-skeleton>
+
+      <div *ngIf="catalogView === 'PIZZAS' && !(loadingCatalog && pizzaCosts.length === 0 && extraCosts.length === 0)" class="space-y-4">
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full text-left border-collapse min-w-[960px]">
             <thead>
@@ -311,7 +318,7 @@
         ></app-pagination>
       </div>
 
-      <div *ngIf="catalogView === 'EXTRAS'" class="space-y-4">
+      <div *ngIf="catalogView === 'EXTRAS' && !(loadingCatalog && pizzaCosts.length === 0 && extraCosts.length === 0)" class="space-y-4">
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full text-left border-collapse min-w-[880px]">
             <thead>

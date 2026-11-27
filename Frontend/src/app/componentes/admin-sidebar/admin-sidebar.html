@@ -40,7 +40,7 @@
   </div>
 
   <nav class="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-2 sidebar-scroll" aria-label="Opciones de administración">
-    <a
+    <button type="button"
       class="sidebar-item"
       [class.collapsed-item]="sidebarCollapsed"
       [ngClass]="vistaActual === 'dashboard' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -49,7 +49,7 @@
     >
       <i class="bi bi-grid-fill text-base min-w-[22px] text-center"></i>
       <span *ngIf="!sidebarCollapsed" class="truncate">Dashboard</span>
-    </a>
+    </button>
 
     <div class="sidebar-group" [class.sidebar-group-collapsed]="sidebarCollapsed">
       <button
@@ -73,7 +73,7 @@
 
       <div class="sidebar-group-body" [class.open]="sidebarCollapsed || gruposAbiertos.comunidad">
         <div class="sidebar-group-inner" [class.pl-2]="!sidebarCollapsed">
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'usuarios' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -82,9 +82,9 @@
           >
             <i class="bi bi-people text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Usuarios</span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'reviews' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -93,7 +93,7 @@
           >
             <i class="bi bi-star text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Reseñas</span>
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -120,7 +120,7 @@
 
       <div class="sidebar-group-body" [class.open]="sidebarCollapsed || gruposAbiertos.catalogo">
         <div class="sidebar-group-inner" [class.pl-2]="!sidebarCollapsed">
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'pizzas' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -129,9 +129,9 @@
           >
             <i class="bi bi-pie-chart text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Pizzas y Recetas</span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'categorias' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -140,9 +140,9 @@
           >
             <i class="bi bi-tags text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Categorías</span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'sizes' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -151,9 +151,9 @@
           >
             <i class="bi bi-rulers text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Tamaños</span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'ingredientes' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -162,9 +162,9 @@
           >
             <i class="bi bi-droplet text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Ingredientes</span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'extras' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -173,9 +173,9 @@
           >
             <i class="bi bi-plus-square text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Extras</span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'promociones' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -184,7 +184,7 @@
           >
             <i class="bi bi-tag text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Promociones</span>
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -211,7 +211,7 @@
 
       <div class="sidebar-group-body" [class.open]="sidebarCollapsed || gruposAbiertos.operaciones">
         <div class="sidebar-group-inner" [class.pl-2]="!sidebarCollapsed">
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'orders' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -220,9 +220,9 @@
           >
             <i class="bi bi-receipt text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Pedidos</span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'notas-credito' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -231,9 +231,9 @@
           >
             <i class="bi bi-file-earmark-minus text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Notas de Crédito</span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item justify-between"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'delivery' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -251,9 +251,9 @@
             >
               {{ deliveryFeeActual === 0 ? 'Gratis' : ('S/ ' + (deliveryFeeActual | number:'1.2-2')) }}
             </span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'payments' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -262,9 +262,9 @@
           >
             <i class="bi bi-cash-coin text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Pagos</span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'metodos-pago' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -273,7 +273,7 @@
           >
             <i class="bi bi-credit-card-fill text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Métodos de Pago</span>
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -306,7 +306,7 @@
 
       <div class="sidebar-group-body" [class.open]="sidebarCollapsed || gruposAbiertos.finanzas">
         <div class="sidebar-group-inner" [class.pl-2]="!sidebarCollapsed">
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'finanzas' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -315,9 +315,9 @@
           >
             <i class="bi bi-graph-up-arrow text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Pérdidas y Ganancias</span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item justify-between relative"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'inventario' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -339,9 +339,9 @@
               *ngIf="sidebarCollapsed && alertasStockTotal > 0"
               class="w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-1.5"
             ></span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'costos-produccion' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -350,9 +350,9 @@
           >
             <i class="bi bi-calculator text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Costos de Producción</span>
-          </a>
+          </button>
 
-          <a
+          <button type="button"
             class="sidebar-item"
             [class.collapsed-item]="sidebarCollapsed"
             [ngClass]="vistaActual === 'perdidas' ? 'bg-red-600 text-white font-bold shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-white'"
@@ -361,22 +361,23 @@
           >
             <i class="bi bi-exclamation-octagon text-base min-w-[22px] text-center"></i>
             <span *ngIf="!sidebarCollapsed" class="truncate">Pérdidas de Productos</span>
-          </a>
+          </button>
         </div>
       </div>
     </div>
   </nav>
 
   <div class="border-t border-gray-800/90 p-3 shrink-0 space-y-1.5">
-    <div
-      class="flex items-center gap-3 cursor-pointer p-2 rounded-xl transition-colors"
+    <button
+      type="button"
+      class="w-full flex items-center gap-3 cursor-pointer p-2 rounded-xl transition-colors border-0 bg-transparent text-left"
       [class.justify-center]="sidebarCollapsed"
       [ngClass]="vistaActual === 'mi-perfil' ? 'bg-gray-800' : 'hover:bg-gray-900'"
       [title]="sidebarCollapsed ? (currentUser?.name || 'Mi Perfil') : ''"
       (click)="onCambiarVista('mi-perfil')"
       *ngIf="currentUser"
     >
-      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center font-black text-white text-sm shadow shrink-0">
+      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center font-bold text-white text-sm shadow shrink-0">
         <span>{{ currentUserInitial }}</span>
       </div>
       <div *ngIf="!sidebarCollapsed" class="flex-1 overflow-hidden">
@@ -388,11 +389,11 @@
             class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[9px] font-bold"
             title="Sesión vinculada con Google"
           >
-            <i class="bi bi-google text-[9px]"></i> Google
+            <i class="bi bi-google text-[9px]" aria-hidden="true"></i> Google
           </span>
         </div>
       </div>
-    </div>
+    </button>
 
     <button
       type="button"

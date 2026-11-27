@@ -1,9 +1,8 @@
 <div class="space-y-6">
   <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-widest text-red-600 mb-1">Configuración de Entregas</p>
-      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Tarifa de Delivery</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-0">Administra el costo de envío a domicilio aplicado en el carrito, cobro y boleta electrónica.</p>
+      <h2 class="eco-page-title">Tarifa de Delivery</h2>
+      <p class="eco-page-subtitle">Configura el costo de envío aplicado en carrito, cobros y comprobantes SUNAT.</p>
     </div>
     <button
       type="button"
@@ -14,7 +13,24 @@
     </button>
   </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  <div *ngIf="loadErrorTarifa && !loadingTarifa" class="eco-alert eco-alert-error items-center" role="alert">
+    <div class="flex items-center gap-3">
+      <i class="bi bi-exclamation-triangle-fill text-lg" aria-hidden="true"></i>
+      <span>{{ loadErrorTarifa }}</span>
+    </div>
+    <button type="button" class="eco-btn eco-btn-secondary eco-btn-sm" (click)="cargarTarifaDelivery()">
+      Reintentar
+    </button>
+  </div>
+
+  <app-ui-skeleton
+    *ngIf="loadingTarifa && !deliveryFeeActualizadoAt"
+    variant="kpis"
+    [count]="3"
+    label="Cargando tarifa de delivery..."
+  ></app-ui-skeleton>
+
+  <div *ngIf="!loadingTarifa || deliveryFeeActualizadoAt" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
     <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
       <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mb-3">
         <i class="bi bi-bicycle text-lg"></i>

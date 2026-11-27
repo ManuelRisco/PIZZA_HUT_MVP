@@ -118,3 +118,21 @@
     to { transform: translateY(0); opacity: 1; }
   }
 }
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .toast-notification {
+  background: rgba(30, 41, 59, 0.96);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-lg);
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .toast-message {
+  color: var(--text-primary);
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .toast-close {
+  color: var(--text-muted);
+}
+
+:host-context(html[data-theme="dark"]:not([data-contraste="alto"])) .toast-close:hover {
+  color: var(--text-primary);
+}
