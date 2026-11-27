@@ -1,13 +1,24 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { ApplicationConfig, Injectable, inject, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import { provideRouter, RouterStateSnapshot, TitleStrategy } from '@angular/router';
+import { provideHttpClient, withInterceptors, HttpInterceptorFn } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { AdminGuard } from './guards/admin.guard';
 import { AuthService } from './services/auth.service';
+import { errorInterceptor } from './interceptors/error.interceptor';
 
-import { inject } from '@angular/core';
-import { HttpInterceptorFn } from '@angular/common/http';
+@Injectable({ providedIn: 'root' })
+export class EcoPizzaTitleStrategy extends TitleStrategy {
+  constructor(private readonly title: Title) {
+    super();
+  }
+
+  override updateTitle(routerState: RouterStateSnapshot): void {
+    const pageTitle = this.buildTitle(routerState);
+    this.title.setTitle(pageTitle ? `Eco Pizza - ${pageTitle}` : 'Eco Pizza - Inicio');
+  }
+}
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
@@ -23,13 +34,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req);
 };
 
-import { errorInterceptor } from './interceptors/error.interceptor';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes), 
+    provideRouter(routes),
+    { provide: TitleStrategy, useClass: EcoPizzaTitleStrategy },
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     AdminGuard
   ]

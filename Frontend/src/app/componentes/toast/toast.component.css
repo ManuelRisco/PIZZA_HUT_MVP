@@ -46,8 +46,8 @@
   justify-content: center;
 }
 
-.toast-notification.success .toast-icon { color: #27ae60; }
-.toast-notification.error .toast-icon { color: #e74c3c; }
+.toast-notification.success .toast-icon { color: #039340; }
+.toast-notification.error .toast-icon { color: #d9251b; }
 .toast-notification.warning .toast-icon { color: #f39c12; }
 .toast-notification.info .toast-icon { color: #3498db; }
 
@@ -90,8 +90,8 @@
   animation: progressShrink 4s linear forwards;
 }
 
-.toast-notification.success .toast-progress { color: #27ae60; }
-.toast-notification.error .toast-progress { color: #e74c3c; }
+.toast-notification.success .toast-progress { color: #039340; }
+.toast-notification.error .toast-progress { color: #d9251b; }
 .toast-notification.warning .toast-progress { color: #f39c12; }
 .toast-notification.info .toast-progress { color: #3498db; }
 

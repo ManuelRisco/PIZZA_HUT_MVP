@@ -22,11 +22,15 @@ public class CheckoutRequestDTO {
     @NotNull(message = "Los datos de pago son obligatorios")
     private PaymentDTO payment;
 
-    // ==== Opciones de Boleta de Venta Electrónica (SUNAT) ====
+    // ==== Opciones de Comprobante Electrónico SUNAT (Boleta BBB1 / Factura FFF1) ====
     private Boolean wantsBoleta;
+    private Integer tipoComprobante;
     private String clienteDni;
+    private String clienteRuc;
     private String clienteNombre;
+    private String clienteDireccion;
     private Boolean ageVerified;
+    private Boolean rucVerified;
 
     public static class AddressDTO {
         @NotBlank(message = "La línea 1 de la dirección es obligatoria")
@@ -153,10 +157,18 @@ public class CheckoutRequestDTO {
 
     public Boolean getWantsBoleta() { return wantsBoleta; }
     public void setWantsBoleta(Boolean wantsBoleta) { this.wantsBoleta = wantsBoleta; }
+    public Integer getTipoComprobante() { return tipoComprobante; }
+    public void setTipoComprobante(Integer tipoComprobante) { this.tipoComprobante = tipoComprobante; }
     public String getClienteDni() { return clienteDni; }
     public void setClienteDni(String clienteDni) { this.clienteDni = clienteDni; }
+    public String getClienteRuc() { return clienteRuc; }
+    public void setClienteRuc(String clienteRuc) { this.clienteRuc = clienteRuc; }
     public String getClienteNombre() { return clienteNombre; }
     public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }
+    public String getClienteDireccion() { return clienteDireccion; }
+    public void setClienteDireccion(String clienteDireccion) { this.clienteDireccion = clienteDireccion; }
     public Boolean getAgeVerified() { return ageVerified; }
     public void setAgeVerified(Boolean ageVerified) { this.ageVerified = ageVerified; }
+    public Boolean getRucVerified() { return rucVerified; }
+    public void setRucVerified(Boolean rucVerified) { this.rucVerified = rucVerified; }
 }

@@ -5,23 +5,19 @@
 ></div>
 
 <aside
-  class="bg-black text-white flex flex-col border-r border-gray-800/80 transition-transform md:transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] z-[5500] md:z-20 fixed inset-y-0 left-0 h-[100dvh] md:static md:h-full shrink-0 overscroll-contain will-change-transform shadow-2xl md:shadow-none"
+  class="eco-sidebar bg-[#161616] text-white flex flex-col border-r border-neutral-800/90 transition-transform md:transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] z-[5500] md:z-20 fixed inset-y-0 left-0 h-[100dvh] md:static md:h-full shrink-0 overscroll-contain will-change-transform shadow-2xl md:shadow-none"
   [ngClass]="{
     'w-[268px] translate-x-0': !sidebarCollapsed,
     'w-[268px] -translate-x-full md:translate-x-0 md:w-[76px]': sidebarCollapsed
   }"
   aria-label="Menú del panel de cliente"
 >
-  <div class="flex items-center justify-between gap-2 px-3.5 py-3.5 border-b border-gray-800/90 shrink-0">
+  <div class="flex items-center justify-between gap-2 px-3.5 py-3.5 border-b border-neutral-800 shrink-0">
     <div *ngIf="!sidebarCollapsed" class="flex items-center gap-2.5 min-w-0">
-      <div class="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-sm shrink-0">
-        <i class="bi bi-person-badge-fill text-base" aria-hidden="true"></i>
-      </div>
       <div class="min-w-0">
         <h5 class="text-white font-black text-sm tracking-wide m-0 leading-tight truncate">
           PANEL CLIENTE
         </h5>
-        <p class="text-[10px] font-bold text-red-500 uppercase tracking-widest m-0 leading-tight">Mi Cuenta</p>
       </div>
     </div>
 
@@ -65,7 +61,7 @@
         (click)="toggleGrupo('actividad')"
       >
         <span class="flex items-center gap-2 min-w-0">
-          <i class="bi bi-bag-heart-fill text-xs text-red-500"></i>
+          <i class="bi bi-bag-heart-fill text-xs text-emerald-400"></i>
           <span class="truncate">Actividad y Pedidos</span>
         </span>
         <span class="flex items-center gap-1.5 shrink-0">
@@ -75,7 +71,7 @@
           >
             {{ pedidosActivos }}
           </span>
-          <span *ngIf="!gruposAbiertos.actividad && esGrupoConVistaActiva('actividad')" class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          <span *ngIf="!gruposAbiertos.actividad && esGrupoConVistaActiva('actividad')" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
           <i class="bi bi-chevron-down text-[11px] transition-transform duration-200" [class.rotate-180]="gruposAbiertos.actividad"></i>
         </span>
       </button>
@@ -151,11 +147,11 @@
         (click)="toggleGrupo('cuenta')"
       >
         <span class="flex items-center gap-2 min-w-0">
-          <i class="bi bi-shield-check text-xs text-red-500"></i>
+          <i class="bi bi-shield-check text-xs text-emerald-400"></i>
           <span class="truncate">Cuenta y Seguridad</span>
         </span>
         <span class="flex items-center gap-1.5 shrink-0">
-          <span *ngIf="!gruposAbiertos.cuenta && esGrupoConVistaActiva('cuenta')" class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          <span *ngIf="!gruposAbiertos.cuenta && esGrupoConVistaActiva('cuenta')" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
           <i class="bi bi-chevron-down text-[11px] transition-transform duration-200" [class.rotate-180]="gruposAbiertos.cuenta"></i>
         </span>
       </button>
@@ -187,7 +183,7 @@
       (click)="onCambiarVista('perfil')"
       *ngIf="currentUser"
     >
-      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center font-black text-white text-sm shadow shrink-0">
+      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center font-black text-white text-sm shadow shrink-0">
         <span>{{ inicialUsuario }}</span>
       </div>
       <div *ngIf="!sidebarCollapsed" class="flex-1 overflow-hidden">

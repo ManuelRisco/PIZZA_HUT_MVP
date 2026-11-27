@@ -5,6 +5,10 @@ export interface UsuarioDTO {
   phone?: string;
   dni?: string | null;
   ageVerified?: boolean;
+  ruc?: string | null;
+  rucRazonSocial?: string | null;
+  rucDireccion?: string | null;
+  rucVerified?: boolean;
   role: 'CUSTOMER' | 'ADMIN';
   createdAt?: string | null;
   deletedAt?: string | null;
@@ -24,6 +28,10 @@ export interface UsuarioCreateDTO {
   phone?: string;
   dni?: string | null;
   ageVerified?: boolean;
+  ruc?: string | null;
+  rucRazonSocial?: string | null;
+  rucDireccion?: string | null;
+  rucVerified?: boolean;
   role?: 'CUSTOMER' | 'ADMIN';
 }
 

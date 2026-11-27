@@ -132,9 +132,39 @@ class EmailServiceTest {
         List<MimeMessage> sentMessages = msgCaptor.getAllValues();
         assertEquals("carlos.cliente@gmail.com", sentMessages.get(0).getAllRecipients()[0].toString());
         assertTrue(sentMessages.get(0).getSubject().contains("#105"));
+        assertTrue(sentMessages.get(0).getSubject().contains("Eco Pizza"));
+        assertFalse(sentMessages.get(0).getSubject().toLowerCase().contains("pizza hut"));
+        assertTrue(sentMessages.get(0).getFrom()[0].toString().contains("Eco Pizza"));
+        assertTrue(sentMessages.get(0).getContent().toString().contains("Eco Pizza"));
+        assertFalse(sentMessages.get(0).getContent().toString().toLowerCase().contains("pizza hut"));
 
         assertEquals("admin.prueba@gmail.com", sentMessages.get(1).getAllRecipients()[0].toString());
         assertTrue(sentMessages.get(1).getSubject().contains("#105"));
+        assertTrue(sentMessages.get(1).getSubject().contains("Eco Pizza"));
+        assertFalse(sentMessages.get(1).getSubject().toLowerCase().contains("pizza hut"));
+        assertTrue(sentMessages.get(1).getFrom()[0].toString().contains("Eco Pizza"));
+    }
+
+    @Test
+    @DisplayName("Enviar correo de recuperacion y confirmacion de contrasena con marca Eco Pizza")
+    void testPasswordResetAndChangedEmailsUseEcoPizzaBranding() throws Exception {
+        when(mailSender.createMimeMessage()).thenAnswer(inv -> new MimeMessage(Session.getInstance(new Properties())));
+
+        boolean sent = emailService.sendPasswordResetEmail("cliente@gmail.com", "Ana Perez", "482910", 15);
+        assertTrue(sent);
+        emailService.sendPasswordChangedConfirmationEmailAsync("cliente@gmail.com", "Ana Perez");
+
+        ArgumentCaptor<MimeMessage> msgCaptor = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(mailSender, times(2)).send(msgCaptor.capture());
+
+        for (MimeMessage msg : msgCaptor.getAllValues()) {
+            assertTrue(msg.getSubject().contains("Eco Pizza"));
+            assertFalse(msg.getSubject().toLowerCase().contains("pizza hut"));
+            assertTrue(msg.getFrom()[0].toString().contains("Eco Pizza"));
+            String body = msg.getContent().toString();
+            assertTrue(body.contains("Eco Pizza"));
+            assertFalse(body.toLowerCase().contains("pizza hut"));
+        }
     }
 
     @Test

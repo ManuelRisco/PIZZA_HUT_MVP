@@ -9,10 +9,12 @@ import { CommonModule } from '@angular/common';
   template: `
     <div class="not-found-container">
       <div class="not-found-content">
-        <div class="pizza-icon">🍕</div>
+        <div class="eco-logo-badge">
+          <img src="/logo.webp" alt="Logo Eco Pizza" />
+        </div>
         <h1>¡Oops! Página no encontrada</h1>
         <h2>Error 404</h2>
-        <p>La página que buscas no existe, pero tenemos deliciosas pizzas esperándote.</p>
+        <p>La página que buscas no existe, pero en Eco Pizza tenemos deliciosas pizzas esperándote.</p>
 
         <div class="action-buttons">
           <button class="btn-home" (click)="navegarA('/')">
@@ -43,6 +45,7 @@ import { CommonModule } from '@angular/common';
       align-items: center;
       justify-content: center;
       padding: 20px;
+      background: #f6fbf7;
     }
 
     .not-found-content {
@@ -50,91 +53,102 @@ import { CommonModule } from '@angular/common';
       background: white;
       padding: 40px;
       border-radius: 20px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      border-top: 4px solid #039340;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
       max-width: 500px;
       width: 100%;
     }
 
-    .pizza-icon {
-      font-size: 80px;
-      margin-bottom: 20px;
-      display: inline-block;
-      animation: spin 3s linear infinite;
+    .eco-logo-badge {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 20px;
+      padding: 8px;
+      border-radius: 20px;
+      background: #ffffff;
+      border: 2px solid #039340;
+      box-shadow: 0 10px 24px rgba(3, 147, 64, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    .eco-logo-badge img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
     h1 {
-      color: #333;
-      margin-bottom: 10px;
-      font-size: 28px;
+      color: #161616;
+      margin-bottom: 8px;
+      font-size: 26px;
+      font-weight: 800;
     }
 
     h2 {
-      color: #ff6b6b;
-      margin-bottom: 20px;
-      font-size: 48px;
-      font-weight: bold;
+      color: #d9251b;
+      margin-bottom: 18px;
+      font-size: 46px;
+      font-weight: 900;
     }
 
     p {
-      color: #666;
-      margin-bottom: 30px;
+      color: #4b5563;
+      margin-bottom: 28px;
       line-height: 1.6;
     }
 
     .action-buttons {
       display: flex;
-      gap: 15px;
+      gap: 14px;
       justify-content: center;
-      margin-bottom: 30px;
+      margin-bottom: 28px;
       flex-wrap: wrap;
     }
 
     .btn-home, .btn-menu {
       padding: 12px 24px;
       border: none;
-      border-radius: 25px;
-      font-weight: bold;
+      border-radius: 12px;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.25s ease;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
     .btn-home {
-      background: #ff6b6b;
+      background: #d9251b;
       color: white;
     }
 
     .btn-home:hover {
-      background: #ff5252;
+      background: #b31d15;
       transform: translateY(-2px);
     }
 
     .btn-menu {
-      background: #feca57;
-      color: #333;
+      background: #039340;
+      color: white;
     }
 
     .btn-menu:hover {
-      background: #ffb142;
+      background: #027a35;
       transform: translateY(-2px);
     }
 
     .suggested-links {
-      border-top: 1px solid #eee;
+      border-top: 1px solid #e5e7eb;
       padding-top: 20px;
     }
 
     .suggested-links h3 {
-      color: #333;
-      margin-bottom: 15px;
-      font-size: 18px;
+      color: #161616;
+      margin-bottom: 14px;
+      font-size: 16px;
+      font-weight: 700;
     }
 
     .suggested-links ul {
@@ -148,13 +162,14 @@ import { CommonModule } from '@angular/common';
     }
 
     .suggested-links a {
-      color: #ff6b6b;
+      color: #039340;
       text-decoration: none;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
     }
 
     .suggested-links a:hover {
+      color: #d9251b;
       text-decoration: underline;
     }
 
@@ -164,7 +179,7 @@ import { CommonModule } from '@angular/common';
         width: 90%;
       }
 
-      h1 { font-size: 24px; }
+      h1 { font-size: 22px; }
       h2 { font-size: 36px; }
 
       .action-buttons {
@@ -188,4 +203,3 @@ export class NotFoundComponent {
     this.router.navigate([ruta]);
   }
 }
-

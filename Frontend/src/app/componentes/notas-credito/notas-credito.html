@@ -1,0 +1,451 @@
+<div class="space-y-6 font-sans">
+  <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-black uppercase tracking-widest text-rose-600 mb-1">Facturación Electrónica SUNAT</p>
+      <h2 class="text-xl sm:text-2xl font-black text-gray-900 m-0">Notas de Crédito Electrónicas (FFF1)</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-0">
+        Al cancelar un pedido que ya cuenta con Boleta Electrónica emitida, el sistema genera automáticamente la Nota de Crédito FFF1 para anularla ante SUNAT y notificar al cliente.
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        (click)="cargarDatos()"
+        [disabled]="loading"
+        class="bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2 cursor-pointer"
+      >
+        <i class="bi bi-arrow-clockwise" [class.animate-spin]="loading"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <div
+    *ngIf="loadError"
+    class="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+    role="alert"
+  >
+    <div class="flex items-center gap-3">
+      <i class="bi bi-wifi-off text-red-600 text-lg"></i>
+      <span class="text-sm font-semibold text-red-800">{{ loadError }}</span>
+    </div>
+    <button
+      type="button"
+      (click)="cargarDatos()"
+      class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs cursor-pointer"
+    >
+      Reintentar
+    </button>
+  </div>
+
+  <div
+    *ngIf="mensaje"
+    class="px-4 py-3 rounded-2xl border flex justify-between items-center text-sm font-medium"
+    [ngClass]="error ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'"
+  >
+    <div class="flex items-center gap-2">
+      <i class="bi" [ngClass]="error ? 'bi-exclamation-triangle-fill text-red-600' : 'bi-check-circle-fill text-emerald-600'"></i>
+      <span>{{ mensaje }}</span>
+    </div>
+    <button type="button" (click)="mensaje = ''" class="hover:opacity-75 cursor-pointer">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">NC Emitidas (FFF1)</p>
+        <p class="text-2xl font-black text-rose-600 m-0">{{ kpiEmitidas }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-file-earmark-minus-fill text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Monto Anulado SUNAT</p>
+        <p class="text-2xl font-black text-gray-900 m-0">S/ {{ kpiMontoAnulado | number:'1.2-2' }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-gray-100 text-gray-700 flex items-center justify-center shrink-0">
+        <i class="bi bi-cash-coin text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Boletas Anulables</p>
+        <p class="text-2xl font-black text-emerald-600 m-0">{{ kpiBoletasAnulables }}</p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-receipt-cutoff text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Cancelados sin NC</p>
+        <p class="text-2xl font-black m-0" [ngClass]="kpiCanceladosSinNc > 0 ? 'text-amber-600' : 'text-gray-900'">
+          {{ kpiCanceladosSinNc }}
+        </p>
+      </div>
+      <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+        <i class="bi bi-exclamation-circle-fill text-lg"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        (click)="cambiarTab('EMITIDAS')"
+        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 cursor-pointer"
+        [ngClass]="activeTab === 'EMITIDAS' ? 'bg-rose-600 text-white shadow-sm' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+      >
+        <i class="bi bi-file-earmark-check-fill"></i>
+        Notas de Crédito Emitidas
+        <span class="px-2 py-0.5 rounded-full text-[11px]" [ngClass]="activeTab === 'EMITIDAS' ? 'bg-white/20 text-white' : 'bg-white text-gray-800'">
+          {{ kpiEmitidas }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        (click)="cambiarTab('ANULABLES')"
+        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 cursor-pointer"
+        [ngClass]="activeTab === 'ANULABLES' ? 'bg-gray-900 text-white shadow-sm' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+      >
+        <i class="bi bi-receipt"></i>
+        Anular Boleta / Emitir NC
+        <span class="px-2 py-0.5 rounded-full text-[11px]" [ngClass]="activeTab === 'ANULABLES' ? 'bg-white/20 text-white' : 'bg-white text-gray-800'">
+          {{ kpiBoletasAnulables }}
+        </span>
+      </button>
+    </div>
+
+    <div class="relative w-full lg:w-80">
+      <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+      <input
+        type="text"
+        [(ngModel)]="terminoBusqueda"
+        (input)="onBusquedaChange()"
+        placeholder="Buscar por #pedido, FFF1, BBB1, DNI o cliente..."
+        class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all"
+      />
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
+    <div class="animate-spin rounded-full h-10 w-10 border-4 border-rose-200 border-t-rose-600 mb-3"></div>
+    <p class="text-sm font-bold text-gray-500 m-0">Cargando comprobantes electrónicos...</p>
+  </div>
+
+  <div *ngIf="!loading && activeTab === 'EMITIDAS'" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto" *ngIf="paginatedList.length > 0">
+      <table class="w-full text-left border-collapse min-w-[820px] text-xs">
+        <thead class="bg-gray-900 text-white uppercase text-[11px] tracking-wider">
+          <tr>
+            <th class="px-4 py-3 font-bold">Nota de Crédito</th>
+            <th class="px-4 py-3 font-bold">Boleta Anulada</th>
+            <th class="px-4 py-3 font-bold">Pedido / Cliente</th>
+            <th class="px-4 py-3 font-bold">Motivo SUNAT</th>
+            <th class="px-4 py-3 font-bold text-right">Importe Anulado</th>
+            <th class="px-4 py-3 font-bold text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let order of paginatedList; trackBy: trackByOrderId" class="hover:bg-gray-50/80 transition-colors">
+            <td class="px-4 py-3.5 align-top">
+              <div class="flex items-center gap-1.5">
+                <span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-black font-mono text-xs">
+                  {{ order.ncComprobante || (order.ncSerie + '-' + order.ncNumero) }}
+                </span>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] uppercase">
+                  {{ order.ncEstado || 'EMITIDA' }}
+                </span>
+              </div>
+              <p class="text-[11px] text-gray-400 m-0 mt-1">
+                <i class="bi bi-clock mr-1"></i>{{ (order.ncEmitidaAt || order.createdAt) | date:'dd/MM/yyyy HH:mm' }}
+              </p>
+              <p class="text-[10px] text-gray-400 font-mono m-0 mt-0.5 truncate max-w-[190px]" *ngIf="order.ncHash" [title]="order.ncHash">
+                Hash: {{ order.ncHash }}
+              </p>
+            </td>
+
+            <td class="px-4 py-3.5 align-top">
+              <span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-mono font-bold line-through">
+                {{ order.boletaComprobante || (order.boletaSerie + '-' + order.boletaNumero) }}
+              </span>
+              <p class="text-[11px] text-rose-700 font-bold m-0 mt-1">ANULADA ANTE SUNAT</p>
+            </td>
+
+            <td class="px-4 py-3.5 align-top">
+              <p class="font-black text-gray-900 m-0">Pedido #{{ order.id }}</p>
+              <p class="font-semibold text-gray-700 m-0 mt-0.5">{{ order.boletaClienteNombre || order.userName }}</p>
+              <p class="text-[11px] text-indigo-700 font-bold m-0 mt-0.5" *ngIf="order.boletaClienteDni || order.userDni">
+                {{ esFactura(order) ? 'RUC' : 'DNI' }}: {{ order.boletaClienteDni || order.userDni }}
+              </p>
+            </td>
+
+            <td class="px-4 py-3.5 align-top max-w-[240px]">
+              <span class="inline-block px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-bold text-[10px] uppercase mb-1">
+                01 - Anulación de la operación
+              </span>
+              <p class="text-gray-600 m-0 leading-snug">{{ order.ncMotivo || ('Anulación de pedido #' + order.id) }}</p>
+            </td>
+
+            <td class="px-4 py-3.5 align-top text-right">
+              <p class="text-sm font-black text-rose-700 m-0">S/ {{ order.total | number:'1.2-2' }}</p>
+              <p class="text-[11px] text-gray-400 m-0 mt-0.5">
+                IGV: S/ {{ (order.boletaTotalIgv || (order.total - (order.total / 1.18))) | number:'1.2-2' }}
+              </p>
+            </td>
+
+            <td class="px-4 py-3.5 align-top text-right">
+              <div class="flex flex-wrap justify-end gap-1.5">
+                <button
+                  type="button"
+                  (click)="verNotaCreditoPdf(order)"
+                  class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+                >
+                  <i class="bi bi-file-earmark-pdf-fill"></i> NC PDF
+                </button>
+                <button
+                  type="button"
+                  (click)="verBoletaPdf(order)"
+                  class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+                  title="Ver Boleta Original"
+                >
+                  <i class="bi bi-receipt"></i> Boleta
+                </button>
+                <a
+                  *ngIf="order.ncXmlUrl"
+                  [href]="order.ncXmlUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 font-bold text-[11px] flex items-center gap-1 no-underline"
+                >
+                  <i class="bi bi-filetype-xml"></i> XML
+                </a>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="paginatedList.length === 0" class="py-16 text-center px-4">
+      <i class="bi bi-file-earmark-check text-4xl text-gray-300 block mb-2"></i>
+      <p class="font-bold text-gray-700 text-base m-0">Aún no hay Notas de Crédito emitidas</p>
+      <p class="text-xs text-gray-400 mt-1 mb-0">
+        Cuando canceles un pedido que ya tiene Boleta Electrónica emitida, su Nota de Crédito FFF1 aparecerá aquí automáticamente.
+      </p>
+    </div>
+
+    <div class="p-4 border-t border-gray-100" *ngIf="filteredList.length > 0">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="filteredList.length"
+        [itemsPerPage]="itemsPerPage"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && activeTab === 'ANULABLES'" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto" *ngIf="paginatedList.length > 0">
+      <table class="w-full text-left border-collapse min-w-[820px] text-xs">
+        <thead class="bg-gray-900 text-white uppercase text-[11px] tracking-wider">
+          <tr>
+            <th class="px-4 py-3 font-bold">Boleta Emitida</th>
+            <th class="px-4 py-3 font-bold">Pedido / Estado</th>
+            <th class="px-4 py-3 font-bold">Cliente / DNI</th>
+            <th class="px-4 py-3 font-bold">Fecha Emisión</th>
+            <th class="px-4 py-3 font-bold text-right">Importe</th>
+            <th class="px-4 py-3 font-bold text-right">Anular ante SUNAT</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let order of paginatedList; trackBy: trackByOrderId" class="hover:bg-gray-50/80 transition-colors">
+            <td class="px-4 py-3.5">
+              <span
+                class="px-2.5 py-1 rounded-md border font-mono font-black"
+                [ngClass]="esFactura(order) ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'"
+              >
+                {{ esFactura(order) ? 'FAC' : 'BOL' }} {{ order.boletaComprobante || (order.boletaSerie + '-' + order.boletaNumero) }}
+              </span>
+            </td>
+
+            <td class="px-4 py-3.5">
+              <div class="flex items-center gap-2">
+                <span class="font-black text-gray-900">#{{ order.id }}</span>
+                <span
+                  class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase"
+                  [ngClass]="order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'"
+                >
+                  {{ getEstadoTexto(order.status) }}
+                </span>
+              </div>
+              <p class="text-[11px] text-amber-700 font-bold m-0 mt-1" *ngIf="order.status === 'CANCELLED'">
+                Pendiente de Nota de Crédito SUNAT
+              </p>
+            </td>
+
+            <td class="px-4 py-3.5">
+              <p class="font-bold text-gray-900 m-0">{{ order.boletaClienteNombre || order.userName }}</p>
+              <p class="text-[11px] text-indigo-700 font-bold m-0 mt-0.5" *ngIf="order.boletaClienteDni || order.userDni">
+                DNI: {{ order.boletaClienteDni || order.userDni }}
+              </p>
+            </td>
+
+            <td class="px-4 py-3.5 text-gray-600">
+              {{ (order.boletaEmitidaAt || order.createdAt) | date:'dd/MM/yyyy HH:mm' }}
+            </td>
+
+            <td class="px-4 py-3.5 text-right font-black text-gray-900 text-sm">
+              S/ {{ order.total | number:'1.2-2' }}
+            </td>
+
+            <td class="px-4 py-3.5 text-right">
+              <div class="flex flex-wrap justify-end gap-1.5">
+                <button
+                  type="button"
+                  (click)="verBoletaPdf(order)"
+                  class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+                >
+                  <i class="bi bi-file-earmark-pdf"></i> Ver Boleta
+                </button>
+                <button
+                  type="button"
+                  (click)="abrirModalEmitir(order)"
+                  class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-xs cursor-pointer"
+                >
+                  <i class="bi bi-x-octagon-fill"></i> Anular con NC FFF1
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="paginatedList.length === 0" class="py-16 text-center px-4">
+      <i class="bi bi-receipt text-4xl text-gray-300 block mb-2"></i>
+      <p class="font-bold text-gray-700 text-base m-0">No hay boletas activas pendientes de anulación</p>
+      <p class="text-xs text-gray-400 mt-1 mb-0">
+        Aquí aparecerán los pedidos con Boleta de Venta Electrónica emitida que aún no tengan Nota de Crédito.
+      </p>
+    </div>
+
+    <div class="p-4 border-t border-gray-100" *ngIf="filteredList.length > 0">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalItems]="filteredList.length"
+        [itemsPerPage]="itemsPerPage"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (itemsPerPageChange)="onItemsPerPageChange($event)"
+      ></app-pagination>
+    </div>
+  </div>
+</div>
+
+<div
+  *ngIf="showEmitModal && orderParaAnular"
+  class="fixed inset-0 z-[6000] !mt-0 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200">
+    <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center">
+      <div>
+        <p class="text-[10px] font-black uppercase tracking-widest text-rose-400 m-0">SUNAT · Serie FFF1</p>
+        <h5 class="text-base sm:text-lg font-black m-0">Emitir Nota de Crédito Electrónica</h5>
+      </div>
+      <button
+        type="button"
+        (click)="cerrarModalEmitir()"
+        [disabled]="emitiendo"
+        class="text-gray-400 hover:text-white cursor-pointer"
+      >
+        <i class="bi bi-x-lg text-lg"></i>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4 text-sm">
+      <div class="bg-rose-50 border border-rose-200 rounded-xl p-3.5 text-xs space-y-1">
+        <div class="flex justify-between">
+          <span class="text-gray-600">Pedido a cancelar:</span>
+          <strong class="text-gray-900">#{{ orderParaAnular.id }}</strong>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Boleta a anular ante SUNAT:</span>
+          <strong class="font-mono text-rose-700">{{ orderParaAnular.boletaComprobante }}</strong>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Cliente / DNI:</span>
+          <strong class="text-gray-900">{{ orderParaAnular.boletaClienteNombre || orderParaAnular.userName }} ({{ orderParaAnular.boletaClienteDni || orderParaAnular.userDni || '-' }})</strong>
+        </div>
+        <div class="flex justify-between border-t border-rose-200 pt-1.5 mt-1.5">
+          <span class="text-gray-600">Importe Total a Anular:</span>
+          <strong class="text-rose-700 text-sm">S/ {{ orderParaAnular.total | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+          Tipo de Nota de Crédito SUNAT
+        </label>
+        <div class="px-3.5 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-xs font-bold text-gray-800">
+          01 - Anulación de la operación (Serie FFF1)
+        </div>
+      </div>
+
+      <div>
+        <label for="motivoNcInput" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+          Sustento / Motivo de Anulación
+        </label>
+        <textarea
+          id="motivoNcInput"
+          [(ngModel)]="motivoAnulacion"
+          rows="3"
+          maxlength="250"
+          placeholder="Describe el motivo de la anulación del pedido y comprobante..."
+          class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none resize-none"
+        ></textarea>
+      </div>
+
+      <label class="flex items-center gap-2.5 text-xs font-semibold text-gray-700 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          [(ngModel)]="enviarCorreoCliente"
+          class="w-4 h-4 accent-rose-600 rounded cursor-pointer"
+        />
+        Enviar automáticamente el PDF de la Nota de Crédito al correo del cliente ({{ orderParaAnular.userEmail }})
+      </label>
+    </div>
+
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-2.5">
+      <button
+        type="button"
+        (click)="cerrarModalEmitir()"
+        [disabled]="emitiendo"
+        class="px-4 py-2 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-bold rounded-xl text-xs sm:text-sm cursor-pointer disabled:opacity-50"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="confirmarEmisionNc()"
+        [disabled]="emitiendo"
+        class="px-5 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-sm cursor-pointer"
+      >
+        <i class="bi" [ngClass]="emitiendo ? 'bi-arrow-repeat animate-spin' : 'bi-file-earmark-minus-fill'"></i>
+        {{ emitiendo ? 'Emitiendo NC ante SUNAT...' : 'Confirmar y Emitir NC FFF1' }}
+      </button>
+    </div>
+  </div>
+</div>

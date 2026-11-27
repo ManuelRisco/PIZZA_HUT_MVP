@@ -195,6 +195,28 @@ public class UsuarioService {
                     usuario.setAgeVerified(true);
                 }
             }
+            if (usuarioActualizado.getRuc() != null) {
+                String cleanRuc = usuarioActualizado.getRuc().trim();
+                if (cleanRuc.isEmpty()) {
+                    usuario.setRuc(null);
+                    usuario.setRucRazonSocial(null);
+                    usuario.setRucDireccion(null);
+                    usuario.setRucVerified(false);
+                } else {
+                    if (!cleanRuc.matches("^(10|15|16|17|20)\\d{9}$")) {
+                        throw new IllegalArgumentException("El RUC debe contener exactamente 11 d\u00edgitos num\u00e9ricos v\u00e1lidos.");
+                    }
+                    usuario.setRuc(cleanRuc);
+                    if (usuarioActualizado.getRucRazonSocial() != null) {
+                        usuario.setRucRazonSocial(usuarioActualizado.getRucRazonSocial().trim());
+                    }
+                    if (usuarioActualizado.getRucDireccion() != null) {
+                        usuario.setRucDireccion(usuarioActualizado.getRucDireccion().trim());
+                    }
+                    usuario.setRucVerified(true);
+                    usuario.setAgeVerified(true);
+                }
+            }
 
             // Si el rol cambia, incrementar versi\u00f3n del token e invalidar
             // refresh_token

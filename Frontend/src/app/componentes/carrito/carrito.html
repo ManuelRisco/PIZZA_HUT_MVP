@@ -1,902 +1,1079 @@
-<main class="cart-wrapper" aria-label="Carrito de compras">
-  <h1 id="cart-title">Tu carrito</h1>
-
-  @if (checkoutSuccess) {
-    <output class="alert alert-success" aria-live="assertive" aria-label="Confirmación de pago">{{ checkoutSuccess }}</output>
-  }
-
-  @if (checkoutError) {
-    <div class="alert alert-danger" role="alert" aria-live="assertive">{{ checkoutError }}</div>
-  }
-
-  @if (items.length === 0 && !isProcessing && !isSuccess) {
-    <output class="empty-state" aria-live="polite" aria-label="Carrito vacío">
-      <i class="bi bi-cart-x" aria-hidden="true"></i>
-      <h2>Tu carrito está vacío</h2>
-      <p>Agrega tus pizzas favoritas desde el menú.</p>
-      <a class="btn-primary" routerLink="/menu" aria-label="Ver menú">Ver menú</a>
-    </output>
-  } @else {
-    <div class="cart-grid">
-      <div class="cart-column products-column">
-        
-        <div class="cart-items-container" aria-label="Items en el carrito">
-          <h2 class="section-title" style="margin-top: 0;">Tus Productos</h2>
-        @for (item of items; track item.id; let i = $index) {
-          <article class="cart-item" [attr.aria-label]="item.name + ', tamaño ' + (item.size | titlecase) + ', cantidad ' + item.quantity">
-            <img 
-              [src]="getOptimizedImageUrl(item.imageUrl)" 
-              [alt]="item.name + ' - ' + (item.size | titlecase)"
-              [loading]="i < 3 ? 'eager' : 'lazy'"
-              [attr.fetchpriority]="i === 0 ? 'high' : (i < 3 ? 'auto' : 'low')"
-              decoding="async"
-              class="item-image"
-              (error)="$any($event.target).src = '/combo1.webp'"
-            >
-            <div class="item-content">
-              <div class="item-header">
-                <h3 id="item-name-{{ item.id }}">{{ item.name }}</h3>
-                <span class="line-total" aria-label="Total para este item">S/. {{ (item.unitPrice * item.quantity) | number:'1.2-2' }}</span>
-              </div>
-              <p class="item-size" aria-label="Tamaño">Tamaño: {{ item.size | titlecase }} <span class="unit-price-text">(S/. {{ item.unitPrice | number:'1.2-2' }} c/u)</span></p>
-              @if (tieneExtras(item)) {
-                <p class="extras-info" aria-label="Ingredientes adicionales">
-                  <i class="bi bi-plus-circle-fill" aria-hidden="true"></i> {{ getExtrasNombres(item) }}
-                </p>
-              }
-              <div class="item-footer">
-                <fieldset class="quantity-control" style="border:none;padding:0;margin:0;">
-                  <legend class="visually-hidden">{{ 'Control de cantidad para ' + item.name }}</legend>
-                  <button (click)="decrementar(item)" [disabled]="item.quantity <= 1" [attr.aria-label]="'Disminuir cantidad de ' + item.name">−</button>
-                  <span class="quantity-display" aria-label="Cantidad actual">{{ item.quantity }}</span>
-                  <button (click)="incrementar(item)" [attr.aria-label]="'Aumentar cantidad de ' + item.name">+</button>
-                </fieldset>
-                <button class="remove-button" (click)="eliminar(item)" [attr.aria-label]="'Quitar ' + item.name + ' del carrito'">
-                  <i class="bi bi-trash" aria-hidden="true"></i> Quitar
-                </button>
-              </div>
-            </div>
-          </article>
+<div class="cart-page-shell">
+  <main class="cart-wrapper" aria-label="Carrito de compras">
+    <header class="cart-page-header">
+      <div class="cart-title-row">
+        <h1 id="cart-title">Tu carrito</h1>
+        @if (items.length > 0) {
+          <span class="cart-count-pill">
+            {{ totals.itemsCount }} {{ totals.itemsCount === 1 ? 'producto' : 'productos' }}
+          </span>
         }
       </div>
-      </div>
+      <a class="cart-back-link" routerLink="/menu" aria-label="Volver al menú">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+        <span>Seguir comprando</span>
+      </a>
+    </header>
 
-      <div class="cart-column checkout-column">
-          
-          <section class="checkout-section">
-            <h2 class="section-title"><i class="bi bi-geo-alt"></i> Entrega</h2>
-            
-        <div class="summary-field">
-          <span id="delivery-type-label">Tipo de entrega</span>
-          <fieldset class="delivery-type-options" style="border:none;padding:0;margin:0;">
-            <legend class="visually-hidden">Tipo de entrega</legend>
-            <label class="radio-option">
-              <input 
-                type="radio" 
-                name="deliveryType" 
-                value="PICKUP" 
-                [(ngModel)]="deliveryType"
-                (ngModelChange)="onDeliveryTypeChange()"
-                [ngModelOptions]="{ standalone: true }"
-                aria-label="Recojo en tienda"
+    @if (checkoutSuccess) {
+      <output class="cart-banner cart-banner-success" aria-live="assertive" aria-label="Confirmación de pago">
+        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+        <span>{{ checkoutSuccess }}</span>
+      </output>
+    }
+
+    @if (items.length === 0 && !isProcessing && !isSuccess) {
+      <output class="empty-state" aria-live="polite" aria-label="Carrito vacío">
+        <div class="empty-state-icon" aria-hidden="true">
+          <i class="bi bi-cart-x"></i>
+        </div>
+        <h2>Tu carrito está vacío</h2>
+        <p>Agrega tus pizzas, combos o bebidas favoritas desde nuestro menú para empezar tu pedido.</p>
+        <a class="btn-primary empty-cta" routerLink="/menu" aria-label="Ver menú">
+          <i class="bi bi-book-half" aria-hidden="true"></i>
+          <span>Explorar el menú</span>
+        </a>
+      </output>
+    } @else {
+      <div class="cart-grid">
+        <div class="cart-column left-column">
+          <section class="cart-items-container" aria-label="Items en el carrito">
+            <div class="section-header">
+              <div class="section-title-group">
+                <span class="step-number">1</span>
+                <h2 class="section-title">Tus Productos</h2>
+              </div>
+              <button
+                type="button"
+                class="clear-cart-inline"
+                (click)="vaciar()"
+                [disabled]="items.length === 0 || isProcessing || isSuccess"
+                aria-label="Vaciar carrito"
               >
-              <span aria-hidden="true">🏪 Recojo en tienda</span>
-            </label>
-            <label class="radio-option">
-              <input 
-                type="radio" 
-                name="deliveryType" 
-                value="DELIVERY" 
-                [(ngModel)]="deliveryType"
-                (ngModelChange)="onDeliveryTypeChange()"
-                [ngModelOptions]="{ standalone: true }"
-                aria-label="Delivery a domicilio"
-              >
-              <span aria-hidden="true">🛵 Delivery a domicilio ({{ baseDeliveryFee === 0 ? 'Gratis' : 'S/ ' + (baseDeliveryFee | number:'1.2-2') }})</span>
-            </label>
-          </fieldset>
-        </div>
-
-        @if (deliveryType === 'DELIVERY') {
-          <fieldset class="address-form">
-            <legend id="address-legend">Dirección de entrega</legend>
-            
-            <div class="summary-field">
-              <span id="address-option-label">Opciones de dirección</span>
-              <fieldset class="delivery-type-options" style="border:none;padding:0;margin:0;">
-                <legend class="visually-hidden">Opciones de dirección</legend>
-                <label class="radio-option">
-                  <input 
-                    type="radio" 
-                    name="addressOption" 
-                    value="saved" 
-                    [(ngModel)]="addressOption"
-                    (ngModelChange)="onDeliveryTypeChange()"
-                    [ngModelOptions]="{ standalone: true }"
-                    [disabled]="direcciones.length === 0"
-                    aria-label="Usar dirección guardada"
-                  >
-                  <span aria-hidden="true">📍 Direcciones guardadas</span>
-                </label>
-                <label class="radio-option">
-                  <input 
-                    type="radio" 
-                    name="addressOption" 
-                    value="new" 
-                    [(ngModel)]="addressOption"
-                    (ngModelChange)="onDeliveryTypeChange()"
-                    [ngModelOptions]="{ standalone: true }"
-                    aria-label="Agregar nueva dirección"
-                  >
-                  <span aria-hidden="true">➕ Agregar nueva dirección</span>
-                </label>
-              </fieldset>
+                <i class="bi bi-trash3" aria-hidden="true"></i>
+                <span>Vaciar</span>
+              </button>
             </div>
 
-            @if (addressOption === 'saved') {
-              <div class="summary-field">
-                <label for="addressSelect">Selecciona una dirección <span aria-label="requerido">*</span></label>
-                <select
-                  id="addressSelect"
-                  [(ngModel)]="selectedAddressId"
-                  [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="onSavedAddressChange()"
-                  aria-required="true"
-                  
+            <div class="cart-items-list">
+              @for (item of items; track item.id; let i = $index) {
+                <article
+                  class="cart-item"
+                  [attr.aria-label]="item.name + ', tamaño ' + (item.size | titlecase) + ', cantidad ' + item.quantity"
                 >
-                  <option [ngValue]="null">-- Selecciona ubicación --</option>
-                  @for (direccion of direcciones; track direccion.id) {
-                    <option [ngValue]="direccion.id">
-                      {{ direccion.line1 }}, {{ direccion.district }}, {{ direccion.city }}
-                    </option>
-                  }
-                </select>
-              </div>
-            }
-            
-            @if (addressOption === 'new') {
-              <div class="summary-field">
-                <label for="addressLine1">Dirección <span aria-label="requerido">*</span></label>
-                <input 
-                  id="addressLine1" 
-                  type="text" 
-                  [(ngModel)]="addressForm.line1" 
-                  [ngModelOptions]="{ standalone: true }" 
-                  placeholder="Calle, número, departamento" 
-                  required
-                  aria-required="true"
-                  aria-label="Línea de dirección"
-                  aria-describedby="addressLine1-help"
-                >
-                <small id="addressLine1-help" class="form-text text-muted">Ej: Av. Principal 123, Apto 4B</small>
-              </div>
-              <div class="summary-field">
-                <label for="addressCity">Ciudad <span aria-label="requerido">*</span></label>
-                <input 
-                  id="addressCity" 
-                  type="text" 
-                  [(ngModel)]="addressForm.city" 
-                  [ngModelOptions]="{ standalone: true }" 
-                  placeholder="Lima, Arequipa, etc." 
-                  required
-                  aria-required="true"
-                  aria-label="Ciudad"
-                >
-              </div>
-              <div class="summary-field">
-                <label for="addressDistrict">Distrito <span aria-label="requerido">*</span></label>
-                <input 
-                  id="addressDistrict" 
-                  type="text" 
-                  [(ngModel)]="addressForm.district" 
-                  [ngModelOptions]="{ standalone: true }" 
-                  placeholder="Miraflores, San Isidro, etc." 
-                  required
-                  aria-required="true"
-                  aria-label="Distrito"
-                >
-              </div>
-              <div class="summary-field">
-                <label for="addressReference">Referencia (opcional)</label>
-                <input 
-                  id="addressReference" 
-                  type="text" 
-                  [(ngModel)]="addressForm.reference" 
-                  [ngModelOptions]="{ standalone: true }" 
-                  placeholder="Cerca al parque, edificio azul, etc."
-                  aria-label="Referencia adicional"
-                >
-              </div>
-            }
-          </fieldset>
-        }
-        </section>
+                  <img
+                    [src]="getOptimizedImageUrl(item.imageUrl)"
+                    [alt]="item.name + ' - ' + (item.size | titlecase)"
+                    [loading]="i < 3 ? 'eager' : 'lazy'"
+                    [attr.fetchpriority]="i === 0 ? 'high' : (i < 3 ? 'auto' : 'low')"
+                    decoding="async"
+                    class="item-image"
+                    (error)="$any($event.target).src = '/combo1.webp'"
+                  />
 
-        <section class="checkout-section">
-          <h2 class="section-title"><i class="bi bi-credit-card"></i> Pago</h2>
-          <div class="summary-field">
-            <label for="paymentMethod">Método de pago</label>
-          @if (!paymentMethodsLoaded) {
-            <output class="loading-placeholder" aria-label="Cargando opciones de pago">Cargando opciones...</output>
-          } @else if (paymentMethods.length === 0) {
-            <p class="helper-text" role="alert">No hay métodos de pago disponibles. Inténtalo más tarde.</p>
-          } @else {
-            <select
-              id="paymentMethod"
-              [(ngModel)]="selectedPaymentMethodId"
-              (ngModelChange)="onPaymentMethodChange($event)"
-              [ngModelOptions]="{ standalone: true }"
-              
-              aria-required="true"
-            >
-              @for (metodo of paymentMethods; track metodo.id) {
-                <option [ngValue]="metodo.id">{{ metodo.name }}</option>
-              }
-            </select>
-          }
-        </div>
-
-        @if (requiresCardDetails) {
-          @if (useMercadoPagoCardBrick) {
-            <div id="mp-card-brick-section" style="margin-top: 12px; background: #ffffff; border: 2px solid #bae6fd; border-radius: 14px; padding: 14px 16px;">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
-                <span style="font-weight: 800; font-size: 0.9rem; color: #0369a1; display: inline-flex; align-items: center; gap: 6px;">
-                  <i class="bi bi-shield-lock-fill"></i>
-                  Pago seguro con Mercado Pago Perú
-                </span>
-                @if (mpSandboxMode) {
-                  <span style="font-size: 0.68rem; font-weight: 800; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; padding: 2px 8px; border-radius: 999px;">
-                    MODO PRUEBAS (SANDBOX)
-                  </span>
-                } @else {
-                  <span style="font-size: 0.68rem; font-weight: 800; background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 999px;">
-                    PCI-DSS PROTEGIDO
-                  </span>
-                }
-              </div>
-
-              @if (mpBrickLoading) {
-                <div style="padding: 18px; text-align: center; color: #4b5563; font-size: 0.85rem;">
-                  <i class="bi bi-arrow-repeat" style="margin-right: 6px;"></i>
-                  Cargando módulo encriptado de tarjeta...
-                </div>
-              }
-
-              @if (mpBrickError) {
-                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 10px 12px; color: #991b1b; font-size: 0.82rem; margin-bottom: 10px;">
-                  <i class="bi bi-exclamation-triangle-fill"></i> {{ mpBrickError }}
-                  <button
-                    type="button"
-                    (click)="reintentarCardBrick()"
-                    style="margin-left: 8px; background: #991b1b; color: #fff; border: none; border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"
-                  >
-                    Reintentar
-                  </button>
-                </div>
-              }
-
-              <div id="mp-card-brick-container"></div>
-
-              <small style="display: block; margin-top: 8px; color: #64748b; font-size: 0.75rem;">
-                <i class="bi bi-lock-fill" style="color: #0284c7;"></i>
-                Tus datos se procesan de forma segura con Mercado Pago.
-              </small>
-            </div>
-          } @else {
-            <fieldset class="payment-card-form">
-              <legend class="visually-hidden">Detalles de tarjeta de crédito</legend>
-              <div class="summary-field">
-                <label for="cardHolder">Titular de la tarjeta</label>
-                <input 
-                  id="cardHolder" 
-                  type="text" 
-                  [(ngModel)]="cardForm.holder" 
-                  [ngModelOptions]="{ standalone: true }" 
-                  placeholder="Nombre como figura en la tarjeta"
-                  aria-label="Titular de la tarjeta"
-                  aria-required="true"
-                >
-              </div>
-              <div class="summary-field">
-                <label for="cardNumber">Número de tarjeta</label>
-                <input 
-                  id="cardNumber" 
-                  type="text" 
-                  maxlength="19" 
-                  [(ngModel)]="cardForm.number" 
-                  [ngModelOptions]="{ standalone: true }" 
-                  placeholder="0000 0000 0000 0000"
-                  aria-label="Número de tarjeta"
-                  aria-describedby="cardNumber-help"
-                  aria-required="true"
-                >
-                <small id="cardNumber-help" class="form-text text-muted">Formato: 16 dígitos</small>
-              </div>
-              <fieldset class="card-inline-fields"><legend class="visually-hidden">Fecha de expiración y CVV</legend>
-                <div class="summary-field">
-                  <label for="cardExpiry">Expiración</label>
-                  <input 
-                    id="cardExpiry" 
-                    type="text" 
-                    maxlength="5" 
-                    [(ngModel)]="cardForm.expiry" 
-                    [ngModelOptions]="{ standalone: true }" 
-                    placeholder="MM/AA"
-                    aria-label="Fecha de expiración (MM/AA)"
-                    aria-required="true"
-                  >
-                </div>
-                <div class="summary-field">
-                  <label for="cardCvv">CVV</label>
-                  <div style="position: relative;">
-                    <input 
-                      id="cardCvv" 
-                      [type]="showCvv ? 'text' : 'password'" 
-                      maxlength="4" 
-                      [(ngModel)]="cardForm.cvv" 
-                      [ngModelOptions]="{ standalone: true }" 
-                      placeholder="***"
-                      aria-label="CVV (código de seguridad)"
-                      aria-required="true"
-                      style="width: 100%; padding-right: 35px;"
-                    >
-                    <i class="bi" [ngClass]="showCvv ? 'bi-eye-slash' : 'bi-eye'" 
-                       (click)="showCvv = !showCvv" 
-                       style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888;"></i>
-                  </div>
-                </div>
-              </fieldset>
-            </fieldset>
-          }
-        }
-
-        @if (requiresMobileDetails) {
-          @if (useMercadoPagoYape) {
-            <fieldset class="payment-mobile-form" style="border: 2px solid #ddd6fe; border-radius: 14px; padding: 14px 16px; background: #faf5ff;">
-              <legend class="visually-hidden">Pago oficial con Yape vía Mercado Pago</legend>
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
-                <span style="font-weight: 800; font-size: 0.9rem; color: #6d28d9; display: inline-flex; align-items: center; gap: 6px;">
-                  <i class="bi bi-phone-fill"></i>
-                  Yape Oficial vía Mercado Pago
-                </span>
-                @if (mpSandboxMode) {
-                  <span style="font-size: 0.68rem; font-weight: 800; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; padding: 2px 8px; border-radius: 999px;">
-                    SANDBOX
-                  </span>
-                } @else {
-                  <span style="font-size: 0.68rem; font-weight: 800; background: #ede9fe; color: #5b21b6; padding: 2px 8px; border-radius: 999px;">
-                    COBRO INMEDIATO
-                  </span>
-                }
-              </div>
-
-              <div class="summary-field">
-                <label for="mobilePhone">Celular registrado en Yape</label>
-                <input 
-                  id="mobilePhone" 
-                  type="tel" 
-                  maxlength="9" 
-                  [(ngModel)]="mobileForm.phone" 
-                  [ngModelOptions]="{ standalone: true }" 
-                  placeholder="9XXXXXXXX"
-                  aria-label="Número de celular Yape"
-                  aria-required="true"
-                >
-              </div>
-              <div class="summary-field">
-                <label for="mobileReference">Código de aprobación Yape (6 dígitos)</label>
-                <input 
-                  id="mobileReference" 
-                  type="text" 
-                  inputmode="numeric"
-                  maxlength="6"
-                  [(ngModel)]="mobileForm.reference" 
-                  [ngModelOptions]="{ standalone: true }" 
-                  placeholder="Ej. 123456"
-                  aria-label="Código de aprobación Yape de 6 dígitos"
-                  aria-required="true"
-                >
-              </div>
-              <div class="helper-text" style="color: #5b21b6;" aria-label="Instrucciones Yape">
-                <i class="bi bi-shield-check"></i>
-                Abre tu app <strong>Yape → Menú → Aprobar compras</strong> y copia el código de 6 dígitos. El cobro se confirma al instante.
-                @if (mpSandboxMode) {
-                  <span style="display: block; margin-top: 4px; color: #92400e; font-weight: 700;">
-                    Datos de prueba Sandbox: Celular <code>111111111</code> · OTP <code>123456</code> (aprobado)
-                  </span>
-                }
-              </div>
-            </fieldset>
-          } @else {
-            <fieldset class="payment-mobile-form">
-              <legend class="visually-hidden">Detalles de pago móvil</legend>
-              <div class="summary-field">
-                <label for="mobilePhone">Número asociado ({{ isYapeMethod ? 'Yape' : 'Plin' }})</label>
-                <input 
-                  id="mobilePhone" 
-                  type="tel" 
-                  maxlength="9" 
-                  [(ngModel)]="mobileForm.phone" 
-                  [ngModelOptions]="{ standalone: true }" 
-                  placeholder="9XXXXXXXX"
-                  aria-label="Número de teléfono asociado"
-                  aria-required="true"
-                >
-              </div>
-              <div class="summary-field">
-                <label for="mobileReference">Código de transferencia / operación</label>
-                <input 
-                  id="mobileReference" 
-                  type="text" 
-                  [(ngModel)]="mobileForm.reference" 
-                  [ngModelOptions]="{ standalone: true }" 
-                  placeholder="Ingresa el código o referencia"
-                  aria-label="Código de referencia de transferencia"
-                  aria-required="true"
-                >
-              </div>
-              <div class="helper-text" aria-label="Instrucciones">Confirma el pago en tu app y regístralo con el código generado.</div>
-            </fieldset>
-          }
-        }
-
-        <div class="summary-field">
-          <label for="notes">Notas para el pedido (opcional)</label>
-          <textarea 
-            id="notes" 
-            rows="3" 
-            [(ngModel)]="notes" 
-            [ngModelOptions]="{ standalone: true }" 
-            placeholder="Ej. Sin cebolla, llamar al llegar..."
-            aria-label="Notas especiales para el pedido"
-            aria-describedby="notes-help"
-          ></textarea>
-        </div>
-
-        <div style="margin-top: 16px; background: #fff; border: 2px solid #e5e7eb; border-radius: 14px; padding: 14px 16px;">
-          <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; margin: 0;">
-            <input
-              type="checkbox"
-              name="wantsBoleta"
-              [(ngModel)]="wantsBoleta"
-              [ngModelOptions]="{ standalone: true }"
-              style="margin-top: 3px; width: 18px; height: 18px; accent-color: #c8102e; cursor: pointer;"
-            />
-            <div style="flex: 1;">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
-                <span style="font-weight: 800; font-size: 0.92rem; color: #111827;">
-                  <i class="bi bi-receipt-cutoff" style="color: #c8102e; margin-right: 4px;"></i>
-                  Solicitar Boleta de Venta Electrónica
-                </span>
-                <span style="font-size: 0.7rem; font-weight: 800; background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 999px;">
-                  PDF POR CORREO
-                </span>
-              </div>
-              <small style="display: block; color: #6b7280; font-size: 0.78rem; margin-top: 3px;">
-                Se generará tu comprobante electrónico y te enviaremos el PDF adjunto a tu correo.
-              </small>
-            </div>
-          </label>
-
-          @if (wantsBoleta) {
-            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #d1d5db;">
-              @if (userHasSavedDni && !editingSavedDni) {
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-                  <div>
-                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: #15803d;">
-                      <i class="bi bi-patch-check-fill"></i> DNI Configurado en tu Cuenta
+                  <div class="item-content">
+                    <div class="item-header">
+                      <h3 id="item-name-{{ item.id }}">{{ item.name }}</h3>
+                      <span class="line-total" aria-label="Total para este item">
+                        S/ {{ (item.unitPrice * item.quantity) | number:'1.2-2' }}
+                      </span>
                     </div>
-                    <div style="font-size: 0.88rem; font-weight: 800; color: #14532d; margin-top: 2px;">
-                      DNI: {{ boletaDni }} — {{ boletaNombre || 'Cliente Verificado' }}
+
+                    <div class="item-meta-row">
+                      <p class="item-size" aria-label="Tamaño">
+                        <span>{{ item.size | titlecase }}</span>
+                        <span class="dot-sep" aria-hidden="true">·</span>
+                        <span class="unit-price-text">S/ {{ item.unitPrice | number:'1.2-2' }}</span>
+                      </p>
+
+                      <div class="item-inline-actions">
+                        <div class="quantity-control" role="group" [attr.aria-label]="'Control de cantidad para ' + item.name">
+                          <button
+                            type="button"
+                            (click)="decrementar(item)"
+                            [disabled]="item.quantity <= 1"
+                            [attr.aria-label]="'Disminuir cantidad de ' + item.name"
+                          >
+                            −
+                          </button>
+                          <span class="quantity-display" aria-label="Cantidad actual">{{ item.quantity }}</span>
+                          <button
+                            type="button"
+                            (click)="incrementar(item)"
+                            [attr.aria-label]="'Aumentar cantidad de ' + item.name"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          class="remove-button"
+                          (click)="eliminar(item)"
+                          [attr.aria-label]="'Quitar ' + item.name + ' del carrito'"
+                          title="Quitar producto"
+                        >
+                          <i class="bi bi-trash3" aria-hidden="true"></i>
+                        </button>
+                      </div>
                     </div>
+
+                    @if (tieneExtras(item)) {
+                      <p class="extras-info" aria-label="Ingredientes adicionales">
+                        <i class="bi bi-plus-circle-fill" aria-hidden="true"></i>
+                        <span>{{ getExtrasNombres(item) }}</span>
+                      </p>
+                    }
                   </div>
-                  <button
-                    type="button"
-                    (click)="editingSavedDni = true"
-                    style="background: #fff; border: 1px solid #86efac; color: #166534; font-size: 0.76rem; font-weight: 700; padding: 6px 10px; border-radius: 8px; cursor: pointer;"
+                </article>
+              }
+            </div>
+          </section>
+
+          <section class="checkout-section" aria-label="Opciones de entrega">
+            <div class="section-header">
+              <div class="section-title-group">
+                <span class="step-number">2</span>
+                <h2 class="section-title">Entrega</h2>
+              </div>
+              @if (deliveryType === 'DELIVERY') {
+                <div class="address-mode-tabs" role="radiogroup" aria-label="Opciones de dirección">
+                  <label
+                    class="address-tab"
+                    [class.active]="addressOption === 'saved'"
+                    [class.disabled]="direcciones.length === 0"
                   >
-                    <i class="bi bi-pencil-square"></i> Cambiar DNI
-                  </button>
-                </div>
-              } @else {
-                <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px;">
-                  <label for="cartBoletaDni" style="display: block; font-size: 0.8rem; font-weight: 700; color: #1f2937; margin-bottom: 6px;">
-                    Configura tu DNI para tus Boletas Electrónicas (se guardará para tus próximos pedidos)
-                  </label>
-                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <input
-                      id="cartBoletaDni"
-                      type="text"
-                      maxlength="8"
-                      [(ngModel)]="boletaDni"
+                      type="radio"
+                      name="addressOption"
+                      value="saved"
+                      [(ngModel)]="addressOption"
+                      (ngModelChange)="onDeliveryTypeChange()"
                       [ngModelOptions]="{ standalone: true }"
-                      placeholder="Ingresa tu DNI (8 dígitos)"
-                      (keyup.enter)="consultarDniCarrito()"
-                      style="flex: 1; min-width: 150px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.85rem;"
+                      [disabled]="direcciones.length === 0"
+                      aria-label="Usar dirección guardada"
                     />
+                    <span>Guardadas ({{ direcciones.length }})</span>
+                  </label>
+                  <label class="address-tab" [class.active]="addressOption === 'new'">
+                    <input
+                      type="radio"
+                      name="addressOption"
+                      value="new"
+                      [(ngModel)]="addressOption"
+                      (ngModelChange)="onDeliveryTypeChange()"
+                      [ngModelOptions]="{ standalone: true }"
+                      aria-label="Agregar nueva dirección"
+                    />
+                    <span>+ Nueva</span>
+                  </label>
+                </div>
+              }
+            </div>
+
+            <div class="delivery-type-grid" role="radiogroup" aria-label="Tipo de entrega">
+              <label class="radio-option" [class.selected]="deliveryType === 'DELIVERY'">
+                <input
+                  type="radio"
+                  name="deliveryType"
+                  value="DELIVERY"
+                  [(ngModel)]="deliveryType"
+                  (ngModelChange)="onDeliveryTypeChange()"
+                  [ngModelOptions]="{ standalone: true }"
+                  aria-label="Delivery a domicilio"
+                />
+                <i class="bi bi-bicycle radio-bi" aria-hidden="true"></i>
+                <span class="radio-copy">
+                  <strong>Delivery</strong>
+                  <small>{{ baseDeliveryFee === 0 ? 'Gratis' : 'S/ ' + (baseDeliveryFee | number:'1.2-2') }}</small>
+                </span>
+              </label>
+
+              <label class="radio-option" [class.selected]="deliveryType === 'PICKUP'">
+                <input
+                  type="radio"
+                  name="deliveryType"
+                  value="PICKUP"
+                  [(ngModel)]="deliveryType"
+                  (ngModelChange)="onDeliveryTypeChange()"
+                  [ngModelOptions]="{ standalone: true }"
+                  aria-label="Recojo en tienda"
+                />
+                <i class="bi bi-shop radio-bi" aria-hidden="true"></i>
+                <span class="radio-copy">
+                  <strong>Recojo en tienda</strong>
+                  <small>Gratis</small>
+                </span>
+              </label>
+            </div>
+
+            @if (deliveryType === 'DELIVERY') {
+              <div class="address-form" role="region" aria-label="Dirección de entrega">
+                @if (addressOption === 'saved') {
+                  <div class="summary-field">
+                    <label for="addressSelect">Dirección guardada <span class="req-mark">*</span></label>
+                    <select
+                      id="addressSelect"
+                      [(ngModel)]="selectedAddressId"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="onSavedAddressChange()"
+                      aria-required="true"
+                    >
+                      <option [ngValue]="null">-- Selecciona ubicación --</option>
+                      @for (direccion of direcciones; track direccion.id) {
+                        <option [ngValue]="direccion.id">
+                          {{ direccion.line1 }}, {{ direccion.district }}, {{ direccion.city }}
+                        </option>
+                      }
+                    </select>
+                  </div>
+                }
+
+                @if (addressOption === 'new') {
+                  <div class="form-grid-2">
+                    <div class="summary-field full-span">
+                      <label for="addressLine1">Dirección <span class="req-mark">*</span></label>
+                      <input
+                        id="addressLine1"
+                        type="text"
+                        [(ngModel)]="addressForm.line1"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Av. Principal 123, Dpto 4B"
+                        required
+                        aria-required="true"
+                      />
+                    </div>
+                    <div class="summary-field">
+                      <label for="addressDistrict">Distrito <span class="req-mark">*</span></label>
+                      <input
+                        id="addressDistrict"
+                        type="text"
+                        [(ngModel)]="addressForm.district"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Chorrillos, Miraflores..."
+                        required
+                        aria-required="true"
+                      />
+                    </div>
+                    <div class="summary-field">
+                      <label for="addressCity">Ciudad <span class="req-mark">*</span></label>
+                      <input
+                        id="addressCity"
+                        type="text"
+                        [(ngModel)]="addressForm.city"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Lima"
+                        required
+                        aria-required="true"
+                      />
+                    </div>
+                    <div class="summary-field full-span">
+                      <label for="addressReference">Referencia (opcional)</label>
+                      <input
+                        id="addressReference"
+                        type="text"
+                        [(ngModel)]="addressForm.reference"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Cerca al parque, timbre..."
+                      />
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        </div>
+
+        <div class="cart-column middle-column">
+          <section class="checkout-section" aria-label="Pago y comprobante">
+            <div class="section-header">
+              <div class="section-title-group">
+                <span class="step-number">3</span>
+                <h2 class="section-title">Pago y Comprobante</h2>
+              </div>
+            </div>
+
+            <div class="summary-field">
+              <span class="field-label-text">Método de pago</span>
+              @if (!paymentMethodsLoaded) {
+                <output class="loading-placeholder" aria-label="Cargando opciones de pago">Cargando opciones...</output>
+              } @else if (paymentMethods.length === 0) {
+                <p class="helper-text" role="alert">No hay métodos de pago disponibles.</p>
+              } @else {
+                <div class="payment-methods-grid" role="radiogroup" aria-label="Método de pago">
+                  @for (metodo of paymentMethodsSorted; track metodo.id) {
                     <button
                       type="button"
-                      (click)="consultarDniCarrito()"
-                      [disabled]="buscandoDni || boletaDni.trim().length !== 8"
-                      style="background: #111827; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.8rem; font-weight: 700; cursor: pointer;"
+                      class="payment-method-card"
+                      [class.selected]="selectedPaymentMethodId === metodo.id"
+                      (click)="selectPaymentMethod(metodo)"
+                      [attr.aria-pressed]="selectedPaymentMethodId === metodo.id"
                     >
-                      <i class="bi" [ngClass]="buscandoDni ? 'bi-arrow-repeat' : 'bi-search'"></i>
-                      {{ buscandoDni ? 'Buscando...' : 'Buscar RENIEC' }}
+                      <span class="pm-icon" aria-hidden="true">
+                        <i class="bi" [ngClass]="getPaymentIcon(metodo)"></i>
+                      </span>
+                      <span class="pm-name">{{ metodo.name }}</span>
+                      @if (selectedPaymentMethodId === metodo.id) {
+                        <i class="bi bi-check-circle-fill pm-check" aria-hidden="true"></i>
+                      }
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            @if (requiresCardDetails) {
+              @if (useMercadoPagoCardBrick) {
+                <div id="mp-card-brick-section" class="mp-brick-card">
+                  <div class="mp-card-header">
+                    <span class="mp-card-title">
+                      <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
+                      Mercado Pago Perú
+                    </span>
+                    @if (mpSandboxMode) {
+                      <span class="status-chip chip-amber">SANDBOX</span>
+                    } @else {
+                      <span class="status-chip chip-green">PCI-DSS</span>
+                    }
+                  </div>
+
+                  @if (mpBrickLoading) {
+                    <div class="mp-loading-box">
+                      <i class="bi bi-arrow-repeat spin-icon" aria-hidden="true"></i>
+                      <span>Cargando módulo de tarjeta...</span>
+                    </div>
+                  }
+
+                  @if (mpBrickError) {
+                    <div class="mp-error-box">
+                      <span><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> {{ mpBrickError }}</span>
+                      <button type="button" class="mp-retry-btn" (click)="reintentarCardBrick()">Reintentar</button>
+                    </div>
+                  }
+
+                  <div id="mp-card-brick-container"></div>
+
+                  <small class="mp-footnote">
+                    <i class="bi bi-lock-fill" aria-hidden="true"></i>
+                    Procesamiento encriptado con Mercado Pago.
+                  </small>
+                </div>
+              } @else {
+                <div class="payment-card-form" role="region" aria-label="Detalles de tarjeta">
+                  <div class="form-grid-2">
+                    <div class="summary-field full-span">
+                      <label for="cardHolder">Titular</label>
+                      <input
+                        id="cardHolder"
+                        type="text"
+                        [(ngModel)]="cardForm.holder"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Nombre en la tarjeta"
+                        aria-required="true"
+                      />
+                    </div>
+                    <div class="summary-field full-span">
+                      <label for="cardNumber">Número de tarjeta</label>
+                      <input
+                        id="cardNumber"
+                        type="text"
+                        maxlength="19"
+                        [(ngModel)]="cardForm.number"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="0000 0000 0000 0000"
+                        aria-required="true"
+                      />
+                    </div>
+                    <div class="summary-field">
+                      <label for="cardExpiry">Expiración</label>
+                      <input
+                        id="cardExpiry"
+                        type="text"
+                        maxlength="5"
+                        [(ngModel)]="cardForm.expiry"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="MM/AA"
+                        aria-required="true"
+                      />
+                    </div>
+                    <div class="summary-field">
+                      <label for="cardCvv">CVV</label>
+                      <div class="cvv-wrap">
+                        <input
+                          id="cardCvv"
+                          [type]="showCvv ? 'text' : 'password'"
+                          maxlength="4"
+                          [(ngModel)]="cardForm.cvv"
+                          [ngModelOptions]="{ standalone: true }"
+                          placeholder="***"
+                          aria-required="true"
+                        />
+                        <button
+                          type="button"
+                          class="cvv-toggle"
+                          (click)="showCvv = !showCvv"
+                          [attr.aria-label]="showCvv ? 'Ocultar CVV' : 'Mostrar CVV'"
+                        >
+                          <i class="bi" [ngClass]="showCvv ? 'bi-eye-slash' : 'bi-eye'"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+
+            @if (requiresMobileDetails) {
+              @if (useMercadoPagoYape) {
+                <div class="payment-mobile-form yape-mp-box" role="region" aria-label="Pago oficial con Yape vía Mercado Pago">
+                  <div class="mp-card-header">
+                    <span class="yape-title">
+                      <i class="bi bi-phone-fill" aria-hidden="true"></i>
+                      Yape vía Mercado Pago
+                    </span>
+                    @if (mpSandboxMode) {
+                      <span class="status-chip chip-amber">SANDBOX</span>
+                    } @else {
+                      <span class="status-chip chip-purple">INMEDIATO</span>
+                    }
+                  </div>
+
+                  <div class="form-grid-2">
+                    <div class="summary-field">
+                      <label for="mobilePhone">Celular Yape</label>
+                      <input
+                        id="mobilePhone"
+                        type="tel"
+                        maxlength="9"
+                        [(ngModel)]="mobileForm.phone"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="9XXXXXXXX"
+                        aria-required="true"
+                      />
+                    </div>
+                    <div class="summary-field">
+                      <label for="mobileReference">Código (6 dígitos)</label>
+                      <input
+                        id="mobileReference"
+                        type="text"
+                        inputmode="numeric"
+                        maxlength="6"
+                        [(ngModel)]="mobileForm.reference"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="123456"
+                        aria-required="true"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="yape-help-note">
+                    <i class="bi bi-shield-check" aria-hidden="true"></i>
+                    <div>
+                      App <strong>Yape → Aprobar compras</strong>.
+                      @if (mpSandboxMode) {
+                        <span class="sandbox-hint">Sandbox: Cel <code>111111111</code> · OTP <code>123456</code></span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <div class="payment-mobile-form" role="region" aria-label="Detalles de pago móvil">
+                  <div class="form-grid-2">
+                    <div class="summary-field">
+                      <label for="mobilePhone">Celular ({{ isYapeMethod ? 'Yape' : 'Plin' }})</label>
+                      <input
+                        id="mobilePhone"
+                        type="tel"
+                        maxlength="9"
+                        [(ngModel)]="mobileForm.phone"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="9XXXXXXXX"
+                        aria-required="true"
+                      />
+                    </div>
+                    <div class="summary-field">
+                      <label for="mobileReference">N° operación</label>
+                      <input
+                        id="mobileReference"
+                        type="text"
+                        [(ngModel)]="mobileForm.reference"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Código o ref."
+                        aria-required="true"
+                      />
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+
+            <div class="summary-field notes-field">
+              <label for="notes">Notas del pedido (opcional)</label>
+              <input
+                id="notes"
+                type="text"
+                [(ngModel)]="notes"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Ej. Sin cebolla, tocar timbre, llamar al llegar..."
+                aria-label="Notas especiales para el pedido"
+              />
+            </div>
+
+            <div class="boleta-box" [class.active]="wantsBoleta">
+              <label class="boleta-toggle-label">
+                <input
+                  type="checkbox"
+                  name="wantsBoleta"
+                  [(ngModel)]="wantsBoleta"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <span class="boleta-title">
+                  <i class="bi bi-receipt-cutoff" aria-hidden="true"></i>
+                  Comprobante Electrónico SUNAT
+                </span>
+                @if (isCashMethod) {
+                  <span class="status-chip chip-amber">AL ENTREGAR</span>
+                } @else {
+                  <span class="status-chip chip-red">PDF</span>
+                }
+              </label>
+
+              @if (wantsBoleta) {
+                <div class="boleta-details">
+                  <div class="comprobante-type-switch" role="radiogroup" aria-label="Tipo de comprobante electrónico">
+                    <button
+                      type="button"
+                      class="comprobante-type-btn"
+                      [class.active]="comprobanteTipo === 'BOLETA'"
+                      (click)="seleccionarTipoComprobante('BOLETA')"
+                      [attr.aria-pressed]="comprobanteTipo === 'BOLETA'"
+                    >
+                      <i class="bi bi-person-vcard" aria-hidden="true"></i>
+                      <span>Boleta (DNI)</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="comprobante-type-btn"
+                      [class.active]="comprobanteTipo === 'FACTURA'"
+                      (click)="seleccionarTipoComprobante('FACTURA')"
+                      [attr.aria-pressed]="comprobanteTipo === 'FACTURA'"
+                    >
+                      <i class="bi bi-building" aria-hidden="true"></i>
+                      <span>Factura (RUC · FFF1)</span>
                     </button>
                   </div>
 
-                  @if (boletaNombre) {
-                    <div style="margin-top: 8px;">
-                      <label for="cartBoletaNombre" style="display: block; font-size: 0.75rem; font-weight: 700; color: #4b5563; margin-bottom: 3px;">
-                        Denominación del Cliente (RENIEC)
-                      </label>
-                      <input
-                        id="cartBoletaNombre"
-                        type="text"
-                        [(ngModel)]="boletaNombre"
-                        [ngModelOptions]="{ standalone: true }"
-                        style="width: 100%; padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.83rem; background: #fff; font-weight: 700;"
-                      />
-                    </div>
-                  }
-
-                  @if (boletaDniMsg) {
-                    <div style="margin-top: 6px; font-size: 0.78rem; color: #15803d; font-weight: 700;">
-                      <i class="bi bi-check-circle-fill"></i> {{ boletaDniMsg }}
-                    </div>
-                  }
-                  @if (boletaDniError) {
-                    <div style="margin-top: 6px; font-size: 0.78rem; color: #b91c1c; font-weight: 700;">
-                      <i class="bi bi-exclamation-triangle-fill"></i> {{ boletaDniError }}
-                    </div>
-                  }
-
-                  <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.77rem; color: #111827; font-weight: 600; margin-top: 10px; cursor: pointer;">
-                    <input
-                      type="checkbox"
-                      name="cartBoletaAgeVerified"
-                      [(ngModel)]="boletaAgeVerified"
-                      [ngModelOptions]="{ standalone: true }"
-                      style="margin-top: 2px; width: 16px; height: 16px; accent-color: #c8102e; cursor: pointer;"
-                    />
-                    <span>
-                      Declaro ser <strong>mayor de edad (+18 años)</strong> y que el <strong>DNI ingresado me pertenece</strong>.
-                    </span>
-                  </label>
-
-                  <div style="margin-top: 10px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    @if (isUserAuthenticated) {
-                      @if (userHasSavedDni) {
-                        <button
-                          type="button"
-                          (click)="editingSavedDni = false"
-                          style="background: #e5e7eb; color: #374151; border: none; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer;"
-                        >
-                          Cancelar
-                        </button>
-                      }
-                      <button
-                        type="button"
-                        (click)="guardarDniEnCuenta()"
-                        [disabled]="guardandoDni || boletaDni.trim().length !== 8 || !boletaAgeVerified"
-                        style="background: #c8102e; color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 0.78rem; font-weight: 700; cursor: pointer;"
-                      >
-                        <i class="bi bi-floppy-fill"></i>
-                        {{ guardandoDni ? 'Guardando...' : 'Guardar DNI en mi cuenta' }}
-                      </button>
-                    } @else {
-                      <span style="font-size: 0.76rem; color: #6b7280; margin-right: auto;">
-                        Inicia sesión para guardar tu DNI y confirmar tu pedido.
+                  @if (isCashMethod) {
+                    <div class="boleta-cash-notice">
+                      <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                      <span>
+                        En efectivo, tu {{ comprobanteTipo === 'FACTURA' ? 'Factura Electrónica FFF1' : 'Boleta Electrónica BBB1' }} se emitirá y enviará a tu correo al recibir y pagar el pedido.
                       </span>
-                      <a
-                        routerLink="/join"
-                        style="background: #111827; color: #fff; text-decoration: none; border-radius: 8px; padding: 7px 14px; font-size: 0.78rem; font-weight: 700;"
-                      >
-                        <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
-                      </a>
+                    </div>
+                  }
+
+                  @if (comprobanteTipo === 'BOLETA') {
+                    @if (userHasSavedDni && !editingSavedDni) {
+                      <div class="boleta-saved-card">
+                        <div>
+                          <span class="boleta-saved-badge">
+                            <i class="bi bi-patch-check-fill" aria-hidden="true"></i> DNI Guardado
+                          </span>
+                          <div class="boleta-saved-value">
+                            {{ boletaDni }} — {{ boletaNombre || 'Cliente Verificado' }}
+                          </div>
+                        </div>
+                        <button type="button" class="boleta-edit-btn" (click)="editingSavedDni = true">
+                          Cambiar
+                        </button>
+                      </div>
+                    } @else {
+                      <div class="boleta-editor-card">
+                        <div class="boleta-dni-row">
+                          <input
+                            id="cartBoletaDni"
+                            type="text"
+                            maxlength="8"
+                            [(ngModel)]="boletaDni"
+                            [ngModelOptions]="{ standalone: true }"
+                            placeholder="DNI (8 dígitos)"
+                            (keyup.enter)="consultarDniCarrito()"
+                          />
+                          <button
+                            type="button"
+                            class="boleta-search-btn"
+                            (click)="consultarDniCarrito()"
+                            [disabled]="buscandoDni || boletaDni.trim().length !== 8"
+                          >
+                            <i class="bi" [ngClass]="buscandoDni ? 'bi-arrow-repeat' : 'bi-search'" aria-hidden="true"></i>
+                            <span>{{ buscandoDni ? '...' : 'RENIEC' }}</span>
+                          </button>
+                        </div>
+
+                        @if (boletaNombre) {
+                          <div class="boleta-name-field">
+                            <input
+                              id="cartBoletaNombre"
+                              type="text"
+                              [(ngModel)]="boletaNombre"
+                              [ngModelOptions]="{ standalone: true }"
+                              placeholder="Nombre completo"
+                            />
+                          </div>
+                        }
+
+                        @if (boletaDniMsg) {
+                          <div class="boleta-msg-ok">
+                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i> {{ boletaDniMsg }}
+                          </div>
+                        }
+                        @if (boletaDniError) {
+                          <div class="boleta-msg-err">
+                            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> {{ boletaDniError }}
+                          </div>
+                        }
+
+                        <label class="boleta-age-check">
+                          <input
+                            type="checkbox"
+                            name="cartBoletaAgeVerified"
+                            [(ngModel)]="boletaAgeVerified"
+                            [ngModelOptions]="{ standalone: true }"
+                          />
+                          <span>Declaro ser <strong>+18 años</strong> y titular del DNI.</span>
+                        </label>
+
+                        <div class="boleta-actions">
+                          @if (isUserAuthenticated) {
+                            @if (userHasSavedDni) {
+                              <button type="button" class="boleta-cancel-btn" (click)="editingSavedDni = false">
+                                Cancelar
+                              </button>
+                            }
+                            <button
+                              type="button"
+                              class="boleta-save-btn"
+                              (click)="guardarDniEnCuenta()"
+                              [disabled]="guardandoDni || boletaDni.trim().length !== 8 || !boletaAgeVerified"
+                            >
+                              <i class="bi bi-floppy-fill" aria-hidden="true"></i>
+                              <span>{{ guardandoDni ? 'Guardando...' : 'Guardar DNI' }}</span>
+                            </button>
+                          } @else {
+                            <span class="boleta-login-note">Inicia sesión para guardar tu DNI.</span>
+                            <a class="boleta-login-link" routerLink="/join">Ingresar</a>
+                          }
+                        </div>
+                      </div>
                     }
-                  </div>
+                  } @else {
+                    @if (userHasSavedRuc && !editingSavedRuc) {
+                      <div class="boleta-saved-card">
+                        <div>
+                          <span class="boleta-saved-badge">
+                            <i class="bi bi-patch-check-fill" aria-hidden="true"></i> RUC Guardado · FFF1
+                          </span>
+                          <div class="boleta-saved-value">
+                            {{ facturaRuc }} — {{ facturaRazonSocial || 'Empresa Verificada' }}
+                          </div>
+                          @if (facturaDireccion) {
+                            <div class="boleta-saved-sub">{{ facturaDireccion }}</div>
+                          }
+                        </div>
+                        <button type="button" class="boleta-edit-btn" (click)="editingSavedRuc = true">
+                          Cambiar
+                        </button>
+                      </div>
+                    } @else {
+                      <div class="boleta-editor-card">
+                        <div class="boleta-dni-row">
+                          <input
+                            id="cartFacturaRuc"
+                            type="text"
+                            maxlength="11"
+                            [(ngModel)]="facturaRuc"
+                            [ngModelOptions]="{ standalone: true }"
+                            placeholder="RUC (11 dígitos: 10... o 20...)"
+                            (keyup.enter)="consultarRucCarrito()"
+                          />
+                          <button
+                            type="button"
+                            class="boleta-search-btn"
+                            (click)="consultarRucCarrito()"
+                            [disabled]="buscandoRuc || facturaRuc.trim().length !== 11"
+                          >
+                            <i class="bi" [ngClass]="buscandoRuc ? 'bi-arrow-repeat' : 'bi-search'" aria-hidden="true"></i>
+                            <span>{{ buscandoRuc ? '...' : 'SUNAT' }}</span>
+                          </button>
+                        </div>
+
+                        <div class="boleta-name-field">
+                          <input
+                            id="cartFacturaRazonSocial"
+                            type="text"
+                            [(ngModel)]="facturaRazonSocial"
+                            [ngModelOptions]="{ standalone: true }"
+                            placeholder="Razón Social (se completa con SUNAT)"
+                          />
+                        </div>
+
+                        <div class="boleta-name-field">
+                          <input
+                            id="cartFacturaDireccion"
+                            type="text"
+                            [(ngModel)]="facturaDireccion"
+                            [ngModelOptions]="{ standalone: true }"
+                            placeholder="Dirección fiscal (opcional)"
+                          />
+                        </div>
+
+                        @if (facturaRucMsg) {
+                          <div class="boleta-msg-ok">
+                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i> {{ facturaRucMsg }}
+                          </div>
+                        }
+                        @if (facturaRucError) {
+                          <div class="boleta-msg-err">
+                            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> {{ facturaRucError }}
+                          </div>
+                        }
+
+                        <label class="boleta-age-check">
+                          <input
+                            type="checkbox"
+                            name="cartFacturaRucVerified"
+                            [(ngModel)]="facturaRucVerified"
+                            [ngModelOptions]="{ standalone: true }"
+                          />
+                          <span>Declaro ser <strong>+18 años</strong> y titular o representante autorizado del <strong>RUC</strong>.</span>
+                        </label>
+
+                        <div class="boleta-actions">
+                          @if (isUserAuthenticated) {
+                            @if (userHasSavedRuc) {
+                              <button type="button" class="boleta-cancel-btn" (click)="editingSavedRuc = false">
+                                Cancelar
+                              </button>
+                            }
+                            <button
+                              type="button"
+                              class="boleta-save-btn"
+                              (click)="guardarRucEnCuenta()"
+                              [disabled]="guardandoRuc || facturaRuc.trim().length !== 11 || !facturaRucVerified"
+                            >
+                              <i class="bi bi-floppy-fill" aria-hidden="true"></i>
+                              <span>{{ guardandoRuc ? 'Guardando...' : 'Guardar RUC' }}</span>
+                            </button>
+                          } @else {
+                            <span class="boleta-login-note">Inicia sesión para guardar tu RUC.</span>
+                            <a class="boleta-login-link" routerLink="/join">Ingresar</a>
+                          }
+                        </div>
+                      </div>
+                    }
+                  }
                 </div>
               }
             </div>
-          }
+          </section>
         </div>
-        </section>
-      </div>
 
-      <aside class="cart-column summary-column" aria-label="Resumen del pedido">
-        <div class="summary-card">
-          <h2 id="summary-title" class="summary-card-title">Resumen de tu pedido</h2>
+        <aside class="cart-column summary-column" aria-label="Resumen del pedido">
+          <div class="summary-card">
+            <div class="summary-accent-bar" aria-hidden="true"></div>
+            <h2 id="summary-title" class="summary-card-title">Resumen</h2>
 
-        <section class="promo-section" aria-label="Código promocional">
-          <h3 id="promo-title">¿Tienes un código promocional?</h3>
-          
-          @if (promoSuccess) {
-            <output class="alert alert-success promo-alert" aria-live="polite" aria-label="Código promocional aplicado">
-              <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-              {{ promoSuccess }}
-            </output>
-          }
-          
-          @if (promoError) {
-            <div class="alert alert-danger promo-alert" role="alert" aria-live="assertive" aria-label="Error en código promocional">
-              <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
-              {{ promoError }}
-            </div>
-          }
-          
-          @if (!promoApplied) {
-            <fieldset class="promo-input-group" style="border:none;padding:0;margin:0;">
-              <legend class="visually-hidden">Código promocional</legend>
-              <input 
-                type="text" 
-                [(ngModel)]="promoCode" 
-                [ngModelOptions]="{ standalone: true }"
-                placeholder="Ingresa tu código"
-                class="promo-input"
-                [disabled]="isValidatingPromo"
-                aria-label="Ingresa código promocional"
-                aria-describedby="promo-help"
-              >
-              <span id="promo-help" class="visually-hidden">Ingresa tu código promocional y haz clic en Aplicar</span>
-              <button 
-                class="btn-promo" 
-                (click)="aplicarPromocion()"
-                [disabled]="!promoCode.trim() || isValidatingPromo"
-                [attr.aria-label]="isValidatingPromo ? 'Validando código' : 'Aplicar código promocional'"
-              >
-                @if (isValidatingPromo) {
-                  <span>Validando...</span>
-                } @else {
-                  <span>Aplicar</span>
-                }
-              </button>
-            </fieldset>
-          } @else {
-            <section class="promo-applied" aria-label="Código promocional aplicado">
-              <div class="promo-code-display">
-                <i class="bi bi-tag-fill" aria-hidden="true"></i>
-                <span aria-label="Código aplicado">{{ promoCode }}</span>
-              </div>
-              <button class="btn-remove-promo" (click)="quitarPromocion()" aria-label="Quitar código promocional">
-                <i class="bi bi-x-circle" aria-hidden="true"></i>
-                Quitar
-              </button>
+            <section class="promo-section" aria-label="Código promocional">
+              @if (promoSuccess) {
+                <output class="cart-banner cart-banner-success promo-alert" aria-live="polite">
+                  <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                  <span>{{ promoSuccess }}</span>
+                </output>
+              }
+
+              @if (promoError) {
+                <div class="cart-banner cart-banner-danger promo-alert" role="alert" aria-live="assertive">
+                  <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+                  <span>{{ promoError }}</span>
+                </div>
+              }
+
+              @if (!promoApplied) {
+                <div class="promo-input-group">
+                  <input
+                    type="text"
+                    [(ngModel)]="promoCode"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="Código promocional"
+                    class="promo-input"
+                    [disabled]="isValidatingPromo"
+                    (keyup.enter)="aplicarPromocion()"
+                    aria-label="Ingresa código promocional"
+                  />
+                  <button
+                    type="button"
+                    class="btn-promo"
+                    (click)="aplicarPromocion()"
+                    [disabled]="!promoCode.trim() || isValidatingPromo"
+                  >
+                    {{ isValidatingPromo ? '...' : 'Aplicar' }}
+                  </button>
+                </div>
+              } @else {
+                <div class="promo-applied">
+                  <div class="promo-code-display">
+                    <i class="bi bi-tag-fill" aria-hidden="true"></i>
+                    <span>{{ promoCode }}</span>
+                  </div>
+                  <button type="button" class="btn-remove-promo" (click)="quitarPromocion()" aria-label="Quitar código promocional">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                  </button>
+                </div>
+              }
             </section>
-          }
-        </section>
 
-        <table class="summary-table" aria-label="Resumen de precios">
-          <tbody>
-            <tr class="summary-row">
-              <th scope="row">Productos</th>
-              <td>{{ totals.itemsCount }}</td>
-            </tr>
-            <tr class="summary-row">
-              <th scope="row">Subtotal</th>
-              <td>S/. {{ totals.subtotal | number:'1.2-2' }}</td>
-            </tr>
-            <tr class="summary-row">
-              <th scope="row">Delivery estimado</th>
-              <td>S/. {{ totals.deliveryFee | number:'1.2-2' }}</td>
-            </tr>
-            @if (promoApplied && promoDiscount > 0) {
-              <tr class="summary-row promo-discount">
-                <th scope="row">
-                  <i class="bi bi-tag-fill me-1" aria-hidden="true"></i>
-                  Descuento ({{ promoCode }})
-                </th>
-                <td class="discount-value">-S/. {{ promoDiscount | number:'1.2-2' }}</td>
-              </tr>
-            }
-            <tr>
-              <td colspan="2"><hr style="margin: 0.5rem 0; border-color: rgba(0,0,0,0.1);"></td>
-            </tr>
-            <tr class="summary-row total">
-              <th scope="row" id="total-label">Total a pagar</th>
-              <td aria-labelledby="total-label">S/. {{ totals.total | number:'1.2-2' }}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        @if (checkoutError) {
-          <div class="alert alert-danger mt-3 mb-2 p-3 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 border border-red-300 bg-red-50 text-red-800" role="alert" aria-live="assertive">
-            <i class="bi bi-exclamation-triangle-fill text-red-600 text-base shrink-0"></i>
-            <span>{{ checkoutError }}</span>
-          </div>
-        }
-
-        <button 
-          class="btn-primary" 
-          [disabled]="isCheckoutDisabled" 
-          (click)="checkout()"
-          [attr.aria-label]="isProcessing ? 'Procesando pedido' : 'Proceder con pedido por S/. ' + (totals.total | number:'1.2-2')"
-        >
-          @if (isProcessing) {
-            <span>Procesando...</span>
-          } @else if (useMercadoPagoCardBrick) {
-            <span><i class="bi bi-shield-lock-fill"></i> Pagar con Mercado Pago</span>
-          } @else if (useMercadoPagoYape) {
-            <span><i class="bi bi-phone-fill"></i> Pagar con Yape (Mercado Pago)</span>
-          } @else {
-            <span>Proceder con mi pedido</span>
-          }
-        </button>
-          <a class="btn-link" routerLink="/menu" aria-label="Añadir más productos">Añadir más productos</a>
-          <button 
-            class="btn-secondary" 
-            (click)="vaciar()" 
-            [disabled]="items.length === 0 || isProcessing || isSuccess"
-            aria-label="Vaciar carrito"
-          >
-            Vaciar carrito
-          </button>
-        </div>
-      </aside>
-    </div>
-  }
-
-  @if (showDeleteModal && itemToDelete) {
-    <div class="delete-modal-overlay" (click)="cerrarModalEliminar()">
-      <div class="delete-modal-content" (click)="$event.stopPropagation()">
-        <div class="modal-icon">
-          <i class="bi bi-exclamation-triangle"></i>
-        </div>
-        <h3>¿Eliminar producto?</h3>
-        <p>¿Estás seguro que deseas quitar <strong>{{ itemToDelete.name }}</strong> de tu carrito?</p>
-        <div class="modal-actions">
-          <button class="btn-cancel" (click)="cerrarModalEliminar()">Cancelar</button>
-          <button class="btn-confirm-delete" (click)="confirmarEliminar()">Sí, eliminar</button>
-        </div>
-      </div>
-    </div>
-  }
-
-  @if (isProcessing && !isSuccess) {
-    <div class="processing-overlay" role="status" aria-live="polite" aria-busy="true">
-      <div class="processing-content">
-        <div class="processing-visual" [class.mail-stage]="processingStep === 3" [class.done-stage]="processingStep === 4">
-          <div class="pizza-loader"></div>
-          <div class="processing-center-icon" aria-hidden="true">
-            @if (processingStep === 1) {
-              <i class="bi bi-bag-check-fill"></i>
-            } @else if (processingStep === 2) {
-              <i class="bi bi-shield-check"></i>
-            } @else if (processingStep === 3) {
-              <i class="bi bi-envelope-fill mail-pulse-icon"></i>
-            } @else {
-              <i class="bi bi-check-circle-fill"></i>
-            }
-          </div>
-        </div>
-
-        <div class="processing-header-copy">
-          <h3>{{ processingTitle }}</h3>
-          <p>{{ processingSubtitle }}</p>
-        </div>
-
-        <div class="processing-progress-wrapper" aria-hidden="true">
-          <div class="processing-progress-track">
-            <div class="processing-progress-fill" [style.width.%]="processingProgress"></div>
-          </div>
-          <span class="processing-progress-label">{{ processingProgress | number:'1.0-0' }}%</span>
-        </div>
-
-        <ul class="processing-steps" aria-label="Etapas del procesamiento del pedido">
-          <li class="processing-step-item" [class.active]="processingStep === 1" [class.completed]="processingStep > 1">
-            <span class="step-badge" aria-hidden="true">
-              @if (processingStep > 1) {
-                <i class="bi bi-check-circle-fill"></i>
-              } @else {
-                <span class="step-dot"></span>
-              }
-            </span>
-            <span>Validando pedido y stock en cocina</span>
-          </li>
-          <li class="processing-step-item" [class.active]="processingStep === 2" [class.completed]="processingStep > 2">
-            <span class="step-badge" aria-hidden="true">
-              @if (processingStep > 2) {
-                <i class="bi bi-check-circle-fill"></i>
-              } @else {
-                <span class="step-dot"></span>
-              }
-            </span>
-            <span>Confirmando pago y registrando orden</span>
-          </li>
-          <li class="processing-step-item" [class.active]="processingStep === 3" [class.completed]="processingStep > 3">
-            <span class="step-badge" aria-hidden="true">
-              @if (processingStep > 3) {
-                <i class="bi bi-check-circle-fill"></i>
-              } @else {
-                <span class="step-dot"></span>
-              }
-            </span>
-            <span>Enviando comprobante a tu correo electrónico</span>
-          </li>
-        </ul>
-
-        <small class="processing-footnote">Por favor, no cierres ni recargues esta ventana</small>
-      </div>
-    </div>
-  }
-
-  @if (isSuccess) {
-    <div class="success-overlay" role="dialog" aria-modal="true" aria-label="Pedido confirmado">
-      <div class="success-content">
-        <div class="success-icon-container">
-          <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-            <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
-            <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-          </svg>
-        </div>
-        <h2>¡Pedido {{ confirmedOrderId ? '#' + confirmedOrderId + ' ' : '' }}Confirmado!</h2>
-        <p>Tu deliciosa pizza ya entró en preparación en nuestra cocina.</p>
-
-        @if (confirmedPaymentViaMp) {
-          <div style="margin: 10px 0; background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 12px; padding: 10px 14px; text-align: left; display: flex; align-items: center; gap: 10px;">
-            <i class="bi bi-patch-check-fill" style="color: #0284c7; font-size: 1.25rem;"></i>
-            <div>
-              <div style="font-size: 0.78rem; font-weight: 800; color: #0369a1; text-transform: uppercase;">
-                Pago Aprobado por Mercado Pago Perú
+            <div class="summary-breakdown" aria-label="Resumen de precios">
+              <div class="summary-row">
+                <span class="row-label">Productos ({{ totals.itemsCount }})</span>
+                <span class="row-value">S/ {{ totals.subtotal | number:'1.2-2' }}</span>
               </div>
-              <div style="font-size: 0.82rem; color: #0c4a6e;">
-                Medio confirmado: <strong>{{ confirmedPaymentMethodLabel || 'Mercado Pago' }}</strong>
+              <div class="summary-row">
+                <span class="row-label">{{ deliveryType === 'PICKUP' ? 'Recojo en tienda' : 'Delivery' }}</span>
+                @if (totals.deliveryFee === 0) {
+                  <span class="row-value free-tag">Gratis</span>
+                } @else {
+                  <span class="row-value">S/ {{ totals.deliveryFee | number:'1.2-2' }}</span>
+                }
+              </div>
+
+              @if (promoApplied && promoDiscount > 0) {
+                <div class="summary-row promo-discount">
+                  <span class="row-label">
+                    <i class="bi bi-tag-fill" aria-hidden="true"></i>
+                    {{ promoCode }}
+                  </span>
+                  <span class="row-value discount-value">-S/ {{ promoDiscount | number:'1.2-2' }}</span>
+                </div>
+              }
+
+              <div class="summary-divider" aria-hidden="true"></div>
+
+              <div class="summary-row total">
+                <span id="total-label" class="row-label">Total</span>
+                <span class="row-value total-amount" aria-labelledby="total-label">
+                  S/ {{ totals.total | number:'1.2-2' }}
+                </span>
               </div>
             </div>
-          </div>
-        }
 
-        @if (confirmedEmailSent) {
-          <div class="email-status-banner sent" role="status" aria-live="polite">
-            <div class="email-status-icon">
-              <i class="bi bi-envelope-check-fill" aria-hidden="true"></i>
-            </div>
-            <div class="email-status-copy">
-              <strong>¡Se envió el correo de confirmación!</strong>
-              <span>
-                Enviamos el detalle de tu pedido a
-                <b>{{ confirmedEmailAddress || 'tu correo registrado' }}</b>@if (confirmedAdminEmailSent) { y notificamos a los administradores}.
-              </span>
-            </div>
-          </div>
-        } @else {
-          <div class="email-status-banner pending" role="status" aria-live="polite">
-            <div class="email-status-icon">
-              <i class="bi bi-envelope-exclamation-fill" aria-hidden="true"></i>
-            </div>
-            <div class="email-status-copy">
-              <strong>Pedido registrado en cocina</strong>
-              <span>
-                El envío del comprobante a <b>{{ confirmedEmailAddress || 'tu cuenta' }}</b> quedó pendiente.
-              </span>
-            </div>
-          </div>
-        }
+            @if (checkoutError) {
+              <div class="cart-banner cart-banner-danger summary-error" role="alert" aria-live="assertive">
+                <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                <span>{{ checkoutError }}</span>
+              </div>
+            }
 
-        @if (confirmedBoletaComprobante) {
-          <div style="margin: 12px 0; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 12px 14px; text-align: left;">
-            <div style="font-size: 0.74rem; font-weight: 800; color: #15803d; text-transform: uppercase;">
-              <i class="bi bi-file-earmark-pdf-fill"></i> Boleta de Venta Electrónica Emitida (SUNAT)
-            </div>
-            <div style="font-size: 0.95rem; font-weight: 900; color: #14532d; margin-top: 2px;">
-              Comprobante {{ confirmedBoletaComprobante }} (DNI: {{ boletaDni }})
-            </div>
-            <p style="font-size: 0.78rem; color: #166534; margin: 4px 0 10px;">
-              El archivo PDF oficial de tu Boleta de Venta Electrónica fue adjuntado a tu correo electrónico.
-            </p>
             <button
               type="button"
-              (click)="abrirBoletaConfirmadaPdf()"
-              style="width: 100%; background: #15803d; color: #fff; border: none; border-radius: 9px; padding: 9px 14px; font-size: 0.82rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;"
+              class="btn-primary checkout-submit-btn"
+              [disabled]="isCheckoutDisabled"
+              (click)="checkout()"
+              [attr.aria-label]="isProcessing ? 'Procesando pedido' : 'Proceder con pedido por S/ ' + (totals.total | number:'1.2-2')"
             >
-              <i class="bi bi-file-earmark-pdf-fill"></i> Ver / Descargar Boleta Electrónica (PDF)
+              @if (isProcessing) {
+                <i class="bi bi-arrow-repeat spin-icon" aria-hidden="true"></i>
+                <span>Procesando...</span>
+              } @else if (useMercadoPagoCardBrick) {
+                <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
+                <span>Pagar con Mercado Pago</span>
+              } @else if (useMercadoPagoYape) {
+                <i class="bi bi-phone-fill" aria-hidden="true"></i>
+                <span>Pagar con Yape</span>
+              } @else {
+                <i class="bi bi-bag-check-fill" aria-hidden="true"></i>
+                <span>Confirmar · S/ {{ totals.total | number:'1.2-2' }}</span>
+              }
             </button>
+
+            <div class="summary-trust-note">
+              <i class="bi bi-shield-check" aria-hidden="true"></i>
+              <span>Confirmación inmediata por correo</span>
+            </div>
           </div>
-        }
-
-        <button class="btn-primary" (click)="cerrarExito()">Aceptar</button>
+        </aside>
       </div>
-    </div>
-  }
+    }
 
-</main>
+    @if (showDeleteModal && itemToDelete) {
+      <div class="delete-modal-overlay" (click)="cerrarModalEliminar()">
+        <div class="delete-modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-icon">
+            <i class="bi bi-exclamation-triangle"></i>
+          </div>
+          <h3>¿Eliminar producto?</h3>
+          <p>¿Estás seguro que deseas quitar <strong>{{ itemToDelete.name }}</strong> de tu carrito?</p>
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="cerrarModalEliminar()">Cancelar</button>
+            <button type="button" class="btn-confirm-delete" (click)="confirmarEliminar()">Sí, eliminar</button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (isProcessing && !isSuccess) {
+      <div class="processing-overlay" role="status" aria-live="polite" aria-busy="true">
+        <div class="processing-content">
+          <div class="processing-visual" [class.mail-stage]="processingStep === 3" [class.done-stage]="processingStep === 4">
+            <div class="pizza-loader"></div>
+            <div class="processing-center-icon" aria-hidden="true">
+              @if (processingStep === 1) {
+                <i class="bi bi-bag-check-fill"></i>
+              } @else if (processingStep === 2) {
+                <i class="bi bi-shield-check"></i>
+              } @else if (processingStep === 3) {
+                <i class="bi bi-envelope-fill mail-pulse-icon"></i>
+              } @else {
+                <i class="bi bi-check-circle-fill"></i>
+              }
+            </div>
+          </div>
+
+          <div class="processing-header-copy">
+            <h3>{{ processingTitle }}</h3>
+            <p>{{ processingSubtitle }}</p>
+          </div>
+
+          <div class="processing-progress-wrapper" aria-hidden="true">
+            <div class="processing-progress-track">
+              <div class="processing-progress-fill" [style.width.%]="processingProgress"></div>
+            </div>
+            <span class="processing-progress-label">{{ processingProgress | number:'1.0-0' }}%</span>
+          </div>
+
+          <ul class="processing-steps" aria-label="Etapas del procesamiento del pedido">
+            <li class="processing-step-item" [class.active]="processingStep === 1" [class.completed]="processingStep > 1">
+              <span class="step-badge" aria-hidden="true">
+                @if (processingStep > 1) {
+                  <i class="bi bi-check-circle-fill"></i>
+                } @else {
+                  <span class="step-dot"></span>
+                }
+              </span>
+              <span>Validando pedido y stock en cocina</span>
+            </li>
+            <li class="processing-step-item" [class.active]="processingStep === 2" [class.completed]="processingStep > 2">
+              <span class="step-badge" aria-hidden="true">
+                @if (processingStep > 2) {
+                  <i class="bi bi-check-circle-fill"></i>
+                } @else {
+                  <span class="step-dot"></span>
+                }
+              </span>
+              <span>Confirmando pago y registrando orden</span>
+            </li>
+            <li class="processing-step-item" [class.active]="processingStep === 3" [class.completed]="processingStep > 3">
+              <span class="step-badge" aria-hidden="true">
+                @if (processingStep > 3) {
+                  <i class="bi bi-check-circle-fill"></i>
+                } @else {
+                  <span class="step-dot"></span>
+                }
+              </span>
+              <span>Enviando comprobante a tu correo electrónico</span>
+            </li>
+          </ul>
+
+          <small class="processing-footnote">Por favor, no cierres ni recargues esta ventana</small>
+        </div>
+      </div>
+    }
+
+    @if (isSuccess) {
+      <div class="success-overlay" role="dialog" aria-modal="true" aria-label="Pedido confirmado">
+        <div class="success-content">
+          <div class="success-icon-container">
+            <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+              <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+              <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+            </svg>
+          </div>
+          <h2>¡Pedido {{ confirmedOrderId ? '#' + confirmedOrderId + ' ' : '' }}Confirmado!</h2>
+          <p>Tu deliciosa Eco Pizza ya entró en preparación en nuestra cocina.</p>
+
+          @if (confirmedPaymentViaMp) {
+            <div class="success-mp-banner">
+              <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
+              <div>
+                <div class="success-mp-title">Pago Aprobado por Mercado Pago Perú</div>
+                <div class="success-mp-sub">
+                  Medio confirmado: <strong>{{ confirmedPaymentMethodLabel || 'Mercado Pago' }}</strong>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (confirmedEmailSent) {
+            <div class="email-status-banner sent" role="status" aria-live="polite">
+              <div class="email-status-icon">
+                <i class="bi bi-envelope-check-fill" aria-hidden="true"></i>
+              </div>
+              <div class="email-status-copy">
+                <strong>¡Se envió el correo de confirmación!</strong>
+                <span>
+                  Enviamos el detalle de tu pedido a
+                  <b>{{ confirmedEmailAddress || 'tu correo registrado' }}</b>@if (confirmedAdminEmailSent) { y notificamos a los administradores}.
+                </span>
+              </div>
+            </div>
+          } @else {
+            <div class="email-status-banner pending" role="status" aria-live="polite">
+              <div class="email-status-icon">
+                <i class="bi bi-envelope-exclamation-fill" aria-hidden="true"></i>
+              </div>
+              <div class="email-status-copy">
+                <strong>Pedido registrado en cocina</strong>
+                <span>
+                  El envío del comprobante a <b>{{ confirmedEmailAddress || 'tu cuenta' }}</b> quedó pendiente.
+                </span>
+              </div>
+            </div>
+          }
+
+          @if (confirmedBoletaComprobante) {
+            <div class="success-boleta-card">
+              <div class="success-boleta-kicker">
+                <i class="bi bi-file-earmark-pdf-fill" aria-hidden="true"></i>
+                {{ confirmedTipoComprobante === 1 ? 'Factura Electrónica Emitida (SUNAT)' : 'Boleta de Venta Electrónica Emitida (SUNAT)' }}
+              </div>
+              <div class="success-boleta-code">
+                Comprobante {{ confirmedBoletaComprobante }} ({{ confirmedTipoComprobante === 1 ? 'RUC' : 'DNI' }}: {{ confirmedDocumentoCliente || boletaDni }})
+              </div>
+              <p class="success-boleta-note">
+                El archivo PDF oficial de tu {{ confirmedTipoComprobante === 1 ? 'Factura Electrónica' : 'Boleta de Venta Electrónica' }} fue adjuntado a tu correo electrónico.
+              </p>
+              <button type="button" class="success-boleta-btn" (click)="abrirBoletaConfirmadaPdf()">
+                <i class="bi bi-file-earmark-pdf-fill" aria-hidden="true"></i>
+                <span>Ver / Descargar {{ confirmedTipoComprobante === 1 ? 'Factura Electrónica' : 'Boleta Electrónica' }} (PDF)</span>
+              </button>
+            </div>
+          } @else if (confirmedBoletaEstado === 'PENDIENTE_ENTREGA') {
+            <div class="success-boleta-pending">
+              <div class="success-boleta-pending-kicker">
+                <i class="bi bi-clock-history" aria-hidden="true"></i>
+                {{ confirmedTipoComprobante === 1 ? 'Factura Electrónica Programada (Pago en Efectivo)' : 'Boleta Electrónica Programada (Pago en Efectivo)' }}
+              </div>
+              <div class="success-boleta-pending-title">
+                {{ confirmedTipoComprobante === 1 ? 'RUC registrado' : 'DNI registrado' }}: {{ confirmedDocumentoCliente || (comprobanteTipo === 'FACTURA' ? facturaRuc : boletaDni) }}
+              </div>
+              <p class="success-boleta-pending-note">
+                Emitiremos tu {{ confirmedTipoComprobante === 1 ? 'Factura Electrónica FFF1' : 'Boleta de Venta Electrónica BBB1' }} SUNAT y te enviaremos el PDF automáticamente por correo cuando se confirme la entrega y el pago en efectivo.
+              </p>
+            </div>
+          }
+
+          <button type="button" class="btn-primary" (click)="cerrarExito()">Aceptar</button>
+        </div>
+      </div>
+    }
+  </main>
+</div>

@@ -133,6 +133,17 @@
           <option value="DELIVERED">Entregados</option>
           <option value="CANCELLED">Cancelados</option>
         </select>
+
+        <select
+          [(ngModel)]="filtroComprobante"
+          (change)="onFiltroChange()"
+          class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-700 outline-none focus:bg-white focus:border-red-500"
+        >
+          <option value="TODOS">Todos los comprobantes</option>
+          <option value="CON_BOLETA">Con Boleta (BBB1)</option>
+          <option value="CON_FACTURA">Con Factura (FFF1)</option>
+          <option value="CON_NC">Con Nota de Crédito (FFF1)</option>
+        </select>
       </div>
     </div>
 
@@ -141,7 +152,7 @@
         {{ filteredOrders.length }} pedido{{ filteredOrders.length === 1 ? '' : 's' }}
       </span>
       <button
-        *ngIf="terminoBusqueda || filtroEstado !== 'TODOS' || filtroDeliveryType !== 'TODOS'"
+        *ngIf="terminoBusqueda || filtroEstado !== 'TODOS' || filtroDeliveryType !== 'TODOS' || filtroComprobante !== 'TODOS'"
         type="button"
         (click)="limpiarFiltros()"
         class="text-xs font-bold text-red-600 hover:text-red-700 underline cursor-pointer"
@@ -186,10 +197,27 @@
           </span>
           <span
             *ngIf="tieneBoleta(order)"
-            class="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1"
+            class="px-2.5 py-0.5 rounded-full text-xs font-black border flex items-center gap-1"
+            [ngClass]="esBoletaAnulada(order) ? 'bg-gray-100 text-gray-500 border-gray-200 line-through' : (esFactura(order) ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200')"
           >
-            <i class="bi bi-receipt-cutoff text-emerald-600"></i>
-            BOLETA {{ order.boletaComprobante || (order.boletaSerie + '-' + order.boletaNumero) }}
+            <i class="bi bi-receipt-cutoff" [ngClass]="esBoletaAnulada(order) ? 'text-gray-400' : (esFactura(order) ? 'text-blue-600' : 'text-emerald-600')"></i>
+            {{ esFactura(order) ? 'FACTURA' : 'BOLETA' }} {{ order.boletaComprobante || (order.boletaSerie + '-' + order.boletaNumero) }}
+          </span>
+          <span
+            *ngIf="tieneNotaCredito(order)"
+            class="px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-50 text-rose-800 border border-rose-200 flex items-center gap-1"
+            title="Comprobante anulado ante SUNAT mediante Nota de Crédito Electrónica"
+          >
+            <i class="bi bi-file-earmark-minus-fill text-rose-600"></i>
+            NC {{ order.ncComprobante || (order.ncSerie + '-' + order.ncNumero) }}
+          </span>
+          <span
+            *ngIf="esBoletaPendienteEntrega(order)"
+            class="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1"
+            title="Se emitirá automáticamente al marcar el pedido como Entregado"
+          >
+            <i class="bi bi-clock-history text-amber-600"></i>
+            {{ esFactura(order) ? 'FACTURA AL ENTREGAR' : 'BOLETA AL ENTREGAR' }}
           </span>
         </div>
 
@@ -211,8 +239,8 @@
           <p class="text-gray-500 m-0 mt-0.5" *ngIf="order.userPhone">
             <i class="bi bi-telephone text-[10px] mr-1"></i>{{ order.userPhone }}
           </p>
-          <p class="text-indigo-700 font-bold m-0 mt-0.5" *ngIf="order.boletaClienteDni || order.userDni">
-            <i class="bi bi-person-vcard text-[10px] mr-1"></i>DNI: {{ order.boletaClienteDni || order.userDni }}
+          <p class="text-indigo-700 font-bold m-0 mt-0.5" *ngIf="order.boletaClienteDni || order.userDni || order.userRuc">
+            <i class="bi bi-person-vcard text-[10px] mr-1"></i>{{ esFactura(order) ? 'RUC' : 'DNI' }}: {{ order.boletaClienteDni || (esFactura(order) ? order.userRuc : order.userDni) }}
           </p>
         </div>
 
@@ -265,9 +293,30 @@
             *ngIf="tieneBoleta(order)"
             type="button"
             (click)="verBoletaPdf(order)"
-            class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            class="px-3.5 py-1.5 rounded-xl text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            [ngClass]="esFactura(order) ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'"
           >
-            <i class="bi bi-file-earmark-pdf-fill"></i> Ver Boleta PDF ({{ order.boletaComprobante }})
+            <i class="bi bi-file-earmark-pdf-fill"></i> Ver {{ esFactura(order) ? 'Factura' : 'Boleta' }} PDF ({{ order.boletaComprobante }})
+          </button>
+
+          <button
+            *ngIf="tieneNotaCredito(order)"
+            type="button"
+            (click)="verNotaCreditoPdf(order)"
+            class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+          >
+            <i class="bi bi-file-earmark-minus-fill"></i> Ver Nota de Crédito PDF ({{ order.ncComprobante }})
+          </button>
+
+          <button
+            *ngIf="puedeEmitirNotaCredito(order)"
+            type="button"
+            (click)="emitirNotaCreditoAdmin(order)"
+            [disabled]="emitiendoNcOrderId === order.id"
+            class="px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          >
+            <i class="bi" [ngClass]="emitiendoNcOrderId === order.id ? 'bi-arrow-repeat animate-spin' : 'bi-x-octagon-fill'"></i>
+            {{ emitiendoNcOrderId === order.id ? 'Emitiendo NC...' : 'Emitir Nota de Crédito FFF1' }}
           </button>
 
           <button
@@ -278,7 +327,7 @@
             class="px-3.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             <i class="bi" [ngClass]="emitiendoBoletaOrderId === order.id ? 'bi-arrow-repeat animate-spin' : 'bi-receipt'"></i>
-            {{ emitiendoBoletaOrderId === order.id ? 'Emitiendo Boleta...' : 'Emitir Boleta SUNAT' }}
+            {{ emitiendoBoletaOrderId === order.id ? 'Emitiendo...' : (esFactura(order) ? 'Emitir Factura FFF1' : 'Emitir Comprobante SUNAT') }}
           </button>
         </div>
 
@@ -463,14 +512,23 @@
       <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
         <div class="space-y-1">
           <div class="flex items-center gap-2">
-            <span class="px-2 py-0.5 rounded-md bg-emerald-600 text-white font-black text-[10px] uppercase">SUNAT</span>
+            <span class="px-2 py-0.5 rounded-md text-white font-black text-[10px] uppercase" [ngClass]="esFactura(selectedOrder) ? 'bg-blue-600' : 'bg-emerald-600'">SUNAT</span>
             <span class="font-black text-gray-900 text-sm">
-              {{ tieneBoleta(selectedOrder) ? ('Boleta de Venta Electrónica ' + selectedOrder.boletaComprobante) : 'Pedido sin Boleta Electrónica emitida' }}
+              {{
+                tieneBoleta(selectedOrder)
+                  ? ((esFactura(selectedOrder) ? 'Factura Electrónica ' : 'Boleta de Venta Electrónica ') + selectedOrder.boletaComprobante)
+                  : esBoletaPendienteEntrega(selectedOrder)
+                    ? (esFactura(selectedOrder) ? 'Factura Electrónica FFF1 solicitada (pendiente de entrega)' : 'Boleta Electrónica solicitada (pendiente de entrega)')
+                    : 'Pedido sin Comprobante Electrónico emitido'
+              }}
             </span>
           </div>
+          <p class="text-amber-800 font-semibold m-0" *ngIf="esBoletaPendienteEntrega(selectedOrder)">
+            {{ esFactura(selectedOrder) ? 'RUC' : 'DNI' }}: {{ selectedOrder.boletaClienteDni || (esFactura(selectedOrder) ? selectedOrder.userRuc : selectedOrder.userDni) }} — Se emitirá automáticamente en SUNAT al marcar este pedido como Entregado.
+          </p>
           <p class="text-gray-600 m-0" *ngIf="tieneBoleta(selectedOrder)">
-            <strong>DNI:</strong> {{ selectedOrder.boletaClienteDni }} &nbsp;|&nbsp;
-            <strong>Titular:</strong> {{ selectedOrder.boletaClienteNombre || selectedOrder.userName }} &nbsp;|&nbsp;
+            <strong>{{ esFactura(selectedOrder) ? 'RUC' : 'DNI' }}:</strong> {{ selectedOrder.boletaClienteDni }} &nbsp;|&nbsp;
+            <strong>{{ esFactura(selectedOrder) ? 'Razón Social' : 'Titular' }}:</strong> {{ selectedOrder.boletaClienteNombre || selectedOrder.userName }} &nbsp;|&nbsp;
             <strong>Op. Gravada:</strong> S/ {{ (selectedOrder.boletaTotalGravada || (selectedOrder.total / 1.18)) | number:'1.2-2' }} &nbsp;|&nbsp;
             <strong>I.G.V. (18%):</strong> S/ {{ (selectedOrder.boletaTotalIgv || (selectedOrder.total - (selectedOrder.total / 1.18))) | number:'1.2-2' }}
           </p>
@@ -484,9 +542,10 @@
             *ngIf="tieneBoleta(selectedOrder)"
             type="button"
             (click)="verBoletaPdf(selectedOrder)"
-            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            class="px-4 py-2 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            [ngClass]="esFactura(selectedOrder) ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'"
           >
-            <i class="bi bi-file-earmark-pdf-fill"></i> Ver / Descargar Boleta PDF
+            <i class="bi bi-file-earmark-pdf-fill"></i> Ver / Descargar {{ esFactura(selectedOrder) ? 'Factura' : 'Boleta' }} PDF
           </button>
           <a
             *ngIf="selectedOrder.boletaXmlUrl"
@@ -506,6 +565,66 @@
           >
             <i class="bi" [ngClass]="emitiendoBoletaOrderId === selectedOrder.id ? 'bi-arrow-repeat animate-spin' : 'bi-receipt-cutoff'"></i>
             {{ emitiendoBoletaOrderId === selectedOrder.id ? 'Emitiendo...' : 'Emitir Boleta Electrónica Ahora' }}
+          </button>
+        </div>
+      </div>
+
+      <div
+        *ngIf="tieneNotaCredito(selectedOrder) || puedeEmitirNotaCredito(selectedOrder)"
+        class="bg-rose-50/80 border border-rose-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs"
+      >
+        <div class="space-y-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2 py-0.5 rounded-md bg-rose-600 text-white font-black text-[10px] uppercase">SUNAT · NC</span>
+            <span class="font-black text-gray-900 text-sm">
+              {{
+                tieneNotaCredito(selectedOrder)
+                  ? ('Nota de Crédito Electrónica ' + selectedOrder.ncComprobante)
+                  : 'Pedido cancelado con Boleta pendiente de anulación SUNAT'
+              }}
+            </span>
+          </div>
+          <p class="text-rose-800 font-semibold m-0" *ngIf="tieneNotaCredito(selectedOrder)">
+            Anula Boleta {{ selectedOrder.boletaComprobante }} · Tipo: 01 - Anulación de la operación
+          </p>
+          <p class="text-gray-600 m-0" *ngIf="tieneNotaCredito(selectedOrder)">
+            <strong>Motivo:</strong> {{ selectedOrder.ncMotivo || ('Anulación de pedido #' + selectedOrder.id) }}
+          </p>
+          <p class="text-gray-500 m-0 font-mono text-[11px]" *ngIf="selectedOrder.ncHash">
+            Hash NC CPE: {{ selectedOrder.ncHash }}
+          </p>
+          <p class="text-rose-800 m-0" *ngIf="!tieneNotaCredito(selectedOrder) && puedeEmitirNotaCredito(selectedOrder)">
+            Este pedido fue cancelado después de emitirse la Boleta {{ selectedOrder.boletaComprobante }}. Emite la Nota de Crédito FFF1 para anularla ante SUNAT.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            *ngIf="tieneNotaCredito(selectedOrder)"
+            type="button"
+            (click)="verNotaCreditoPdf(selectedOrder)"
+            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+          >
+            <i class="bi bi-file-earmark-pdf-fill"></i> Ver / Descargar NC PDF
+          </button>
+          <a
+            *ngIf="selectedOrder.ncXmlUrl"
+            [href]="selectedOrder.ncXmlUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="px-3 py-2 bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 font-bold rounded-xl text-xs transition-colors flex items-center gap-1 no-underline"
+          >
+            <i class="bi bi-filetype-xml"></i> XML
+          </a>
+          <button
+            *ngIf="puedeEmitirNotaCredito(selectedOrder)"
+            type="button"
+            (click)="emitirNotaCreditoAdmin(selectedOrder)"
+            [disabled]="emitiendoNcOrderId === selectedOrder.id"
+            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+          >
+            <i class="bi" [ngClass]="emitiendoNcOrderId === selectedOrder.id ? 'bi-arrow-repeat animate-spin' : 'bi-x-octagon-fill'"></i>
+            {{ emitiendoNcOrderId === selectedOrder.id ? 'Emitiendo NC...' : 'Emitir Nota de Crédito FFF1 Ahora' }}
           </button>
         </div>
       </div>

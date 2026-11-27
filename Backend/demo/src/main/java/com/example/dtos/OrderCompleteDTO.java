@@ -12,6 +12,7 @@ public class OrderCompleteDTO {
     private String userEmail;
     private String userPhone;
     private String userDni;
+    private String userRuc;
 
     // Dirección
     private Integer addressId;
@@ -63,6 +64,22 @@ public class OrderCompleteDTO {
     private BigDecimal boletaTotalIgv;
     private LocalDateTime boletaEmitidaAt;
 
+    // Nota de Crédito Electrónica (SUNAT / Nubefact)
+    private String ncSerie;
+    private Integer ncNumero;
+    private String ncComprobante;
+    private Integer ncTipoNota;
+    private String ncMotivo;
+    private String ncPdfUrl;
+    private String ncXmlUrl;
+    private String ncCdrUrl;
+    private String ncEnlace;
+    private String ncHash;
+    private String ncQr;
+    private String ncEstado;
+    private String ncError;
+    private LocalDateTime ncEmitidaAt;
+
     // Items del pedido
     private List<OrderItemCompleteDTO> items;
 
@@ -85,6 +102,9 @@ public class OrderCompleteDTO {
 
     public String getUserDni() { return userDni; }
     public void setUserDni(String userDni) { this.userDni = userDni; }
+
+    public String getUserRuc() { return userRuc; }
+    public void setUserRuc(String userRuc) { this.userRuc = userRuc; }
 
     public Integer getAddressId() { return addressId; }
     public void setAddressId(Integer addressId) { this.addressId = addressId; }
@@ -193,6 +213,48 @@ public class OrderCompleteDTO {
 
     public LocalDateTime getBoletaEmitidaAt() { return boletaEmitidaAt; }
     public void setBoletaEmitidaAt(LocalDateTime boletaEmitidaAt) { this.boletaEmitidaAt = boletaEmitidaAt; }
+
+    public String getNcSerie() { return ncSerie; }
+    public void setNcSerie(String ncSerie) { this.ncSerie = ncSerie; }
+
+    public Integer getNcNumero() { return ncNumero; }
+    public void setNcNumero(Integer ncNumero) { this.ncNumero = ncNumero; }
+
+    public String getNcComprobante() { return ncComprobante; }
+    public void setNcComprobante(String ncComprobante) { this.ncComprobante = ncComprobante; }
+
+    public Integer getNcTipoNota() { return ncTipoNota; }
+    public void setNcTipoNota(Integer ncTipoNota) { this.ncTipoNota = ncTipoNota; }
+
+    public String getNcMotivo() { return ncMotivo; }
+    public void setNcMotivo(String ncMotivo) { this.ncMotivo = ncMotivo; }
+
+    public String getNcPdfUrl() { return ncPdfUrl; }
+    public void setNcPdfUrl(String ncPdfUrl) { this.ncPdfUrl = ncPdfUrl; }
+
+    public String getNcXmlUrl() { return ncXmlUrl; }
+    public void setNcXmlUrl(String ncXmlUrl) { this.ncXmlUrl = ncXmlUrl; }
+
+    public String getNcCdrUrl() { return ncCdrUrl; }
+    public void setNcCdrUrl(String ncCdrUrl) { this.ncCdrUrl = ncCdrUrl; }
+
+    public String getNcEnlace() { return ncEnlace; }
+    public void setNcEnlace(String ncEnlace) { this.ncEnlace = ncEnlace; }
+
+    public String getNcHash() { return ncHash; }
+    public void setNcHash(String ncHash) { this.ncHash = ncHash; }
+
+    public String getNcQr() { return ncQr; }
+    public void setNcQr(String ncQr) { this.ncQr = ncQr; }
+
+    public String getNcEstado() { return ncEstado; }
+    public void setNcEstado(String ncEstado) { this.ncEstado = ncEstado; }
+
+    public String getNcError() { return ncError; }
+    public void setNcError(String ncError) { this.ncError = ncError; }
+
+    public LocalDateTime getNcEmitidaAt() { return ncEmitidaAt; }
+    public void setNcEmitidaAt(LocalDateTime ncEmitidaAt) { this.ncEmitidaAt = ncEmitidaAt; }
 
     public List<OrderItemCompleteDTO> getItems() { return items; }
     public void setItems(List<OrderItemCompleteDTO> items) { this.items = items; }

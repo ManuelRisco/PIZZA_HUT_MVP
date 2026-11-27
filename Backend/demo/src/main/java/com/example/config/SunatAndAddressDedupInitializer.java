@@ -37,6 +37,7 @@ public class SunatAndAddressDedupInitializer implements CommandLineRunner {
             ensureUserDniColumns();
             ensureOrderBoletaColumns();
             ensureReniecCacheTable();
+            ensureSunatRucCacheTable();
             deduplicateCustomerAddresses();
         } catch (Exception e) {
             log.error("Error durante la inicializacion de columnas SUNAT/RENIEC y deduplicacion de direcciones: {}", e.getMessage(), e);
@@ -54,6 +55,30 @@ public class SunatAndAddressDedupInitializer implements CommandLineRunner {
             IF COL_LENGTH('dbo.users', 'age_verified') IS NULL
             BEGIN
                 ALTER TABLE dbo.users ADD age_verified BIT NOT NULL CONSTRAINT DF_users_age_verified DEFAULT 0;
+            END
+            """);
+        jdbcTemplate.execute("""
+            IF COL_LENGTH('dbo.users', 'ruc') IS NULL
+            BEGIN
+                ALTER TABLE dbo.users ADD ruc VARCHAR(15) NULL;
+            END
+            """);
+        jdbcTemplate.execute("""
+            IF COL_LENGTH('dbo.users', 'ruc_razon_social') IS NULL
+            BEGIN
+                ALTER TABLE dbo.users ADD ruc_razon_social VARCHAR(255) NULL;
+            END
+            """);
+        jdbcTemplate.execute("""
+            IF COL_LENGTH('dbo.users', 'ruc_direccion') IS NULL
+            BEGIN
+                ALTER TABLE dbo.users ADD ruc_direccion VARCHAR(300) NULL;
+            END
+            """);
+        jdbcTemplate.execute("""
+            IF COL_LENGTH('dbo.users', 'ruc_verified') IS NULL
+            BEGIN
+                ALTER TABLE dbo.users ADD ruc_verified BIT NOT NULL CONSTRAINT DF_users_ruc_verified DEFAULT 0;
             END
             """);
     }
@@ -77,7 +102,20 @@ public class SunatAndAddressDedupInitializer implements CommandLineRunner {
             "IF COL_LENGTH('dbo.orders', 'boleta_error') IS NULL ALTER TABLE dbo.orders ADD boleta_error VARCHAR(500) NULL;",
             "IF COL_LENGTH('dbo.orders', 'boleta_total_gravada') IS NULL ALTER TABLE dbo.orders ADD boleta_total_gravada DECIMAL(10,2) NULL;",
             "IF COL_LENGTH('dbo.orders', 'boleta_total_igv') IS NULL ALTER TABLE dbo.orders ADD boleta_total_igv DECIMAL(10,2) NULL;",
-            "IF COL_LENGTH('dbo.orders', 'boleta_emitida_at') IS NULL ALTER TABLE dbo.orders ADD boleta_emitida_at DATETIME2 NULL;"
+            "IF COL_LENGTH('dbo.orders', 'boleta_emitida_at') IS NULL ALTER TABLE dbo.orders ADD boleta_emitida_at DATETIME2 NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_serie') IS NULL ALTER TABLE dbo.orders ADD nc_serie VARCHAR(10) NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_numero') IS NULL ALTER TABLE dbo.orders ADD nc_numero INT NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_tipo_nota') IS NULL ALTER TABLE dbo.orders ADD nc_tipo_nota INT NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_motivo') IS NULL ALTER TABLE dbo.orders ADD nc_motivo VARCHAR(255) NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_pdf_url') IS NULL ALTER TABLE dbo.orders ADD nc_pdf_url VARCHAR(500) NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_xml_url') IS NULL ALTER TABLE dbo.orders ADD nc_xml_url VARCHAR(500) NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_cdr_url') IS NULL ALTER TABLE dbo.orders ADD nc_cdr_url VARCHAR(500) NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_enlace') IS NULL ALTER TABLE dbo.orders ADD nc_enlace VARCHAR(500) NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_hash') IS NULL ALTER TABLE dbo.orders ADD nc_hash VARCHAR(255) NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_qr') IS NULL ALTER TABLE dbo.orders ADD nc_qr VARCHAR(500) NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_estado') IS NULL ALTER TABLE dbo.orders ADD nc_estado VARCHAR(40) NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_error') IS NULL ALTER TABLE dbo.orders ADD nc_error VARCHAR(500) NULL;",
+            "IF COL_LENGTH('dbo.orders', 'nc_emitida_at') IS NULL ALTER TABLE dbo.orders ADD nc_emitida_at DATETIME2 NULL;"
         };
         for (String sql : ddlStatements) {
             jdbcTemplate.execute(sql);
@@ -103,6 +141,25 @@ public class SunatAndAddressDedupInitializer implements CommandLineRunner {
             BEGIN
                 INSERT INTO dbo.reniec_dni_cache (dni, nombres, apellido_paterno, apellido_materno, nombre_completo)
                 VALUES ('76949746', 'MANUEL FABRIZZIO', 'RISCO', 'GIL', 'MANUEL FABRIZZIO RISCO GIL');
+            END
+            """);
+    }
+
+    private void ensureSunatRucCacheTable() {
+        jdbcTemplate.execute("""
+            IF OBJECT_ID('dbo.sunat_ruc_cache', 'U') IS NULL
+            BEGIN
+                CREATE TABLE dbo.sunat_ruc_cache (
+                    ruc VARCHAR(15) NOT NULL PRIMARY KEY,
+                    razon_social VARCHAR(255) NOT NULL,
+                    direccion VARCHAR(300) NULL,
+                    estado VARCHAR(60) NULL,
+                    condicion VARCHAR(60) NULL,
+                    distrito VARCHAR(120) NULL,
+                    provincia VARCHAR(120) NULL,
+                    departamento VARCHAR(120) NULL,
+                    updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+                );
             END
             """);
     }

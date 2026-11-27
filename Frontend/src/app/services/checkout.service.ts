@@ -48,13 +48,19 @@ export class CheckoutService {
         notes: payload.notes ?? null,
         estimatedDelivery: payload.estimatedDelivery ?? null,
         wantsBoleta: Boolean(payload.wantsBoleta),
-        boletaClienteDni: payload.clienteDni ?? null,
-        boletaClienteNombre: payload.clienteNombre ?? null
+        boletaTipoComprobante: payload.wantsBoleta ? (payload.tipoComprobante ?? 2) : null,
+        boletaClienteDni: payload.tipoComprobante === 1 ? (payload.clienteRuc ?? null) : (payload.clienteDni ?? null),
+        boletaClienteNombre: payload.clienteNombre ?? null,
+        boletaClienteDireccion: payload.clienteDireccion ?? null
       },
       wantsBoleta: Boolean(payload.wantsBoleta),
+      tipoComprobante: payload.wantsBoleta ? (payload.tipoComprobante ?? 2) : null,
       clienteDni: payload.clienteDni ?? null,
+      clienteRuc: payload.clienteRuc ?? null,
       clienteNombre: payload.clienteNombre ?? null,
+      clienteDireccion: payload.clienteDireccion ?? null,
       ageVerified: Boolean(payload.ageVerified),
+      rucVerified: Boolean(payload.rucVerified),
       address: payload.address && deliveryType === 'DELIVERY' ? {
         line1: payload.address.line1,
         city: payload.address.city,

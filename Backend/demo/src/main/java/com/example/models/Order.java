@@ -97,6 +97,46 @@ public class Order {
     @Column(name = "boleta_emitida_at")
     private LocalDateTime boletaEmitidaAt;
 
+    // ==== Campos de Nota de Crédito Electrónica (SUNAT / Nubefact - Anulación de Boleta) ====
+    @Column(name = "nc_serie", length = 10)
+    private String ncSerie;
+
+    @Column(name = "nc_numero")
+    private Integer ncNumero;
+
+    @Column(name = "nc_tipo_nota")
+    private Integer ncTipoNota;
+
+    @Column(name = "nc_motivo", length = 255)
+    private String ncMotivo;
+
+    @Column(name = "nc_pdf_url", length = 500)
+    private String ncPdfUrl;
+
+    @Column(name = "nc_xml_url", length = 500)
+    private String ncXmlUrl;
+
+    @Column(name = "nc_cdr_url", length = 500)
+    private String ncCdrUrl;
+
+    @Column(name = "nc_enlace", length = 500)
+    private String ncEnlace;
+
+    @Column(name = "nc_hash", length = 255)
+    private String ncHash;
+
+    @Column(name = "nc_qr", length = 500)
+    private String ncQr;
+
+    @Column(name = "nc_estado", length = 40)
+    private String ncEstado;
+
+    @Column(name = "nc_error", length = 500)
+    private String ncError;
+
+    @Column(name = "nc_emitida_at")
+    private LocalDateTime ncEmitidaAt;
+
     public enum OrderStatus {
         PENDING,
         CONFIRMED,

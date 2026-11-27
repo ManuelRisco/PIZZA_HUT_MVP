@@ -14,10 +14,26 @@ import {
   IngredientDTO,
   LossCategory,
   LossItemType,
+  OrderLossCandidateDTO,
+  OrderLossCreateDTO,
   ProductLossCreateDTO,
   ProductLossDTO,
   SizeDTO
 } from '../../models/admin.interface';
+
+export type LossFormMode = LossItemType | 'ORDER';
+
+export interface PulledOrderItemRow {
+  orderItemId: number;
+  itemType: 'PIZZA' | 'EXTRA';
+  itemName: string;
+  extras: string[];
+  maxQuantity: number;
+  quantity: number;
+  unitCost: number;
+  unitPrice: number;
+  selected: boolean;
+}
 
 export interface CategoryStatCard {
   code: LossCategory;
@@ -48,6 +64,14 @@ export class PerdidasComponent implements OnInit {
   extras: Extra[] = [];
   pizzas: PizzaDTO[] = [];
   sizes: SizeDTO[] = [];
+  pullableOrders: OrderLossCandidateDTO[] = [];
+  loadingOrders = false;
+  orderSearchTerm = '';
+  selectedOrderId: number | null = null;
+  pulledOrderItems: PulledOrderItemRow[] = [];
+  restoreUnselectedStock = true;
+  deductStockIfPending = true;
+  private autoOrderReason = '';
 
   filterStartDate = '';
   filterEndDate = '';
@@ -66,7 +90,7 @@ export class PerdidasComponent implements OnInit {
   showModal = false;
   editingLoss: ProductLossDTO | null = null;
   form: {
-    itemType: LossItemType;
+    itemType: LossFormMode;
     ingredientId: number | null;
     extraId: number | null;
     pizzaId: number | null;
@@ -145,7 +169,7 @@ export class PerdidasComponent implements OnInit {
       .toISOString()
       .slice(0, 16);
     return {
-      itemType: 'INGREDIENT' as LossItemType,
+      itemType: 'INGREDIENT' as LossFormMode,
       ingredientId: null as number | null,
       extraId: null as number | null,
       pizzaId: null as number | null,
@@ -171,6 +195,29 @@ export class PerdidasComponent implements OnInit {
     this.sizeService.obtenerTodos().subscribe({
       next: (res) => (this.sizes = res || [])
     });
+    this.cargarPedidosJalables();
+  }
+
+  cargarPedidosJalables(autoSelectIfOrderMode = false): void {
+    this.loadingOrders = true;
+    this.productLossService
+      .listarPedidosJalables()
+      .pipe(finalize(() => { this.loadingOrders = false; }))
+      .subscribe({
+        next: (res) => {
+          this.pullableOrders = res || [];
+          if (this.selectedOrderId && !this.pullableOrders.some((o) => o.orderId === this.selectedOrderId)) {
+            this.selectedOrderId = null;
+            this.pulledOrderItems = [];
+          }
+          if (autoSelectIfOrderMode && this.form.itemType === 'ORDER' && !this.selectedOrderId && this.pullableOrders.length > 0) {
+            this.onSelectOrder(this.pullableOrders[0].orderId);
+          }
+        },
+        error: () => {
+          this.pullableOrders = [];
+        }
+      });
   }
 
   cargarPerdidas(): void {
@@ -216,7 +263,10 @@ export class PerdidasComponent implements OnInit {
         term &&
         !(l.itemName || '').toLowerCase().includes(term) &&
         !(l.reason || '').toLowerCase().includes(term) &&
-        !(l.reportedByName || '').toLowerCase().includes(term)
+        !(l.reportedByName || '').toLowerCase().includes(term) &&
+        !String(l.orderId || '').includes(term) &&
+        !(`#ep-${l.orderId || ''}`).includes(term) &&
+        !(`#${l.orderId || ''}`).includes(term)
       ) {
         return false;
       }
@@ -300,6 +350,13 @@ export class PerdidasComponent implements OnInit {
     this.form.extraId = this.extras[0]?.id ?? null;
     this.form.pizzaId = this.pizzas[0]?.id ?? null;
     this.form.sizeId = this.sizes[0]?.id ?? null;
+    this.orderSearchTerm = '';
+    this.selectedOrderId = null;
+    this.pulledOrderItems = [];
+    this.restoreUnselectedStock = true;
+    this.deductStockIfPending = true;
+    this.autoOrderReason = '';
+    this.cargarPedidosJalables();
     this.showModal = true;
   }
 
@@ -327,6 +384,10 @@ export class PerdidasComponent implements OnInit {
   cerrarModal(): void {
     this.showModal = false;
     this.editingLoss = null;
+    this.selectedOrderId = null;
+    this.pulledOrderItems = [];
+    this.orderSearchTerm = '';
+    this.autoOrderReason = '';
   }
 
   onChangeFormItemType(): void {
@@ -336,10 +397,140 @@ export class PerdidasComponent implements OnInit {
     } else if (this.form.itemType === 'EXTRA') {
       this.form.extraId = this.extras[0]?.id ?? null;
       this.form.quantity = 1;
-    } else {
+    } else if (this.form.itemType === 'PIZZA') {
       this.form.pizzaId = this.pizzas[0]?.id ?? null;
       this.form.sizeId = this.sizes[0]?.id ?? null;
       this.form.quantity = 1;
+    } else if (this.form.itemType === 'ORDER') {
+      this.form.category = 'CANCELLED_ORDER';
+      this.orderSearchTerm = '';
+      this.restoreUnselectedStock = true;
+      this.deductStockIfPending = true;
+      if (this.pullableOrders.length > 0) {
+        const targetId = this.selectedOrderId && this.pullableOrders.some((o) => o.orderId === this.selectedOrderId)
+          ? this.selectedOrderId
+          : this.pullableOrders[0].orderId;
+        this.onSelectOrder(targetId);
+      } else {
+        this.selectedOrderId = null;
+        this.pulledOrderItems = [];
+      }
+      this.cargarPedidosJalables(true);
+    }
+  }
+
+  onSelectOrder(orderId: number | null): void {
+    const numericId = orderId !== null && orderId !== undefined ? Number(orderId) : null;
+    this.selectedOrderId = numericId;
+    const order = this.pullableOrders.find((o) => o.orderId === numericId) || null;
+    if (!order) {
+      this.pulledOrderItems = [];
+      return;
+    }
+    this.pulledOrderItems = (order.items || []).map((item) => ({
+      orderItemId: item.orderItemId,
+      itemType: item.itemType,
+      itemName: item.itemName,
+      extras: item.extras || [],
+      maxQuantity: Number(item.quantity ?? 1),
+      quantity: Number(item.quantity ?? 1),
+      unitCost: Number(item.unitCost ?? 0),
+      unitPrice: Number(item.unitPrice ?? 0),
+      selected: true
+    }));
+    const suggestedReason = `Anulación de pedido #EP-${String(order.orderId).padStart(4, '0')} (${order.customerName || 'Cliente'})`;
+    if (!this.form.reason.trim() || this.form.reason.trim() === this.autoOrderReason) {
+      this.form.reason = suggestedReason;
+    }
+    this.autoOrderReason = suggestedReason;
+  }
+
+  get filteredPullableOrders(): OrderLossCandidateDTO[] {
+    const term = this.orderSearchTerm.trim().toLowerCase();
+    if (!term) return this.pullableOrders;
+    return this.pullableOrders.filter((o) => {
+      const code = `#ep-${String(o.orderId).padStart(4, '0')}`;
+      const statusLabel = this.getOrderStatusLabel(o.status).toLowerCase();
+      const itemNames = (o.items || []).map((i) => i.itemName.toLowerCase()).join(' ');
+      return (
+        String(o.orderId).includes(term) ||
+        code.includes(term) ||
+        (o.customerName || '').toLowerCase().includes(term) ||
+        (o.customerEmail || '').toLowerCase().includes(term) ||
+        statusLabel.includes(term) ||
+        itemNames.includes(term)
+      );
+    });
+  }
+
+  get selectedPullableOrder(): OrderLossCandidateDTO | null {
+    if (this.selectedOrderId === null) return null;
+    return this.pullableOrders.find((o) => o.orderId === Number(this.selectedOrderId)) || null;
+  }
+
+  get selectedPulledItemsCount(): number {
+    return this.pulledOrderItems.filter((i) => i.selected && i.quantity > 0).length;
+  }
+
+  get allPulledItemsSelected(): boolean {
+    return this.pulledOrderItems.length > 0 && this.pulledOrderItems.every((i) => i.selected);
+  }
+
+  get hasUnselectedOrderItems(): boolean {
+    return this.pulledOrderItems.some((i) => !i.selected || i.quantity < i.maxQuantity);
+  }
+
+  get estimatedOrderLossTotal(): number {
+    return this.pulledOrderItems
+      .filter((i) => i.selected && i.quantity > 0)
+      .reduce((sum, i) => sum + i.quantity * i.unitCost, 0);
+  }
+
+  toggleAllPulledItems(checked: boolean): void {
+    this.pulledOrderItems.forEach((item) => {
+      item.selected = checked;
+      if (checked && item.quantity < 1) {
+        item.quantity = item.maxQuantity;
+      }
+    });
+  }
+
+  clampPulledItemQuantity(item: PulledOrderItemRow): void {
+    let q = Math.round(Number(item.quantity));
+    if (Number.isNaN(q) || q < 1) q = 1;
+    if (q > item.maxQuantity) q = item.maxQuantity;
+    item.quantity = q;
+  }
+
+  adjustPulledItemQuantity(item: PulledOrderItemRow, delta: number): void {
+    item.quantity = item.quantity + delta;
+    this.clampPulledItemQuantity(item);
+    item.selected = true;
+  }
+
+  getOrderStatusLabel(status?: string): string {
+    switch ((status || '').toUpperCase()) {
+      case 'PENDING': return 'Pendiente';
+      case 'CONFIRMED': return 'Confirmado';
+      case 'PREPARING': return 'En Preparación';
+      case 'OUT_FOR_DELIVERY':
+      case 'IN_DELIVERY': return 'En Camino';
+      case 'DELIVERED': return 'Entregado';
+      case 'CANCELLED': return 'Anulado';
+      default: return status || 'Activo';
+    }
+  }
+
+  getOrderStatusBadgeClass(status?: string): string {
+    switch ((status || '').toUpperCase()) {
+      case 'PENDING': return 'bg-amber-100 text-amber-800';
+      case 'CONFIRMED': return 'bg-blue-100 text-blue-800';
+      case 'PREPARING': return 'bg-orange-100 text-orange-800';
+      case 'OUT_FOR_DELIVERY':
+      case 'IN_DELIVERY': return 'bg-indigo-100 text-indigo-800';
+      case 'DELIVERED': return 'bg-emerald-100 text-emerald-800';
+      case 'CANCELLED': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
     }
   }
 
@@ -402,6 +593,56 @@ export class PerdidasComponent implements OnInit {
   }
 
   guardarPerdida(): void {
+    if (!this.editingLoss && this.form.itemType === 'ORDER') {
+      if (!this.selectedOrderId) {
+        this.toastService.showWarning('Selecciona el pedido que deseas jalar y anular.');
+        return;
+      }
+      const selectedItems = this.pulledOrderItems
+        .filter((i) => i.selected)
+        .map((i) => {
+          this.clampPulledItemQuantity(i);
+          return { orderItemId: i.orderItemId, quantity: i.quantity };
+        });
+
+      if (selectedItems.length === 0) {
+        this.toastService.showWarning('Selecciona al menos un producto del pedido para registrar la pérdida.');
+        return;
+      }
+
+      const orderPayload: OrderLossCreateDTO = {
+        orderId: Number(this.selectedOrderId),
+        category: this.form.category,
+        reason: this.form.reason?.trim() || undefined,
+        lossDate: this.form.lossDate ? `${this.form.lossDate}:00` : undefined,
+        restoreUnselectedStock: this.restoreUnselectedStock,
+        deductStockIfPending: this.deductStockIfPending,
+        items: selectedItems
+      };
+
+      this.saving = true;
+      this.productLossService
+        .registrarPerdidaDesdePedido(orderPayload)
+        .pipe(finalize(() => { this.saving = false; }))
+        .subscribe({
+          next: (created) => {
+            const count = Array.isArray(created) ? created.length : selectedItems.length;
+            const code = String(orderPayload.orderId).padStart(4, '0');
+            this.toastService.showSuccess(
+              `Pedido #EP-${code} anulado y ${count} producto(s) registrado(s) como pérdida.`
+            );
+            this.cerrarModal();
+            this.cargarPerdidas();
+            this.cargarCatalogos();
+          },
+          error: (err) => {
+            const msg = err?.error?.message || 'No se pudo anular el pedido y registrar la pérdida.';
+            this.toastService.showError(msg);
+          }
+        });
+      return;
+    }
+
     const qty = Number(this.form.quantity);
     if (!this.editingLoss && (Number.isNaN(qty) || qty <= 0)) {
       this.toastService.showWarning('La cantidad de pérdida debe ser mayor a 0.');
@@ -423,12 +664,14 @@ export class PerdidasComponent implements OnInit {
       }
     }
 
+    const resolvedItemType: LossItemType = this.form.itemType === 'ORDER' ? 'PIZZA' : this.form.itemType;
+
     const payload: ProductLossCreateDTO = {
-      itemType: this.form.itemType,
-      ingredientId: this.form.itemType === 'INGREDIENT' ? Number(this.form.ingredientId) : undefined,
-      extraId: this.form.itemType === 'EXTRA' ? Number(this.form.extraId) : undefined,
-      pizzaId: this.form.itemType === 'PIZZA' ? Number(this.form.pizzaId) : undefined,
-      sizeId: this.form.itemType === 'PIZZA' && this.form.sizeId ? Number(this.form.sizeId) : undefined,
+      itemType: resolvedItemType,
+      ingredientId: resolvedItemType === 'INGREDIENT' ? Number(this.form.ingredientId) : undefined,
+      extraId: resolvedItemType === 'EXTRA' ? Number(this.form.extraId) : undefined,
+      pizzaId: resolvedItemType === 'PIZZA' ? Number(this.form.pizzaId) : undefined,
+      sizeId: resolvedItemType === 'PIZZA' && this.form.sizeId ? Number(this.form.sizeId) : undefined,
       quantity: qty,
       category: this.form.category,
       reason: this.form.reason?.trim() || undefined,
@@ -494,5 +737,9 @@ export class PerdidasComponent implements OnInit {
 
   trackByCategoryStat(_index: number, stat: CategoryStatCard): string {
     return stat.code;
+  }
+
+  trackByPulledOrderItem(_index: number, item: PulledOrderItemRow): number {
+    return item.orderItemId;
   }
 }

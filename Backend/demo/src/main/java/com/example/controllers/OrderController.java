@@ -9,6 +9,7 @@ import com.example.services.InventoryService;
 import com.example.services.ProductLossService;
 import com.example.services.StockAlertNotificationService;
 import com.example.services.StoreSettingsService;
+import com.example.services.SunatService;
 import com.example.dtos.OrderDTO;
 import com.example.dtos.OrderCompleteDTO;
 import com.example.dtos.OrderEmailDispatchResultDTO;
@@ -58,6 +59,12 @@ public class OrderController {
     private final EmailService emailService;
     private final StockAlertNotificationService stockAlertNotificationService;
     private final StoreSettingsService storeSettingsService;
+    private SunatService sunatService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setSunatService(SunatService sunatService) {
+        this.sunatService = sunatService;
+    }
 
     public OrderController(OrderService orderService,
                            CheckoutService checkoutService,
@@ -375,6 +382,12 @@ public class OrderController {
                 }
             }
 
+            if (newStatus == Order.OrderStatus.CANCELLED
+                    && Boolean.TRUE.equals(order.getWantsBoleta())
+                    && order.getBoletaNumero() == null) {
+                order.setBoletaEstado("ANULADA_SIN_EMISION");
+            }
+
             order.setStatus(newStatus);
             Order orderActualizado = orderService.actualizarOrder(id, order);
 
@@ -390,6 +403,46 @@ public class OrderController {
                     payment.setStatus(Payment.PaymentStatus.FAILED);
                 }
                 paymentService.actualizarPayment(payment.getId(), payment);
+            }
+
+            if (newStatus == Order.OrderStatus.CANCELLED
+                    && orderActualizado.getBoletaNumero() != null
+                    && orderActualizado.getNcNumero() == null
+                    && sunatService != null) {
+                try {
+                    sunatService.emitirNotaCreditoParaPedido(
+                            orderActualizado.getId(),
+                            "Anulaci\u00f3n de pedido #" + orderActualizado.getId());
+                    orderActualizado = orderService.obtenerPorId(id).orElse(orderActualizado);
+                    if (emailService != null) {
+                        emailService.sendNotaCreditoEmailForOrder(orderActualizado.getId());
+                    }
+                } catch (Exception ncEx) {
+                    logger.warn("Pedido #{} cancelado, pero fall\u00f3 la emisi\u00f3n autom\u00e1tica de Nota de Cr\u00e9dito SUNAT: {}",
+                            id, ncEx.getMessage());
+                }
+            }
+
+            if (newStatus == Order.OrderStatus.DELIVERED
+                    && Boolean.TRUE.equals(orderActualizado.getWantsBoleta())
+                    && orderActualizado.getBoletaNumero() == null
+                    && sunatService != null) {
+                try {
+                    sunatService.emitirComprobanteParaPedido(
+                            orderActualizado.getId(),
+                            orderActualizado.getBoletaTipoComprobante(),
+                            orderActualizado.getBoletaClienteDni(),
+                            orderActualizado.getBoletaClienteNombre(),
+                            orderActualizado.getBoletaClienteDireccion(),
+                            Boolean.TRUE);
+                    orderActualizado = orderService.obtenerPorId(id).orElse(orderActualizado);
+                    if (emailService != null) {
+                        emailService.sendBoletaEmailForOrder(orderActualizado.getId());
+                    }
+                } catch (Exception boletaEx) {
+                    logger.warn("Pedido #{} marcado DELIVERED, pero fall\u00f3 la emisi\u00f3n autom\u00e1tica de comprobante SUNAT: {}",
+                            id, boletaEx.getMessage());
+                }
             }
 
             return ResponseEntity.ok(ApiResponse.success(new OrderDTO(orderActualizado)));
@@ -446,7 +499,8 @@ public class OrderController {
                    o.wants_boleta, o.boleta_tipo_comprobante, o.boleta_serie, o.boleta_numero, o.boleta_cliente_dni, o.boleta_cliente_nombre, o.boleta_cliente_direccion,
                    o.boleta_pdf_url, o.boleta_xml_url, o.boleta_cdr_url, o.boleta_enlace, o.boleta_hash, o.boleta_qr, o.boleta_estado, o.boleta_error,
                    o.boleta_total_gravada, o.boleta_total_igv, o.boleta_emitida_at,
-                   u.id AS user_id, u.name AS customer_name, u.email AS customer_email, u.phone AS customer_phone, u.dni AS customer_dni,
+                   o.nc_serie, o.nc_numero, o.nc_tipo_nota, o.nc_motivo, o.nc_pdf_url, o.nc_xml_url, o.nc_cdr_url, o.nc_enlace, o.nc_hash, o.nc_qr, o.nc_estado, o.nc_error, o.nc_emitida_at,
+                   u.id AS user_id, u.name AS customer_name, u.email AS customer_email, u.phone AS customer_phone, u.dni AS customer_dni, u.ruc AS customer_ruc,
                    a.id AS address_id, a.line1 AS address_line1, a.city AS address_city, a.district AS address_district, a.reference AS address_reference,
                    pm.id AS payment_method_id, pm.name AS payment_method_name
             FROM orders o
@@ -469,6 +523,7 @@ public class OrderController {
             dto.setUserEmail(rs.getString("customer_email"));
             dto.setUserPhone(rs.getString("customer_phone"));
             dto.setUserDni(rs.getString("customer_dni"));
+            dto.setUserRuc(rs.getString("customer_ruc"));
             dto.setAddressId(rs.getObject("address_id") != null ? rs.getInt("address_id") : null);
             dto.setAddressLine1(rs.getString("address_line1"));
             dto.setAddressCity(rs.getString("address_city"));
@@ -510,6 +565,25 @@ public class OrderController {
             dto.setBoletaTotalGravada(rs.getBigDecimal("boleta_total_gravada"));
             dto.setBoletaTotalIgv(rs.getBigDecimal("boleta_total_igv"));
             dto.setBoletaEmitidaAt(rs.getTimestamp("boleta_emitida_at") != null ? rs.getTimestamp("boleta_emitida_at").toLocalDateTime() : null);
+
+            String ncSerie = rs.getString("nc_serie");
+            Integer ncNumero = rs.getObject("nc_numero") != null ? rs.getInt("nc_numero") : null;
+            dto.setNcSerie(ncSerie);
+            dto.setNcNumero(ncNumero);
+            if (ncSerie != null && ncNumero != null) {
+                dto.setNcComprobante(ncSerie + "-" + String.format("%06d", ncNumero));
+            }
+            dto.setNcTipoNota(rs.getObject("nc_tipo_nota") != null ? rs.getInt("nc_tipo_nota") : null);
+            dto.setNcMotivo(rs.getString("nc_motivo"));
+            dto.setNcPdfUrl(rs.getString("nc_pdf_url"));
+            dto.setNcXmlUrl(rs.getString("nc_xml_url"));
+            dto.setNcCdrUrl(rs.getString("nc_cdr_url"));
+            dto.setNcEnlace(rs.getString("nc_enlace"));
+            dto.setNcHash(rs.getString("nc_hash"));
+            dto.setNcQr(rs.getString("nc_qr"));
+            dto.setNcEstado(rs.getString("nc_estado"));
+            dto.setNcError(rs.getString("nc_error"));
+            dto.setNcEmitidaAt(rs.getTimestamp("nc_emitida_at") != null ? rs.getTimestamp("nc_emitida_at").toLocalDateTime() : null);
             return dto;
         }, queryArgs.toArray());
     }

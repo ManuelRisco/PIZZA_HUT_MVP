@@ -44,6 +44,18 @@ public class Usuario {
     @Column(name = "age_verified", nullable = false)
     private Boolean ageVerified = false;
 
+    @Column(name = "ruc", length = 15)
+    private String ruc;
+
+    @Column(name = "ruc_razon_social", length = 255)
+    private String rucRazonSocial;
+
+    @Column(name = "ruc_direccion", length = 300)
+    private String rucDireccion;
+
+    @Column(name = "ruc_verified", nullable = false)
+    private Boolean rucVerified = false;
+
     @Column(name = "refresh_token", length = 512)
     @JsonIgnore
     private String refreshToken;
@@ -102,7 +114,10 @@ public class Usuario {
             this.passwordSet = true;
         }
         if (this.ageVerified == null) {
-            this.ageVerified = (this.dni != null && !this.dni.isBlank());
+            this.ageVerified = (this.dni != null && !this.dni.isBlank()) || Boolean.TRUE.equals(this.rucVerified);
+        }
+        if (this.rucVerified == null) {
+            this.rucVerified = false;
         }
     }
 
@@ -110,7 +125,10 @@ public class Usuario {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
         if (this.ageVerified == null) {
-            this.ageVerified = (this.dni != null && !this.dni.isBlank());
+            this.ageVerified = (this.dni != null && !this.dni.isBlank()) || Boolean.TRUE.equals(this.rucVerified);
+        }
+        if (this.rucVerified == null) {
+            this.rucVerified = false;
         }
     }
 

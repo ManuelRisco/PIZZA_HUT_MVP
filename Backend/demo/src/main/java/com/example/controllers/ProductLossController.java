@@ -1,6 +1,8 @@
 package com.example.controllers;
 
 import com.example.dtos.ApiResponse;
+import com.example.dtos.OrderLossCandidateDTO;
+import com.example.dtos.OrderLossCreateDTO;
 import com.example.dtos.ProductLossCreateDTO;
 import com.example.dtos.ProductLossDTO;
 import com.example.security.SecurityUtils;
@@ -45,6 +47,21 @@ public class ProductLossController {
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return ResponseEntity.ok(ApiResponse.success(
                 productLossService.getLossesSummary(startDate, endDate)));
+    }
+
+    @GetMapping("/pullable-orders")
+    public ResponseEntity<ApiResponse<List<OrderLossCandidateDTO>>> listPullableOrders() {
+        return ResponseEntity.ok(ApiResponse.success(productLossService.listPullableOrders()));
+    }
+
+    @PostMapping("/from-order")
+    public ResponseEntity<ApiResponse<List<ProductLossDTO>>> createLossesFromOrder(
+            @RequestBody OrderLossCreateDTO req) {
+        Integer userId = securityUtils.getCurrentUserId();
+        List<ProductLossDTO> created = productLossService.createLossesFromOrder(req, userId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(created,
+                        "Pedido #" + req.getOrderId() + " anulado y " + created.size() + " producto(s) registrado(s) como pérdida"));
     }
 
     @PostMapping

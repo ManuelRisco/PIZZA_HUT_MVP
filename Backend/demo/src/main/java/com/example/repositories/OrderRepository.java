@@ -13,6 +13,8 @@ List<Order> findByUserId(Integer userId);
     long countByUserId(Integer userId);
     
     List<Order> findTop100ByOrderByCreatedAtDesc();
+
+    List<Order> findTop150ByStatusNotOrderByCreatedAtDesc(Order.OrderStatus status);
 }
 
 

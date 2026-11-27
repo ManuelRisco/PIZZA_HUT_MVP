@@ -130,26 +130,29 @@ public class EmailService {
         boolean adminSent = false;
         int adminCount = 0;
 
-        // 1. Correo de confirmacion para el cliente que realizo el pedido (con PDF de Boleta Electronica adjunto si aplica)
+        // 1. Correo de confirmacion para el cliente que realizo el pedido (con PDF de Boleta Electronica adjunto solo si ya fue emitida)
         if (isDeliverableEmail(customerEmail)) {
             try {
-                boolean hasBoleta = Boolean.TRUE.equals(order.getWantsBoleta()) || order.getBoletaNumero() != null;
+                boolean boletaEmitida = order.getBoletaNumero() != null
+                        || "EMITIDA".equalsIgnoreCase(order.getBoletaEstado());
+                boolean esFactura = isFacturaOrder(order);
+                String tipoDocNombre = esFactura ? "Factura Electr\u00f3nica" : "Boleta Electr\u00f3nica";
                 String comprobanteLabel = order.getBoletaComprobante() != null ? order.getBoletaComprobante() : "";
-                String customerSubject = hasBoleta && !comprobanteLabel.isBlank()
-                        ? "Confirmaci\u00f3n de tu Pedido #" + order.getId() + " y Boleta Electr\u00f3nica " + comprobanteLabel + " - Pizza Hut"
-                        : "Confirmaci\u00f3n de tu Pedido #" + order.getId() + " - Pizza Hut";
+                String customerSubject = boletaEmitida && !comprobanteLabel.isBlank()
+                        ? "Confirmaci\u00f3n de tu Pedido #" + order.getId() + " y " + tipoDocNombre + " " + comprobanteLabel + " - Eco Pizza"
+                        : "Confirmaci\u00f3n de tu Pedido #" + order.getId() + " - Eco Pizza";
                 String customerHtml = buildCustomerOrderHtml(order);
 
                 byte[] boletaPdfBytes = null;
                 String boletaFilename = null;
-                if (hasBoleta && sunatService != null) {
+                if (boletaEmitida && sunatService != null) {
                     try {
                         boletaPdfBytes = sunatService.obtenerPdfBoleta(order.getId());
-                        String serie = order.getBoletaSerie() != null ? order.getBoletaSerie() : "BBB1";
+                        String serie = order.getBoletaSerie() != null ? order.getBoletaSerie() : (esFactura ? "FFF1" : "BBB1");
                         int num = order.getBoletaNumero() != null ? order.getBoletaNumero() : order.getId();
-                        boletaFilename = String.format("Boleta_%s-%06d.pdf", serie, num);
+                        boletaFilename = String.format("%s_%s-%06d.pdf", esFactura ? "Factura" : "Boleta", serie, num);
                     } catch (Exception pdfEx) {
-                        log.warn("No se pudo adjuntar el PDF de la boleta al correo del pedido #{}: {}", order.getId(), pdfEx.getMessage());
+                        log.warn("No se pudo adjuntar el PDF del comprobante al correo del pedido #{}: {}", order.getId(), pdfEx.getMessage());
                     }
                 }
 
@@ -174,7 +177,7 @@ public class EmailService {
         if (!adminEmails.isEmpty()) {
             try {
                 String totalText = formatMoney(order.getTotal());
-                String adminSubject = "Nuevo Pedido #" + order.getId() + " Recibido (" + totalText + ") - Administraci\u00f3n Pizza Hut";
+                String adminSubject = "Nuevo Pedido #" + order.getId() + " Recibido (" + totalText + ") - Administraci\u00f3n Eco Pizza";
                 String adminHtml = buildAdminOrderHtml(order);
                 sendHtmlMessage(adminEmails, adminSubject, adminHtml);
                 adminSent = true;
@@ -204,8 +207,8 @@ public class EmailService {
 
         boolean hasOutOfStock = alerts.stream().anyMatch(a -> "OUT_OF_STOCK".equalsIgnoreCase(a.getAlertLevel()));
         String subject = hasOutOfStock
-                ? "URGENTE: Stock Agotado detectado en Inventario (" + alerts.size() + " producto(s) en alerta) - Pizza Hut"
-                : "Alerta Consolidada de Falta de Stock (" + alerts.size() + " producto(s) bajo m\u00ednimo) - Pizza Hut";
+                ? "URGENTE: Stock Agotado detectado en Inventario (" + alerts.size() + " producto(s) en alerta) - Eco Pizza"
+                : "Alerta Consolidada de Falta de Stock (" + alerts.size() + " producto(s) bajo m\u00ednimo) - Eco Pizza";
 
         String html = buildStockAlertHtml(alerts, hasOutOfStock);
         sendHtmlMessage(adminEmails, subject, html);
@@ -218,7 +221,7 @@ public class EmailService {
         String from = resolveFromAddress();
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, false, StandardCharsets.UTF_8.name());
-        helper.setFrom(new InternetAddress(from, "Pizza Hut Notificaciones", StandardCharsets.UTF_8.name()));
+        helper.setFrom(new InternetAddress(from, "Eco Pizza Notificaciones", StandardCharsets.UTF_8.name()));
         helper.setTo(toAddresses.toArray(new String[0]));
         helper.setSubject(subject);
         helper.setText(htmlBody, true);
@@ -234,7 +237,7 @@ public class EmailService {
         String from = resolveFromAddress();
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
-        helper.setFrom(new InternetAddress(from, "Pizza Hut Facturaci\u00f3n Electr\u00f3nica", StandardCharsets.UTF_8.name()));
+        helper.setFrom(new InternetAddress(from, "Eco Pizza Facturaci\u00f3n Electr\u00f3nica", StandardCharsets.UTF_8.name()));
         helper.setTo(toAddresses.toArray(new String[0]));
         helper.setSubject(subject);
         helper.setText(htmlBody, true);
@@ -254,13 +257,15 @@ public class EmailService {
             return false;
         }
         try {
-            String comprobante = order.getBoletaComprobante() != null ? order.getBoletaComprobante() : ("BBB1-" + orderId);
-            String subject = "Boleta de Venta Electr\u00f3nica " + comprobante + " (Pedido #" + order.getId() + ") - Pizza Hut";
+            boolean esFactura = isFacturaOrder(order);
+            String serie = order.getBoletaSerie() != null ? order.getBoletaSerie() : (esFactura ? "FFF1" : "BBB1");
+            int num = order.getBoletaNumero() != null ? order.getBoletaNumero() : orderId;
+            String comprobante = order.getBoletaComprobante() != null ? order.getBoletaComprobante() : String.format("%s-%06d", serie, num);
+            String tipoLabel = esFactura ? "Factura Electr\u00f3nica " : "Boleta de Venta Electr\u00f3nica ";
+            String subject = tipoLabel + comprobante + " (Pedido #" + order.getId() + ") - Eco Pizza";
             String html = buildCustomerOrderHtml(order);
             byte[] pdfBytes = sunatService != null ? sunatService.obtenerPdfBoleta(orderId) : null;
-            String serie = order.getBoletaSerie() != null ? order.getBoletaSerie() : "BBB1";
-            int num = order.getBoletaNumero() != null ? order.getBoletaNumero() : orderId;
-            String filename = String.format("Boleta_%s-%06d.pdf", serie, num);
+            String filename = String.format("%s_%s-%06d.pdf", esFactura ? "Factura" : "Boleta", serie, num);
 
             if (pdfBytes != null && pdfBytes.length > 0) {
                 sendHtmlMessageWithAttachment(List.of(order.getUserEmail().trim()), subject, html, filename, pdfBytes, "application/pdf");
@@ -274,6 +279,103 @@ public class EmailService {
         }
     }
 
+    public boolean sendNotaCreditoEmailForOrder(Integer orderId) {
+        if (orderId == null || !isMailOperational()) {
+            return false;
+        }
+        OrderCompleteDTO order = loadCompleteOrder(orderId);
+        if (order == null || !isDeliverableEmail(order.getUserEmail()) || order.getNcNumero() == null) {
+            return false;
+        }
+        try {
+            String ncSerie = order.getNcSerie() != null ? order.getNcSerie() : "FFF1";
+            int ncNum = order.getNcNumero();
+            String ncComprobante = order.getNcComprobante() != null
+                    ? order.getNcComprobante()
+                    : String.format("%s-%06d", ncSerie, ncNum);
+            boolean esFactura = isFacturaOrder(order);
+            String docShortLabel = esFactura ? "Factura " : "Boleta ";
+            String boletaRef = order.getBoletaComprobante() != null
+                    ? order.getBoletaComprobante()
+                    : ((esFactura ? "FFF1-" : "BBB1-") + orderId);
+            String subject = "Nota de Cr\u00e9dito Electr\u00f3nica " + ncComprobante
+                    + " (Anulaci\u00f3n de " + docShortLabel + boletaRef + ") - Eco Pizza";
+            String html = buildNotaCreditoEmailHtml(order, ncComprobante, boletaRef);
+            byte[] pdfBytes = sunatService != null ? sunatService.obtenerPdfNotaCredito(orderId) : null;
+            String filename = String.format("NotaCredito_%s-%06d.pdf", ncSerie, ncNum);
+
+            if (pdfBytes != null && pdfBytes.length > 0) {
+                sendHtmlMessageWithAttachment(List.of(order.getUserEmail().trim()), subject, html, filename, pdfBytes, "application/pdf");
+            } else {
+                sendHtmlMessage(List.of(order.getUserEmail().trim()), subject, html);
+            }
+            return true;
+        } catch (Exception ex) {
+            log.error("Error al enviar correo con Nota de Cr\u00e9dito Electr\u00f3nica para pedido #{}: {}", orderId, ex.getMessage());
+            return false;
+        }
+    }
+
+    private String buildNotaCreditoEmailHtml(OrderCompleteDTO order, String ncComprobante, String boletaRef) {
+        boolean esFactura = isFacturaOrder(order);
+        String docLong = esFactura ? "Factura Electr\u00f3nica" : "Boleta de Venta Electr\u00f3nica";
+        String docShort = esFactura ? "Factura" : "Boleta";
+        String idDocLabel = esFactura ? "RUC Cliente" : "DNI Cliente";
+        String customerName = order.getUserName() != null && !order.getUserName().isBlank()
+                ? escapeHtml(order.getUserName()) : "Cliente";
+        String dni = order.getBoletaClienteDni() != null ? escapeHtml(order.getBoletaClienteDni()) : "--------";
+        String motivo = order.getNcMotivo() != null && !order.getNcMotivo().isBlank()
+                ? escapeHtml(order.getNcMotivo()) : "Anulaci\u00f3n de la operaci\u00f3n";
+        String fecha = (order.getNcEmitidaAt() != null ? order.getNcEmitidaAt() : LocalDateTime.now()).format(DATE_TIME_FMT);
+        String downloadBtn = (order.getNcPdfUrl() != null && order.getNcPdfUrl().startsWith("http"))
+                ? "<div style=\"margin-top:12px;\"><a href=\"" + escapeHtml(order.getNcPdfUrl()) + "\" target=\"_blank\" style=\"display:inline-block;background:#D9251B;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:10px 18px;border-radius:8px;\">Descargar Nota de Cr\u00e9dito Electr\u00f3nica (PDF)</a></div>"
+                : "";
+
+        return """
+            <!DOCTYPE html>
+            <html lang="es">
+            <head><meta charset="UTF-8"></head>
+            <body style="margin:0;padding:0;background-color:#f4f4f6;font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;">
+              <div style="max-width:640px;margin:24px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.08);">
+                <div style="background:#161616;color:#ffffff;padding:24px 28px;border-bottom:4px solid #D9251B;">
+                  <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#fca5a5;">Comprobante Electr\u00f3nico SUNAT \u00b7 Eco Pizza</div>
+                  <h1 style="margin:6px 0 0;font-size:21px;font-weight:700;">Nota de Cr\u00e9dito Electr\u00f3nica %s</h1>
+                  <p style="margin:6px 0 0;font-size:13px;opacity:0.9;">Emitida el %s &middot; Pedido #%d</p>
+                </div>
+                <div style="padding:24px 28px;font-size:14px;line-height:1.6;">
+                  <p style="margin:0 0 14px;">Hola <strong>%s</strong>,</p>
+                  <p style="margin:0 0 16px;">Te informamos que se ha emitido la <strong>Nota de Cr\u00e9dito Electr\u00f3nica %s</strong> anulando tu %s <strong>%s</strong> ante SUNAT.</p>
+                  <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px;font-size:13px;color:#7f1d1d;">
+                    <p style="margin:4px 0;"><strong>Documento que modifica:</strong> %s %s</p>
+                    <p style="margin:4px 0;"><strong>Tipo de Nota:</strong> 01 - Anulaci\u00f3n de la operaci\u00f3n</p>
+                    <p style="margin:4px 0;"><strong>Motivo:</strong> %s</p>
+                    <p style="margin:4px 0;"><strong>%s:</strong> %s</p>
+                    <p style="margin:4px 0;"><strong>Importe Total Anulado:</strong> %s</p>
+                    %s
+                  </div>
+                  <p style="margin:18px 0 0;font-size:12px;color:#6b7280;">Hemos adjuntado el archivo PDF oficial de tu Nota de Cr\u00e9dito Electr\u00f3nica a este correo.</p>
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                escapeHtml(ncComprobante),
+                fecha,
+                order.getId(),
+                customerName,
+                escapeHtml(ncComprobante),
+                docLong,
+                escapeHtml(boletaRef),
+                docShort,
+                escapeHtml(boletaRef),
+                motivo,
+                idDocLabel,
+                dni,
+                formatMoney(order.getTotal()),
+                downloadBtn
+        );
+    }
+
     private OrderCompleteDTO loadCompleteOrder(Integer orderId) {
         String sql = """
             SELECT o.id AS order_id, o.delivery_type, o.status, o.subtotal, o.deliveryFee, o.discount,
@@ -283,6 +385,7 @@ public class EmailService {
                    o.boleta_pdf_url, o.boleta_xml_url, o.boleta_cdr_url, o.boleta_enlace,
                    o.boleta_hash, o.boleta_qr, o.boleta_estado, o.boleta_total_gravada,
                    o.boleta_total_igv, o.boleta_emitida_at,
+                   o.nc_serie, o.nc_numero, o.nc_tipo_nota, o.nc_motivo, o.nc_pdf_url, o.nc_hash, o.nc_estado, o.nc_emitida_at,
                    u.id AS user_id, u.name AS customer_name, u.email AS customer_email, u.phone AS customer_phone, u.dni AS customer_dni,
                    a.id AS address_id, a.line1 AS address_line1, a.city AS address_city,
                    a.district AS address_district, a.reference AS address_reference,
@@ -345,6 +448,21 @@ public class EmailService {
             dto.setBoletaTotalIgv(rs.getBigDecimal("boleta_total_igv"));
             Timestamp emitida = rs.getTimestamp("boleta_emitida_at");
             dto.setBoletaEmitidaAt(emitida != null ? emitida.toLocalDateTime() : null);
+
+            String ncSerie = rs.getString("nc_serie");
+            Integer ncNum = rs.getObject("nc_numero") != null ? rs.getInt("nc_numero") : null;
+            dto.setNcSerie(ncSerie);
+            dto.setNcNumero(ncNum);
+            if (ncSerie != null && ncNum != null) {
+                dto.setNcComprobante(ncSerie + "-" + String.format("%06d", ncNum));
+            }
+            dto.setNcTipoNota(rs.getObject("nc_tipo_nota") != null ? rs.getInt("nc_tipo_nota") : null);
+            dto.setNcMotivo(rs.getString("nc_motivo"));
+            dto.setNcPdfUrl(rs.getString("nc_pdf_url"));
+            dto.setNcHash(rs.getString("nc_hash"));
+            dto.setNcEstado(rs.getString("nc_estado"));
+            Timestamp ncEmitida = rs.getTimestamp("nc_emitida_at");
+            dto.setNcEmitidaAt(ncEmitida != null ? ncEmitida.toLocalDateTime() : null);
             return dto;
         }, orderId);
 
@@ -428,8 +546,8 @@ public class EmailService {
             <head><meta charset="UTF-8"></head>
             <body style="margin:0;padding:0;background-color:#f4f4f6;font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;">
               <div style="max-width:640px;margin:24px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.08);">
-                <div style="background:#c8102e;color:#ffffff;padding:24px 28px;">
-                  <h1 style="margin:0;font-size:22px;font-weight:700;">\u00a1Gracias por tu pedido en Pizza Hut!</h1>
+                <div style="background:#D9251B;color:#ffffff;padding:24px 28px;border-bottom:4px solid #039340;">
+                  <h1 style="margin:0;font-size:22px;font-weight:700;">\u00a1Gracias por tu pedido en Eco Pizza!</h1>
                   <p style="margin:6px 0 0;font-size:14px;opacity:0.95;">Pedido <strong>#%d</strong> registrado el %s</p>
                 </div>
                 <div style="padding:24px 28px;">
@@ -488,8 +606,8 @@ public class EmailService {
             <head><meta charset="UTF-8"></head>
             <body style="margin:0;padding:0;background-color:#f3f4f6;font-family:'Segoe UI',Arial,sans-serif;color:#111827;">
               <div style="max-width:680px;margin:24px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.1);">
-                <div style="background:#111827;color:#ffffff;padding:20px 28px;border-bottom:4px solid #c8102e;">
-                  <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#fca5a5;">Panel Administrativo \u00b7 Alerta de Venta</div>
+                <div style="background:#161616;color:#ffffff;padding:20px 28px;border-bottom:4px solid #D9251B;">
+                  <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#fca5a5;">Panel Administrativo Eco Pizza \u00b7 Alerta de Venta</div>
                   <h1 style="margin:4px 0 0;font-size:22px;">Nuevo Pedido #%d \u2014 %s</h1>
                 </div>
                 <div style="padding:24px 28px;">
@@ -498,7 +616,7 @@ public class EmailService {
                     <p style="margin:4px 0;"><strong>Cliente:</strong> %s (ID #%d)</p>
                     <p style="margin:4px 0;"><strong>Correo Cliente:</strong> %s</p>
                     <p style="margin:4px 0;"><strong>Tel\u00e9fono:</strong> %s</p>
-                    <p style="margin:4px 0;"><strong>Modalidad:</strong> <span style="color:#c8102e;font-weight:700;">%s</span></p>
+                    <p style="margin:4px 0;"><strong>Modalidad:</strong> <span style="color:#D9251B;font-weight:700;">%s</span></p>
                     <p style="margin:4px 0;"><strong>Direcci\u00f3n:</strong> %s</p>
                     <p style="margin:4px 0;"><strong>M\u00e9todo de Pago:</strong> %s</p>
                     %s
@@ -603,9 +721,9 @@ public class EmailService {
                 <td style="padding:4px 0;color:#4b5563;">Costo de env\u00edo:</td>
                 <td style="padding:4px 0;text-align:right;">%s</td>
               </tr>
-              <tr style="border-top:2px solid #111827;font-size:16px;font-weight:700;">
-                <td style="padding:8px 0;color:#111827;">Total:</td>
-                <td style="padding:8px 0;text-align:right;color:#c8102e;">%s</td>
+              <tr style="border-top:2px solid #161616;font-size:16px;font-weight:700;">
+                <td style="padding:8px 0;color:#161616;">Total:</td>
+                <td style="padding:8px 0;text-align:right;color:#D9251B;">%s</td>
               </tr>
             </table>
             """.formatted(
@@ -676,7 +794,7 @@ public class EmailService {
             <body style="margin:0;padding:0;background-color:#f3f4f6;font-family:'Segoe UI',Arial,sans-serif;color:#111827;">
               <div style="max-width:780px;margin:24px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.1);">
                 <div style="background:%s;color:#ffffff;padding:20px 28px;">
-                  <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;opacity:0.9;">Control Autom\u00e1tico de Inventario (Lote Consolidado)</div>
+                  <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;opacity:0.9;">Eco Pizza \u00b7 Control Autom\u00e1tico de Inventario (Lote Consolidado)</div>
                   <h1 style="margin:4px 0 0;font-size:21px;">%s</h1>
                 </div>
                 <div style="padding:24px 28px;">
@@ -714,7 +832,7 @@ public class EmailService {
 
     private String buildAddressSummaryHtml(OrderCompleteDTO order) {
         if ("PICKUP".equalsIgnoreCase(order.getDeliveryType())) {
-            return "Recojo presencial en local Pizza Hut";
+            return "Recojo presencial en local Eco Pizza";
         }
         List<String> parts = new ArrayList<>();
         if (order.getAddressLine1() != null && !order.getAddressLine1().isBlank()) {
@@ -740,13 +858,41 @@ public class EmailService {
         return "<p style=\"margin:4px 0;\"><strong>Notas del pedido:</strong> " + escapeHtml(notes) + "</p>";
     }
 
+    private boolean isFacturaOrder(OrderCompleteDTO order) {
+        if (order == null) return false;
+        if (Integer.valueOf(1).equals(order.getBoletaTipoComprobante())) return true;
+        return order.getBoletaSerie() != null && order.getBoletaSerie().trim().toUpperCase().startsWith("F");
+    }
+
     private String buildBoletaSummaryHtml(OrderCompleteDTO order) {
         if (order == null || (!Boolean.TRUE.equals(order.getWantsBoleta()) && order.getBoletaNumero() == null)) {
             return "";
         }
-        String comprobante = order.getBoletaComprobante() != null ? escapeHtml(order.getBoletaComprobante()) : "BBB1-" + order.getId();
+        boolean esFactura = isFacturaOrder(order);
+        String tipoTitulo = esFactura ? "Factura Electr\u00f3nica" : "Boleta de Venta Electr\u00f3nica";
+        String idLabel = esFactura ? "RUC Cliente" : "DNI Cliente";
+        String nameLabel = esFactura ? "Raz\u00f3n Social" : "Denominaci\u00f3n";
         String dni = order.getBoletaClienteDni() != null ? escapeHtml(order.getBoletaClienteDni()) : "--------";
         String denom = order.getBoletaClienteNombre() != null ? escapeHtml(order.getBoletaClienteNombre()) : escapeHtml(order.getUserName());
+
+        if (order.getBoletaNumero() == null && "PENDIENTE_ENTREGA".equalsIgnoreCase(order.getBoletaEstado())) {
+            return """
+                <div style="margin-top:20px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:16px 18px;font-size:13px;color:#78350f;">
+                  <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;font-weight:800;color:#b45309;margin-bottom:4px;">%s Solicitada \u00b7 Pago contra entrega</div>
+                  <h4 style="margin:0 0 8px;font-size:15px;color:#78350f;">Emisi\u00f3n programada al entregar tu pedido</h4>
+                  <p style="margin:4px 0;"><strong>%s:</strong> %s &nbsp;|&nbsp; <strong>%s:</strong> %s</p>
+                  <p style="margin:8px 0 0;font-size:12px;color:#92400e;">Tu %s SUNAT se emitir\u00e1 y enviar\u00e1 autom\u00e1ticamente en PDF a este correo en cuanto se confirme la entrega y el pago en efectivo.</p>
+                </div>
+                """.formatted(tipoTitulo, idLabel, dni, nameLabel, denom, tipoTitulo);
+        }
+
+        if (order.getBoletaNumero() == null && !"EMITIDA".equalsIgnoreCase(order.getBoletaEstado())) {
+            return "";
+        }
+
+        String comprobante = order.getBoletaComprobante() != null
+                ? escapeHtml(order.getBoletaComprobante())
+                : ((esFactura ? "FFF1-" : "BBB1-") + order.getId());
         String gravada = formatMoney(order.getBoletaTotalGravada());
         String igv = formatMoney(order.getBoletaTotalIgv());
         String total = formatMoney(order.getTotal());
@@ -754,20 +900,20 @@ public class EmailService {
                 ? "<p style=\"margin:4px 0;font-size:12px;color:#4b5563;\"><strong>Resumen Hash CPE:</strong> <code>" + escapeHtml(order.getBoletaHash()) + "</code></p>"
                 : "";
         String downloadBtn = (order.getBoletaPdfUrl() != null && order.getBoletaPdfUrl().startsWith("http"))
-                ? "<div style=\"margin-top:12px;\"><a href=\"" + escapeHtml(order.getBoletaPdfUrl()) + "\" target=\"_blank\" style=\"display:inline-block;background:#c8102e;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:10px 18px;border-radius:8px;\">Descargar Boleta de Venta Electr\u00f3nica (PDF)</a></div>"
+                ? "<div style=\"margin-top:12px;\"><a href=\"" + escapeHtml(order.getBoletaPdfUrl()) + "\" target=\"_blank\" style=\"display:inline-block;background:#D9251B;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:10px 18px;border-radius:8px;\">Descargar " + tipoTitulo + " (PDF)</a></div>"
                 : "";
 
         return """
             <div style="margin-top:20px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px 18px;font-size:13px;color:#14532d;">
               <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;font-weight:800;color:#15803d;margin-bottom:4px;">Comprobante Electr\u00f3nico SUNAT Adjunto en PDF</div>
-              <h4 style="margin:0 0 8px;font-size:16px;color:#14532d;">Boleta de Venta Electr\u00f3nica %s</h4>
-              <p style="margin:4px 0;"><strong>DNI Cliente:</strong> %s &nbsp;|&nbsp; <strong>Denominaci\u00f3n:</strong> %s</p>
+              <h4 style="margin:0 0 8px;font-size:16px;color:#14532d;">%s %s</h4>
+              <p style="margin:4px 0;"><strong>%s:</strong> %s &nbsp;|&nbsp; <strong>%s:</strong> %s</p>
               <p style="margin:4px 0;"><strong>Op. Gravada:</strong> %s &nbsp;|&nbsp; <strong>I.G.V. (18%%):</strong> %s &nbsp;|&nbsp; <strong>Importe Total:</strong> %s</p>
               %s
-              <p style="margin:8px 0 0;font-size:12px;color:#166534;">Hemos adjuntado el archivo PDF oficial de tu Boleta de Venta Electr\u00f3nica a este correo.</p>
+              <p style="margin:8px 0 0;font-size:12px;color:#166534;">Hemos adjuntado el archivo PDF oficial de tu %s a este correo.</p>
               %s
             </div>
-            """.formatted(comprobante, dni, denom, gravada, igv, total, hash, downloadBtn);
+            """.formatted(tipoTitulo, comprobante, idLabel, dni, nameLabel, denom, gravada, igv, total, hash, tipoTitulo, downloadBtn);
     }
 
     private String translateMovementType(String movementType) {
@@ -819,14 +965,14 @@ public class EmailService {
         try {
             String safeName = (userName != null && !userName.isBlank()) ? escapeHtml(userName.trim()) : "Cliente";
             String safeCode = escapeHtml(resetCode != null ? resetCode.trim() : "");
-            String subject = "C\u00f3digo de recuperaci\u00f3n de contrase\u00f1a - Pizza Hut";
+            String subject = "C\u00f3digo de recuperaci\u00f3n de contrase\u00f1a - Eco Pizza";
             String html = """
                     <!DOCTYPE html>
                     <html lang="es">
                     <head><meta charset="UTF-8"></head>
                     <body style="margin:0;padding:0;background-color:#f4f4f6;font-family:Arial,Helvetica,sans-serif;color:#222;">
                       <div style="max-width:580px;margin:24px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.08);">
-                        <div style="background:linear-gradient(135deg,#c8102e,#8c0b20);color:#ffffff;padding:24px 28px;text-align:center;">
+                        <div style="background:linear-gradient(135deg,#D9251B,#991610);color:#ffffff;padding:24px 28px;text-align:center;border-bottom:4px solid #039340;">
                           <h1 style="margin:0;font-size:22px;letter-spacing:0.5px;">Recuperaci\u00f3n de Contrase\u00f1a</h1>
                           <p style="margin:6px 0 0;font-size:14px;opacity:0.92;">Solicitud de restablecimiento de acceso</p>
                         </div>
@@ -835,9 +981,9 @@ public class EmailService {
                           <p style="margin:0 0 18px;font-size:14px;line-height:1.6;color:#444;">
                             Recibimos una solicitud para restablecer la contrase\u00f1a de tu cuenta. Ingresa el siguiente c\u00f3digo de verificaci\u00f3n de 6 d\u00edgitos en la pantalla de recuperaci\u00f3n:
                           </p>
-                          <div style="margin:22px 0;padding:18px;background:#fff5f6;border:2px dashed #c8102e;border-radius:10px;text-align:center;">
-                            <div style="font-size:12px;text-transform:uppercase;color:#8c0b20;letter-spacing:1px;margin-bottom:6px;">C\u00f3digo de Verificaci\u00f3n</div>
-                            <div style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#c8102e;font-family:monospace;">%s</div>
+                          <div style="margin:22px 0;padding:18px;background:#fff5f6;border:2px dashed #D9251B;border-radius:10px;text-align:center;">
+                            <div style="font-size:12px;text-transform:uppercase;color:#991610;letter-spacing:1px;margin-bottom:6px;">C\u00f3digo de Verificaci\u00f3n</div>
+                            <div style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#D9251B;font-family:monospace;">%s</div>
                             <div style="font-size:12px;color:#666;margin-top:8px;">V\u00e1lido durante <strong>%d minutos</strong></div>
                           </div>
                           <p style="margin:0 0 10px;font-size:13px;color:#666;line-height:1.5;">
@@ -845,7 +991,7 @@ public class EmailService {
                           </p>
                         </div>
                         <div style="background:#f9fafb;padding:14px 28px;text-align:center;font-size:12px;color:#888;border-top:1px solid #eee;">
-                          Enviado el %s &middot; Seguridad de Cuentas Pizza Hut
+                          Enviado el %s &middot; Seguridad de Cuentas Eco Pizza
                         </div>
                       </div>
                     </body>
@@ -868,20 +1014,23 @@ public class EmailService {
         }
         try {
             String safeName = (userName != null && !userName.isBlank()) ? escapeHtml(userName.trim()) : "Cliente";
-            String subject = "Tu contrase\u00f1a ha sido actualizada - Pizza Hut";
+            String subject = "Tu contrase\u00f1a ha sido actualizada - Eco Pizza";
             String html = """
                     <!DOCTYPE html>
                     <html lang="es">
                     <head><meta charset="UTF-8"></head>
                     <body style="margin:0;padding:0;background-color:#f4f4f6;font-family:Arial,Helvetica,sans-serif;color:#222;">
                       <div style="max-width:560px;margin:24px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.08);">
-                        <div style="background:linear-gradient(135deg,#15803d,#166534);color:#ffffff;padding:20px 26px;text-align:center;">
+                        <div style="background:linear-gradient(135deg,#039340,#026d2f);color:#ffffff;padding:20px 26px;text-align:center;">
                           <h2 style="margin:0;font-size:20px;">Contrase\u00f1a Restablecida con \u00c9xito</h2>
                         </div>
                         <div style="padding:22px 26px;font-size:14px;line-height:1.6;color:#333;">
                           <p>Hola <strong>%s</strong>,</p>
-                          <p>Te confirmamos que la contrase\u00f1a de tu cuenta fue actualizada correctamente el <strong>%s</strong>.</p>
+                          <p>Te confirmamos que la contrase\u00f1a de tu cuenta en <strong>Eco Pizza</strong> fue actualizada correctamente el <strong>%s</strong>.</p>
                           <p style="color:#666;font-size:13px;">Ya puedes iniciar sesi\u00f3n con tu nueva contrase\u00f1a.</p>
+                        </div>
+                        <div style="background:#f9fafb;padding:12px 26px;text-align:center;font-size:12px;color:#888;border-top:1px solid #eee;">
+                          Seguridad de Cuentas Eco Pizza
                         </div>
                       </div>
                     </body>

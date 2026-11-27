@@ -7,6 +7,7 @@ const STORAGE_GROUPS_KEY = 'adminSidebarGroups';
 
 const VISTA_TO_GROUP: Record<string, AdminGroupKey> = {
   orders: 'operaciones',
+  'notas-credito': 'operaciones',
   payments: 'operaciones',
   'metodos-pago': 'operaciones',
   delivery: 'operaciones',

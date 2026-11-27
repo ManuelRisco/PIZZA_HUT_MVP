@@ -3,7 +3,14 @@
 
   <div class="navbar-header">
     <div class="navbar-logo">
-      <a [routerLink]="['']">🍕 Pizza Hut</a>
+      <a [routerLink]="['']" class="brand-link" aria-label="Eco Pizza - Inicio">
+        <span class="brand-logo-wrap">
+          <img src="/logo.webp" alt="Logo Eco Pizza" class="brand-logo-img" />
+        </span>
+        <span class="brand-text">
+          <span class="brand-name"><span class="brand-eco">ECO</span><span class="brand-pizza">PIZZA</span></span>
+        </span>
+      </a>
     </div>
 
     <div class="mobile-header-actions">
@@ -19,7 +26,12 @@
 
   <ul class="navbar-links" [class.mobile-open]="isMobileMenuOpen" aria-label="Menú de navegación">
     <li class="mobile-drawer-header">
-      <a class="drawer-brand" (click)="navegarA('/')" (keyup.enter)="navegarA('/')" tabindex="0">🍕 Pizza Hut</a>
+      <a class="drawer-brand" (click)="navegarA('/')" (keyup.enter)="navegarA('/')" tabindex="0">
+        <span class="brand-logo-wrap drawer-logo-wrap">
+          <img src="/logo.webp" alt="Logo Eco Pizza" class="brand-logo-img" />
+        </span>
+        <span class="brand-name"><span class="brand-eco">ECO</span><span class="brand-pizza">PIZZA</span></span>
+      </a>
       <button type="button" class="drawer-close-btn" (click)="closeMobileMenu($event)" aria-label="Cerrar menú">
         <i class="bi bi-x-lg" aria-hidden="true"></i>
       </button>

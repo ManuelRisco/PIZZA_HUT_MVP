@@ -115,9 +115,21 @@
                 <i class="bi" [ngClass]="esPickup(order) ? 'bi-shop text-gray-600' : 'bi-scooter text-red-600'"></i>
                 {{ esPickup(order) ? 'Recojo en tienda' : 'Delivery' }}
               </span>
-              <span *ngIf="tieneBoleta(order)" class="px-2.5 py-1 rounded-lg text-xs font-black border flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border-emerald-200">
-                <i class="bi bi-receipt-cutoff text-emerald-600"></i>
-                Boleta {{ order.boletaComprobante || (order.boletaSerie + '-' + order.boletaNumero) }}
+              <span
+                *ngIf="tieneBoleta(order)"
+                class="px-2.5 py-1 rounded-lg text-xs font-black border flex items-center gap-1.5"
+                [ngClass]="tieneNotaCredito(order) ? 'bg-gray-100 text-gray-500 border-gray-200 line-through' : (esFactura(order) ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200')"
+              >
+                <i class="bi bi-receipt-cutoff" [ngClass]="tieneNotaCredito(order) ? 'text-gray-400' : (esFactura(order) ? 'text-blue-600' : 'text-emerald-600')"></i>
+                {{ esFactura(order) ? 'Factura' : 'Boleta' }} {{ order.boletaComprobante || (order.boletaSerie + '-' + order.boletaNumero) }}
+              </span>
+              <span *ngIf="tieneNotaCredito(order)" class="px-2.5 py-1 rounded-lg text-xs font-black border flex items-center gap-1.5 bg-rose-50 text-rose-800 border-rose-200">
+                <i class="bi bi-file-earmark-minus-fill text-rose-600"></i>
+                Nota de Crédito {{ order.ncComprobante || (order.ncSerie + '-' + order.ncNumero) }}
+              </span>
+              <span *ngIf="esBoletaPendienteEntrega(order)" class="px-2.5 py-1 rounded-lg text-xs font-black border flex items-center gap-1.5 bg-amber-50 text-amber-800 border-amber-200">
+                <i class="bi bi-clock-history text-amber-600"></i>
+                {{ esFactura(order) ? 'Factura al entregar' : 'Boleta al entregar' }}
               </span>
             </div>
 
@@ -180,10 +192,20 @@
               <button
                 *ngIf="tieneBoleta(order)"
                 type="button"
-                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shadow-2xs cursor-pointer"
+                class="w-full text-white font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shadow-2xs cursor-pointer"
+                [ngClass]="esFactura(order) ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'"
                 (click)="verBoletaPdf(order)"
               >
-                <i class="bi bi-file-earmark-pdf-fill"></i> Boleta PDF
+                <i class="bi bi-file-earmark-pdf-fill"></i> {{ esFactura(order) ? 'Factura PDF' : 'Boleta PDF' }}
+              </button>
+
+              <button
+                *ngIf="tieneNotaCredito(order)"
+                type="button"
+                class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shadow-2xs cursor-pointer"
+                (click)="verNotaCreditoPdf(order)"
+              >
+                <i class="bi bi-file-earmark-minus-fill"></i> Nota de Crédito PDF
               </button>
 
               <button

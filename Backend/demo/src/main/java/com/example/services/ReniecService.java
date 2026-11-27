@@ -1,6 +1,7 @@
 package com.example.services;
 
 import com.example.dtos.DniLookupDTO;
+import com.example.dtos.RucLookupDTO;
 import com.example.exceptions.BadRequestException;
 import com.example.exceptions.ResourceNotFoundException;
 import com.example.models.Usuario;
@@ -38,6 +39,7 @@ public class ReniecService {
     private final UsuarioRepository usuarioRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ConcurrentHashMap<String, DniLookupDTO> memoryDniCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, RucLookupDTO> memoryRucCache = new ConcurrentHashMap<>();
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -136,6 +138,306 @@ public class ReniecService {
             }
         }
         return usuarioRepository.saveAndFlush(usuario);
+    }
+
+    /**
+     * Consulta un RUC peruano de 11 dígitos usando caché en memoria, caché SQL Server (dbo.sunat_ruc_cache),
+     * Decolecta API SUNAT y respaldo público, guardando automáticamente cada resultado en caché y BD.
+     */
+    public RucLookupDTO consultarRuc(String rawRuc) {
+        if (rawRuc == null || !rawRuc.trim().matches("^(10|15|16|17|20)\\d{9}$")) {
+            throw new BadRequestException("El RUC debe contener exactamente 11 dígitos numéricos válidos (ej. 10... o 20...).");
+        }
+        String ruc = rawRuc.trim();
+
+        RucLookupDTO cached = memoryRucCache.get(ruc);
+        if (cached != null) {
+            return cached;
+        }
+
+        RucLookupDTO dbCached = findRucInDbCache(ruc);
+        if (dbCached != null) {
+            memoryRucCache.put(ruc, dbCached);
+            return dbCached;
+        }
+
+        RucLookupDTO decolectaResult = tryDecolectaRucApi(ruc);
+        if (decolectaResult != null) {
+            saveRucToCache(decolectaResult);
+            return decolectaResult;
+        }
+
+        RucLookupDTO fallbackResult = tryPublicRucFallback(ruc);
+        if (fallbackResult != null) {
+            saveRucToCache(fallbackResult);
+            return fallbackResult;
+        }
+
+        RucLookupDTO userDbResult = findRucInUsersTable(ruc);
+        if (userDbResult != null) {
+            saveRucToCache(userDbResult);
+            return userDbResult;
+        }
+
+        throw new ResourceNotFoundException("No se encontraron datos en SUNAT para el RUC " + ruc + ". Puede escribir la razón social manualmente.");
+    }
+
+    /**
+     * Guarda o actualiza el RUC del usuario en la tabla users junto con la declaración obligatoria
+     * de que el RUC le pertenece (o está autorizado) y es mayor de 18 años.
+     */
+    @Transactional
+    @CacheEvict(value = "users", allEntries = true)
+    public Usuario configurarRucUsuario(Long userId,
+                                        String rawRuc,
+                                        Boolean rucVerified,
+                                        String razonSocial,
+                                        String direccionFiscal) {
+        if (userId == null) {
+            throw new BadRequestException("Usuario no autenticado.");
+        }
+        if (rawRuc == null || !rawRuc.trim().matches("^(10|15|16|17|20)\\d{9}$")) {
+            throw new BadRequestException("El RUC debe contener exactamente 11 dígitos numéricos válidos (ej. 10... o 20...).");
+        }
+        if (!Boolean.TRUE.equals(rucVerified)) {
+            throw new BadRequestException("Debe confirmar que es mayor de 18 años y titular o representante autorizado del RUC ingresado.");
+        }
+
+        Usuario usuario = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado."));
+
+        String cleanRuc = rawRuc.trim();
+        String cleanRazon = razonSocial != null && !razonSocial.isBlank()
+                ? razonSocial.trim().toUpperCase(Locale.ROOT)
+                : null;
+        String cleanDireccion = direccionFiscal != null && !direccionFiscal.isBlank()
+                ? direccionFiscal.trim().toUpperCase(Locale.ROOT)
+                : null;
+
+        if (cleanRazon == null) {
+            try {
+                RucLookupDTO lookup = consultarRuc(cleanRuc);
+                if (lookup != null) {
+                    cleanRazon = lookup.razonSocial();
+                    if (cleanDireccion == null && lookup.direccion() != null && !lookup.direccion().isBlank()) {
+                        cleanDireccion = lookup.direccion();
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        usuario.setRuc(cleanRuc);
+        if (cleanRazon != null) {
+            usuario.setRucRazonSocial(cleanRazon);
+        }
+        if (cleanDireccion != null) {
+            usuario.setRucDireccion(cleanDireccion);
+        }
+        usuario.setRucVerified(true);
+        usuario.setAgeVerified(true);
+
+        if (cleanRazon != null) {
+            saveRucToCache(new RucLookupDTO(
+                    cleanRuc,
+                    cleanRazon,
+                    cleanDireccion != null ? cleanDireccion : "",
+                    "ACTIVO",
+                    "HABIDO",
+                    "",
+                    "",
+                    "",
+                    "USER_CONFIG"
+            ));
+        }
+
+        return usuarioRepository.saveAndFlush(usuario);
+    }
+
+    private RucLookupDTO tryDecolectaRucApi(String ruc) {
+        if (decolectaApiUrl == null || decolectaApiUrl.isBlank() || decolectaApiToken == null || decolectaApiToken.isBlank()) {
+            return null;
+        }
+        String baseUrl = decolectaApiUrl.trim().replaceAll("/+$", "");
+        String token = decolectaApiToken.trim();
+        String[] authHeaders = new String[]{
+            "Bearer " + token,
+            token.startsWith("sk_") ? "Bearer " + token : "Bearer sk_" + token
+        };
+        String[] paths = new String[]{
+            "/sunat/ruc?numero=" + ruc,
+            "/sunat/ruc/full?numero=" + ruc
+        };
+
+        for (String path : paths) {
+            for (String authHeader : authHeaders) {
+                try {
+                    HttpRequest req = HttpRequest.newBuilder()
+                            .uri(URI.create(baseUrl + path))
+                            .header("Authorization", authHeader)
+                            .header("Referer", "https://api.decolecta.com")
+                            .header("Accept", "application/json")
+                            .header("User-Agent", "EcoPizzaMVP/1.0")
+                            .timeout(Duration.ofSeconds(8))
+                            .GET()
+                            .build();
+
+                    HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+                    if (resp.statusCode() == 200 && resp.body() != null && !resp.body().isBlank()) {
+                        RucLookupDTO parsed = parseRucJson(ruc, objectMapper.readTree(resp.body()), "DECOLECTA_SUNAT");
+                        if (parsed != null) {
+                            log.info("RUC {} consultado exitosamente desde Decolecta API: {}", ruc, parsed.razonSocial());
+                            return parsed;
+                        }
+                    } else {
+                        log.debug("Decolecta API devolvió HTTP {} para RUC {} ({}): {}", resp.statusCode(), ruc, path, resp.body());
+                    }
+                } catch (Exception ex) {
+                    log.debug("Aviso al consultar Decolecta API para RUC {}: {}", ruc, ex.getMessage());
+                }
+            }
+        }
+        return null;
+    }
+
+    private RucLookupDTO tryPublicRucFallback(String ruc) {
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.apis.net.pe/v1/ruc?numero=" + ruc))
+                    .header("Accept", "application/json")
+                    .header("User-Agent", "Mozilla/5.0")
+                    .timeout(Duration.ofSeconds(8))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() == 200 && resp.body() != null && !resp.body().isBlank()) {
+                RucLookupDTO parsed = parseRucJson(ruc, objectMapper.readTree(resp.body()), "SUNAT_PERU");
+                if (parsed != null) {
+                    log.info("RUC {} consultado exitosamente mediante servicio SUNAT secundario: {}", ruc, parsed.razonSocial());
+                    return parsed;
+                }
+            }
+        } catch (Exception ex) {
+            log.debug("Aviso en consulta SUNAT secundaria para RUC {}: {}", ruc, ex.getMessage());
+        }
+        return null;
+    }
+
+    private RucLookupDTO parseRucJson(String ruc, JsonNode json, String source) {
+        if (json == null || json.isMissingNode()) return null;
+        String razonSocial = firstNonBlank(
+                json.path("razon_social").asText(null),
+                json.path("razonSocial").asText(null),
+                json.path("nombre").asText(null),
+                json.path("nombre_o_razon_social").asText(null)
+        );
+        if (razonSocial == null || razonSocial.isBlank()) {
+            return null;
+        }
+        String distrito = firstNonBlank(json.path("distrito").asText(null));
+        String provincia = firstNonBlank(json.path("provincia").asText(null));
+        String departamento = firstNonBlank(json.path("departamento").asText(null));
+        String direccion = firstNonBlank(
+                json.path("direccion").asText(null),
+                json.path("direccion_completa").asText(null),
+                json.path("domicilio_fiscal").asText(null)
+        );
+        if (direccion != null && (direccion.equals("-") || direccion.equals("--"))) {
+            direccion = null;
+        }
+        if (direccion != null && distrito != null && !direccion.toUpperCase(Locale.ROOT).contains(distrito.toUpperCase(Locale.ROOT))) {
+            StringBuilder fullAddr = new StringBuilder(direccion.trim());
+            fullAddr.append(" - ").append(distrito.trim());
+            if (provincia != null && !provincia.isBlank()) {
+                fullAddr.append(" - ").append(provincia.trim());
+            }
+            if (departamento != null && !departamento.isBlank()) {
+                fullAddr.append(" - ").append(departamento.trim());
+            }
+            direccion = fullAddr.toString();
+        }
+        String estado = firstNonBlank(json.path("estado").asText(null));
+        String condicion = firstNonBlank(json.path("condicion").asText(null));
+
+        return new RucLookupDTO(
+                ruc,
+                razonSocial.trim().replaceAll("\\s+", " ").toUpperCase(Locale.ROOT),
+                direccion != null ? direccion.trim().replaceAll("\\s+", " ").toUpperCase(Locale.ROOT) : "",
+                estado != null ? estado.trim().toUpperCase(Locale.ROOT) : "",
+                condicion != null ? condicion.trim().toUpperCase(Locale.ROOT) : "",
+                distrito != null ? distrito.trim().toUpperCase(Locale.ROOT) : "",
+                provincia != null ? provincia.trim().toUpperCase(Locale.ROOT) : "",
+                departamento != null ? departamento.trim().toUpperCase(Locale.ROOT) : "",
+                source
+        );
+    }
+
+    private RucLookupDTO findRucInDbCache(String ruc) {
+        try {
+            List<RucLookupDTO> rows = jdbcTemplate.query("""
+                SELECT ruc, razon_social, direccion, estado, condicion, distrito, provincia, departamento
+                FROM dbo.sunat_ruc_cache
+                WHERE ruc = ?
+                """, (rs, rowNum) -> new RucLookupDTO(
+                    rs.getString("ruc"),
+                    rs.getString("razon_social"),
+                    rs.getString("direccion"),
+                    rs.getString("estado"),
+                    rs.getString("condicion"),
+                    rs.getString("distrito"),
+                    rs.getString("provincia"),
+                    rs.getString("departamento"),
+                    "CACHE_SUNAT"
+            ), ruc);
+            return rows.isEmpty() ? null : rows.get(0);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private RucLookupDTO findRucInUsersTable(String ruc) {
+        try {
+            List<RucLookupDTO> rows = jdbcTemplate.query("""
+                SELECT TOP 1 ruc, ruc_razon_social, ruc_direccion
+                FROM dbo.users
+                WHERE ruc = ? AND ruc_razon_social IS NOT NULL AND LTRIM(RTRIM(ruc_razon_social)) <> ''
+                """, (rs, rowNum) -> new RucLookupDTO(
+                    ruc,
+                    rs.getString("ruc_razon_social").trim().toUpperCase(Locale.ROOT),
+                    rs.getString("ruc_direccion") != null ? rs.getString("ruc_direccion").trim().toUpperCase(Locale.ROOT) : "",
+                    "ACTIVO",
+                    "HABIDO",
+                    "",
+                    "",
+                    "",
+                    "DB_USERS"
+            ), ruc);
+            return rows.isEmpty() ? null : rows.get(0);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void saveRucToCache(RucLookupDTO res) {
+        if (res == null || res.ruc() == null || res.razonSocial() == null || res.razonSocial().isBlank()) return;
+        memoryRucCache.put(res.ruc(), res);
+        try {
+            jdbcTemplate.update("""
+                IF EXISTS (SELECT 1 FROM dbo.sunat_ruc_cache WHERE ruc = ?)
+                    UPDATE dbo.sunat_ruc_cache
+                    SET razon_social = ?, direccion = ?, estado = ?, condicion = ?, distrito = ?, provincia = ?, departamento = ?, updated_at = SYSDATETIME()
+                    WHERE ruc = ?
+                ELSE
+                    INSERT INTO dbo.sunat_ruc_cache (ruc, razon_social, direccion, estado, condicion, distrito, provincia, departamento)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                    res.ruc(),
+                    res.razonSocial(), res.direccion(), res.estado(), res.condicion(), res.distrito(), res.provincia(), res.departamento(), res.ruc(),
+                    res.ruc(), res.razonSocial(), res.direccion(), res.estado(), res.condicion(), res.distrito(), res.provincia(), res.departamento()
+            );
+        } catch (Exception ignored) {
+        }
     }
 
     private DniLookupDTO tryDecolectaApi(String dni) {

@@ -74,7 +74,7 @@ public class SecurityConfig {
                 // ==========================================
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/api/registro", "/api/ingresar").permitAll()
-                .requestMatchers("/api/sunat/dni/**").permitAll()
+                .requestMatchers("/api/sunat/dni/**", "/api/sunat/ruc/**").permitAll()
                 .requestMatchers("/api/sunat/**").authenticated()
                 .requestMatchers("/api/auth/google", "/api/auth/google/config").permitAll()
                 .requestMatchers("/api/recuperar-password/**").permitAll()

@@ -80,6 +80,20 @@ public class OrderService {
         if (orderActualizada.getBoletaTotalIgv() != null) order.setBoletaTotalIgv(orderActualizada.getBoletaTotalIgv());
         if (orderActualizada.getBoletaEmitidaAt() != null) order.setBoletaEmitidaAt(orderActualizada.getBoletaEmitidaAt());
 
+        if (orderActualizada.getNcSerie() != null) order.setNcSerie(orderActualizada.getNcSerie());
+        if (orderActualizada.getNcNumero() != null) order.setNcNumero(orderActualizada.getNcNumero());
+        if (orderActualizada.getNcTipoNota() != null) order.setNcTipoNota(orderActualizada.getNcTipoNota());
+        if (orderActualizada.getNcMotivo() != null) order.setNcMotivo(orderActualizada.getNcMotivo());
+        if (orderActualizada.getNcPdfUrl() != null) order.setNcPdfUrl(orderActualizada.getNcPdfUrl());
+        if (orderActualizada.getNcXmlUrl() != null) order.setNcXmlUrl(orderActualizada.getNcXmlUrl());
+        if (orderActualizada.getNcCdrUrl() != null) order.setNcCdrUrl(orderActualizada.getNcCdrUrl());
+        if (orderActualizada.getNcEnlace() != null) order.setNcEnlace(orderActualizada.getNcEnlace());
+        if (orderActualizada.getNcHash() != null) order.setNcHash(orderActualizada.getNcHash());
+        if (orderActualizada.getNcQr() != null) order.setNcQr(orderActualizada.getNcQr());
+        if (orderActualizada.getNcEstado() != null) order.setNcEstado(orderActualizada.getNcEstado());
+        if (orderActualizada.getNcError() != null) order.setNcError(orderActualizada.getNcError());
+        if (orderActualizada.getNcEmitidaAt() != null) order.setNcEmitidaAt(orderActualizada.getNcEmitidaAt());
+
         return orderRepository.save(order);
     }
 

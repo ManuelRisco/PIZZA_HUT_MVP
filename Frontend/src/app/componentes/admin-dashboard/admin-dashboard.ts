@@ -380,9 +380,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
       worksheet.mergeCells('A1', 'F1');
       const titleCell = worksheet.getCell('A1');
-      titleCell.value = 'REPORTE GENERAL DE VENTAS - PIZZA HUT';
+      titleCell.value = 'REPORTE GENERAL DE VENTAS - ECO PIZZA';
       titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
-      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC8102E' } };
+      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9251B' } };
       titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
       worksheet.getRow(1).height = 30;
 
@@ -417,7 +417,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
       this.todosLosPedidos.forEach((p) => {
         const row = worksheet.addRow({
-          id: `PH-${p.id?.toString().padStart(4, '0')}`,
+          id: `EP-${p.id?.toString().padStart(4, '0')}`,
           cliente: p.userName || 'Usuario Anónimo',
           correo: p.userEmail || 'No registrado',
           estado: p.status,
@@ -436,7 +436,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           cell.alignment = { vertical: 'middle', horizontal: 'center' };
           if (colNumber === 5) {
             cell.numFmt = '"S/" #,##0.00';
-            cell.font = { bold: true, color: { argb: 'FF008000' } };
+            cell.font = { bold: true, color: { argb: 'FF039340' } };
           }
         });
       });
@@ -445,7 +445,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       const blob = new Blob([buffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
-      saveAs(blob, `Reporte_General_PizzaHut_${Date.now()}.xlsx`);
+      saveAs(blob, `Reporte_General_EcoPizza_${Date.now()}.xlsx`);
       this.toastService.showSuccess('Reporte Excel generado correctamente.');
     } catch (err) {
       console.error('Error exportando Excel:', err);

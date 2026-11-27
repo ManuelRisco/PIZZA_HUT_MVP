@@ -5,6 +5,17 @@
 :root {
   color-scheme: light;
   --ease-fluid: cubic-bezier(0.22, 1, 0.36, 1);
+  --eco-red: #d9251b;
+  --eco-red-dark: #b31d15;
+  --eco-red-deep: #8e1610;
+  --eco-red-soft: #fef2f1;
+  --eco-green: #039340;
+  --eco-green-dark: #027a35;
+  --eco-green-light: #18b55b;
+  --eco-green-soft: #eaf9f0;
+  --eco-dark: #161616;
+  --eco-dark-surface: #1f1f1f;
+  --eco-dark-border: #2c2c2c;
 }
 
 *,
@@ -183,7 +194,7 @@ html[data-contraste="alto"] *:not(.animate-spin):not(.pizza-loader):not(.spinner
   border-color: var(--hc-border) !important;
 }
 
-html[data-contraste="alto"] :is(.panel-divider, .dropdown-divider, .w-16.h-1.bg-red-600) {
+html[data-contraste="alto"] :is(.panel-divider, .dropdown-divider, .w-16.h-1.bg-red-600, .eco-section-bar) {
   background-color: var(--hc-fg) !important;
 }
 
@@ -226,6 +237,7 @@ html[data-contraste="alto"] :where(
 
 html[data-contraste="alto"] app-navbar .navbar {
   border-bottom: 2px solid var(--hc-border) !important;
+  border-image: none !important;
 }
 
 html[data-contraste="alto"] app-navbar .navbar-links.mobile-open {
@@ -234,9 +246,11 @@ html[data-contraste="alto"] app-navbar .navbar-links.mobile-open {
 
 html[data-contraste="alto"] app-footer footer {
   border-top: 2px solid var(--hc-border) !important;
+  border-image: none !important;
 }
 
-html[data-contraste="alto"] aside.bg-black {
+html[data-contraste="alto"] aside.bg-black,
+html[data-contraste="alto"] aside.eco-sidebar {
   border-right: 2px solid var(--hc-border) !important;
 }
 
@@ -246,6 +260,7 @@ html[data-contraste="alto"] .panel-header {
 
 html[data-contraste="alto"] :is(
   app-carousel .bg-yellow-500,
+  app-carousel .bg-emerald-500,
   .toast-progress,
   .processing-progress-fill,
   .step-dot,
@@ -388,7 +403,7 @@ html[data-font-size="extra-grande"] li {
   position: absolute;
   top: -40px;
   left: 0;
-  background: #d90000;
+  background: var(--eco-green);
   color: white;
   padding: 8px;
   z-index: 9999;

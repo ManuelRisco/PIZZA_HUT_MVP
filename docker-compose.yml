@@ -10,7 +10,7 @@ services:
     env_file:
       - ./Backend/demo/.env
     environment:
-      - DB_URL=jdbc:sqlserver://host.docker.internal:1433;databaseName=pizzahut_bd;encrypt=true;trustServerCertificate=true;
+      - DB_URL=jdbc:sqlserver://host.docker.internal:1433;databaseName=ecopizza_bd;encrypt=true;trustServerCertificate=true;
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

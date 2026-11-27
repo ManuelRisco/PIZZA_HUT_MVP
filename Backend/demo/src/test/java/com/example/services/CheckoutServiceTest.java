@@ -49,6 +49,8 @@ public class CheckoutServiceTest {
     private SizeService sizeService;
     @Mock
     private InventoryService inventoryService;
+    @Mock
+    private SunatService sunatService;
 
     @InjectMocks
     private CheckoutService checkoutService;
@@ -187,5 +189,129 @@ public class CheckoutServiceTest {
         });
 
         assertEquals("Stock insuficiente para la cantidad seleccionada.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Boleta híbrida: Efectivo (PENDING) difiere emisión SUNAT a PENDIENTE_ENTREGA")
+    void testCheckoutCashDefersSunatBoletaUntilDelivery() {
+        Address savedAddress = new Address();
+        savedAddress.setId(10);
+        when(addressService.crearAddress(any(Address.class))).thenReturn(savedAddress);
+
+        Order savedOrder = new Order();
+        savedOrder.setId(201);
+        savedOrder.setTotal(new BigDecimal("55.00"));
+        savedOrder.setDeliveryFee(new BigDecimal("5.00"));
+        when(orderService.crearOrder(any(Order.class))).thenReturn(savedOrder);
+        when(orderService.actualizarOrder(eq(201), any(Order.class))).thenReturn(savedOrder);
+        when(orderService.obtenerPorId(201)).thenReturn(java.util.Optional.of(savedOrder));
+
+        when(inventoryService.deductCheckoutStockAndCalculateUnitCosts(any(), eq(201), eq(1)))
+                .thenReturn(List.of(new BigDecimal("10.00")));
+        when(orderItemService.crearOrderItem(any(OrderItem.class))).thenReturn(new OrderItem());
+
+        com.example.models.Pizza mockPizza = new com.example.models.Pizza();
+        mockPizza.setId(1);
+        mockPizza.setPrice(new BigDecimal("20.00"));
+        when(pizzaService.obtenerPorId(1)).thenReturn(java.util.Optional.of(mockPizza));
+
+        com.example.models.Size mockSize = new com.example.models.Size();
+        mockSize.setId(2);
+        mockSize.setExtraCost(new BigDecimal("5.00"));
+        when(sizeService.obtenerPorId(2)).thenReturn(java.util.Optional.of(mockSize));
+
+        request.getPayment().setStatus("PENDING");
+        request.setWantsBoleta(true);
+        request.setClienteDni("12345678");
+        request.setClienteNombre("JUAN PEREZ");
+
+        checkoutService.checkout(request);
+
+        verify(sunatService, times(1)).registrarSolicitudBoletaPendiente(201, "12345678", "JUAN PEREZ");
+        verify(sunatService, never()).emitirBoletaParaPedido(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Boleta híbrida: Pago adelantado (PAID) emite boleta SUNAT inmediatamente en checkout")
+    void testCheckoutPrepaidEmitsSunatBoletaImmediately() {
+        Address savedAddress = new Address();
+        savedAddress.setId(10);
+        when(addressService.crearAddress(any(Address.class))).thenReturn(savedAddress);
+
+        Order savedOrder = new Order();
+        savedOrder.setId(202);
+        savedOrder.setTotal(new BigDecimal("55.00"));
+        savedOrder.setDeliveryFee(new BigDecimal("5.00"));
+        when(orderService.crearOrder(any(Order.class))).thenReturn(savedOrder);
+        when(orderService.actualizarOrder(eq(202), any(Order.class))).thenReturn(savedOrder);
+        when(orderService.obtenerPorId(202)).thenReturn(java.util.Optional.of(savedOrder));
+
+        when(inventoryService.deductCheckoutStockAndCalculateUnitCosts(any(), eq(202), eq(1)))
+                .thenReturn(List.of(new BigDecimal("10.00")));
+        when(orderItemService.crearOrderItem(any(OrderItem.class))).thenReturn(new OrderItem());
+
+        com.example.models.Pizza mockPizza = new com.example.models.Pizza();
+        mockPizza.setId(1);
+        mockPizza.setPrice(new BigDecimal("20.00"));
+        when(pizzaService.obtenerPorId(1)).thenReturn(java.util.Optional.of(mockPizza));
+
+        com.example.models.Size mockSize = new com.example.models.Size();
+        mockSize.setId(2);
+        mockSize.setExtraCost(new BigDecimal("5.00"));
+        when(sizeService.obtenerPorId(2)).thenReturn(java.util.Optional.of(mockSize));
+
+        request.getPayment().setStatus("PAID");
+        request.setWantsBoleta(true);
+        request.setClienteDni("87654321");
+        request.setClienteNombre("MARIA LOPEZ");
+
+        checkoutService.checkout(request);
+
+        verify(sunatService, times(1)).emitirBoletaParaPedido(202, "87654321", "MARIA LOPEZ");
+        verify(sunatService, never()).registrarSolicitudBoletaPendiente(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Factura FFF1: Pago adelantado (PAID) emite Factura FFF1 inmediatamente con rucVerified=true")
+    void testCheckoutPrepaidEmitsSunatFacturaFFF1() {
+        Address savedAddress = new Address();
+        savedAddress.setId(10);
+        when(addressService.crearAddress(any(Address.class))).thenReturn(savedAddress);
+
+        Order savedOrder = new Order();
+        savedOrder.setId(203);
+        savedOrder.setTotal(new BigDecimal("55.00"));
+        savedOrder.setDeliveryFee(new BigDecimal("5.00"));
+        when(orderService.crearOrder(any(Order.class))).thenReturn(savedOrder);
+        when(orderService.actualizarOrder(eq(203), any(Order.class))).thenReturn(savedOrder);
+        when(orderService.obtenerPorId(203)).thenReturn(java.util.Optional.of(savedOrder));
+
+        when(inventoryService.deductCheckoutStockAndCalculateUnitCosts(any(), eq(203), eq(1)))
+                .thenReturn(List.of(new BigDecimal("10.00")));
+        when(orderItemService.crearOrderItem(any(OrderItem.class))).thenReturn(new OrderItem());
+
+        com.example.models.Pizza mockPizza = new com.example.models.Pizza();
+        mockPizza.setId(1);
+        mockPizza.setPrice(new BigDecimal("20.00"));
+        when(pizzaService.obtenerPorId(1)).thenReturn(java.util.Optional.of(mockPizza));
+
+        com.example.models.Size mockSize = new com.example.models.Size();
+        mockSize.setId(2);
+        mockSize.setExtraCost(new BigDecimal("5.00"));
+        when(sizeService.obtenerPorId(2)).thenReturn(java.util.Optional.of(mockSize));
+
+        request.getPayment().setStatus("PAID");
+        request.setWantsBoleta(true);
+        request.setTipoComprobante(1);
+        request.setClienteRuc("20538225763");
+        request.setClienteNombre("ECOPIZZA S.A.C.");
+        request.setClienteDireccion("AV. JAVIER PRADO 4200");
+        request.setRucVerified(true);
+
+        checkoutService.checkout(request);
+
+        verify(sunatService, times(1)).emitirComprobanteParaPedido(
+                203, 1, "20538225763", "ECOPIZZA S.A.C.", "AV. JAVIER PRADO 4200", true);
+        verify(sunatService, never()).registrarSolicitudComprobantePendiente(any(), any(), any(), any(), any(), any());
     }
 }

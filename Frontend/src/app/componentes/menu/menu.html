@@ -4,7 +4,7 @@
       <h2 class="text-3xl font-black uppercase tracking-tight text-gray-900">
         Favoritos del Menú
       </h2>
-      <div class="w-16 h-1 bg-red-600 mt-2"></div>
+      <div class="w-20 h-1.5 rounded-full bg-gradient-to-r from-[#039340] to-[#d9251b] mt-2 eco-section-bar"></div>
     </div>
   </div>
 
@@ -110,7 +110,7 @@
             </div>
             <button 
               class="w-10 h-10 rounded flex items-center justify-center transition-colors"
-              [ngClass]="esPizzaAgotada(pizza) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-900 hover:bg-black text-white'"
+              [ngClass]="esPizzaAgotada(pizza) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#161616] hover:bg-[#039340] text-white'"
               [disabled]="esPizzaAgotada(pizza)"
               (click)="abrirModalPersonalizacion(pizza)"
               aria-label="Agregar al carrito"

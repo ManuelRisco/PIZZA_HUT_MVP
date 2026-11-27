@@ -64,9 +64,30 @@ export class ClientePedidosComponent implements OnInit {
     return Boolean(order?.boletaComprobante || order?.boletaNumero || order?.boletaPdfUrl);
   }
 
+  esFactura(order: OrderCompleteDTO): boolean {
+    return Boolean(
+      order?.boletaTipoComprobante === 1 ||
+      (order?.boletaSerie || '').toUpperCase().startsWith('F') ||
+      (order?.boletaComprobante || '').toUpperCase().startsWith('F')
+    );
+  }
+
+  tieneNotaCredito(order: OrderCompleteDTO): boolean {
+    return Boolean(order?.ncComprobante || order?.ncNumero || order?.ncPdfUrl);
+  }
+
+  esBoletaPendienteEntrega(order: OrderCompleteDTO): boolean {
+    return Boolean(!this.tieneBoleta(order) && order?.boletaEstado === 'PENDIENTE_ENTREGA' && order?.status !== 'CANCELLED');
+  }
+
   verBoletaPdf(order: OrderCompleteDTO): void {
     if (!order?.id) return;
     this.sunatService.abrirBoletaPdf(order.id, order.boletaPdfUrl);
+  }
+
+  verNotaCreditoPdf(order: OrderCompleteDTO): void {
+    if (!order?.id) return;
+    this.sunatService.abrirNotaCreditoPdf(order.id, order.ncPdfUrl);
   }
 
   ngOnInit(): void {

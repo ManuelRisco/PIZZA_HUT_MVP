@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
+import { Title } from '@angular/platform-browser';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription, timer } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
@@ -18,6 +19,7 @@ import { Categorias } from '../categorias/categorias';
 import { Ingredientes } from '../ingredientes/ingredientes';
 import { Sizes } from '../sizes/sizes';
 import { Orders } from '../orders/orders';
+import { NotasCreditoComponent } from '../notas-credito/notas-credito';
 import { Payments } from '../payments/payments';
 import { MetodosPagoComponent } from '../metodos-pago/metodos-pago';
 import { Reviews } from '../reviews/reviews';
@@ -43,6 +45,7 @@ const VISTA_TO_ROUTE: Record<string, string> = {
   extras: '/admin/extras',
   promociones: '/admin/promociones',
   orders: '/orders',
+  'notas-credito': '/admin/notas-credito',
   delivery: '/admin/delivery',
   payments: '/payments',
   'metodos-pago': '/metodos-pago',
@@ -72,6 +75,7 @@ const VISTA_TITLES: Record<string, string> = {
   extras: 'Extras',
   promociones: 'Promociones',
   orders: 'Pedidos',
+  'notas-credito': 'Notas de Crédito',
   delivery: 'Tarifa de Delivery',
   payments: 'Pagos',
   'metodos-pago': 'Métodos de Pago',
@@ -93,6 +97,7 @@ const VISTA_TITLES: Record<string, string> = {
     Ingredientes,
     Sizes,
     Orders,
+    NotasCreditoComponent,
     Payments,
     MetodosPagoComponent,
     Reviews,
@@ -129,6 +134,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly location: Location,
+    private readonly titleService: Title,
     private readonly usuarioService: UsuarioService,
     private readonly inventoryService: InventoryService,
     private readonly storeSettingsService: StoreSettingsService,
@@ -168,6 +174,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
         this.vistaActual = vistaGuardada;
       }
     }
+    this.actualizarTituloPagina();
 
     this.removeLocationListener = this.location.onUrlChange((url) => {
       const pathOnly = (url || '').split('?')[0].split('#')[0];
@@ -175,6 +182,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
       if (mappedVista && mappedVista !== this.vistaActual) {
         this.vistaActual = mappedVista;
         sessionStorage.setItem('adminVistaActual', mappedVista);
+        this.actualizarTituloPagina();
       }
     });
 
@@ -225,6 +233,10 @@ export class PanelAdmin implements OnInit, OnDestroy {
     return VISTA_TITLES[this.vistaActual] || 'Panel Admin';
   }
 
+  private actualizarTituloPagina(): void {
+    this.titleService.setTitle(`Eco Pizza - ${this.getVistaTituloActual()}`);
+  }
+
   verDetallePedido(pedido: OrderCompleteDTO): void {
     if (!pedido?.id) return;
     this.pedidoSeleccionadoId = pedido.id;
@@ -234,6 +246,7 @@ export class PanelAdmin implements OnInit, OnDestroy {
   cambiarVista(vista: string): void {
     this.vistaActual = vista;
     sessionStorage.setItem('adminVistaActual', vista);
+    this.actualizarTituloPagina();
 
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       this.sidebarCollapsed = true;

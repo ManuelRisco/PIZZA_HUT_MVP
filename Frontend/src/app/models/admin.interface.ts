@@ -47,6 +47,20 @@ export interface OrderDTO {
   boletaTotalGravada?: number | null;
   boletaTotalIgv?: number | null;
   boletaEmitidaAt?: string | null;
+  ncSerie?: string | null;
+  ncNumero?: number | null;
+  ncComprobante?: string | null;
+  ncTipoNota?: number | null;
+  ncMotivo?: string | null;
+  ncPdfUrl?: string | null;
+  ncXmlUrl?: string | null;
+  ncCdrUrl?: string | null;
+  ncEnlace?: string | null;
+  ncHash?: string | null;
+  ncQr?: string | null;
+  ncEstado?: string | null;
+  ncError?: string | null;
+  ncEmitidaAt?: string | null;
 }
 
 export interface OrderItemDTO {
@@ -75,6 +89,7 @@ export interface OrderCompleteDTO {
   userEmail?: string;
   userPhone?: string;
   userDni?: string | null;
+  userRuc?: string | null;
 
   addressId?: number | null;
   addressLine1?: string;
@@ -118,6 +133,21 @@ export interface OrderCompleteDTO {
   boletaTotalGravada?: number | null;
   boletaTotalIgv?: number | null;
   boletaEmitidaAt?: string | null;
+
+  ncSerie?: string | null;
+  ncNumero?: number | null;
+  ncComprobante?: string | null;
+  ncTipoNota?: number | null;
+  ncMotivo?: string | null;
+  ncPdfUrl?: string | null;
+  ncXmlUrl?: string | null;
+  ncCdrUrl?: string | null;
+  ncEnlace?: string | null;
+  ncHash?: string | null;
+  ncQr?: string | null;
+  ncEstado?: string | null;
+  ncError?: string | null;
+  ncEmitidaAt?: string | null;
 
   items?: OrderItemDTO[];
 }
@@ -299,6 +329,49 @@ export interface ProductLossCreateDTO {
   reason?: string;
   deductStock?: boolean;
   lossDate?: string | null;
+}
+
+export interface OrderLossCandidateItemDTO {
+  orderItemId: number;
+  itemType: 'PIZZA' | 'EXTRA';
+  pizzaId?: number | null;
+  extraId?: number | null;
+  sizeId?: number | null;
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  unitCost: number;
+  lineCost: number;
+  extras?: string[];
+}
+
+export interface OrderLossCandidateDTO {
+  orderId: number;
+  status: string;
+  deliveryType?: string;
+  stockSettled?: string;
+  customerName: string;
+  customerEmail?: string;
+  total: number;
+  notes?: string | null;
+  createdAt?: string;
+  items: OrderLossCandidateItemDTO[];
+}
+
+export interface OrderLossItemSelectionDTO {
+  orderItemId: number;
+  quantity: number;
+}
+
+export interface OrderLossCreateDTO {
+  orderId: number;
+  category?: LossCategory;
+  reason?: string;
+  lossDate?: string | null;
+  restoreUnselectedStock?: boolean;
+  deductStockIfPending?: boolean;
+  items?: OrderLossItemSelectionDTO[];
 }
 
 export interface LossesSummaryDTO {

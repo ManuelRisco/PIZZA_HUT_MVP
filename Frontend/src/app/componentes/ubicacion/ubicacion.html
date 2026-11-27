@@ -1,70 +1,70 @@
-<section class="py-10 sm:py-16 md:py-20 bg-[#141414] min-h-screen text-white font-sans">
+<section class="py-10 sm:py-16 md:py-20 bg-[#161616] min-h-screen text-white font-sans">
   <div class="container mx-auto px-4 md:px-8 max-w-6xl">
-    
+
     <div class="text-center mb-10 sm:mb-14">
       <h1 class="text-3xl sm:text-4xl md:text-5xl font-black mb-3 tracking-tight text-white font-serif">
         Ubicación y Contacto
       </h1>
       <p class="text-gray-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto font-medium">
-        Visítanos y vive la experiencia. Estamos listos para atenderte con el calor de nuestros hornos.
+        Visítanos y vive la experiencia Eco Pizza. Estamos listos para atenderte con el calor de nuestros hornos.
       </p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-12 sm:mb-16">
-      
-      <div class="bg-[#1a1a1a] rounded-2xl p-5 sm:p-8 md:p-10 border border-[#333] shadow-2xl">
+
+      <div class="bg-[#1f1f1f] rounded-2xl p-5 sm:p-8 md:p-10 border border-[#2f2f2f] shadow-2xl">
         <h2 class="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-white">Información de Contacto</h2>
-        
+
         <div class="space-y-6 sm:space-y-8">
           <div class="flex items-start gap-4">
             <div class="mt-1">
-              <i class="bi bi-geo-alt text-xl text-gray-400"></i>
+              <i class="bi bi-geo-alt-fill text-xl text-[#18b55b]"></i>
             </div>
             <div class="min-w-0">
               <h3 class="font-bold text-white mb-1">Dirección</h3>
-              <p class="text-gray-400 text-sm sm:text-base">Pizza Hut - Mega Plaza Villa Chorrillos</p>
+              <p class="text-gray-300 text-sm sm:text-base font-semibold">Eco Pizza - Mega Plaza Villa Chorrillos</p>
               <p class="text-gray-400 text-sm sm:text-base">Av. Alameda Sur esquina con Av. San Marcos 15067</p>
               <p class="text-gray-400 text-sm sm:text-base">Chorrillos, Lima</p>
             </div>
           </div>
-          
+
           <div class="flex items-start gap-4">
             <div class="mt-1">
-              <i class="bi bi-clock text-xl text-gray-400"></i>
+              <i class="bi bi-clock-fill text-xl text-[#18b55b]"></i>
             </div>
             <div>
               <h3 class="font-bold text-white mb-1">Horarios de Atención</h3>
-              <p class="text-gray-400 text-sm sm:text-base">Lunes a Domingo: 11:00 AM - 10:00 PM</p>
+              <p class="text-gray-400 text-sm sm:text-base">Lunes a Domingo: 12:00 PM - 12:00 AM</p>
             </div>
           </div>
-          
+
           <div class="flex items-start gap-4">
             <div class="mt-1">
-              <i class="bi bi-telephone text-xl text-gray-400"></i>
+              <i class="bi bi-telephone-fill text-xl text-[#18b55b]"></i>
             </div>
             <div class="min-w-0">
               <h3 class="font-bold text-white mb-1">Reservas y Delivery</h3>
               <p class="text-gray-400 text-sm sm:text-base">+51 990 401 696</p>
-              <p class="text-gray-400 text-sm sm:text-base break-all">pizzahut_delivery@pizzahut.com.pe</p>
+              <p class="text-gray-400 text-sm sm:text-base break-all">ecopizza&#64;terra.com</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="rounded-2xl overflow-hidden border border-[#333] shadow-2xl h-[300px] sm:h-[380px] lg:h-auto min-h-[300px] relative">
-        
-        <div *ngIf="!mapLoaded" class="absolute inset-0 bg-[#1a1a1a] flex flex-col items-center justify-center z-10 animate-pulse">
-          <div class="w-12 h-12 border-4 border-red-700 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <div class="rounded-2xl overflow-hidden border border-[#2f2f2f] shadow-2xl h-[300px] sm:h-[380px] lg:h-auto min-h-[300px] relative">
+
+        <div *ngIf="!mapLoaded" class="absolute inset-0 bg-[#1f1f1f] flex flex-col items-center justify-center z-10 animate-pulse">
+          <div class="w-12 h-12 border-4 border-[#039340] border-t-transparent rounded-full animate-spin mb-4"></div>
           <p class="text-gray-400 font-medium tracking-wide">Cargando mapa interactivo...</p>
         </div>
 
-        <iframe 
+        <iframe
           (load)="onMapLoad()"
-          src="https://maps.google.com/maps?q=Pizza%20Hut%20Mega%20Plaza%20Villa%20Chorrillos&t=&z=15&ie=UTF8&iwloc=&output=embed" 
-          width="100%" 
-          height="100%" 
-          style="border:0;" 
-          allowfullscreen="" 
+          src="https://maps.google.com/maps?q=Eco%20Pizza%20Av.%20Defensores%20del%20Morro%202471%2C%20Chorrillos%2015064&t=&z=16&ie=UTF8&iwloc=&output=embed"
+          width="100%"
+          height="100%"
+          style="border:0;"
+          allowfullscreen=""
           referrerpolicy="no-referrer-when-downgrade"
           class="w-full h-full grayscale-[20%] contrast-125 relative z-0 transition-opacity duration-500"
           [ngClass]="{'opacity-0': !mapLoaded, 'opacity-100': mapLoaded}">
@@ -72,28 +72,28 @@
       </div>
     </div>
 
-    <div class="bg-gradient-to-r from-[#c8102e] to-[#a50a23] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl relative mt-12 sm:mt-16">
+    <div class="bg-gradient-to-r from-[#d9251b] via-[#b31d15] to-[#161616] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl relative mt-12 sm:mt-16 border border-white/10">
       <div class="grid grid-cols-1 md:grid-cols-2">
-        
+
         <div class="p-6 sm:p-10 md:p-14 flex flex-col justify-center">
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white font-bold text-xs uppercase tracking-widest w-max mb-4 sm:mb-6">
-            <i class="bi bi-motorcycle"></i> Entrega Rápida
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#039340] text-white font-bold text-xs uppercase tracking-widest w-max mb-4 sm:mb-6 shadow-sm">
+            <i class="bi bi-bicycle"></i> Entrega Rápida
           </div>
           <h2 class="text-2xl sm:text-3xl md:text-5xl font-black mb-4 sm:mb-6 text-white leading-tight">
             También lo llevamos a la puerta de tu casa
           </h2>
           <p class="text-white/90 text-base sm:text-lg font-medium mb-6 sm:mb-8">
-            Nuestros repartidores se aseguran de que tu pizza llegue siempre caliente y en perfectas condiciones. ¡Pide ahora y disfruta sin salir de casa!
+            Nuestros repartidores se aseguran de que tu Eco Pizza llegue siempre caliente y en perfectas condiciones. ¡Pide ahora y disfruta sin salir de casa!
           </p>
-          <a [routerLink]="['/menu']" class="bg-white text-[#c8102e] hover:bg-gray-100 font-bold py-3.5 px-7 sm:py-4 sm:px-8 rounded-full shadow-lg transition-all duration-300 hover:-translate-y-0.5 w-max inline-flex items-center gap-2 text-sm sm:text-base">
+          <a [routerLink]="['/menu']" class="bg-white text-[#d9251b] hover:bg-[#eaf9f0] hover:text-[#027a35] font-bold py-3.5 px-7 sm:py-4 sm:px-8 rounded-full shadow-lg transition-all duration-300 hover:-translate-y-0.5 w-max inline-flex items-center gap-2 text-sm sm:text-base">
             Hacer un Pedido <i class="bi bi-arrow-right"></i>
           </a>
         </div>
-        
+
         <div class="relative h-[260px] sm:h-[340px] md:h-auto md:min-h-full">
-          <img 
-            src="/pizza_delivery_hero.webp" 
-            alt="Pizza Hut Delivery" 
+          <img
+            src="/pizza_delivery_hero.webp"
+            alt="Eco Pizza Delivery"
             class="absolute inset-0 w-full h-full object-cover object-top md:object-center"
           >
         </div>

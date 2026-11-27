@@ -60,6 +60,7 @@
           [orderIdToOpen]="pedidoSeleccionadoId"
           (orderOpened)="pedidoSeleccionadoId = null"
         ></app-orders>
+        <app-notas-credito *ngIf="vistaActual === 'notas-credito'"></app-notas-credito>
         <app-delivery-config *ngIf="vistaActual === 'delivery'"></app-delivery-config>
         <app-payments *ngIf="vistaActual === 'payments'"></app-payments>
         <app-metodos-pago *ngIf="vistaActual === 'metodos-pago'"></app-metodos-pago>

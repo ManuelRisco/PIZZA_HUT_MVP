@@ -204,13 +204,13 @@ export class PromocionesClienteComponent implements OnInit {
   obtenerColorTipo(tipo: string): string {
     switch (tipo) {
       case 'PERCENTAGE':
-        return '#e74c3c';
+        return '#d9251b';
       case 'FIXED_AMOUNT':
-        return '#27ae60';
+        return '#039340';
       case 'BUNDLE':
-        return '#3498db';
+        return '#161616';
       default:
-        return '#95a5a6';
+        return '#6b7280';
     }
   }
 

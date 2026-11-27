@@ -10,6 +10,10 @@ public class UsuarioDTO {
     private String phone;
     private String dni;
     private Boolean ageVerified;
+    private String ruc;
+    private String rucRazonSocial;
+    private String rucDireccion;
+    private Boolean rucVerified;
     private Usuario.Role role;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
@@ -29,6 +33,10 @@ public class UsuarioDTO {
         this.phone = usuario.getPhone();
         this.dni = usuario.getDni();
         this.ageVerified = Boolean.TRUE.equals(usuario.getAgeVerified());
+        this.ruc = usuario.getRuc();
+        this.rucRazonSocial = usuario.getRucRazonSocial();
+        this.rucDireccion = usuario.getRucDireccion();
+        this.rucVerified = Boolean.TRUE.equals(usuario.getRucVerified());
         this.role = usuario.getRole();
         this.createdAt = usuario.getCreatedAt();
         this.deletedAt = usuario.getDeletedAt();
@@ -57,6 +65,18 @@ public class UsuarioDTO {
 
     public Boolean getAgeVerified() { return ageVerified; }
     public void setAgeVerified(Boolean ageVerified) { this.ageVerified = ageVerified; }
+
+    public String getRuc() { return ruc; }
+    public void setRuc(String ruc) { this.ruc = ruc; }
+
+    public String getRucRazonSocial() { return rucRazonSocial; }
+    public void setRucRazonSocial(String rucRazonSocial) { this.rucRazonSocial = rucRazonSocial; }
+
+    public String getRucDireccion() { return rucDireccion; }
+    public void setRucDireccion(String rucDireccion) { this.rucDireccion = rucDireccion; }
+
+    public Boolean getRucVerified() { return rucVerified; }
+    public void setRucVerified(Boolean rucVerified) { this.rucVerified = rucVerified; }
 
     public Usuario.Role getRole() { return role; }
     public void setRole(Usuario.Role role) { this.role = role; }

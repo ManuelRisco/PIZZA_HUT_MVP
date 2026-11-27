@@ -50,7 +50,7 @@ const PANEL_EXACT_PATHS = new Set<string>([
   styleUrls: ['./app.css']
 })
 export class App implements OnInit, OnDestroy {
-  protected readonly title = signal('pizzahut');
+  protected readonly title = signal('Eco Pizza');
   protected readonly isPanelView = signal(false);
 
   private observer: MutationObserver | null = null;

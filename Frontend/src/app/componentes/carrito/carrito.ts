@@ -157,6 +157,9 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
   confirmedAdminEmailSent = false;
   confirmedBoletaComprobante: string | null = null;
   confirmedBoletaPdfUrl: string | null = null;
+  confirmedBoletaEstado: string | null = null;
+  confirmedTipoComprobante: 1 | 2 = 2;
+  confirmedDocumentoCliente = '';
   confirmedPaymentViaMp = false;
   confirmedPaymentMethodLabel = '';
 
@@ -184,6 +187,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
   private brickMountTimer: ReturnType<typeof setTimeout> | null = null;
 
   wantsBoleta = false;
+  comprobanteTipo: 'BOLETA' | 'FACTURA' = 'BOLETA';
   userHasSavedDni = false;
   editingSavedDni = false;
   boletaDni = '';
@@ -193,6 +197,17 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
   guardandoDni = false;
   boletaDniMsg = '';
   boletaDniError = '';
+
+  userHasSavedRuc = false;
+  editingSavedRuc = false;
+  facturaRuc = '';
+  facturaRazonSocial = '';
+  facturaDireccion = '';
+  facturaRucVerified = false;
+  buscandoRuc = false;
+  guardandoRuc = false;
+  facturaRucMsg = '';
+  facturaRucError = '';
 
   processingStep: 1 | 2 | 3 | 4 = 1;
   processingProgress = 12;
@@ -289,6 +304,13 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
       this.boletaAgeVerified = true;
       this.userHasSavedDni = true;
     }
+    if (currentUser?.ruc && /^(10|15|16|17|20)\d{9}$/.test(currentUser.ruc.trim())) {
+      this.facturaRuc = currentUser.ruc.trim();
+      this.facturaRazonSocial = currentUser.rucRazonSocial || '';
+      this.facturaDireccion = currentUser.rucDireccion || '';
+      this.facturaRucVerified = Boolean(currentUser.rucVerified);
+      this.userHasSavedRuc = Boolean(currentUser.rucVerified);
+    }
     if (userId) {
       this.usuarioService.obtenerUsuarioActual().subscribe({
         next: (u) => {
@@ -299,6 +321,13 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
               this.boletaNombre = u.name || '';
               this.boletaAgeVerified = true;
               this.userHasSavedDni = true;
+            }
+            if (u.ruc && /^(10|15|16|17|20)\d{9}$/.test(u.ruc.trim())) {
+              this.facturaRuc = u.ruc.trim();
+              this.facturaRazonSocial = u.rucRazonSocial || '';
+              this.facturaDireccion = u.rucDireccion || '';
+              this.facturaRucVerified = Boolean(u.rucVerified);
+              this.userHasSavedRuc = Boolean(u.rucVerified);
             }
           }
         },
@@ -528,7 +557,7 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
             style: {
               theme: 'default',
               customVariables: {
-                baseColor: '#c8102e',
+                baseColor: '#d9251b',
                 baseColorFirstVariant: '#a00d24',
                 baseColorSecondVariant: '#7f0a1c',
               },
@@ -765,12 +794,23 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     if (this.wantsBoleta) {
-      const cleanDni = (this.boletaDni || '').trim();
-      if (!/^\d{8}$/.test(cleanDni)) {
-        return 'Para emitir Boleta de Venta Electrónica debes ingresar un DNI válido de 8 dígitos.';
-      }
-      if (!this.userHasSavedDni && !this.boletaAgeVerified) {
-        return 'Debes confirmar que eres mayor de 18 años (+18) y que el DNI ingresado te pertenece.';
+      if (this.comprobanteTipo === 'FACTURA') {
+        const cleanRuc = (this.facturaRuc || '').trim();
+        if (!/^(10|15|16|17|20)\d{9}$/.test(cleanRuc)) {
+          return 'Para emitir Factura Electrónica FFF1 debes ingresar un RUC válido de 11 dígitos (ej. 10... o 20...).';
+        }
+        const savedRucMatches = this.userHasSavedRuc && !this.editingSavedRuc;
+        if (!savedRucMatches && !this.facturaRucVerified) {
+          return 'Debes confirmar que eres mayor de 18 años (+18) y titular o representante autorizado del RUC ingresado.';
+        }
+      } else {
+        const cleanDni = (this.boletaDni || '').trim();
+        if (!/^\d{8}$/.test(cleanDni)) {
+          return 'Para emitir Boleta de Venta Electrónica debes ingresar un DNI válido de 8 dígitos.';
+        }
+        if (!this.userHasSavedDni && !this.boletaAgeVerified) {
+          return 'Debes confirmar que eres mayor de 18 años (+18) y que el DNI ingresado te pertenece.';
+        }
       }
     }
 
@@ -779,17 +819,27 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
 
   private buildBaseCheckoutPayload(): CheckoutPayload {
     const combinedNotes = this.composeNotes();
+    const isFactura = this.wantsBoleta && this.comprobanteTipo === 'FACTURA';
+    const rucAccepted = isFactura
+      ? (this.userHasSavedRuc && !this.editingSavedRuc ? true : this.facturaRucVerified)
+      : undefined;
 
     const payload: CheckoutPayload = {
       notes: combinedNotes,
       paymentMethodId: this.selectedPaymentMethodId!,
       deliveryType: this.deliveryType,
       wantsBoleta: this.wantsBoleta,
-      clienteDni: this.wantsBoleta ? this.boletaDni.trim() : undefined,
+      tipoComprobante: this.wantsBoleta ? (isFactura ? 1 : 2) : undefined,
+      clienteDni: this.wantsBoleta && !isFactura ? this.boletaDni.trim() : undefined,
+      clienteRuc: isFactura ? this.facturaRuc.trim() : undefined,
       clienteNombre: this.wantsBoleta
-        ? this.boletaNombre.trim() || this.authService.getCurrentUser()?.name || ''
+        ? isFactura
+          ? this.facturaRazonSocial.trim() || undefined
+          : this.boletaNombre.trim() || this.authService.getCurrentUser()?.name || ''
         : undefined,
+      clienteDireccion: isFactura && this.facturaDireccion.trim() ? this.facturaDireccion.trim() : undefined,
       ageVerified: this.wantsBoleta ? true : undefined,
+      rucVerified: rucAccepted,
     };
 
     if (this.deliveryType === 'DELIVERY' && this.addressOption === 'saved' && this.selectedAddressId) {
@@ -944,19 +994,27 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         if (!this.isProcessing || this.processingStep >= 4) return;
         this.processingStep = 2;
         this.processingProgress = Math.max(this.processingProgress, 42);
-        this.processingTitle = this.wantsBoleta
-          ? 'Emitiendo Boleta de Venta Electrónica SUNAT...'
-          : 'Confirmando pago y preparando orden...';
-        this.processingSubtitle = this.wantsBoleta
-          ? 'Generando comprobante electrónico serie BBB1 en Nubefact'
-          : 'Asegurando los detalles de tu pedido';
+        const emitsBoletaNow = this.wantsBoleta && !this.isCashMethod;
+        const isFactura = this.comprobanteTipo === 'FACTURA';
+        this.processingTitle = emitsBoletaNow
+          ? (isFactura ? 'Emitiendo Factura Electrónica SUNAT...' : 'Emitiendo Boleta de Venta Electrónica SUNAT...')
+          : this.wantsBoleta
+            ? (isFactura ? 'Registrando solicitud de Factura para la entrega...' : 'Registrando solicitud de Boleta para la entrega...')
+            : 'Confirmando pago y preparando orden...';
+        this.processingSubtitle = emitsBoletaNow
+          ? (isFactura ? 'Generando comprobante electrónico serie FFF1 en Nubefact' : 'Generando comprobante electrónico serie BBB1 en Nubefact')
+          : this.wantsBoleta
+            ? (isFactura ? 'Tu factura se emitirá automáticamente al recibir y pagar en efectivo' : 'Tu boleta se emitirá automáticamente al recibir y pagar en efectivo')
+            : 'Asegurando los detalles de tu pedido';
       }, 1100),
       setTimeout(() => {
         if (!this.isProcessing || this.processingStep >= 4) return;
         this.processingStep = 3;
         this.processingProgress = Math.max(this.processingProgress, 70);
-        this.processingTitle = this.wantsBoleta
-          ? 'Enviando tu Boleta Electrónica (PDF) por correo...'
+        const emitsBoletaNow = this.wantsBoleta && !this.isCashMethod;
+        const isFactura = this.comprobanteTipo === 'FACTURA';
+        this.processingTitle = emitsBoletaNow
+          ? (isFactura ? 'Enviando tu Factura Electrónica (PDF) por correo...' : 'Enviando tu Boleta Electrónica (PDF) por correo...')
           : 'Enviando confirmación a tu correo...';
         this.processingSubtitle = 'Despachando el comprobante a tu bandeja y avisando a tienda';
       }, 2200),
@@ -992,8 +1050,31 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
         this.confirmedAdminEmailSent = Boolean(result?.order?.adminEmailSent);
         this.confirmedBoletaComprobante = result?.order?.boletaComprobante || null;
         this.confirmedBoletaPdfUrl = result?.order?.boletaPdfUrl || null;
+        this.confirmedBoletaEstado = result?.order?.boletaEstado || null;
+        this.confirmedTipoComprobante =
+          result?.order?.boletaTipoComprobante === 1 || (result?.order?.boletaSerie || '').startsWith('F')
+            ? 1
+            : 2;
+        this.confirmedDocumentoCliente =
+          result?.order?.boletaClienteDni ||
+          (this.comprobanteTipo === 'FACTURA' ? this.facturaRuc.trim() : this.boletaDni.trim());
 
-        if (this.wantsBoleta && /^\d{8}$/.test((this.boletaDni || '').trim())) {
+        if (this.wantsBoleta && this.comprobanteTipo === 'FACTURA' && /^(10|15|16|17|20)\d{9}$/.test((this.facturaRuc || '').trim())) {
+          this.userHasSavedRuc = true;
+          this.editingSavedRuc = false;
+          this.facturaRucVerified = true;
+          const cur = this.authService.getCurrentUser();
+          if (cur) {
+            this.authService.updateCurrentUser({
+              ...cur,
+              ruc: this.facturaRuc.trim(),
+              rucRazonSocial: result?.order?.boletaClienteNombre || this.facturaRazonSocial.trim() || cur.rucRazonSocial,
+              rucDireccion: result?.order?.boletaClienteDireccion || this.facturaDireccion.trim() || cur.rucDireccion,
+              rucVerified: true,
+              ageVerified: true,
+            });
+          }
+        } else if (this.wantsBoleta && /^\d{8}$/.test((this.boletaDni || '').trim())) {
           this.userHasSavedDni = true;
           this.editingSavedDni = false;
           const cur = this.authService.getCurrentUser();
@@ -1134,6 +1215,92 @@ export class CarritoComponent implements OnInit, OnDestroy, OnChanges {
   abrirBoletaConfirmadaPdf(): void {
     if (!this.confirmedOrderId) return;
     this.sunatService.abrirBoletaPdf(this.confirmedOrderId, this.confirmedBoletaPdfUrl);
+  }
+
+  seleccionarTipoComprobante(tipo: 'BOLETA' | 'FACTURA'): void {
+    this.comprobanteTipo = tipo;
+    this.boletaDniError = '';
+    this.facturaRucError = '';
+  }
+
+  consultarRucCarrito(): void {
+    this.facturaRucError = '';
+    this.facturaRucMsg = '';
+    const clean = (this.facturaRuc || '').trim();
+    if (!/^(10|15|16|17|20)\d{9}$/.test(clean)) {
+      this.facturaRucError = 'Ingresa un RUC válido de 11 dígitos numéricos (ej. 10... o 20...).';
+      return;
+    }
+    this.buscandoRuc = true;
+    this.sunatService.consultarRuc(clean).subscribe({
+      next: (res) => {
+        this.buscandoRuc = false;
+        if (res?.razonSocial) {
+          this.facturaRazonSocial = res.razonSocial;
+          if (res.direccion) {
+            this.facturaDireccion = res.direccion;
+          }
+          const estadoInfo = res.estado ? ` (${res.estado})` : '';
+          this.facturaRucMsg = `SUNAT: ${res.razonSocial}${estadoInfo}`;
+        }
+      },
+      error: (err) => {
+        this.buscandoRuc = false;
+        this.facturaRucError = err?.error?.message || 'No se pudo consultar el RUC en SUNAT. Puedes ingresar la razón social manualmente.';
+      },
+    });
+  }
+
+  guardarRucEnCuenta(): void {
+    this.facturaRucError = '';
+    this.facturaRucMsg = '';
+    if (!this.authService.obtenerUsuarioId() || !this.authService.getCurrentUser()?.id) {
+      this.facturaRucError = 'Debes iniciar sesión para guardar tu RUC en tu cuenta.';
+      this.toastService.showInfo('Inicia sesión para guardar tu RUC en tu cuenta.');
+      return;
+    }
+    const clean = (this.facturaRuc || '').trim();
+    if (!/^(10|15|16|17|20)\d{9}$/.test(clean)) {
+      this.facturaRucError = 'Ingresa un RUC válido de 11 dígitos.';
+      return;
+    }
+    if (!this.facturaRucVerified) {
+      this.facturaRucError = 'Debes confirmar que eres mayor de 18 años y titular o representante autorizado del RUC.';
+      return;
+    }
+    this.guardandoRuc = true;
+    this.sunatService
+      .configurarRuc(
+        clean,
+        true,
+        this.facturaRazonSocial.trim() || undefined,
+        this.facturaDireccion.trim() || undefined,
+      )
+      .subscribe({
+        next: (u) => {
+          this.guardandoRuc = false;
+          this.userHasSavedRuc = true;
+          this.editingSavedRuc = false;
+          this.facturaRucVerified = true;
+          if (u?.rucRazonSocial) {
+            this.facturaRazonSocial = u.rucRazonSocial;
+          }
+          if (u?.rucDireccion) {
+            this.facturaDireccion = u.rucDireccion;
+          }
+          this.authService.updateCurrentUser(u);
+          this.facturaRucMsg = 'RUC guardado en tu cuenta para este y próximos pedidos.';
+          this.toastService.showSuccess('RUC vinculado correctamente a tu cuenta.');
+        },
+        error: (err) => {
+          this.guardandoRuc = false;
+          if (err?.status === 401 || err?.status === 403) {
+            this.facturaRucError = 'Debes iniciar sesión para guardar tu RUC en tu cuenta.';
+            return;
+          }
+          this.facturaRucError = err?.error?.message || 'No se pudo vincular el RUC.';
+        },
+      });
   }
 
   get isCheckoutDisabled(): boolean {

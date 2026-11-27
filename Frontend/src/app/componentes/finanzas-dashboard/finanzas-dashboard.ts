@@ -281,15 +281,15 @@ export class FinanzasDashboardComponent implements OnInit {
         ExcelJS.Workbook ??
         (ExcelJS as unknown as { default: { Workbook: typeof ExcelJS.Workbook } }).default.Workbook;
       const workbook = new WorkbookCtor();
-      workbook.creator = 'Pizza Hut MVP - Finanzas';
+      workbook.creator = 'Eco Pizza - Finanzas';
       workbook.created = new Date();
 
       const wsPl = workbook.addWorksheet('Estado de Resultados');
       wsPl.mergeCells('A1:C1');
       const title = wsPl.getCell('A1');
-      title.value = 'ESTADO DE PÉRDIDAS Y GANANCIAS (P&L) - PIZZA HUT';
+      title.value = 'ESTADO DE PÉRDIDAS Y GANANCIAS (P&L) - ECO PIZZA';
       title.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
-      title.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC8102E' } };
+      title.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9251B' } };
       title.alignment = { vertical: 'middle', horizontal: 'center' };
       wsPl.getRow(1).height = 28;
 
@@ -388,7 +388,7 @@ export class FinanzasDashboardComponent implements OnInit {
       const blob = new Blob([buffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
-      saveAs(blob, `Estado_Perdidas_Ganancias_PizzaHut_${Date.now()}.xlsx`);
+      saveAs(blob, `Estado_Perdidas_Ganancias_EcoPizza_${Date.now()}.xlsx`);
       this.toastService.showSuccess('Estado de Pérdidas y Ganancias exportado a Excel');
     } catch {
       this.toastService.showError('No se pudo generar el archivo Excel.');

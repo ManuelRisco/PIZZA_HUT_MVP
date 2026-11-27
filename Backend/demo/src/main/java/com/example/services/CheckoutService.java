@@ -73,20 +73,47 @@ public class CheckoutService {
 
         savedOrder = finalizeOrderTotals(savedOrder, req, realSubtotal, promotionAUsar);
 
-        processPayment(req, savedOrder);
+        Payment.PaymentStatus resolvedPaymentStatus = processPayment(req, savedOrder);
 
         incrementPromotionUsage(promotionAUsar);
 
         boolean wantsBoleta = Boolean.TRUE.equals(req.getWantsBoleta())
                 || (req.getOrder() != null && Boolean.TRUE.equals(req.getOrder().getWantsBoleta()));
         if (wantsBoleta && sunatService != null) {
-            String reqDni = req.getClienteDni() != null && !req.getClienteDni().isBlank()
-                    ? req.getClienteDni().trim()
-                    : (req.getOrder() != null ? req.getOrder().getBoletaClienteDni() : null);
+            boolean isFactura = Integer.valueOf(1).equals(req.getTipoComprobante())
+                    || (req.getOrder() != null && Integer.valueOf(1).equals(req.getOrder().getBoletaTipoComprobante()))
+                    || (req.getClienteRuc() != null && !req.getClienteRuc().isBlank());
             String reqNombre = req.getClienteNombre() != null && !req.getClienteNombre().isBlank()
                     ? req.getClienteNombre().trim()
                     : (req.getOrder() != null ? req.getOrder().getBoletaClienteNombre() : null);
-            sunatService.emitirBoletaParaPedido(savedOrder.getId(), reqDni, reqNombre);
+
+            if (isFactura) {
+                String reqRuc = req.getClienteRuc() != null && !req.getClienteRuc().isBlank()
+                        ? req.getClienteRuc().trim()
+                        : (req.getClienteDni() != null && !req.getClienteDni().isBlank()
+                            ? req.getClienteDni().trim()
+                            : (req.getOrder() != null ? req.getOrder().getBoletaClienteDni() : null));
+                String reqDireccion = req.getClienteDireccion() != null && !req.getClienteDireccion().isBlank()
+                        ? req.getClienteDireccion().trim()
+                        : (req.getOrder() != null ? req.getOrder().getBoletaClienteDireccion() : null);
+                Boolean rucVerified = Boolean.TRUE.equals(req.getRucVerified());
+                if (resolvedPaymentStatus == Payment.PaymentStatus.PAID) {
+                    sunatService.emitirComprobanteParaPedido(
+                            savedOrder.getId(), 1, reqRuc, reqNombre, reqDireccion, rucVerified);
+                } else {
+                    sunatService.registrarSolicitudComprobantePendiente(
+                            savedOrder.getId(), 1, reqRuc, reqNombre, reqDireccion, rucVerified);
+                }
+            } else {
+                String reqDni = req.getClienteDni() != null && !req.getClienteDni().isBlank()
+                        ? req.getClienteDni().trim()
+                        : (req.getOrder() != null ? req.getOrder().getBoletaClienteDni() : null);
+                if (resolvedPaymentStatus == Payment.PaymentStatus.PAID) {
+                    sunatService.emitirBoletaParaPedido(savedOrder.getId(), reqDni, reqNombre);
+                } else {
+                    sunatService.registrarSolicitudBoletaPendiente(savedOrder.getId(), reqDni, reqNombre);
+                }
+            }
             savedOrder = orderService.obtenerPorId(savedOrder.getId()).orElse(savedOrder);
         }
 
@@ -300,7 +327,7 @@ public class CheckoutService {
         return orderService.actualizarOrder(savedOrder.getId(), savedOrder);
     }
 
-    private void processPayment(CheckoutRequestDTO req, Order savedOrder) {
+    private Payment.PaymentStatus processPayment(CheckoutRequestDTO req, Order savedOrder) {
         if (req.getPayment() != null && req.getPayment().getPaymentMethodId() != null) {
             CheckoutRequestDTO.PaymentDTO payReq = req.getPayment();
             Payment.PaymentStatus resolvedStatus = Payment.PaymentStatus.valueOf(
@@ -327,7 +354,9 @@ public class CheckoutService {
             payment.setStatus(resolvedStatus);
             payment.setTransactionId(resolvedTxId);
             paymentService.crearPayment(payment);
+            return resolvedStatus;
         }
+        return Payment.PaymentStatus.PENDING;
     }
 
     private void incrementPromotionUsage(Promotion promotionAUsar) {

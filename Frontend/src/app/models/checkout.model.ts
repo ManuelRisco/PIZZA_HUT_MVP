@@ -32,9 +32,13 @@ export interface CheckoutPayload {
   promoCode?: string;
   discount?: number;
   wantsBoleta?: boolean;
+  tipoComprobante?: 1 | 2;
   clienteDni?: string;
+  clienteRuc?: string;
   clienteNombre?: string;
+  clienteDireccion?: string;
   ageVerified?: boolean;
+  rucVerified?: boolean;
   payment?: {
     paymentMethodId: number;
     amount?: number;

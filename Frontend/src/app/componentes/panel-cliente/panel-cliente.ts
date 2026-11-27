@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
+import { Title } from '@angular/platform-browser';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -77,6 +78,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly location: Location,
+    private readonly titleService: Title,
   ) {}
 
   ngOnInit(): void {
@@ -109,6 +111,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       this.vistaActual = saved && CLIENTE_VISTA_TO_ROUTE[saved] ? saved : 'dashboard';
       sessionStorage.setItem('clienteVistaActual', this.vistaActual);
     }
+    this.actualizarTituloPagina();
 
     this.removeLocationListener = this.location.onUrlChange((url) => {
       const pathOnly = (url || '').split('?')[0].split('#')[0];
@@ -116,6 +119,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       if (mapped && mapped !== this.vistaActual) {
         this.vistaActual = mapped;
         sessionStorage.setItem('clienteVistaActual', mapped);
+        this.actualizarTituloPagina();
       }
     });
 
@@ -187,9 +191,14 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     return CLIENTE_VISTA_TITLES[this.vistaActual] || 'Mi Panel';
   }
 
+  private actualizarTituloPagina(): void {
+    this.titleService.setTitle(`Eco Pizza - ${this.getVistaTituloActual()}`);
+  }
+
   cambiarVista(vista: string): void {
     this.vistaActual = vista;
     sessionStorage.setItem('clienteVistaActual', vista);
+    this.actualizarTituloPagina();
 
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       this.sidebarCollapsed = true;

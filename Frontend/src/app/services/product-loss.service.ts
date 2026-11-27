@@ -5,6 +5,8 @@ import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   LossesSummaryDTO,
+  OrderLossCandidateDTO,
+  OrderLossCreateDTO,
   ProductLossCreateDTO,
   ProductLossDTO
 } from '../models/admin.interface';
@@ -56,6 +58,18 @@ export class ProductLossService {
 
   registrarPerdida(payload: ProductLossCreateDTO): Observable<ProductLossDTO> {
     return this.http.post<any>(this.apiUrl, payload).pipe(
+      map(res => (res.data !== undefined ? res.data : res))
+    );
+  }
+
+  listarPedidosJalables(): Observable<OrderLossCandidateDTO[]> {
+    return this.http.get<any>(`${this.apiUrl}/pullable-orders`).pipe(
+      map(res => (res.data !== undefined ? res.data : res))
+    );
+  }
+
+  registrarPerdidaDesdePedido(payload: OrderLossCreateDTO): Observable<ProductLossDTO[]> {
+    return this.http.post<any>(`${this.apiUrl}/from-order`, payload).pipe(
       map(res => (res.data !== undefined ? res.data : res))
     );
   }
